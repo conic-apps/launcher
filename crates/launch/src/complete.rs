@@ -27,7 +27,10 @@ use crate::error::*;
 /// missing or corrupted assets, libraries and the Mojang-provided Java runtime
 /// (when preferred and the instance has no Java path of its own), then create
 /// the lock files.
-/// > NOTE: If the game crashes, the lock file must be deleted before the next launch.
+///
+/// If the instance's last run ended abnormally (its crash marker is set), the
+/// lock files are ignored and deleted first, so this run re-verifies every file;
+/// the marker is then cleared.
 ///
 /// # Arguments
 ///
@@ -41,14 +44,33 @@ pub async fn complete_files(
     prefer_mojang_java: bool,
     config: &DownloadConfig,
 ) -> Result<()> {
-    let assets_lock_file = LOCATIONS
-        .instances
-        .get_instance_root(&instance.id)
-        .join(".conic-assets-ok");
-    let libraries_lock_file = LOCATIONS
-        .instances
-        .get_instance_root(&instance.id)
-        .join(".conic-libraries-ok");
+    let instance_root = LOCATIONS.instances.get_instance_root(&instance.id);
+    // A run that ended abnormally may have left half-written files behind — that
+    // is often *why* it crashed — and the lock files would otherwise vouch for
+    // them. This mirrors HMCL's `unmarkLaunchedAbnormally`: the marker forces a
+    // full re-check exactly once, then is cleared. The Java-runtime lock lives
+    // here too (see `complete_java_runtime_files`).
+    if instance::last_exit_abnormal(&instance.id) {
+        info!(
+            "The previous run of instance {} exited abnormally; re-checking files",
+            instance.id
+        );
+        for lock in [
+            ".conic-assets-ok",
+            ".conic-libraries-ok",
+            ".java-runtime-ok",
+        ] {
+            let _ = std::fs::remove_file(instance_root.join(lock));
+        }
+        if let Err(error) = instance::clear_last_exit_abnormal(&instance.id) {
+            warn!(
+                "Could not clear the crash marker of instance {}: {error}",
+                instance.id
+            );
+        }
+    }
+    let assets_lock_file = instance_root.join(".conic-assets-ok");
+    let libraries_lock_file = instance_root.join(".conic-libraries-ok");
     if try_load_lock_file(&assets_lock_file).is_some() {
         info!("Found file \".conic-assets-ok\", no need to check assets files.");
     } else {

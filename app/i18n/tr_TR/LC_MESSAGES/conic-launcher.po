@@ -3162,3 +3162,18 @@ msgstr ". Başka bir cihazda tamamlamak için "
 msgctxt "AccountAddMicrosoft"
 msgid "Click to copy"
 msgstr "Kopyalamak için tıklayın"
+
+#: ui
+msgctxt "CrashView"
+msgid "Game crashed"
+msgstr "Oyun çöktü"
+
+#: ui
+msgctxt "CrashView"
+msgid "Close"
+msgstr "Kapat"
+
+#: ui
+msgctxt "CrashView"
+msgid "Possible mods:"
+msgstr "Olası modlar:"

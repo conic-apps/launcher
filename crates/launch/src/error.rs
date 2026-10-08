@@ -54,9 +54,6 @@ pub enum Error {
     #[error("Chunk length mismatch")]
     ChunkLengthMismatch,
 
-    #[error("Unabled to take Minecraft stdout")]
-    TakeMinecraftStdoutFailed,
-
     #[error("No suitable Java runtime found")]
     NoSuitableJavaRuntime,
 

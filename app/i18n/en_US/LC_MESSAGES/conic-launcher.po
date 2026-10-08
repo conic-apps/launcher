@@ -3167,3 +3167,18 @@ msgstr ". To finish signing in on another device, "
 msgctxt "AccountAddMicrosoft"
 msgid "Click to copy"
 msgstr "Click to copy"
+
+#: ui
+msgctxt "CrashView"
+msgid "Game crashed"
+msgstr "Game crashed"
+
+#: ui
+msgctxt "CrashView"
+msgid "Close"
+msgstr "Close"
+
+#: ui
+msgctxt "CrashView"
+msgid "Possible mods:"
+msgstr "Possible mods:"

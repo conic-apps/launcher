@@ -3162,3 +3162,18 @@ msgstr "することもできます。別のデバイスで完了するには、
 msgctxt "AccountAddMicrosoft"
 msgid "Click to copy"
 msgstr "クリックしてコピー"
+
+#: ui
+msgctxt "CrashView"
+msgid "Game crashed"
+msgstr "ゲームがクラッシュしました"
+
+#: ui
+msgctxt "CrashView"
+msgid "Close"
+msgstr "閉じる"
+
+#: ui
+msgctxt "CrashView"
+msgid "Possible mods:"
+msgstr "原因の可能性があるMOD："

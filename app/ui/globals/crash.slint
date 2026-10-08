@@ -1,0 +1,35 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// The crash page's state.
+//
+// Rust raises it from the launch crate's session events
+// (`app/src/ui/views/crash/`): when a game exits abnormally the collected
+// `CrashReport` is pushed here and the app navigates to the `"crash"` page.
+// The strings are the crate's own output, unformatted — Slint cannot format
+// them — so the page shows the raw summary, exit code, report path and crash
+// text.
+export global CrashState {
+    /// The crashed instance's display name.
+    in-out property <string> instance-name: "";
+    /// One line naming the crash, from the crash report or the exit code.
+    in-out property <string> summary: "";
+    /// A pre-formatted line such as "exit code: 1 · APPLICATION_ERROR", or just
+    /// the exit kind when the platform reported no code.
+    in-out property <string> exit-code: "";
+    /// The crash-analysis rules the output matched, one per line, each with the
+    /// fields it captured. Raw rule names, not translated.
+    in-out property <string> reasons: "";
+    /// Likely offending mods, comma-separated, from the report's stack trace.
+    in-out property <string> keywords: "";
+    /// The crash report file the details came from, empty when the game wrote
+    /// none and the details are the log tail.
+    in-out property <string> report-path: "";
+    /// The raw crash report, or the tail of the game log.
+    in-out property <string> details: "";
+
+    /// The "Close" button. Rust navigates back to the page the crash
+    /// interrupted.
+    callback close();
+}

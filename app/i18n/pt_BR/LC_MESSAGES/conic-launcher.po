@@ -3162,3 +3162,18 @@ msgstr ". Para concluir o login em outro dispositivo, "
 msgctxt "AccountAddMicrosoft"
 msgid "Click to copy"
 msgstr "Clique para copiar"
+
+#: ui
+msgctxt "CrashView"
+msgid "Game crashed"
+msgstr "O jogo travou"
+
+#: ui
+msgctxt "CrashView"
+msgid "Close"
+msgstr "Fechar"
+
+#: ui
+msgctxt "CrashView"
+msgid "Possible mods:"
+msgstr "Mods possíveis:"

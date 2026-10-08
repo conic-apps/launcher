@@ -63,14 +63,12 @@ pub async fn generate_command_arguments(
     tokio::fs::write(&game_icon, DEFAULT_GAME_ICON).await?;
     if PLATFORM_INFO.os_family == OsFamily::Macos {
         command_arguments.push("-Xdock:name=Minecraft".to_string());
-        command_arguments.push(format!(
-            "-Xdock:icon={game_icon}",
-            game_icon = if game_icon.contains(" ") {
-                format!("\"{game_icon}\"")
-            } else {
-                game_icon
-            }
-        ));
+        // Raw, unquoted: the launch script quotes every argument for the shell
+        // it runs under (`spawn_minecraft_process`). Quoting here as well used
+        // to produce `"-Xdock:icon="/path with spaces/icon"` — the doubled
+        // quotes split the path on a space, and Java took the tail as the main
+        // class.
+        command_arguments.push(format!("-Xdock:icon={game_icon}"));
     }
     if launch_options.xmn_memory > 0 {
         command_arguments.push(format!("-Xmn{}M", launch_options.xmn_memory));

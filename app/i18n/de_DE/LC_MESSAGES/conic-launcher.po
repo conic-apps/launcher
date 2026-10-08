@@ -3162,3 +3162,18 @@ msgstr ". Um die Anmeldung auf einem anderen Gerät abzuschließen, "
 msgctxt "AccountAddMicrosoft"
 msgid "Click to copy"
 msgstr "Zum Kopieren klicken"
+
+#: ui
+msgctxt "CrashView"
+msgid "Game crashed"
+msgstr "Das Spiel ist abgestürzt"
+
+#: ui
+msgctxt "CrashView"
+msgid "Close"
+msgstr "Schließen"
+
+#: ui
+msgctxt "CrashView"
+msgid "Possible mods:"
+msgstr "Mögliche Mods:"

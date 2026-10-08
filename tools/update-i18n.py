@@ -1098,6 +1098,49 @@ SAVE_TAGS = {
             "pl_PL": "Dodaj konto",
         },
     },
+    # The crash report screen. There is no `en_US` row: an ASCII msgid is its
+    # own English translation.
+    "CrashView": {
+        "Game crashed": {
+            "zh_CN": "游戏崩溃了",
+            "zh_TW": "遊戲崩潰了",
+            "ja_JP": "ゲームがクラッシュしました",
+            "ko_KR": "게임이 충돌했습니다",
+            "de_DE": "Das Spiel ist abgestürzt",
+            "fr_FR": "Le jeu a planté",
+            "es_ES": "El juego se bloqueó",
+            "pt_BR": "O jogo travou",
+            "ru_RU": "Игра завершилась сбоем",
+            "tr_TR": "Oyun çöktü",
+            "pl_PL": "Gra uległa awarii",
+        },
+        "Close": {
+            "zh_CN": "关闭",
+            "zh_TW": "關閉",
+            "ja_JP": "閉じる",
+            "ko_KR": "닫기",
+            "de_DE": "Schließen",
+            "fr_FR": "Fermer",
+            "es_ES": "Cerrar",
+            "pt_BR": "Fechar",
+            "ru_RU": "Закрыть",
+            "tr_TR": "Kapat",
+            "pl_PL": "Zamknij",
+        },
+        "Possible mods:": {
+            "zh_CN": "可能的模组：",
+            "zh_TW": "可能的模組：",
+            "ja_JP": "原因の可能性があるMOD：",
+            "ko_KR": "가능성 있는 모드:",
+            "de_DE": "Mögliche Mods:",
+            "fr_FR": "Mods possibles :",
+            "es_ES": "Mods posibles:",
+            "pt_BR": "Mods possíveis:",
+            "ru_RU": "Возможные моды:",
+            "tr_TR": "Olası modlar:",
+            "pl_PL": "Możliwe mody:",
+        },
+    },
     # The title bar's newspaper button, and the news overlay it opens.
     "TitleBar": {
         "News": {

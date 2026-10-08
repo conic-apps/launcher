@@ -3162,3 +3162,18 @@ msgstr "。若要在其他设备上完成登录步骤，请 "
 msgctxt "AccountAddMicrosoft"
 msgid "Click to copy"
 msgstr "点击复制"
+
+#: ui
+msgctxt "CrashView"
+msgid "Game crashed"
+msgstr "游戏崩溃了"
+
+#: ui
+msgctxt "CrashView"
+msgid "Close"
+msgstr "关闭"
+
+#: ui
+msgctxt "CrashView"
+msgid "Possible mods:"
+msgstr "可能的模组："

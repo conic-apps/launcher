@@ -3162,3 +3162,18 @@ msgstr ". Aby dokończyć logowanie na innym urządzeniu, "
 msgctxt "AccountAddMicrosoft"
 msgid "Click to copy"
 msgstr "Kliknij, aby skopiować"
+
+#: ui
+msgctxt "CrashView"
+msgid "Game crashed"
+msgstr "Gra uległa awarii"
+
+#: ui
+msgctxt "CrashView"
+msgid "Close"
+msgstr "Zamknij"
+
+#: ui
+msgctxt "CrashView"
+msgid "Possible mods:"
+msgstr "Możliwe mody:"
