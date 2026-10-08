@@ -122,16 +122,33 @@ pub fn remove_background_image() -> Result<()> {
 
 /// Update channel selection. Serialized as the lowercase values `nightly`,
 /// `stable` and `beta`.
-#[derive(Clone, Debug, Serialize, Deserialize, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum UpdateChannel {
     #[serde(alias = "Weekly")]
     Nightly,
-    #[default]
     #[serde(alias = "Release")]
     Stable,
     #[serde(alias = "Snapshot")]
     Beta,
+}
+
+impl Default for UpdateChannel {
+    /// The default channel follows the build: a pre-release carries its
+    /// prerelease assets on the `beta` channel, so defaulting it to `stable`
+    /// would strand the install on a 204 every time (see
+    /// `crates/update/src/manifest.rs`). Release builds track `stable`.
+    fn default() -> Self {
+        let version = shared::app_version().to_ascii_lowercase();
+        if ["alpha", "beta", "rc"]
+            .iter()
+            .any(|tag| version.contains(tag))
+        {
+            UpdateChannel::Beta
+        } else {
+            UpdateChannel::Stable
+        }
+    }
 }
 
 impl UpdateChannel {
