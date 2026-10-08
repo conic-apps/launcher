@@ -11,22 +11,23 @@ categories:
         - "test"
         - "style"
         - "release"
-  - title: "✨ Features"
+  - title: "Enhancements"
     when:
       labels:
         - "feature"
         - "enhancement"
-  - title: "🐛 Bug Fixes"
+        - "performance"
+  - title: "Fixed"
     when:
       labels:
         - "fix"
         - "bugfix"
         - "bug"
-  - title: "🚀 Performance"
-    when:
-      labels:
-        - "performance"
 change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
 change-title-escapes: '\<*_&'
+replacers:
+  - target: change-title
+    search: '/^(?:feat|fix|chore|perf)(?:\([^)]*\))?!?: (.*)$/'
+    replace: '\u$1'
 template: |
   $CHANGES
