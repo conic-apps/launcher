@@ -31,3 +31,5 @@ replacers:
     replace: '\u$1'
 template: |
   $CHANGES
+  
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...$RESOLVED_TAG
