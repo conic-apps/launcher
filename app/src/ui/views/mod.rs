@@ -4,6 +4,7 @@
 
 //! The top-level pages, mirroring `app/ui/views/` one surface per folder.
 
+pub(crate) mod crash;
 pub(crate) mod game;
 pub(crate) mod launch;
 pub(crate) mod settings;

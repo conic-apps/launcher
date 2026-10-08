@@ -3162,3 +3162,18 @@ msgstr ". Para terminar de iniciar sesión en otro dispositivo, "
 msgctxt "AccountAddMicrosoft"
 msgid "Click to copy"
 msgstr "Haz clic para copiar"
+
+#: ui
+msgctxt "CrashView"
+msgid "Game crashed"
+msgstr "El juego se bloqueó"
+
+#: ui
+msgctxt "CrashView"
+msgid "Close"
+msgstr "Cerrar"
+
+#: ui
+msgctxt "CrashView"
+msgid "Possible mods:"
+msgstr "Mods posibles:"

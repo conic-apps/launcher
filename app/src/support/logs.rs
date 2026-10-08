@@ -188,10 +188,10 @@ fn format_record(buffer: &mut Formatter, record: &Record) -> std::io::Result<()>
     // The trailing newline is this function's to write: `env_logger`'s own
     // default formatter is what normally ends a record, and this replaces it.
     buffer.write_fmt(format_args!(
-        "[{}] [{}/{style}{}{style:#}]: {}\n",
-        now.to_rfc3339(),
-        record.target(),
+        "{} - {style}{:<5}{style:#} / {}: {}\n",
+        now.format("%d/%m/%Y %H:%M:%S"),
         record.level(),
+        record.target(),
         record.args()
     ))
 }
