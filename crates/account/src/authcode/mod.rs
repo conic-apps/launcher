@@ -143,7 +143,10 @@ impl AuthCallback {
     /// Consuming `self` is what ties the listener's life to the login's: a
     /// `wait` that is never awaited — the user closed the dialog, or went back
     /// to the device code — drops the sockets with it, and the port is free
-    /// again at once.
+    /// again at once. That holds for an aborted `wait` too: the accept loops
+    /// own the listeners, and the guard below takes them down when the future
+    /// is dropped, because dropping a `JoinHandle` alone would only detach
+    /// them and leave every loop parked on `accept()` forever.
     ///
     /// This is the half that needs a runtime, and the first thing it does is
     /// hand the `std` sockets over to one: a socket only becomes an async one
@@ -155,7 +158,7 @@ impl AuthCallback {
             shared,
             ..
         } = self;
-        let mut loops = Vec::with_capacity(listeners.len());
+        let mut loops = AcceptLoops::new();
         for listener in listeners {
             // A socket this crate bound and put in non-blocking mode is one
             // `from_std` accepts, so this cannot be reached in practice — but a
@@ -181,10 +184,37 @@ impl AuthCallback {
             Ok(Err(_)) | Err(_) => Outcome::Nothing,
         };
         shared.finish();
-        for accept_loop in loops {
-            accept_loop.abort();
-        }
+        drop(loops);
         outcome
+    }
+}
+
+/// The accept-loop handles, kept so every end of `wait` — return, `?`-less
+/// early exit, or a dropped (aborted) future — takes the loops down with it.
+/// Without the guard, aborting the task that awaited `wait` drops the
+/// `JoinHandle`s, which detaches the loops instead of cancelling them: they
+/// would hold their listeners, and the port, until the process ended.
+struct AcceptLoops(Vec<tokio::task::JoinHandle<()>>);
+
+impl AcceptLoops {
+    fn new() -> Self {
+        Self(Vec::new())
+    }
+
+    fn push(&mut self, loop_handle: tokio::task::JoinHandle<()>) {
+        self.0.push(loop_handle);
+    }
+
+    fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
+
+impl Drop for AcceptLoops {
+    fn drop(&mut self) {
+        for loop_handle in &self.0 {
+            loop_handle.abort();
+        }
     }
 }
 

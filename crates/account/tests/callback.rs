@@ -248,6 +248,35 @@ async fn a_favicon_request_is_not_a_failure() {
 }
 
 #[tokio::test]
+async fn an_aborted_wait_gives_the_port_back() {
+    let callback = callback();
+    let endpoint = Endpoint::of(&callback);
+    let waiter = tokio::spawn(async move {
+        callback.wait(GENEROUS).await;
+    });
+
+    // Up before anything asks for the port to be free.
+    let response = get(&endpoint, "/").await;
+    assert!(response.starts_with("HTTP/1.1 200 OK\r\n"), "{response}");
+
+    // The dialog closing aborts the waiter the same way it does in the app.
+    waiter.abort();
+    let _ = waiter.await;
+
+    // Reaping the aborted wait is the same cancellation turn; give the
+    // released sockets a moment to show up as refused from the other end.
+    let mut freed = String::new();
+    for _ in 0..20 {
+        tokio::time::sleep(Duration::from_millis(50)).await;
+        freed = get(&endpoint, "/").await;
+        if freed.is_empty() {
+            break;
+        }
+    }
+    assert!(freed.is_empty(), "the port is still taken: {freed}");
+}
+
+#[tokio::test]
 async fn only_the_first_code_ends_the_login() {
     let (endpoint, replay) = {
         let callback = callback();
