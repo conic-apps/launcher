@@ -525,9 +525,8 @@ jobs:
         with:
           version: ${{ needs.get-version.outputs.app_version }}
           prerelease: ${{ steps.detect.outputs.is_prerelease }}
-          publish: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          publish: false
+          token: ${{ secrets.RELEASE_PAT }}
 
       - name: Upload files
         env:
