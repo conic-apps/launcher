@@ -187,7 +187,7 @@ pub async fn install_for_instance(
     let unresolved_version = serde_json::from_str::<version::Version>(
         &tokio::fs::read_to_string(version_json_path).await?,
     )?;
-    let resolved_version = resolve_version(&unresolved_version, &minecraft_location, &[]).await?;
+    let resolved_version = resolve_version(&unresolved_version, &minecraft_location, &[])?;
     let java_version_list = MojangJavaVersionList::new().await?;
 
     let java_runtime_info = match PLATFORM_INFO.os_family {

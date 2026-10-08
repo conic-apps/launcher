@@ -290,7 +290,7 @@ async fn resolve_installer_java(
     let version_json_path = minecraft_location.get_version_json(&instance.config.runtime.minecraft);
     let raw_version_json = tokio::fs::read_to_string(version_json_path).await?;
     let unresolved_version = serde_json::from_str::<Version>(&raw_version_json)?;
-    let resolved_version = resolve_version(&unresolved_version, &minecraft_location, &[]).await?;
+    let resolved_version = resolve_version(&unresolved_version, &minecraft_location, &[])?;
     Ok(
         java_discovery::resolve_java_executable(&java_discovery::ResolveJavaOptions {
             instance_java_path: instance.config.launch_config.java_path.clone(),

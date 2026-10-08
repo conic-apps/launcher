@@ -143,8 +143,7 @@ pub async fn launch(config: Config, instance: Instance, sink: LaunchSink) -> Res
         &Version::from_str(&raw_version_json)?,
         &minecraft_location,
         &[],
-    )
-    .await?;
+    )?;
     let resolved_java = java_discovery::resolve_java_executable(&ResolveJavaOptions {
         instance_java_path: instance.config.launch_config.java_path.clone(),
         prefer_mojang_java: config.prefer_mojang_java,

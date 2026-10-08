@@ -65,8 +65,7 @@ pub async fn generate_download_info(
         &version::Version::from_str(&raw_version_json)?,
         &minecraft_location,
         &[],
-    )
-    .await?;
+    )?;
     let resolved_version_id = &resolved_version.id;
 
     save_version_json(&minecraft_location, resolved_version_id, &raw_version_json).await?;
