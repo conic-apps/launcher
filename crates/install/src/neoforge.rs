@@ -4,10 +4,14 @@
 
 //! The Neoforge version list and installer.
 
-use std::{io::BufRead, path::Path, path::PathBuf, process::Stdio};
+use std::{path::Path, path::PathBuf, process::Stdio};
 
 use log::{debug, error, info};
 use serde_json::Value;
+use tokio::{
+    io::{AsyncBufReadExt, BufReader},
+    process::Command,
+};
 
 use config::download::DownloadConfig;
 use download::{DownloadTask, DownloadTaskType, download_concurrent, progress::DownloadState};
@@ -53,7 +57,7 @@ pub async fn install(
     let installer_path = download_installer(neoforge_version, reporter).await?;
     info!("Running installer with {}", java_path.display());
 
-    let mut command = std::process::Command::new(java_path)
+    let mut child = Command::new(java_path)
         .arg("-jar")
         .arg(&installer_path)
         .arg("--installClient")
@@ -61,18 +65,15 @@ pub async fn install(
         .stdout(Stdio::piped())
         .spawn()?;
 
-    let out = command
-        .stdout
-        .take()
-        .ok_or(Error::NeoforgeInstallerFailed)?;
-    let mut out = std::io::BufReader::new(out);
+    let out = child.stdout.take().ok_or(Error::NeoforgeInstallerFailed)?;
+    let mut out = BufReader::new(out);
     let mut buf = String::new();
     let mut success = false;
-    let pid = command.id();
+    let pid = child.id().ok_or(Error::NeoforgeInstallerFailed)?;
 
     loop {
         buf.clear();
-        let size = out.read_line(&mut buf)?;
+        let size = out.read_line(&mut buf).await?;
         if size == 0 {
             break;
         }
@@ -86,9 +87,9 @@ pub async fn install(
         }
     }
 
-    let output = command.wait_with_output()?;
+    let status = child.wait().await?;
     tokio::fs::remove_file(installer_path).await?;
-    if !success || !output.status.success() {
+    if !success || !status.success() {
         error!("Failed to ran neoforge installer");
         return Err(Error::NeoforgeInstallerFailed);
     }

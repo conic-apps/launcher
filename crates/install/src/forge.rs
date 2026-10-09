@@ -8,13 +8,16 @@ use std::{
     cmp::Reverse,
     collections::HashMap,
     ffi::OsString,
-    io::BufRead,
     path::{Path, PathBuf},
-    process::{Child, Stdio},
+    process::Stdio,
 };
 
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
+use tokio::{
+    io::{AsyncBufReadExt, BufReader},
+    process::{Child, Command},
+};
 
 use config::download::DownloadConfig;
 use download::{DownloadTask, DownloadTaskType, download_concurrent, progress::DownloadState};
@@ -225,7 +228,7 @@ async fn try_bangbang93_bootstrapper(
     info!("Trying Bangbang93 forge install bootstrapper");
     let bangbang93_bootstrapper_path =
         save_bootstrapper(FORGE_INSTALL_BOOTSTRAPPER_BANGBANG93).await?;
-    let child = std::process::Command::new(java_path)
+    let child = Command::new(java_path)
         .arg("-cp")
         .arg(generate_classpath(
             &bangbang93_bootstrapper_path,
@@ -235,7 +238,7 @@ async fn try_bangbang93_bootstrapper(
         .arg(install_dir)
         .stdout(Stdio::piped())
         .spawn()?;
-    let result = wait_child(child, reporter);
+    let result = wait_child(child, reporter).await;
     tokio::fs::remove_file(bangbang93_bootstrapper_path).await?;
     result
 }
@@ -254,7 +257,7 @@ async fn try_conicmc_bootstrapper(
 ) -> Result<()> {
     info!("Trying ConicMC forge install bootstrapper");
     let conicmc_bootstrapper_path = save_bootstrapper(FORGE_INSTALL_BOOTSTRAPPER_CONIC).await?;
-    let child = std::process::Command::new(java_path)
+    let child = Command::new(java_path)
         .arg("-cp")
         .arg(generate_classpath(
             &conicmc_bootstrapper_path,
@@ -265,20 +268,26 @@ async fn try_conicmc_bootstrapper(
         .arg(version_id)
         .stdout(Stdio::piped())
         .spawn()?;
-    let result = wait_child(child, reporter);
+    let result = wait_child(child, reporter).await;
     tokio::fs::remove_file(conicmc_bootstrapper_path).await?;
     result
 }
 
-fn wait_child(mut child: Child, reporter: &ModLoaderReporter) -> Result<()> {
+/// Streams the installer's stdout, reporting every line but the `true`
+/// handshake, then waits for the process to exit.
+///
+/// The subprocess can run for minutes, so it is driven by [`Command`] instead of
+/// `std::process::Command`: a blocking `read_line` would park a runtime worker
+/// thread for the whole install instead of just this task.
+async fn wait_child(mut child: Child, reporter: &ModLoaderReporter) -> Result<()> {
     let out = child.stdout.take().ok_or(Error::ForgeInstallerFailed)?;
-    let mut out = std::io::BufReader::new(out);
+    let mut out = BufReader::new(out);
     let mut buf = String::new();
     let mut success = false;
-    let pid = child.id();
+    let pid = child.id().ok_or(Error::ForgeInstallerFailed)?;
     loop {
         buf.clear();
-        let size = out.read_line(&mut buf)?;
+        let size = out.read_line(&mut buf).await?;
         if size == 0 {
             break;
         }
@@ -291,8 +300,8 @@ fn wait_child(mut child: Child, reporter: &ModLoaderReporter) -> Result<()> {
             reporter.report_installer_line(line);
         }
     }
-    let output = child.wait_with_output()?;
-    if !success || !output.status.success() {
+    let status = child.wait().await?;
+    if !success || !status.success() {
         error!("Failed to run forge installer");
         return Err(Error::ForgeInstallerFailed);
     }
