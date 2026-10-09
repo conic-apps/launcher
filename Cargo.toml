@@ -134,7 +134,7 @@ url = "2"
 uuid = { version = "1", features = ["v4", "serde"] }
 zip = { version = "4", default-features = false, features = ["deflate"]}
 libloader = "0.1"
-tokio = { version = "1", features = ["macros", "rt", "time", "fs"]}
+tokio = { version = "1", features = ["macros", "rt", "time", "fs", "process"]}
 flate2 = "1"
 # Unpacking the `.app.tar.gz` / Linux portable `.tar.gz` update bundles (crates/update).
 tar = "0.4"

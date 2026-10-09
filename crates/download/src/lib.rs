@@ -241,6 +241,7 @@ pub async fn download_concurrent(
 ) -> Result<()> {
     let download_tasks: Result<Vec<DownloadTask>> =
         filter_existing_and_verified_files(tasks, progress)
+            .await?
             .into_iter()
             .map(|x| x.classify())
             .collect();
@@ -302,10 +303,24 @@ pub async fn download_concurrent(
     Ok(())
 }
 
-pub fn filter_existing_and_verified_files(
+/// Drops the tasks whose file is already on disk with a matching checksum and
+/// returns what is left to download.
+///
+/// Hashing every already-downloaded file is blocking disk and CPU work over
+/// hundreds of files, so the pass runs on the blocking pool instead of inline: a
+/// runtime worker cannot be parked for its whole duration, and it is the very
+/// thread that has to drive the downloads which follow. `rayon` still walks the
+/// files in parallel inside that task, because the pool hands us one thread and
+/// hashing is exactly the work that wants one per core.
+///
+/// A blocking task that has started cannot be cancelled, so aborting the
+/// download's `JoinHandle` during this phase detaches the pass rather than
+/// stopping it. That is harmless — it only reads files and bumps a counter — but
+/// a cancelled download can keep a core busy until the pass ends.
+pub async fn filter_existing_and_verified_files(
     downloads: Vec<DownloadTask>,
     progress: &DownloadState,
-) -> Vec<DownloadTask> {
+) -> Result<Vec<DownloadTask>> {
     let completed = progress.completed_tasks.clone();
     {
         let mut task = progress
@@ -315,28 +330,31 @@ pub fn filter_existing_and_verified_files(
         *task = DownloadPhase::VerifyExistingFiles;
     }
     progress.total_tasks.store(0, Ordering::SeqCst);
-    let filter_op = |download: &DownloadTask| {
-        if std::fs::metadata(&download.file).is_err() {
-            return true;
-        }
-        let mut file = match std::fs::File::open(&download.file) {
-            Ok(file) => file,
-            Err(_) => {
+    let total = downloads.len();
+    let downloads: Vec<DownloadTask> = tokio::task::spawn_blocking(move || {
+        let filter_op = |download: &DownloadTask| {
+            if std::fs::metadata(&download.file).is_err() {
                 return true;
             }
+            let mut file = match std::fs::File::open(&download.file) {
+                Ok(file) => file,
+                Err(_) => {
+                    return true;
+                }
+            };
+            let check_result = verify_checksum_from_read(&mut file, &download.checksum);
+            completed.fetch_add(1, Ordering::SeqCst);
+            match check_result {
+                Some(x) => !x,
+                // Without an expected checksum the content cannot be verified,
+                // so an existing file counts as complete instead of being
+                // redownloaded on every run.
+                None => false,
+            }
         };
-        let check_result = verify_checksum_from_read(&mut file, &download.checksum);
-        completed.fetch_add(1, Ordering::SeqCst);
-        match check_result {
-            Some(x) => !x,
-            // Without an expected checksum the content cannot be verified,
-            // so an existing file counts as complete instead of being
-            // redownloaded on every run.
-            None => false,
-        }
-    };
-    let total = downloads.len();
-    let downloads: Vec<_> = downloads.into_par_iter().filter(filter_op).collect();
+        downloads.into_par_iter().filter(filter_op).collect()
+    })
+    .await?;
     let skipped = total - downloads.len();
     debug!(
         "Checked {total} existing file(s): {skipped} already verified, {} to download",
@@ -348,7 +366,7 @@ pub fn filter_existing_and_verified_files(
             downloads.len()
         );
     }
-    downloads
+    Ok(downloads)
 }
 
 fn verify_checksum_from_read<R: Read>(source: &mut R, checksum: &Checksum) -> Option<bool> {
