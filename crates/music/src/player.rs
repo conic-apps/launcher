@@ -452,12 +452,30 @@ impl Player {
     /// silent whenever nothing plays, so no lazy creation is needed.
     pub fn new() -> Result<Player> {
         let host = cpal::default_host();
-        let device = host.default_output_device().ok_or(Error::NoOutputDevice)?;
-        let config = device
-            .default_output_config()
-            .map_err(|error| Error::Output(error.to_string()))?;
+        // Every failure below used to surface as a bare `Error::Output`, and the
+        // app's own line ("background music is unavailable") names none of the
+        // device, its rate or its format — which is what decides whether a
+        // particular audio setup can work at all.
+        let device = host.default_output_device().ok_or_else(|| {
+            log::error!("no default audio output device was found");
+            Error::NoOutputDevice
+        })?;
+        let config = device.default_output_config().map_err(|error| {
+            log::error!(
+                "the audio device {} would not give its configuration: {error}",
+                device.name().unwrap_or_else(|_| "<unnamed>".to_string())
+            );
+            Error::Output(error.to_string())
+        })?;
         let device_rate = config.sample_rate().0 as f64;
         let device_channels = config.channels() as usize;
+        log::info!(
+            "Audio output: {} at {} Hz, {} channel(s), format {:?}",
+            device.name().unwrap_or_else(|_| "<unnamed>".to_string()),
+            config.sample_rate().0,
+            device_channels,
+            config.sample_format()
+        );
 
         let (commands, receiver) = channel::<Command>();
         let graph = new_graph(device_rate, device_channels);
@@ -465,10 +483,17 @@ impl Player {
         let stream = build_stream(&device, &config, Arc::clone(&graph), device_channels)?;
 
         let worker = Arc::clone(&graph);
+        // Returned as an error rather than panicking: a worker that could not
+        // start is a silent background feature, not a reason to take the app down.
+        // The handle is detached, as it was before: the worker ends when its
+        // command channel closes, and it holds the audio graph.
         std::thread::Builder::new()
             .name("conic-music".into())
             .spawn(move || worker_loop(worker, receiver))
-            .expect("failed to start the music worker");
+            .map_err(|error| {
+                log::error!("the music worker could not be started: {error}");
+                Error::Output(error.to_string())
+            })?;
 
         Ok(Player {
             graph,
@@ -729,7 +754,15 @@ impl Player {
     /// `enabled` and `resume_on_startup` both say so — starts it playing. A saved
     /// track missing from the folder falls back to the first one, paused.
     pub fn restore_session(&self, enabled: bool, resume_on_startup: bool) {
-        let tracks = Arc::new(crate::list_music_files().unwrap_or_default());
+        // A missing music folder is ordinary and reads as an empty playlist; a
+        // folder that is there and unreadable is not, and used to be the same.
+        let tracks = Arc::new(crate::list_music_files().unwrap_or_else(|error| {
+            log::warn!(
+                "the music folder at {} could not be listed: {error}",
+                storage::LOCATIONS.launcher.music.display()
+            );
+            Vec::new()
+        }));
         {
             let mut state = lock(&self.graph.state);
             state.tracks = Arc::clone(&tracks);
@@ -1051,6 +1084,13 @@ fn feed(
                 // to decode either.
                 stalled += 1;
                 if stalled >= MAX_STALLED_READS {
+                    // Abandoning the track is a real outcome — a corrupt file or
+                    // a codec the device refuses — and it was indistinguishable
+                    // from reaching the end of a good one.
+                    log::warn!(
+                        "{MAX_STALLED_READS} consecutive packets could not be decoded; giving \
+                         up on the current track"
+                    );
                     let mut state = lock(&graph.state);
                     state.ended = true;
                     state.playing = false;
@@ -1089,6 +1129,13 @@ fn feed(
             // play is given up on rather than spun on.
             stalled += 1;
             if stalled >= MAX_STALLED_READS {
+                // The device rejected this rate or channel layout repeatedly: the
+                // resampler is producing something the output cannot take, which
+                // is a different problem from a file that will not decode.
+                log::warn!(
+                    "{MAX_STALLED_READS} consecutive reads produced nothing the device \
+                     would accept; giving up on the current track"
+                );
                 let mut state = lock(&graph.state);
                 state.ended = true;
                 state.playing = false;

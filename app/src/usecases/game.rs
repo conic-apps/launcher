@@ -115,6 +115,9 @@ impl InstanceViewState {
 pub fn save(state: &InstanceViewState) {
     let path = state_file();
     let Ok(bytes) = serde_json::to_vec_pretty(state) else {
+        // The doc comment above says a failure is logged; this arm was the one
+        // that did not log it, leaving only the write side covered.
+        log::warn!("the instance view state could not be serialised; it is not being saved");
         return;
     };
     if let Err(error) = std::fs::write(&path, bytes) {

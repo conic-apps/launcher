@@ -9,6 +9,7 @@ repository.workspace = true
 [dependencies]
 shared.workspace = true
 
+log.workspace = true
 reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true

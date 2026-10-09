@@ -74,7 +74,6 @@ pub(crate) struct GameController {
     expanded: HashMap<String, bool>,
     accounts: Vec<Account>,
     playtime: HashMap<String, u64>,
-    content: HashMap<String, content::ContentCounts>,
     /// The account heads the footer and its switcher draw, by `<key>@<size>`.
     /// Memoised because a skin is a base64 PNG (or a bundled webp) that has to
     /// be decoded and cropped, and `apply` runs on every list change.

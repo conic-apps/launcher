@@ -37,13 +37,29 @@ pub async fn delete_account(account: YggdrasilAccount) -> Result<()> {
         .into_iter()
         .filter(|x| x.identifier != account.identifier)
         .collect::<Vec<_>>();
-    let _ = yggdrasil_user_api::invalidate(
+    // The server is told to drop the session, and the account is dropped locally
+    // either way — so a swallowed failure here leaves a live access token on the
+    // server with nothing on record that logout was ever attempted.
+    if let Err(error) = yggdrasil_user_api::invalidate(
         &account.api_root,
         account.access_token,
         account.client_token,
     )
-    .await;
+    .await
+    {
+        log::warn!(
+            "could not invalidate the session for {} at {}: {error}; it is removed locally \
+             regardless",
+            account.identifier,
+            account.api_root
+        );
+    }
     save_accounts(result).await?;
+    log::info!(
+        "Removed the Yggdrasil account {} from {}",
+        account.identifier,
+        account.api_root
+    );
     Ok(())
 }
 
@@ -65,11 +81,32 @@ pub async fn list_accounts() -> Result<Vec<YggdrasilAccount>> {
     if !yggdrasil_accounts_list_file.exists() {
         return Ok(vec![]);
     }
+    // Same hazard as the Microsoft list: both of these read as "no accounts", and
+    // the next add writes the file back with one entry in it. A corrupt file here
+    // silently costs the user every Yggdrasil account they had.
     let serialized_yggdrasil_accounts_list =
-        tokio::fs::read_to_string(yggdrasil_accounts_list_file)
-            .await
-            .unwrap_or_default();
-    Ok(serde_json::from_str(&serialized_yggdrasil_accounts_list).unwrap_or_default())
+        match tokio::fs::read_to_string(&yggdrasil_accounts_list_file).await {
+            Ok(contents) => contents,
+            Err(error) => {
+                log::warn!(
+                    "Could not read {} ({error}); treating it as no Yggdrasil accounts, and \
+                     adding one will overwrite it",
+                    yggdrasil_accounts_list_file.display()
+                );
+                return Ok(vec![]);
+            }
+        };
+    match serde_json::from_str(&serialized_yggdrasil_accounts_list) {
+        Ok(accounts) => Ok(accounts),
+        Err(error) => {
+            log::warn!(
+                "{} is not valid account json ({error}); treating it as no Yggdrasil \
+                 accounts, and adding one will overwrite it",
+                yggdrasil_accounts_list_file.display()
+            );
+            Ok(Vec::new())
+        }
+    }
 }
 
 pub async fn get_account(account_identifier: Uuid) -> Result<YggdrasilAccount> {

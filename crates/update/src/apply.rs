@@ -42,6 +42,9 @@ pub fn apply_pending() -> Result<bool> {
         staged.version,
         staged.kind.as_str()
     );
+    // The bundle that is about to be swapped in — the file the user would need to
+    // put back by hand if anything below goes wrong.
+    log::debug!("the staged bundle is at {}", staged.artifact.display());
     match staged.kind {
         InstallKind::AppImage => apply_appimage(&staged)?,
         InstallKind::App => apply_mac_app(&staged)?,
@@ -146,7 +149,25 @@ fn apply_mac_app(staged: &Staged) -> Result<()> {
         let _ = std::fs::remove_dir_all(&backup);
         std::fs::rename(&bundle, &backup)?;
         if let Err(error) = std::fs::rename(&new_app, &bundle) {
-            let _ = std::fs::rename(&backup, &bundle);
+            // Roll back to the running bundle. A failure here is the worst case
+            // in this crate: the user is left with *no* launcher, and the only
+            // record would otherwise be the app's single `failed to apply` line
+            // — which says nothing about where their bundle went.
+            log::error!(
+                "the new bundle could not be moved into place ({error}); restoring the \
+                 previous one from {}",
+                backup.display()
+            );
+            if let Err(rollback) = std::fs::rename(&backup, &bundle) {
+                log::error!(
+                    "the previous bundle could not be restored from {} either ({rollback}); \
+                     the launcher is at {} and must be put back by hand",
+                    backup.display(),
+                    bundle.display()
+                );
+            } else {
+                log::error!("the previous launcher was restored; the update was not applied");
+            }
             return Err(error.into());
         }
         let _ = std::fs::remove_dir_all(&backup);
@@ -317,6 +338,13 @@ fn run_detached_script(script: &str) -> Result<()> {
     const DETACHED_PROCESS: u32 = 0x0000_0008;
     let path = updates_dir().join("apply.cmd");
     std::fs::write(&path, script)?;
+    // `spawn` succeeding only means the shell started; the script may still fail.
+    // Logging the hand-off is what distinguishes "queued and run" from "queued
+    // and lost", which were otherwise the same silence.
+    log::info!(
+        "handing the update to the detached script at {}",
+        path.display()
+    );
     std::process::Command::new("cmd")
         .arg("/C")
         .arg(&path)

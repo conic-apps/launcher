@@ -33,24 +33,52 @@ pub use error::{Error, Result};
 pub fn load_config_file() -> Result<Config> {
     let config_file_path = &LOCATIONS.launcher.config;
     if !config_file_path.exists() {
-        info!("No config file, using default config");
+        info!(
+            "No config file at {}, using default config",
+            config_file_path.display()
+        );
         return reset_config();
     }
     let data = match std::fs::read_to_string(config_file_path) {
         Ok(x) => x,
-        Err(_) => {
-            error!("Could not read config file, reset it");
+        // The error was discarded and the path was in no message, so a permission
+        // problem and a missing file were the same line — and this one *resets*
+        // the config.
+        Err(error) => {
+            error!(
+                "Could not read {}: {error}; resetting the config",
+                config_file_path.display()
+            );
             return reset_config();
         }
     };
-    if let Ok(config) = toml::from_str::<Config>(&data) {
-        let write_back_data = toml::to_string_pretty(&config)?;
-        std::fs::write(config_file_path, write_back_data)?;
-        info!("Loaded config from file");
-        Ok(config)
-    } else {
-        error!("Config file is not a toml file, reset it");
-        reset_config()
+    // Every message here used to name neither the file nor the reason, and the
+    // toml error was thrown away with `if let Ok`. That is the worst line in the
+    // crate: the reset below *overwrites* the user's config, so the parse error
+    // is the only chance to say what was wrong with it.
+    match toml::from_str::<Config>(&data) {
+        Ok(config) => {
+            // The write-back canonicalises the file. A failure here leaves the
+            // config in memory only, and a crash loses every setting made since.
+            let write_back_data = toml::to_string_pretty(&config)?;
+            if let Err(error) = std::fs::write(config_file_path, write_back_data) {
+                log::warn!(
+                    "{} could not be rewritten after loading: {error}; settings are held in \
+                     memory only until they are saved",
+                    config_file_path.display()
+                );
+            }
+            info!("Loaded config from {}", config_file_path.display());
+            Ok(config)
+        }
+        Err(error) => {
+            error!(
+                "{} is not a valid config ({error}); resetting it, which discards every \
+                 setting in it",
+                config_file_path.display()
+            );
+            reset_config()
+        }
     }
 }
 
@@ -77,7 +105,7 @@ pub fn save_config_to(path: &Path, config: &Config) -> Result<()> {
     }
     let data = toml::to_string_pretty(config)?;
     std::fs::write(path, data)?;
-    info!("Saved config");
+    info!("Saved config to {}", path.display());
     Ok(())
 }
 
@@ -268,7 +296,13 @@ impl Default for Config {
 
 /// Best-effort mapping from the system locale to a bundled launcher language.
 pub fn get_system_language() -> &'static str {
-    let locale = sys_locale::get_locale().unwrap_or_else(|| "en-US".to_string());
+    let locale = sys_locale::get_locale().unwrap_or_else(|| {
+        // English is the right fallback, but a locale that cannot be read is a
+        // first-launch-only condition worth recording: the app then opens in
+        // English on a machine that is configured for something else.
+        log::debug!("the system locale could not be read; falling back to en-US");
+        "en-US".to_string()
+    });
     let locale = locale.replace('_', "-");
     let parts: Vec<&str> = locale.split('-').collect();
 

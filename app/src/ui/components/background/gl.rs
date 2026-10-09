@@ -138,62 +138,68 @@ pub fn install(ui: &App, shared: Handle) -> bool {
         return false;
     }
     let weak = ui.as_weak();
-    ui.window()
-        .set_rendering_notifier(move |state, api| {
-            let Some(ui) = weak.upgrade() else { return };
-            match state {
-                RenderingState::RenderingSetup => {
-                    // A borrowed texture from a previous context is dead now, so
-                    // the layer goes back to the sky until the first draw below
-                    // hands over a fresh one. It is cleared here rather than in
-                    // `RenderingTeardown` on purpose: femtovg fires teardown from
-                    // inside the winit adapter's `suspend()`, which holds the
-                    // adapter's window `RefCell` mutably. Setting a Slint property
-                    // there marks the window dirty and calls `request_redraw`,
-                    // which re-borrows that same cell and panics with
-                    // "RefCell already mutably borrowed" — the crash on `⌘W`. Setup
-                    // runs from `draw()`, with no borrow held, and always precedes
-                    // the first frame of the new context, so nothing ever samples
-                    // the stale texture.
-                    ui.global::<Background>().set_world_image(Image::default());
-                    let size = target_size(&ui);
-                    match Renderer::new(api, size) {
-                        Ok(renderer) => {
-                            log::info!(
-                                target: "background",
-                                "rendering the world with OpenGL at {}x{}",
-                                size.0,
-                                size.1,
-                            );
-                            RENDERER.with(|slot| *slot.borrow_mut() = Some(renderer));
-                        }
-                        Err(error) => {
-                            log::warn!(target: "background", "no GPU background: {error}");
-                            shared.gpu.set(Gpu::Failed);
-                        }
+    let result = ui.window().set_rendering_notifier(move |state, api| {
+        let Some(ui) = weak.upgrade() else { return };
+        match state {
+            RenderingState::RenderingSetup => {
+                // A borrowed texture from a previous context is dead now, so
+                // the layer goes back to the sky until the first draw below
+                // hands over a fresh one. It is cleared here rather than in
+                // `RenderingTeardown` on purpose: femtovg fires teardown from
+                // inside the winit adapter's `suspend()`, which holds the
+                // adapter's window `RefCell` mutably. Setting a Slint property
+                // there marks the window dirty and calls `request_redraw`,
+                // which re-borrows that same cell and panics with
+                // "RefCell already mutably borrowed" — the crash on `⌘W`. Setup
+                // runs from `draw()`, with no borrow held, and always precedes
+                // the first frame of the new context, so nothing ever samples
+                // the stale texture.
+                ui.global::<Background>().set_world_image(Image::default());
+                let size = target_size(&ui);
+                match Renderer::new(api, size) {
+                    Ok(renderer) => {
+                        log::info!(
+                            target: "background",
+                            "rendering the world with OpenGL at {}x{}",
+                            size.0,
+                            size.1,
+                        );
+                        RENDERER.with(|slot| *slot.borrow_mut() = Some(renderer));
+                    }
+                    Err(error) => {
+                        log::warn!(target: "background", "no GPU background: {error}");
+                        shared.gpu.set(Gpu::Failed);
                     }
                 }
-                RenderingState::BeforeRendering => {
-                    let drawn = RENDERER.with(|slot| {
-                        slot.borrow_mut()
-                            .as_mut()
-                            .map(|renderer| renderer.draw(&ui, &shared))
-                            .unwrap_or(false)
-                    });
-                    if drawn && shared.gpu.get() == Gpu::Pending {
-                        shared.gpu.set(Gpu::Running);
-                    }
-                }
-                RenderingState::RenderingTeardown => {
-                    RENDERER.with(|slot| *slot.borrow_mut() = None);
-                    // The image property is not touched here: this state is
-                    // delivered from inside the adapter's `suspend()` and any
-                    // write would panic. `RenderingSetup` clears it instead.
-                }
-                _ => {}
             }
-        })
-        .is_ok()
+            RenderingState::BeforeRendering => {
+                let drawn = RENDERER.with(|slot| {
+                    slot.borrow_mut()
+                        .as_mut()
+                        .map(|renderer| renderer.draw(&ui, &shared))
+                        .unwrap_or(false)
+                });
+                if drawn && shared.gpu.get() == Gpu::Pending {
+                    shared.gpu.set(Gpu::Running);
+                }
+            }
+            RenderingState::RenderingTeardown => {
+                RENDERER.with(|slot| *slot.borrow_mut() = None);
+                // The image property is not touched here: this state is
+                // delivered from inside the adapter's `suspend()` and any
+                // write would panic. `RenderingSetup` clears it instead.
+            }
+            _ => {}
+        }
+    });
+    // A renderer with no OpenGL hook at all — the software one — makes this fail,
+    // and the caller only saw a `false` it had to interpret. That is the ordinary
+    // "no GPU here" case, so it is `debug` rather than a warning.
+    let installed = result.is_ok();
+    if !installed {
+        log::debug!(target: "background", "the renderer has no OpenGL hook; using the CPU path");
+    }
+    installed
 }
 
 /// The pixels the world is drawn at: the window's physical size times the
@@ -812,7 +818,12 @@ impl Renderer {
 
     /// Draws one frame. Returns whether the window now has a fresh world image.
     fn draw(&mut self, ui: &App, shared: &Shared) -> bool {
-        if self.resize(target_size(ui)).is_err() {
+        // `resize` carries readable reasons — "incomplete framebuffer: …", "the
+        // renderer is not using OpenGL" — and the identical error class *is*
+        // logged on the first `Renderer::new`. Dropping it here made a window
+        // resize or a scale change fail into the same silence as the first build.
+        if let Err(error) = self.resize(target_size(ui)) {
+            log::warn!(target: "background", "no GPU background: {error}");
             shared.gpu.set(Gpu::Failed);
             return false;
         }
@@ -948,6 +959,14 @@ impl Renderer {
         // same borrowed texture every frame, and its contents are what change.
         if self.image.is_none() {
             let Some(id) = NonZeroU32::new(resolved.0.get()) else {
+                // Permanent for this context: `draw` answers false from here on
+                // and `Gpu` never reaches `Running`, so the controller logs "no
+                // OpenGL renderer" — a wrong diagnosis. This is the real one.
+                log::warn!(
+                    target: "background",
+                    "the borrowed OpenGL texture handle is not valid; the GPU world cannot \
+                     be drawn"
+                );
                 return false;
             };
             // Safe: the texture is ours and belongs to the context that is

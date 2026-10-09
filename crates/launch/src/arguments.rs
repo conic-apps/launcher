@@ -312,10 +312,31 @@ fn resolve_classpath(
                 let path = minecraft.get_library_by_path(&native_library.path);
                 let native_folder = minecraft.get_natives_root(&version.id);
                 info!("Unzip native library {path:#?} to {native_folder:#?}");
-                if let Ok(file) = std::fs::File::open(path)
-                    && let Ok(mut zip_archive) = ZipArchive::new(file)
-                {
-                    decompression_all(&mut zip_archive, &native_folder).unwrap_or(());
+                // Three failures swallowed in a row: a missing native jar, a
+                // corrupt one, and a per-entry write error inside the archive. The
+                // game then fails to start with an `UnsatisfiedLinkError` and the
+                // `info!` above — which fires *before* the work — reads as though
+                // it had worked.
+                match std::fs::File::open(&path) {
+                    Ok(file) => match ZipArchive::new(file) {
+                        Ok(mut zip_archive) => {
+                            if let Err(error) = decompression_all(&mut zip_archive, &native_folder)
+                            {
+                                log::warn!(
+                                    "Could not extract the native library {path:#?} into \
+                                     {native_folder:#?}: {error}"
+                                );
+                            }
+                        }
+                        Err(error) => log::warn!(
+                            "{path:#?} is not a readable archive: {error}; the game will miss \
+                             this native library"
+                        ),
+                    },
+                    Err(error) => log::warn!(
+                        "Could not open the native library {path:#?}: {error}; the game will \
+                         miss it"
+                    ),
                 }
                 None
             }

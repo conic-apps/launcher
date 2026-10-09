@@ -30,11 +30,18 @@ where
     F: FnOnce(App) + Send + 'static,
 {
     let token = token.clone();
-    let _ = weak.upgrade_in_event_loop(move |ui| {
+    if let Err(error) = weak.upgrade_in_event_loop(move |ui| {
         if token.is_current() {
             apply(ui);
         }
-    });
+    }) {
+        // The event loop is gone, so a result had nowhere to land. `debug!` and not
+        // `warn!`: window teardown is the ordinary cause, and a callback firing at
+        // shutdown is not a fault the user can act on. It is recorded because the
+        // other cause — the loop outliving the component but no longer accepting —
+        // looks exactly like a task that silently did nothing.
+        log::debug!(target: "shell", "a background result had nowhere to land: {error}");
+    }
 }
 
 /// Runs `apply` on the event loop with no staleness check.
@@ -45,5 +52,7 @@ pub(crate) fn report<F>(weak: &Weak<App>, apply: F)
 where
     F: FnOnce(App) + Send + 'static,
 {
-    let _ = weak.upgrade_in_event_loop(apply);
+    if let Err(error) = weak.upgrade_in_event_loop(apply) {
+        log::debug!(target: "shell", "a background result had nowhere to land: {error}");
+    }
 }

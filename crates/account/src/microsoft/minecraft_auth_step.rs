@@ -26,7 +26,7 @@ pub(super) async fn minecraft_authenticate(
     xbl_uhs: &str,
     xsts_token: &str,
 ) -> Result<(String, u64)> {
-    let response: Value = HTTP_CLIENT
+    let response = HTTP_CLIENT
         .post("https://api.minecraftservices.com/authentication/login_with_xbox")
         .header("Content-Type", "application/json")
         .header("Accept", "application/json")
@@ -34,9 +34,8 @@ pub(super) async fn minecraft_authenticate(
             xbl_uhs, xsts_token,
         ))?)
         .send()
-        .await?
-        .json()
         .await?;
+    let response: Value = super::decode(response, "the Minecraft login_with_xbox endpoint").await?;
     Ok((
         response["access_token"]
             .as_str()

@@ -44,13 +44,25 @@ pub fn on_window_event<H: ComponentHandle>(
 ) {
     use i_slint_backend_winit::{EventResult, WinitWindowAccessor};
 
-    EVENT_FILTERS.with(|filters| filters.borrow_mut().push(Box::new(filter)));
+    EVENT_FILTERS.with(|filters| {
+        let mut filters = filters.borrow_mut();
+        // The cheap regression guard for the failure this module exists to
+        // prevent: registering a second raw `on_winit_window_event` *replaces*
+        // the first, which cost the window controls their hook once. Every
+        // subscriber is named in the count, so a double registration is visible.
+        log::debug!(
+            "attaching a window event filter; {} will now be dispatched",
+            filters.len() + 1
+        );
+        filters.push(Box::new(filter));
+    });
 
     if EVENT_HOOK.replace(true) {
         // The slot already holds the dispatcher, and it reads the list above,
         // so a later subscriber is picked up without touching it again.
         return;
     }
+    log::debug!("the window event dispatcher is installed on the winit window");
     component.window().on_winit_window_event(|_, event| {
         EVENT_FILTERS.with(|filters| {
             // The borrow is held across the calls on purpose: a filter cannot be
@@ -112,17 +124,27 @@ impl<H: ComponentHandle> WindowService<H> {
 
     /// Toggles the maximized state (Windows/Linux).
     pub fn toggle_maximize(&self) {
-        self.window().set_maximized(!self.window().is_maximized());
+        let maximized = !self.window().is_maximized();
+        self.set_maximized(maximized);
     }
 
     /// Maximizes (or un-maximizes) the window explicitly.
+    ///
+    /// Slint's `set_maximized` answers nothing — it hands the request to the
+    /// window system and does not wait for an answer — so there is no error to
+    /// log here. The request itself is recorded because the caller only logs the
+    /// *intent* (`toggle_maximize` in `main.rs`), and the platform refusing a
+    /// maximize is otherwise indistinguishable from the click never arriving.
     pub fn set_maximized(&self, maximized: bool) {
         self.window().set_maximized(maximized);
+        log::debug!("the window was asked to be maximized={maximized}");
     }
 
     /// Toggles fullscreen mode.
     pub fn toggle_fullscreen(&self) {
-        self.window().set_fullscreen(!self.window().is_fullscreen());
+        let fullscreen = !self.window().is_fullscreen();
+        self.window().set_fullscreen(fullscreen);
+        log::debug!("the window was asked to be fullscreen={fullscreen}");
     }
 
     /// Reports every focus change to `callback`.
@@ -178,7 +200,13 @@ impl<H: ComponentHandle> WindowService<H> {
     /// while the loop is pumping, and the platform's activation has to run where
     /// its own window lives. Call it from an `upgrade_in_event_loop` callback.
     pub fn bring_to_front(&self) {
+        // Logged as a whole because this is the single-instance path: a second
+        // launch of the app reports itself here and brings this window forward,
+        // and until now the only evidence of that was the request at the call
+        // site, not the outcome.
+        log::debug!("bringing the window forward");
         if self.window().is_minimized() {
+            log::debug!("the window was minimized; restoring it");
             self.minimize_to(false);
         }
         if !self.window().is_visible() {
@@ -194,12 +222,20 @@ impl<H: ComponentHandle> WindowService<H> {
     /// Restores or minimizes the window.
     fn minimize_to(&self, minimized: bool) {
         use i_slint_backend_winit::WinitWindowAccessor;
-        if self
+        match self
             .window()
             .with_winit_window(|window| window.set_minimized(minimized))
-            .is_none()
         {
-            self.window().set_minimized(minimized);
+            // The winit path: the window manager owns the state, so there is
+            // nothing to report back beyond the request.
+            Some(_) => log::debug!("the window manager was asked for minimized={minimized}"),
+            None => {
+                // No winit window, so Slint's own API is the only option left.
+                log::debug!(
+                    "no winit window to minimize; falling back to Slint for minimized={minimized}"
+                );
+                self.window().set_minimized(minimized);
+            }
         }
     }
 
@@ -233,10 +269,18 @@ impl<H: ComponentHandle> WindowService<H> {
     /// therefore Slint's `clicked`) never arrives for the press that started it.
     pub fn drag_window(&self) {
         use i_slint_backend_winit::WinitWindowAccessor;
-        let _ = self.window().with_winit_window(|window| {
-            if let Err(error) = window.drag_window() {
-                log::debug!("the platform did not start a window drag: {error}");
-            }
-        });
+        if self
+            .window()
+            .with_winit_window(|window| {
+                if let Err(error) = window.drag_window() {
+                    log::debug!("the platform did not start a window drag: {error}");
+                }
+            })
+            .is_none()
+        {
+            // The closure above never ran, so its log line never appeared: a
+            // drag on a backend with no winit window was silently swallowed.
+            log::debug!("the window drag did not start: no winit window");
+        }
     }
 }

@@ -213,6 +213,11 @@ pub(crate) fn load(ui: &App) {
     ui.global::<NewsState>().set_loading(true);
     let weak = ui.as_weak();
     runtime::spawn(async move {
+        // Both fetches are stringified and handed to `finish_load`, which logs
+        // the errors — but nothing said *what was asked for*, and the URL only
+        // ever appeared inside the request the crate makes. This records the
+        // attempt so a failed feed has a fetch attached to it.
+        log::info!("Fetching the Mojang news feed and the Java changelog index");
         let news = news::fetch_news().await.map_err(|error| error.to_string());
         let changelogs = news::fetch_changelogs()
             .await

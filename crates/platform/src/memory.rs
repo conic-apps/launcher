@@ -11,5 +11,12 @@ use sysinfo::System;
 pub fn get_available_memory_bytes() -> u64 {
     let mut system = System::new();
     system.refresh_memory();
-    system.available_memory()
+    let available = system.available_memory();
+    // Zero means `sysinfo` could not read the host at all, and the automatic
+    // heap calculation then computes an `-Xmx` of zero — the game starts and
+    // immediately fails, with nothing in the log to connect the two.
+    if available == 0 {
+        log::warn!("the available system memory could not be read (reported as 0 bytes)");
+    }
+    available
 }
