@@ -108,13 +108,25 @@ impl PlatformInfo {
             panic!("Sorry, but this program does not support your system!")
         };
         let os_info = os_info::get();
-        Self {
+        let info = Self {
             arch: parse_arch(os_info.architecture()),
             os_family,
             os_version: os_info.version().to_owned(),
             os_type: os_info.os_type(),
             edition: os_info.edition().map(|x| x.to_owned()),
-        }
+        };
+        // The one line that answers "what did the launcher think it was running
+        // on". The app logs the family separately, but not the version, edition
+        // or arch — and `main` writes no log before this is first touched.
+        log::info!(
+            "Platform: {} {} ({:?}, edition {:?}, arch {:?})",
+            info.os_type,
+            info.os_version,
+            info.os_family,
+            info.edition,
+            info.arch
+        );
+        info
     }
 }
 
@@ -129,6 +141,30 @@ impl std::fmt::Display for OsFamily {
 }
 
 fn parse_arch(arch_str: Option<&str>) -> OsArch {
+    // An unrecognised architecture silently becomes `Unknown`, and that changes
+    // three separate decisions: the memory heuristics, the `arch` segment of the
+    // update artifact name, and which native libraries a game gets. So the raw
+    // string is recorded — nothing else would explain the outcome.
+    if let Some(raw) = arch_str
+        && !matches!(
+            raw,
+            "x86_64"
+                | "amd64"
+                | "i386"
+                | "mips"
+                | "powerpc"
+                | "powerpc64"
+                | "arm"
+                | "armv7l"
+                | "aarch64"
+                | "arm64"
+                | "riscv64"
+                | "s390x"
+                | "loongarch64"
+        )
+    {
+        log::warn!("the architecture was reported as {raw:?}, which is not recognised");
+    }
     match arch_str {
         Some("x86_64") => OsArch::X64,
         Some("amd64") => OsArch::X64,

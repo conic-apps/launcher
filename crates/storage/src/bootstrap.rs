@@ -43,10 +43,37 @@ pub fn bootstrap_path() -> PathBuf {
 
 /// Reads the bootstrap file, falling back to no overrides when it is missing or
 /// unreadable. A broken file must not keep the launcher from starting.
+///
+/// It must not keep the launcher from *starting*, but it does move every root back
+/// to the platform default — which reads as an empty library and accounts the
+/// user cannot account for having signed out of. So both ways of getting nothing
+/// are `warn!`ed with the path: a missing file is ordinary and silent, a broken
+/// one is the support question.
 pub fn load_overrides() -> LocationOverrides {
-    match fs::read_to_string(bootstrap_path()) {
-        Ok(text) => toml::from_str(&text).unwrap_or_default(),
-        Err(_) => LocationOverrides::default(),
+    let path = bootstrap_path();
+    let text = match fs::read_to_string(&path) {
+        Ok(text) => text,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            return LocationOverrides::default();
+        }
+        Err(error) => {
+            log::warn!(
+                "could not read {} ({error}); using the default storage locations",
+                path.display()
+            );
+            return LocationOverrides::default();
+        }
+    };
+    match toml::from_str(&text) {
+        Ok(overrides) => overrides,
+        Err(error) => {
+            log::warn!(
+                "{} is not a valid locations file ({error}); using the default storage \
+                 locations",
+                path.display()
+            );
+            LocationOverrides::default()
+        }
     }
 }
 
@@ -57,5 +84,16 @@ pub fn save_overrides(overrides: &LocationOverrides) -> io::Result<()> {
         fs::create_dir_all(parent)?;
     }
     let text = toml::to_string_pretty(overrides).map_err(io::Error::other)?;
-    fs::write(path, text)
+    fs::write(&path, text)?;
+    // Logged because the write is what a relocation rests on: the app restarts
+    // immediately afterwards and reads this back, so a failure here is a
+    // relocation that silently did not happen.
+    log::info!(
+        "wrote {} (launcher: {:?}, minecraft: {:?}, instances: {:?})",
+        path.display(),
+        overrides.launcher,
+        overrides.minecraft,
+        overrides.instances
+    );
+    Ok(())
 }

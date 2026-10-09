@@ -206,10 +206,15 @@ pub fn parse_mod_archive<R: Read + Seek>(archive: &mut ZipArchive<R>) -> Result<
     for loader in loaders {
         match loader(archive) {
             Ok(mods) => return Ok(mods),
+            // Expected: the loaders are tried in order and each rejects anything
+            // that is not its own format, so only the last one is interesting.
             Err(Error::NotAModFile) => continue,
             Err(e) => return Err(e),
         }
     }
+    // None of the four claimed it. A jar that is really a mod is the case worth
+    // naming — it is what "my mod has no name and no icon" looks like.
+    log::debug!("No loader recognised this archive as one of its own format");
     Err(Error::NotAModFile)
 }
 

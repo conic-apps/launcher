@@ -3,55 +3,49 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The local lists: saves, mods, resource packs, screenshots and favourites.
+//!
+//! None of these read the instance. They turn what [`cache`] parsed into cards,
+//! so opening a panel is a walk over a list that is already in memory — the
+//! parse happened when the game view asked for the summary's counts.
 
 use super::*;
 
-pub(crate) fn load_saves(ui: &App) {
-    ui.global::<ContentState>().set_saves_loading(true);
+/// The saves grid, from the shared cache.
+///
+/// A save's icon is read here rather than by the parse: the summary needs the
+/// world's name and game mode but not its picture, and reading an `icon.png` out
+/// of every world to show five of them is the kind of work that should follow
+/// the panel, not the selection.
+pub(crate) fn project_saves(ui: &App) {
+    let instance = instance(ui);
+    let Some(levels) = cache::saves(&instance) else {
+        return;
+    };
     let weak = ui.as_weak();
-    let instance = controller().borrow().instance_id.clone();
     crate::support::runtime::spawn(async move {
-        // Gzip and NBT parsing is blocking, so it runs on the blocking pool.
-        let levels = crate::support::runtime::spawn_blocking({
-            let instance = instance.clone();
-            move || {
-                content::saves::get_all_levels(&instance).map(|levels| {
-                    levels
-                        .into_iter()
-                        .map(|(folder, root)| (folder, content::saves::summarize_level(&root)))
-                        .collect::<Vec<_>>()
-                })
-            }
-        })
-        .await
-        .ok()
-        .and_then(Result::ok)
-        .unwrap_or_default();
-
         let mut cards = Vec::new();
-        for (folder, level) in levels {
-            let icon = content::saves::get_save_icon(&instance, &folder)
+        for (folder, level) in levels.iter() {
+            let icon = content::saves::get_save_icon(&instance, folder)
                 .await
                 .ok()
                 .and_then(|data| fetch_icon(&data));
-            cards.push(save_card(&folder, &level, icon));
+            cards.push(save_card(folder, level, icon));
         }
-        cards.sort_by(|a, b| a.id.cmp(&b.id));
-
         crate::ui::services::report::report(&weak, move |ui| {
-            {
-                let state = controller();
-                let mut state = state.borrow_mut();
-                for card in &cards {
-                    state
-                        .targets
-                        .insert(card.id.to_string(), CardTarget::Save(card.id.to_string()));
-                }
+            for card in &cards {
+                controller()
+                    .borrow_mut()
+                    .targets
+                    .insert(card.id.to_string(), CardTarget::Save(card.id.to_string()));
             }
             set_cards(&ui, Grid::Saves, cards);
-            ui.global::<ContentState>().set_saves_loading(false);
         });
     });
+}
+
+/// The instance the overlay is showing, which is the game view's current one.
+fn instance(ui: &App) -> String {
+    ui.global::<GameState>().get_current_id().to_string()
 }
 
 /// One save's card, from the summary read out of `level.dat`.
@@ -141,31 +135,33 @@ pub(crate) fn translated_tag(kind: &str) -> PendingTag {
     }
 }
 
-pub(crate) fn load_local_mods(ui: &App) {
-    ui.global::<ContentState>().set_local_mods_loading(true);
+/// The mods grid, from the shared cache.
+///
+/// The jar-in-jar mods are gone before they got here: [`cache::mods`] filters
+/// them, which is the same filter the summary's count came from.
+pub(crate) fn project_local_mods(ui: &App) {
+    let Some(mods) = cache::mods(&instance(ui)) else {
+        return;
+    };
+    let cards: Vec<PendingCard> = mods.iter().map(local_mod_card).collect();
+    report_local(ui, Grid::LocalMods, cards);
+}
+
+/// What every local grid does with the cards it built: the row's file is the
+/// target of its actions, so they go in the same report that puts the cards in
+/// the model — a relayout reads `targets` for the row it is drawing.
+fn report_local(ui: &App, grid: Grid, cards: Vec<PendingCard>) {
     let weak = ui.as_weak();
-    let instance = controller().borrow().instance_id.clone();
-    crate::support::runtime::spawn(async move {
-        let mods = content::mods::remote::parse_mods(&instance).await;
-        let cards: Vec<PendingCard> = mods
-            .iter()
-            // Embedded (jar-in-jar) mods are filtered out of the list.
-            .filter(|mod_info| !mod_info.embedded)
-            .map(local_mod_card)
-            .collect();
-        crate::ui::services::report::report(&weak, move |ui| {
-            {
-                let state = controller();
-                let mut state = state.borrow_mut();
-                for card in &cards {
-                    state
-                        .targets
-                        .insert(card.id.to_string(), CardTarget::Path(card.id.to_string()));
-                }
-            }
-            set_cards(&ui, Grid::LocalMods, cards);
-            ui.global::<ContentState>().set_local_mods_loading(false);
-        });
+    crate::ui::services::report::report(&weak, move |ui| {
+        let state = controller();
+        let mut state = state.borrow_mut();
+        for card in &cards {
+            state
+                .targets
+                .insert(card.id.to_string(), CardTarget::Path(card.id.to_string()));
+        }
+        drop(state);
+        set_cards(&ui, grid, cards);
     });
 }
 
@@ -226,37 +222,13 @@ pub(crate) fn capitalize(key: &str) -> String {
     }
 }
 
-pub(crate) fn load_local_resourcepacks(ui: &App) {
-    ui.global::<ContentState>()
-        .set_local_resourcepacks_loading(true);
-    let weak = ui.as_weak();
-    let instance = controller().borrow().instance_id.clone();
-    crate::support::runtime::spawn(async move {
-        // Reading a pack means opening a zip, so it is blocking work.
-        let packs = crate::support::runtime::spawn_blocking({
-            let instance = instance.clone();
-            move || content::resourcepack::get_instance_resourcepacks(&instance)
-        })
-        .await
-        .ok()
-        .and_then(Result::ok)
-        .unwrap_or_default();
-        let cards: Vec<PendingCard> = packs.iter().map(resourcepack_card).collect();
-        crate::ui::services::report::report(&weak, move |ui| {
-            {
-                let state = controller();
-                let mut state = state.borrow_mut();
-                for card in &cards {
-                    state
-                        .targets
-                        .insert(card.id.to_string(), CardTarget::Path(card.id.to_string()));
-                }
-            }
-            set_cards(&ui, Grid::LocalResourcePacks, cards);
-            ui.global::<ContentState>()
-                .set_local_resourcepacks_loading(false);
-        });
-    });
+/// The resource-pack grid, from the shared cache.
+pub(crate) fn project_local_resourcepacks(ui: &App) {
+    let Some(packs) = cache::resourcepacks(&instance(ui)) else {
+        return;
+    };
+    let cards: Vec<PendingCard> = packs.iter().map(resourcepack_card).collect();
+    report_local(ui, Grid::LocalResourcePacks, cards);
 }
 
 pub(crate) fn resourcepack_card(pack: &content::resourcepack::Resourcepack) -> PendingCard {
@@ -294,116 +266,21 @@ pub(crate) fn resourcepack_card(pack: &content::resourcepack::Resourcepack) -> P
     }
 }
 
-/// How many icons a preview row shows.
-pub(crate) const PREVIEW_ICONS: usize = 5;
-
-/// The four preview rows' icons: the first five saves, mods, resource packs and
-/// screenshots of the instance, each decoded here — the game view's rows are a
-/// view of the same content the panels show. A save's, a resource pack's and a
-/// screenshot's icon is a local file or a data URL; a mod's may be a remote URL,
-/// because `parse_mods` merges online info into it.
+/// The screenshot gallery, from the shared cache.
 ///
-/// Called whenever the current instance changes, as the game view re-reads its
-/// counts then.
-pub fn refresh_preview_icons(ui: &App, instance_id: &str) {
-    let instance = instance_id.to_string();
+/// Every screenshot is decoded, not just the five the summary draws — the panel
+/// is a gallery and a person pages through all of them. The decodes go through
+/// the same memo the previews read, so a screenshot that was on the summary
+/// costs nothing here.
+pub(crate) fn project_screenshots(ui: &App) {
+    let Some(paths) = cache::screenshots(&instance(ui)) else {
+        return;
+    };
     let weak = ui.as_weak();
     crate::support::runtime::spawn(async move {
-        let (saves, mods, packs, shots) = crate::support::runtime::spawn_blocking({
-            let instance = instance.clone();
-            move || {
-                let mut saves: Vec<PendingImage> = Vec::new();
-                if let Ok(levels) = content::saves::get_all_levels(&instance) {
-                    let mut folders: Vec<String> = levels.keys().cloned().collect();
-                    folders.sort();
-                    for folder in folders.into_iter().take(PREVIEW_ICONS) {
-                        // Blocking: it reads the level's `icon.png` and encodes it.
-                        let Ok(icon) = crate::support::runtime::block_on(
-                            content::saves::get_save_icon(&instance, &folder),
-                        ) else {
-                            continue;
-                        };
-                        if let Some(image) = fetch_icon(&icon) {
-                            saves.push(image);
-                        }
-                    }
-                }
-                // `parse_mods` is the instance-aware one (`parse_folder` wants
-                // the folder itself); it is async, so it is driven to
-                // completion here — this whole closure is already off the UI
-                // thread.
-                let mods: Vec<PendingImage> =
-                    crate::support::runtime::block_on(content::mods::remote::parse_mods(&instance))
-                        .iter()
-                        .filter(|mod_info| !mod_info.embedded)
-                        .filter_map(|mod_info| mod_info.icon.as_deref())
-                        .take(PREVIEW_ICONS)
-                        .filter_map(fetch_icon)
-                        .collect();
-                let packs: Vec<PendingImage> =
-                    content::resourcepack::get_instance_resourcepacks(&instance)
-                        .unwrap_or_default()
-                        .iter()
-                        .filter_map(|pack| pack.icon.as_deref())
-                        .take(PREVIEW_ICONS)
-                        .filter_map(fetch_icon)
-                        .collect();
-                let shots: Vec<PendingImage> = content::screenshots::list_screenshots(&instance)
-                    .unwrap_or_default()
-                    .iter()
-                    .take(PREVIEW_ICONS)
-                    .filter_map(|path| {
-                        let bytes = std::fs::read(path).ok()?;
-                        let (width, height, rgba) = decode_to_rgba(&bytes)?;
-                        Some(PendingImage {
-                            key: path.clone(),
-                            width,
-                            height,
-                            rgba,
-                        })
-                    })
-                    .collect();
-                (saves, mods, packs, shots)
-            }
-        })
-        .await
-        .unwrap_or_default();
-        crate::ui::services::report::report(&weak, move |ui| {
-            let state = ui.global::<GameState>();
-            let images = |pending: Vec<PendingImage>| {
-                ModelRc::from(Rc::new(VecModel::from(
-                    pending
-                        .into_iter()
-                        .filter_map(|image| resolve_image(image, &ICONS))
-                        .collect::<Vec<Image>>(),
-                )))
-            };
-            state.set_preview_saves(images(saves));
-            state.set_preview_mods(images(mods));
-            state.set_preview_resourcepacks(images(packs));
-            state.set_preview_screenshots(images(shots));
-        });
-    });
-}
-
-pub(crate) fn load_screenshots(ui: &App) {
-    ui.global::<ContentState>().set_screenshots_loading(true);
-    let weak = ui.as_weak();
-    let instance = controller().borrow().instance_id.clone();
-    crate::support::runtime::spawn(async move {
-        let paths = content::screenshots::list_screenshots(&instance).unwrap_or_default();
         let images: Vec<PendingImage> = paths
             .iter()
-            .filter_map(|path| {
-                let bytes = std::fs::read(path).ok()?;
-                let (width, height, rgba) = decode_to_rgba(&bytes)?;
-                Some(PendingImage {
-                    key: path.clone(),
-                    width,
-                    height,
-                    rgba,
-                })
-            })
+            .filter_map(|path| Memo::Screenshots.fetch(&path.to_string_lossy()))
             .collect();
         crate::ui::services::report::report(&weak, move |ui| {
             let shots: Vec<GalleryShot> = images
@@ -412,7 +289,6 @@ pub(crate) fn load_screenshots(ui: &App) {
                 .collect();
             let ui_state = ui.global::<ContentState>();
             ui_state.set_screenshots(ModelRc::from(Rc::new(VecModel::from(shots))));
-            ui_state.set_screenshots_loading(false);
             ui_state.set_screenshot_index(0);
             if let Some(first) = ui_state.get_screenshots().row_data(0) {
                 ui_state.set_current_screenshot(first.image);

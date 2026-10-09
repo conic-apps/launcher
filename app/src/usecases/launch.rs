@@ -80,7 +80,7 @@ pub async fn run(mut config: Config, instance: Option<Instance>, out: LaunchSink
             }
             Ok(None) => {}
             Err(error) => {
-                log::error!("failed to refresh the account: {error}");
+                log::error!(target: "launch", "failed to refresh the account: {error}");
                 out(LaunchUpdate::Dialog(LaunchDialog::AccountRefreshFailed));
                 return;
             }
@@ -110,13 +110,21 @@ pub async fn run(mut config: Config, instance: Option<Instance>, out: LaunchSink
         Arc::new(move |progress| out(LaunchUpdate::Launch(progress)))
     };
     match launch::launch(config.clone(), instance.clone(), sink).await {
-        Ok(_pid) => {
-            log::info!(target: "launch", "launch task finished");
+        Ok(pid) => {
+            // The process id is the one handle a bug report can be correlated
+            // with, against `running.rs`'s own lines about the same process.
+            log::info!(target: "launch", "launch task finished (pid {pid})");
             let quit_app = instance
                 .config
                 .launch_config
                 .quit_app_after_launch
                 .unwrap_or(config.launch.quit_app_after_launch);
+            log::info!(
+                target: "launch",
+                "the launch finished; the app will {} and the music is {}",
+                if quit_app { "quit" } else { "stay open" },
+                if config.music.pause_on_launch { "paused" } else { "left alone" }
+            );
             out(LaunchUpdate::Finished {
                 quit_app,
                 pause_music: config.music.pause_on_launch,

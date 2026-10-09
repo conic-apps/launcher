@@ -51,7 +51,18 @@ pub(crate) fn check_os(rule: &Value) -> bool {
             if let Some(version) = version.as_str() {
                 let regex = match Regex::new(version) {
                     Ok(regex) => regex,
-                    Err(_) => return false,
+                    // The rule is `disallow` when the pattern does not match, so an
+                    // uncompilable pattern *excludes* the library. That is the same
+                    // outcome as "this library is for another OS", which is how a
+                    // typo in a loader's `os.version` ends up as a missing library
+                    // at launch rather than as anything on screen.
+                    Err(error) => {
+                        log::warn!(
+                            "a rule's os.version pattern {version:?} is not a valid regex \
+                             ({error}); the library it guards will be excluded"
+                        );
+                        return false;
+                    }
                 };
                 regex.is_match(&PLATFORM_INFO.os_version.to_string())
             } else {

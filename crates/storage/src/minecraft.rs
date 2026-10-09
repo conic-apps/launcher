@@ -83,11 +83,17 @@ impl MinecraftLocation {
     /// Creates the root and writes the `launcher_profiles.json` the Forge and
     /// NeoForge installers read to find the installation.
     pub fn init(&self) {
-        let _ = std::fs::create_dir_all(&self.root);
+        if let Err(error) = std::fs::create_dir_all(&self.root) {
+            log::warn!(
+                "Could not create the Minecraft directory {}: {error}",
+                self.root.display()
+            );
+        }
         let launcher_profiles_path = self.root.join("launcher_profiles.json");
         if let Err(error) = std::fs::write(&launcher_profiles_path, DEFAULT_LAUNCHER_PROFILE) {
             log::error!(
-                "Unable to override launcher_profile.json, forge may not install properly: {error}"
+                "Unable to write {}; forge may not install properly: {error}",
+                launcher_profiles_path.display()
             );
         }
     }

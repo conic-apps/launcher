@@ -25,6 +25,11 @@ impl InstancesLocation {
     }
 
     pub fn init(&self) {
-        let _ = std::fs::create_dir_all(&self.root);
+        if let Err(error) = std::fs::create_dir_all(&self.root) {
+            log::warn!(
+                "Could not create the instances directory {}: {error}",
+                self.root.display()
+            );
+        }
     }
 }

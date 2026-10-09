@@ -263,6 +263,15 @@ pub fn resolve_version(
     let mut versions = Vec::new();
     let mut resolved_version = ResolvedVersion::default();
     versions.push(version.clone());
+    // The chain is walked from the leaf up to the root, and every level is a
+    // separate file that can independently be missing, truncated or shaped
+    // differently. `debug!` records which chain was walked, because a resolution
+    // failure names neither the file nor the level.
+    log::debug!(
+        "resolving {} from {}",
+        version.id,
+        versions_folder.display()
+    );
     while let Some(inherits_from_unwrap) = inherits_from {
         resolved_version
             .inheritances
@@ -272,8 +281,17 @@ pub fn resolve_version(
             .join(inherits_from_unwrap.clone())
             .join(format!("{}.json", inherits_from_unwrap.clone()));
         resolved_version.path_chain.push(path.clone());
-        let version_json = read_to_string(path)?;
-        let version_json: Version = serde_json::from_str(&version_json)?;
+        log::debug!("  inherits from {}", path.display());
+        // The path travels with the error: without it a three-deep chain reports
+        // the same message whichever of the three files is at fault.
+        let version_json = read_to_string(&path).map_err(|error| {
+            log::error!("could not read {}: {error}", path.display());
+            error
+        })?;
+        let version_json: Version = serde_json::from_str(&version_json).map_err(|error| {
+            log::error!("{} is not a version json: {error}", path.display());
+            error
+        })?;
 
         versions.push(version_json.clone());
         inherits_from = version_json.inherits_from;
@@ -307,21 +325,67 @@ pub fn resolve_version(
         && let Some(assets) = resolved_version.assets.clone()
     {
         let path = versions_folder.join(&assets).join(format!("{assets}.json"));
-        if let Ok(vanilla_json) = read_to_string(path)
-            && let Ok(vanilla_json) = serde_json::from_str::<Version>(&vanilla_json)
-            && let Some(asset_index) = vanilla_json.asset_index
-        {
-            resolved_version.asset_index = Some(asset_index);
+        // Best-effort by design, but not silent: this path exists *because* the
+        // loader json is self-contained, and a failure here means asset completion
+        // quietly stops resolving resources with nothing but a missing file to
+        // show for it.
+        match read_to_string(&path)
+            .map_err(|error| error.to_string())
+            .and_then(|raw| {
+                serde_json::from_str::<Version>(&raw).map_err(|error| format!("{raw}: {error}"))
+            }) {
+            Ok(vanilla_json) => {
+                if let Some(asset_index) = vanilla_json.asset_index {
+                    resolved_version.asset_index = Some(asset_index);
+                } else {
+                    log::debug!(
+                        "{} carries no asset index of its own to borrow",
+                        path.display()
+                    );
+                }
+            }
+            Err(error) => log::debug!(
+                "could not take the asset index from {}: {error}",
+                path.display()
+            ),
         }
     }
     let standalone = resolved_version.inheritances.is_empty();
-    if resolved_version.main_class.is_none()
-        || resolved_version.libraries.is_empty()
-        || (!standalone
-            && (resolved_version.asset_index.is_none() || resolved_version.downloads.is_empty()))
-    {
+    // The validation says *that* a version json is unusable but never *why*, and
+    // there are four separate reasons here. A hand-edited or exotic loader json
+    // would otherwise report a bare "Bad Version JSON".
+    let missing: &[&str] = if resolved_version.main_class.is_none() {
+        &["mainClass"]
+    } else if resolved_version.libraries.is_empty() {
+        &["libraries"]
+    } else if !standalone && resolved_version.asset_index.is_none() {
+        &["assetIndex"]
+    } else if !standalone && resolved_version.downloads.is_empty() {
+        &["downloads"]
+    } else {
+        &[]
+    };
+    if !missing.is_empty() {
+        log::error!(
+            "{} resolved without {} (resolved from {} via {:#?})",
+            version.id,
+            missing.join(" or "),
+            versions_folder.display(),
+            resolved_version.inheritances
+        );
         return Err(Error::InvalidVersionJson);
     }
+    log::debug!(
+        "{} resolved: {} librar{}, assets from {:?}",
+        version.id,
+        resolved_version.libraries.len(),
+        if resolved_version.libraries.len() == 1 {
+            "y"
+        } else {
+            "ies"
+        },
+        resolved_version.asset_index.as_ref().map(|index| &index.id)
+    );
     Ok(resolved_version)
 }
 

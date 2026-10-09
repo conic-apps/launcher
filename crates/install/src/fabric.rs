@@ -96,21 +96,32 @@ pub async fn install(
     fabric_version: &str,
     minecraft: MinecraftLocation,
 ) -> Result<()> {
-    info!("Saving version metadata file");
+    info!("Installing fabric {fabric_version} for {mcversion}");
     let url = format!(
         "https://meta.fabricmc.net/v2/versions/loader/{mcversion}/{fabric_version}/profile/json"
     );
     let response = HTTP_CLIENT.get(url).send().await?;
+    let status = response.status();
+    if !status.is_success() {
+        // The status was never checked, so a 404 for a version that does not exist
+        // reached the caller as a JSON parse error against an error page.
+        log::warn!("the fabric meta API answered {status} for {fabric_version} on {mcversion}");
+    }
     let fabric_version_json: Version = response.json().await?;
+    // `version_name` is the id everything else keys off — it is the directory the
+    // json lands in and the id the launcher later resolves — so it is the one
+    // thing worth having on record.
     let version_name = fabric_version_json.id.clone();
     let json_path = minecraft.get_version_json(&version_name);
     if let Some(parent) = json_path.parent() {
         tokio::fs::create_dir_all(parent).await?;
     }
+    info!("Saving version metadata file to {}", json_path.display());
     tokio::fs::write(
         json_path,
         serde_json::to_string_pretty(&fabric_version_json)?,
     )
     .await?;
+    info!("Installed fabric as {version_name}");
     Ok(())
 }

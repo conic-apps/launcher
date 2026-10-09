@@ -177,6 +177,20 @@ pub async fn group_install(
     Ok(())
 }
 
+/// The error for a platform Mojang publishes no runtime for.
+///
+/// The bare `NoSupportedJavaRuntime` named nothing, so "why did the Java install
+/// not happen" had no answer beyond an enum variant; the platform and
+/// architecture are the two facts that decide it.
+fn no_runtime_for() -> Error {
+    log::warn!(
+        "Mojang publishes no Java runtime for {:?}/{:?}",
+        PLATFORM_INFO.os_family,
+        PLATFORM_INFO.arch
+    );
+    Error::NoSupportedJavaRuntime
+}
+
 pub async fn install_for_instance(
     instance: &Instance,
     progress: &DownloadState,
@@ -190,6 +204,16 @@ pub async fn install_for_instance(
     let resolved_version = resolve_version(&unresolved_version, &minecraft_location, &[])?;
     let java_version_list = MojangJavaVersionList::new().await?;
 
+    // "Which Java did this install?" was unanswerable: the component and the
+    // platform group are only ever visible here, in local bindings, and every
+    // path below can quietly take a different one — including the arm64 -> x64
+    // fallback, which is a real substitution and used to be invisible.
+    log::info!(
+        "Installing Mojang's Java runtime for component {} on {:?}/{:?}",
+        resolved_version.java_version.component,
+        PLATFORM_INFO.os_family,
+        PLATFORM_INFO.arch
+    );
     let java_runtime_info = match PLATFORM_INFO.os_family {
         OsFamily::Windows => match PLATFORM_INFO.arch {
             OsArch::X64 => java_version_list
@@ -217,7 +241,7 @@ pub async fn install_for_instance(
                         .first()
                         .ok_or(Error::NoSupportedJavaRuntime)?,
                 ),
-            _ => return Err(Error::NoSupportedJavaRuntime),
+            _ => return Err(no_runtime_for()),
         },
         OsFamily::Linux => match PLATFORM_INFO.arch {
             OsArch::X64 => java_version_list
@@ -232,7 +256,7 @@ pub async fn install_for_instance(
                 .ok_or(Error::NoSupportedJavaRuntime)?
                 .first()
                 .ok_or(Error::NoSupportedJavaRuntime)?,
-            _ => return Err(Error::NoSupportedJavaRuntime),
+            _ => return Err(no_runtime_for()),
         },
         OsFamily::Macos => match PLATFORM_INFO.arch {
             OsArch::X64 => java_version_list
@@ -241,20 +265,32 @@ pub async fn install_for_instance(
                 .ok_or(Error::NoSupportedJavaRuntime)?
                 .first()
                 .ok_or(Error::NoSupportedJavaRuntime)?,
-            OsArch::Aarch64 => java_version_list
-                .mac_os_arm64
-                .get(&resolved_version.java_version.component)
-                .ok_or(Error::NoSupportedJavaRuntime)?
-                .first()
-                .unwrap_or(
-                    java_version_list
-                        .mac_os
-                        .get(&resolved_version.java_version.component)
-                        .ok_or(Error::NoSupportedJavaRuntime)?
-                        .first()
-                        .ok_or(Error::NoSupportedJavaRuntime)?,
-                ),
-            _ => return Err(Error::NoSupportedJavaRuntime),
+            OsArch::Aarch64 => {
+                let arm64 = java_version_list
+                    .mac_os_arm64
+                    .get(&resolved_version.java_version.component)
+                    .and_then(|runtimes| runtimes.first());
+                match arm64 {
+                    Some(runtime) => runtime,
+                    None => {
+                        // An arm64 Mac with no arm64 build of this runtime gets the
+                        // x64 one instead, which runs under Rosetta. That is a real
+                        // substitution and used to be invisible.
+                        log::warn!(
+                            "Mojang has no arm64 build of {}; using the x64 build, which \
+                             needs Rosetta",
+                            resolved_version.java_version.component
+                        );
+                        java_version_list
+                            .mac_os
+                            .get(&resolved_version.java_version.component)
+                            .ok_or(Error::NoSupportedJavaRuntime)?
+                            .first()
+                            .ok_or(Error::NoSupportedJavaRuntime)?
+                    }
+                }
+            }
+            _ => return Err(no_runtime_for()),
         },
     };
     install(

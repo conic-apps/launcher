@@ -109,9 +109,17 @@ pub(crate) async fn login_with_device_code(reporter: &LoginReporter) -> Result<M
     let deadline = Instant::now() + Duration::from_secs(response.expires_in);
     let mut interval = Duration::from_secs(response.interval.max(1));
     let mut failed_polls = 0;
+    let mut polls = 0u32;
     let tokens = loop {
         tokio::time::sleep(interval).await;
+        polls += 1;
         if Instant::now() >= deadline {
+            // The user-visible outcome of the wait, and it used to be the one exit
+            // from this loop with nothing written down at all.
+            log::info!(
+                "the device code expired after {polls} poll(s) over {} seconds",
+                response.expires_in
+            );
             return Err(Error::DeviceCodeExpired);
         }
         let poll_result = match device_code::poll_device_code(&response.device_code).await {
@@ -134,14 +142,37 @@ pub(crate) async fn login_with_device_code(reporter: &LoginReporter) -> Result<M
             }
         };
         match poll_result.status.as_str() {
-            "success" => break poll_result,
-            "authorization_pending" => {}
-            // RFC 8628: back off by 5s, for this and every later poll.
-            "slow_down" => interval += Duration::from_secs(5),
-            "authorization_declined" => return Err(Error::AuthorizationDeclined),
-            "bad_verification_code" => return Err(Error::BadVerificationCode),
-            "expired_token" => return Err(Error::DeviceCodeExpired),
+            "success" => {
+                log::info!("the user authorized the device code after {polls} poll(s)");
+                break poll_result;
+            }
+            "authorization_pending" => {
+                log::debug!("poll {polls}: still waiting for the user (next in {interval:?})")
+            }
+            // RFC 8628: back off by 5s, for this and every later poll. This is the
+            // one OAuth state that changes the loop's behaviour, and it was the
+            // only one that happened without a word.
+            "slow_down" => {
+                interval += Duration::from_secs(5);
+                log::debug!(
+                    "poll {polls}: the endpoint asked for a slower rate; polling every \
+                     {interval:?} from now on"
+                );
+            }
+            "authorization_declined" => {
+                log::warn!("the user declined the authorization");
+                return Err(Error::AuthorizationDeclined);
+            }
+            "bad_verification_code" => {
+                log::warn!("the endpoint rejected the device code as invalid");
+                return Err(Error::BadVerificationCode);
+            }
+            "expired_token" => {
+                log::warn!("the endpoint reported the device code as expired");
+                return Err(Error::DeviceCodeExpired);
+            }
             unexpected => {
+                log::warn!("the endpoint answered with an unknown status {unexpected:?}");
                 return Err(Error::MicrosoftResponseMissingKey(unexpected.to_string()));
             }
         }

@@ -39,6 +39,10 @@ pub(crate) fn setup(ui: &App) {
     });
 
     let weak = ui.as_weak();
+    // `running::subscribe` keeps one slot, so a second `setup` would replace this
+    // sink silently and no crash would ever reach the page. Worth a line, since
+    // `main` wires this once and a future caller might not.
+    log::debug!("subscribing the crash page to the launch session events");
     let sink: Sink<SessionEvent> = Arc::new(move |event| {
         let SessionEvent::Exited {
             crash: Some(crash), ..
@@ -54,6 +58,19 @@ pub(crate) fn setup(ui: &App) {
 /// Pushes a collected crash into `CrashState` and opens the page.
 fn show(ui: &App, crash: CrashReport) {
     let state = ui.global::<CrashState>();
+    // The crash crate logs what it diagnosed; this is the line that says an
+    // instance crashed and where to look, which is the first thing anyone reading
+    // a support log wants and it was nowhere in it.
+    log::error!(
+        "'{}' crashed: {} ({}){}",
+        crash.instance_name,
+        crash.summary,
+        crash.exit_type.as_str(),
+        match crash.report_path {
+            Some(ref path) => format!(" — report at {path}"),
+            None => String::new(),
+        }
+    );
     state.set_instance_name(crash.instance_name.into());
     state.set_summary(crash.summary.into());
     state.set_exit_code(

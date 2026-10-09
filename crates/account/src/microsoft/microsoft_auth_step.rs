@@ -12,10 +12,20 @@ pub struct TokenPair {
     pub refresh_token: String,
 }
 
-async fn check_response(response: reqwest::Response) -> Result<Value> {
+/// Reads the token endpoint's answer.
+///
+/// The body is the only place the endpoint explains itself — a rejected grant
+/// arrives as a `400` carrying `error` and `error_description` — and it was read
+/// and then dropped without a word. `invalid_grant` in particular means the user
+/// revoked the app or the refresh token expired, which is the one thing a user
+/// asking "why did I have to sign in again" needs to hear.
+async fn check_response(response: reqwest::Response, what: &str) -> Result<Value> {
     let status = response.status();
     let body = response.text().await?;
     if !status.is_success() {
+        // Truncated: a proxy in front of the endpoint can return a whole HTML page.
+        let shown: String = body.chars().take(512).collect();
+        log::warn!("{what} was refused with {status}: {shown}");
         return Err(Error::HttpResponse {
             status: status.as_u16(),
             body,
@@ -45,7 +55,9 @@ pub async fn redeem_access_token(code: &str, redirect_uri: &str) -> Result<Token
         )
         .send()
         .await?;
-    let response = check_response(response).await?;
+    // The code and the refresh token are secrets, so neither is logged — only
+    // what was attempted and whether it worked.
+    let response = check_response(response, "redeeming the authorization code").await?;
     let access_token = response["access_token"]
         .as_str()
         .ok_or(Error::MicrosoftResponseMissingKey(
@@ -100,7 +112,10 @@ pub(super) async fn get_access_token_from_refresh_token(refresh_token: &str) -> 
         )
         .send()
         .await?;
-    let response = check_response(response).await?;
+    // This runs before every launch that needs a fresh token, so it is one of the
+    // most frequent requests the launcher makes and it used to leave no trace.
+    let response =
+        check_response(response, "exchanging the refresh token for an access token").await?;
     let access_token = response["access_token"]
         .as_str()
         .ok_or(Error::MicrosoftResponseMissingKey(

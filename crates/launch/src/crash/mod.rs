@@ -161,8 +161,21 @@ pub fn analyze(
     console_log: &str,
 ) -> CrashReport {
     let root = LOCATIONS.instances.get_instance_root(&instance.id);
-    let latest_log =
-        std::fs::read_to_string(root.join("logs").join("latest.log")).unwrap_or_default();
+    let latest_log_path = root.join("logs").join("latest.log");
+    let latest_log = match std::fs::read_to_string(&latest_log_path) {
+        Ok(log) => log,
+        Err(error) => {
+            // Not a missing file: a missing `latest.log` is normal for a game that
+            // died before it could write one, which is worth saying — it is the
+            // difference between "no crash report" and "no evidence at all".
+            log::debug!(
+                "No game log at {} ({error}); the crash report will rest on the console \
+                 output alone",
+                latest_log_path.display()
+            );
+            String::new()
+        }
+    };
 
     // Prefer the exact path the game printed, then the one in its log, then the
     // report carved out of either, then, as a last resort, the newest file.
@@ -171,12 +184,19 @@ pub fn analyze(
     let extracted = analyzer::extract_crash_report(console_log)
         .or_else(|| analyzer::extract_crash_report(&latest_log));
     let (report_path, contents) = if let Some((path, contents)) = named {
+        log::debug!("The game named its crash report: {}", path.display());
         (Some(path), contents)
     } else if let Some(contents) = extracted {
+        log::debug!("The crash report was carved out of the output the game printed");
         (None, contents)
     } else if let Some((path, contents)) = newest_crash_report(&root) {
+        log::debug!(
+            "No crash report was named; using the newest one at {}",
+            path.display()
+        );
         (Some(path), contents)
     } else {
+        log::debug!("No crash report at all; falling back to the tail of the game log");
         (None, latest_log.clone())
     };
 
@@ -193,6 +213,19 @@ pub fn analyze(
     } else {
         truncate(&contents, DETAILS_LIMIT)
     };
+    // The one line that says what happened, to an instance, with an exit code —
+    // `running.rs` logs the exit and the app logs the panel, but neither of those
+    // says what was actually diagnosed.
+    log::error!(
+        "'{}' ended abnormally: {} ({}){}",
+        instance.config.name,
+        summary,
+        exit_type.as_str(),
+        match exit_code {
+            Some(code) => format!(" [exit code {code}]"),
+            None => String::new(),
+        }
+    );
 
     CrashReport {
         instance_id: instance.id.clone(),

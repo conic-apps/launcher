@@ -180,18 +180,30 @@ export global GameState {
     in-out property <string> current-playtime-value: "";
     in-out property <bool> current-starred: false;
 
+    // The instance's four content counts. Each is the length of the list the
+    // content overlay draws from — the same parsed list, counted, not a second
+    // scan of the folder. Rust writes them from `overlays/content/cache.rs`.
     in-out property <int> content-saves: 0;
     in-out property <int> content-mods: 0;
     in-out property <int> content-resourcepacks: 0;
     in-out property <int> content-screenshots: 0;
     /// The icons the game view's preview rows draw — up to five of each kind,
-    /// in a 20px circle. Decoded by `content/`, which owns the content
-    /// caches.
+    /// in a 20px circle. The first slice of the same lists the panels draw,
+    /// fetched one at a time as each icon decodes.
     in-out property <[image]> preview-saves: [];
     in-out property <[image]> preview-mods: [];
     in-out property <[image]> preview-resourcepacks: [];
     in-out property <[image]> preview-screenshots: [];
-    in-out property <bool> content-loading: false;
+/// Whether a kind's list is still being parsed, one flag per kind.
+    ///
+    /// They settle at very different times — a mods folder is a SHA-512 per jar
+    /// while a screenshot folder is a `read_dir` — so one flag for all four
+    /// would hold three numbers hostage to the slowest, showing a row's preview
+    /// icons next to a spinner that has nothing to do with them.
+    in-out property <bool> content-loading-saves: false;
+    in-out property <bool> content-loading-mods: false;
+    in-out property <bool> content-loading-resourcepacks: false;
+    in-out property <bool> content-loading-screenshots: false;
     // Suffix shown after a content count. Only Chinese uses one ("个"/"個");
     // Rust derives it from the language so it is not a gettext key.
     in-out property <string> count-unit: "";

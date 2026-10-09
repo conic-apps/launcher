@@ -143,13 +143,31 @@ pub async fn launch(config: Config, instance: Instance, sink: LaunchSink) -> Res
     }
 
     info!("Generating startup parameters");
-    let version_json_path = minecraft_location.get_version_json(instance.get_version_id()?);
-    let raw_version_json = tokio::fs::read_to_string(version_json_path).await?;
+    // This is where the version id stops being the *requested* one and becomes
+    // the resolved one, after the whole `inheritsFrom` chain has been walked.
+    // Only the requested id was ever logged — the banner further down included
+    // the same one — so the id the game actually runs under was nowhere in the
+    // log.
+    let requested_version_id = instance.get_version_id()?;
+    info!(
+        "Resolving {requested_version_id} from {}",
+        minecraft_location.root.display()
+    );
+    let version_json_path = minecraft_location.get_version_json(&requested_version_id);
+    let raw_version_json = tokio::fs::read_to_string(&version_json_path).await?;
     let resolved_version = resolve_version(
         &Version::from_str(&raw_version_json)?,
         &minecraft_location,
         &[],
     )?;
+    info!(
+        "Resolved {} to {} (main class {:?})",
+        requested_version_id, resolved_version.id, resolved_version.main_class
+    );
+    info!(
+        "The game wants Java {} (component {})",
+        resolved_version.java_version.major_version, resolved_version.java_version.component
+    );
     let resolved_java = java_discovery::resolve_java_executable(&ResolveJavaOptions {
         instance_java_path: instance.config.launch_config.java_path.clone(),
         prefer_mojang_java: config.prefer_mojang_java,
@@ -160,7 +178,13 @@ pub async fn launch(config: Config, instance: Instance, sink: LaunchSink) -> Res
     .await?;
     reporter.report(LaunchProgress::GenerateScriptlet);
     let launch_options = LaunchOptions::new(&config, &instance, resolved_java.arch)?;
-    if let Account::Yggdrasil(_) = launch_options.selected_account {
+    if let Account::Yggdrasil(account) = &launch_options.selected_account {
+        // This stage runs on every Yggdrasil launch and the module it calls logs
+        // nothing at all, so "the injector could not be installed" was silent.
+        log::info!(
+            "Ensuring the authlib-injector is current for the Yggdrasil account {}",
+            account.identifier
+        );
         let progress = DownloadState::default();
         reporter.report(LaunchProgress::InstallAuthlibInjector(progress.snapshot()));
         download::progress::watch(
@@ -307,7 +331,24 @@ async fn spawn_minecraft_process(
         commands.push_str(&format!("{} ", launch_options.wrap_command));
     }
     // todo(after java exec): add -Dfile.encoding=encoding.name() and other
-    commands.push_str(&build_launch_command(&java_path, &command_arguments));
+    // The launch line, minus the secret. `command_arguments` carries the
+    // Minecraft access token (see `arguments.rs`), so the *whole* line is
+    // deliberately never logged — only the executable, the main class and how
+    // many arguments follow, which is what a "why did it not start" question
+    // actually needs. `debug!` keeps the detail out of a release log.
+    let launch_command = build_launch_command(&java_path, &command_arguments);
+    info!(
+        "Launching {} with {} argument(s){}",
+        java_path.display(),
+        command_arguments.len(),
+        format_args!(" (before: {:?})", launch_options.execute_before_launch),
+    );
+    for argument in &command_arguments {
+        if argument.starts_with("-D") && !argument.contains("auth_access_token") {
+            debug!("  {argument}");
+        }
+    }
+    commands.push_str(&launch_command);
     let script_path = match PLATFORM_INFO.os_family {
         OsFamily::Windows => instance_root.join(".cache").join("conic-launch.bat"),
         _ => instance_root.join(".cache").join("conic-launch.sh"),
@@ -332,7 +373,16 @@ async fn spawn_minecraft_process(
         info!("Running chmod +x {}", script_path.display());
         let mut chmod = Command::new("chmod");
         chmod.args(["+x", script_path.to_string_lossy().to_string().as_ref()]);
-        chmod.status()?;
+        // The status was discarded, so a `chmod` that fails — a read-only mount,
+        // a filesystem without the bit — left a non-executable script and the
+        // only symptom was the `bash` spawn failing a line later.
+        let chmod_status = chmod.status()?;
+        if !chmod_status.success() {
+            log::warn!(
+                "chmod +x {} failed with {chmod_status}; the script may not be executable",
+                script_path.display()
+            );
+        }
         let mut command = std::process::Command::new("bash");
         command.arg(script_path);
         command
@@ -354,6 +404,7 @@ async fn spawn_minecraft_process(
     running::register(instance.clone(), minecraft_process, move |line| {
         debug!("[{pid}] {line}");
         if line.contains("Setting user:") {
+            info!("The game reported {line}");
             watcher_reporter.report(LaunchProgress::LogSettingUser);
         }
         if line.to_lowercase().contains("lwjgl version") {
@@ -362,39 +413,79 @@ async fn spawn_minecraft_process(
             watcher_game_up.store(true, Ordering::SeqCst);
         }
         if line.contains("OpenAL initialized") {
+            // `info` like the LWJGL marker above: these three latch `game_up` and
+            // end the 20-second wait, so each one is a launch milestone. They were
+            // only reported to the UI, and the game's own stdout is `debug!` —
+            // so in a release build the log showed nothing between "Spawning" and
+            // whatever came after.
+            info!("The game reported {line}");
             watcher_reporter.report(LaunchProgress::LogOpenALLoaded);
             watcher_game_up.store(true, Ordering::SeqCst);
         }
         if (line.contains("Created") && line.contains("textures") && line.contains("-atlas"))
             || line.contains("Found animation info")
         {
+            info!("The game reported {line}");
             watcher_reporter.report(LaunchProgress::LogTextureLoaded);
             watcher_game_up.store(true, Ordering::SeqCst);
         }
     });
+    // The wait was entirely silent: not when it began, not when a marker latched,
+    // and — worst — not when twenty seconds passed with nothing. A game that dies
+    // during startup therefore produced no line at all between "Spawning" and
+    // `running.rs` seeing the process exit.
+    info!("Waiting up to 20 seconds for the game to report that it started");
     let start = Instant::now();
     while start.elapsed().as_secs() < 20 {
         if game_up.load(Ordering::SeqCst) {
+            info!(
+                "The game reported a successful start after {} second(s)",
+                start.elapsed().as_secs()
+            );
             break;
         }
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
-    #[cfg(target_os = "windows")]
-    let _ = Command::new("cmd")
-        .args(["/C", &launch_options.execute_after_launch])
-        .creation_flags(0x08000000)
-        .spawn();
-    #[cfg(not(target_os = "windows"))]
-    let _ = Command::new("sh")
-        .args(["-c", &launch_options.execute_after_launch])
-        .spawn();
+    if !game_up.load(Ordering::SeqCst) {
+        log::warn!(
+            "The game (pid {pid}) did not report a successful start within 20 seconds; \
+             whatever it printed is above and its exit, if any, is below"
+        );
+    }
+    // The hook used to run unconditionally with its `spawn()` result discarded,
+    // so a misconfigured command failed invisibly — and with the default empty
+    // setting this spawned an empty `cmd /C ` or `sh -c ` on every single launch,
+    // which the log said nothing about either.
+    if launch_options.execute_after_launch.trim().is_empty() {
+        log::debug!("No after-launch command is configured");
+    } else {
+        log::info!(
+            "Running the after-launch command: {}",
+            launch_options.execute_after_launch
+        );
+        #[cfg(target_os = "windows")]
+        let hook = {
+            let mut command = Command::new("cmd");
+            command
+                .args(["/C", &launch_options.execute_after_launch])
+                .creation_flags(0x08000000);
+            command.spawn()
+        };
+        #[cfg(not(target_os = "windows"))]
+        let hook = Command::new("sh")
+            .args(["-c", &launch_options.execute_after_launch])
+            .spawn();
+        if let Err(error) = &hook {
+            log::warn!("The after-launch command could not be started: {error}; it will not run");
+        }
+    }
 
     let statistics_profile = match launch_options.selected_account {
         Account::Microsoft(account) => StatisticsProfile::Microsoft(account.profile.uuid),
         Account::Offline(account) => StatisticsProfile::Offline(account.uuid),
         Account::Yggdrasil(account) => StatisticsProfile::Yggdrasil(account.identifier),
     };
-    log_launch(statistics_profile, instance.id).await.unwrap();
+    let _ = log_launch(statistics_profile, instance.id).await;
     Ok(pid)
 }
 

@@ -13,14 +13,22 @@ use crate::error::*;
 
 pub fn resolve_libraries(libraries: Vec<Value>) -> Result<Vec<ResolvedLibrary>> {
     let mut result = Vec::new();
+    // Every entry here can be dropped without failing, and a library missing from
+    // the classpath surfaces at launch as a `ClassNotFoundException` or an
+    // `UnsatisfiedLinkError` with nothing in the launcher log to explain it. So
+    // the reasons are counted and reported once, rather than being silent skips.
+    let (declared, mut not_required) = (libraries.len(), 0);
+    let mut disallowed = 0;
     for library in libraries {
         if library["clientreq"].as_bool() == Some(false) {
+            not_required += 1;
             continue;
         }
         let rules = library["rules"].as_array();
         if let Some(rules) = rules
             && !check_allowed(rules.clone(), &[])
         {
+            disallowed += 1;
             continue;
         }
         if let Some(native_library) = resolve_native_libraries(&library) {
@@ -30,6 +38,20 @@ pub fn resolve_libraries(libraries: Vec<Value>) -> Result<Vec<ResolvedLibrary>> 
         } else {
             result.push(resolve_modloader_libraries(&library)?);
         }
+    }
+    // A library missing from the classpath surfaces at launch as a
+    // `ClassNotFoundException` or an `UnsatisfiedLinkError` with nothing in the
+    // launcher log to explain it, so the tally of what was dropped is reported
+    // once rather than being a set of silent skips.
+    let resolved = result.len();
+    if resolved == 0 && declared > 0 {
+        log::warn!("no library at all could be resolved out of {declared} declared");
+    } else {
+        log::debug!(
+            "resolved {resolved} of {declared} librar{} ({not_required} not required on this \
+             platform, {disallowed} disallowed by their rules)",
+            if declared == 1 { "y" } else { "ies" }
+        );
     }
     Ok(result)
 }
@@ -72,9 +94,19 @@ fn resolve_native_libraries(library: &Value) -> Option<ResolvedLibrary> {
     let package = coordinate.first()?.replace(".", "/");
     let name = *coordinate.get(1)?;
     let version = *coordinate.get(2)?;
-    let base_url = library["url"]
-        .as_str()
-        .unwrap_or("https://libraries.minecraft.net/");
+    // A loader library with no `url` of its own is silently pointed at Mojang's
+    // maven root, which for Fabric / Quilt / NeoForge is the wrong repository
+    // entirely: the download then 404s against a host nobody would think to blame.
+    let base_url = match library["url"].as_str() {
+        Some(url) => url,
+        None => {
+            log::warn!(
+                "the native library {coordinate:?} declares no maven root; falling back to \
+                 the Mojang root, which is likely the wrong repository for it"
+            );
+            "https://libraries.minecraft.net/"
+        }
+    };
     let file_name = format!("{name}-{version}-{classifier_key}");
     Some(ResolvedLibrary::Native(LibraryDownloadInfo {
         sha1: None,
@@ -118,9 +150,17 @@ fn resolve_modloader_libraries(library: &Value) -> Result<ResolvedLibrary> {
     let version = name.get(2).ok_or(Error::InvalidVersionJson)?;
     let name = name.get(1).ok_or(Error::InvalidVersionJson)?;
 
-    let base_url = library["url"]
-        .as_str()
-        .unwrap_or("https://libraries.minecraft.net/");
+    let base_url = match library["url"].as_str() {
+        Some(url) => url,
+        None => {
+            log::warn!(
+                "the library {} declares no maven root; falling back to the Mojang root, \
+                 which is likely the wrong repository for it",
+                library["name"]
+            );
+            "https://libraries.minecraft.net/"
+        }
+    };
     let artifact = format!("{name}-{version}");
     let path = format!("{package}/{name}/{version}/{artifact}.jar");
     Ok(ResolvedLibrary::Common(LibraryDownloadInfo {

@@ -49,8 +49,17 @@ pub fn scan_java_runtimes_cached(options: &ScanOptions) -> Result<JavaScanResult
         && let Some((scanned_at, cached)) = cache.as_ref()
         && scanned_at.elapsed() < SCAN_CACHE_TTL
     {
+        // The settings page rescans on every visit and this cache is the only
+        // thing stopping that from starting a JVM per candidate each time, so a
+        // hit is worth being able to confirm from the log.
+        log::debug!(
+            "Reusing the Java scan from {:?} ago ({} runtime(s))",
+            scanned_at.elapsed(),
+            cached.runtimes.len()
+        );
         return Ok(cached.clone());
     }
+    log::debug!("Rescanning Java runtimes; the cached scan has expired");
 
     let result = JavaScanResult::from_runtimes(scan_java_runtimes_with(options)?);
     if let Ok(mut cache) = SCAN_CACHE.lock() {

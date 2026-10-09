@@ -11,6 +11,7 @@ use super::*;
 /// and takes over `GameState.open-content`.
 pub fn setup(ui: &App) {
     push_grid_models(ui);
+    push_preview_models(ui);
     setup_open_content(ui);
     setup_open_packs(ui);
     setup_source_switch(ui);
@@ -73,19 +74,23 @@ pub(crate) fn setup_open_content(ui: &App) {
         // opening a panel shows whatever that list had — nothing, the first
         // time.
         push_pages(&ui);
+        // The local list is projected from the shared cache and the summary
+        // already asked for it when the instance was selected, so there is
+        // nothing to load here. The projection is repeated anyway: the model
+        // holds whichever panel was last drawn in it, and this one has to.
         match kind.as_str() {
             "saves" => {
                 show_grid(&ui, Grid::Saves);
-                load_saves(&ui);
+                project_saves(&ui);
             }
-            "screenshots" => load_screenshots(&ui),
+            "screenshots" => project_screenshots(&ui),
             "resourcepacks" => {
                 show_grid(&ui, Grid::LocalResourcePacks);
-                load_local_resourcepacks(&ui);
+                project_local_resourcepacks(&ui);
             }
             "mods" => {
                 show_grid(&ui, Grid::LocalMods);
-                load_local_mods(&ui);
+                project_local_mods(&ui);
             }
             _ => {}
         }
@@ -200,10 +205,14 @@ pub(crate) fn setup_source_switch(ui: &App) {
                         run_search(&ui, 1);
                     }
                     _ => {
+                        // Back to the local list, which is a projection of the
+                        // cache rather than a load — the same projection the
+                        // panel drew when it opened, so switching away and back
+                        // costs nothing.
                         let kind = controller().borrow().kind;
                         match kind {
-                            RemoteKind::Mods => load_local_mods(&ui),
-                            RemoteKind::ResourcePacks => load_local_resourcepacks(&ui),
+                            RemoteKind::Mods => project_local_mods(&ui),
+                            RemoteKind::ResourcePacks => project_local_resourcepacks(&ui),
                             RemoteKind::Packs => {}
                         }
                     }
@@ -321,7 +330,7 @@ pub(crate) fn setup_save_deletion(ui: &App) {
                     log::error!("failed to delete the save {folder}: {error}");
                     return;
                 }
-                crate::ui::services::report::report(&weak, move |ui| load_saves(&ui));
+                crate::ui::services::report::report(&weak, move |ui| reload(&ui, Kind::Saves));
             });
         });
     }
@@ -376,7 +385,10 @@ pub(crate) fn setup_save_deletion(ui: &App) {
                     }
                     ui.global::<Dialogs>()
                         .set_confirm_delete_save_visible(false);
-                    load_saves(&ui);
+                    // The world is gone, so the count on the summary behind this
+                    // dialog is wrong until the same re-read that redraws the
+                    // list redraws it.
+                    reload(&ui, Kind::Saves);
                 });
             });
         });
@@ -620,8 +632,13 @@ pub(crate) fn setup_detail_actions(ui: &App) {
                     match outcome {
                         Ok(()) => {
                             refresh_installed(&ui);
-                            // The local list the mod landed in is stale now.
-                            load_local_mods(&ui);
+                            // What landed is stale now — for this panel *and*
+                            // for the count on the summary behind it, which is
+                            // drawn from the same list. One re-read keeps the
+                            // two from disagreeing.
+                            if let Some(kind) = installed_kind(detail.kind) {
+                                reload(&ui, kind);
+                            }
                         }
                         Err(error) => log::error!("failed to download content: {error}"),
                     }
@@ -646,12 +663,43 @@ pub(crate) fn setup_detail_actions(ui: &App) {
             match content::mods::remote::remove_mod_files(&instance, files) {
                 Ok(()) => {
                     refresh_installed(&ui);
-                    load_local_mods(&ui);
+                    // Only a mod is ever removable here — the button is on a
+                    // detail panel that resolved installed files — so this is
+                    // the mods and nothing else.
+                    reload(&ui, Kind::Mods);
                 }
                 Err(error) => log::error!("failed to remove content: {error}"),
             }
             ui.global::<ContentState>().set_detail_operating(false);
         });
+    }
+}
+
+/// Re-reads one kind of the current instance.
+///
+/// The write has already happened by the time this runs, so the cache is
+/// invalidated rather than merely read: the summary's count and this panel both
+/// come back from the one re-parse, which is what stops them from drifting
+/// apart. An install does not invalidate the other three kinds, and neither does
+/// a removal — that is the whole reason this is a [`Kind`] and not a reload.
+///
+/// The redraw is not asked for here. The parse calls back into `repanel`, so
+/// there is exactly one place that turns a fresh list into cards.
+fn reload(ui: &App, kind: Kind) {
+    let instance = ui.global::<GameState>().get_current_id().to_string();
+    refresh(ui, &instance, kind);
+}
+
+/// The kind an install of `kind` lands in, if it lands in the instance at all.
+///
+/// A modpack is installed to the launcher's own directory, so there is nothing
+/// in the summary to re-read — refreshing the mods for it would put a second
+/// parse on the disk for no reason.
+fn installed_kind(kind: RemoteKind) -> Option<Kind> {
+    match kind {
+        RemoteKind::Mods => Some(Kind::Mods),
+        RemoteKind::ResourcePacks => Some(Kind::ResourcePacks),
+        RemoteKind::Packs => None,
     }
 }
 

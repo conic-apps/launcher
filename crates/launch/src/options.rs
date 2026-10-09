@@ -193,7 +193,16 @@ fn count_instance_mods(instance: &Instance) -> usize {
             .flatten()
             .filter(|entry| entry.file_type().map(|t| t.is_file()).unwrap_or(false))
             .count(),
-        Err(_) => 0,
+        // Not "0 mods": an unreadable `mods` folder is reported as 0 and fed
+        // straight into the heap calculation, so the log would confidently say
+        // "mod count 0" and hand the game a heap sized for an empty instance.
+        Err(error) => {
+            log::debug!(
+                "Could not read {} to count the mods ({error}); assuming none",
+                mods_folder.display()
+            );
+            0
+        }
     }
 }
 

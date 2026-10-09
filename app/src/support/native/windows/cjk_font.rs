@@ -76,20 +76,39 @@ pub(crate) fn apply(locale: &str) {
 }
 
 fn set_fallback(collection: &mut Collection, script: Script, names: &[&str]) {
-    let families: Vec<FamilyId> = names
+    // The *resolved* families, not the requested names: a family that is absent is
+    // dropped from `families` here, so logging `names` claimed a font was set when
+    // possibly none was. `filter_map` was silent, which meant the realistic case —
+    // eight of the nine missing on a stripped Windows image — produced a log
+    // identical to a complete one.
+    let resolved: Vec<FamilyId> = names
         .iter()
-        .filter_map(|name| collection.family_id(name))
+        .filter_map(|name| {
+            let id = collection.family_id(name);
+            if id.is_none() {
+                log::debug!(target: "app", "the CJK family {name:?} is not installed");
+            }
+            id
+        })
         .collect();
 
-    if families.is_empty() {
+    if resolved.is_empty() {
         // Nothing we know about is installed. Keep the OS answer rather than
         // clearing the slot, which would leave Han with no font at all.
-        log::warn!("no CJK font among {names:?}; keeping the OS Han fallback");
+        log::warn!(
+            target: "app",
+            "no CJK font among {names:?}; keeping the OS Han fallback"
+        );
         return;
     }
 
-    collection.set_fallbacks(FallbackKey::new(script, None), families.iter().copied());
-    log::debug!(target: "app", "Han fallback set from {names:?}");
+    collection.set_fallbacks(FallbackKey::new(script, None), resolved.iter().copied());
+    log::debug!(
+        target: "app",
+        "the {script:?} fallback is set from {} family/families out of {} requested",
+        resolved.len(),
+        names.len()
+    );
 }
 
 fn hani_script() -> Script {

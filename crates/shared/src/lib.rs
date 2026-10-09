@@ -43,13 +43,24 @@ static APP_VERSION: OnceCell<&'static str> = OnceCell::new();
 /// [`set_system_proxy`], because [`HTTP_CLIENT`] bakes it into its User-Agent
 /// when it is built on first use.
 pub fn set_app_version(version: &'static str) {
-    let _ = APP_VERSION.set(version);
+    if APP_VERSION.set(version).is_err() {
+        // The client bakes the *first* version into its User-Agent, so a second
+        // call leaves a stale one in place for the rest of the session.
+        log::debug!("the app version was already set to {APP_VERSION:?}; ignoring {version:?}");
+    }
 }
 
 /// The app version, or the placeholder when [`set_app_version`] has not run —
 /// which happens only in a crate's own tests, where nothing starts the app.
 pub fn app_version() -> &'static str {
-    APP_VERSION.get().copied().unwrap_or("0.0.0")
+    APP_VERSION.get().copied().unwrap_or_else(|| {
+        // Reached only when nothing started the app — a crate's own tests. In a
+        // real launch it would mean every request goes out as "ConicApps/0.0.0",
+        // which is exactly what this doc comment warns about, so it is worth a
+        // line rather than a silent placeholder.
+        log::debug!("the app version was never set; the User-Agent will read 0.0.0");
+        "0.0.0"
+    })
 }
 
 /// The callback through which a crate reports a task's state to whoever owns
@@ -141,6 +152,14 @@ pub static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
     } else {
         info!("Shouldn't use system proxy")
     }
+    // The one place the client is built, and therefore the only place the proxy
+    // choice and the User-Agent can be stated together. Both were decided by
+    // whichever call reached the `Lazy` first, and a network failure downstream
+    // has no other way to be tied to either.
+    info!(
+        "The shared HTTP client identifies as ConicApps/{}",
+        app_version()
+    );
     let mut builder = reqwest::ClientBuilder::new()
         .pool_idle_timeout(Duration::from_secs(60))
         .pool_max_idle_per_host(200)
@@ -149,13 +168,23 @@ pub static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
     if !should_use_system_proxy {
         builder = builder.no_proxy();
     };
-    builder.build().expect("Failed to build HTTP client")
+    builder
+        .build()
+        .unwrap_or_else(|error| panic!("Failed to build HTTP client: {error}"))
 });
 
 /// Records the config's proxy preference. Must run before the first request
 /// (the client above is built on first use and cannot be reconfigured).
 pub fn set_system_proxy(use_system_proxy: bool) {
-    let _ = SHOULD_USE_SYSTEM_PROXY.set(use_system_proxy);
+    // Ordering matters here and nothing enforces it: the `Lazy` above reads this
+    // cell on first use and cannot be reconfigured afterwards, so a call that
+    // lands after the client exists is silently ignored.
+    if SHOULD_USE_SYSTEM_PROXY.set(use_system_proxy).is_err() {
+        log::warn!(
+            "the system proxy preference was set after the HTTP client was built, so \
+                    it has no effect"
+        );
+    }
 }
 
 #[derive(Debug, Error)]

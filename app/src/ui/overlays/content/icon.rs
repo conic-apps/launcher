@@ -14,7 +14,7 @@ use super::*;
 /// app: sixteen keeps a page's worth in flight without looking like an attack.
 /// The point of the cap is that they overlap at all — one at a time is what made
 /// a page of twenty results look dead for twenty round-trips.
-const ICON_FETCH_CONCURRENCY: usize = 16;
+pub(crate) const ICON_FETCH_CONCURRENCY: usize = 16;
 
 /// How many decoded images one of these maps holds.
 ///
@@ -95,6 +95,64 @@ fn set_card_icon(ui: &App, grid: Grid, rows: &[(usize, String)], image: Option<P
         card.icon = icon.clone();
         card.icon_loading = false;
         model.set_row_data(*index, card);
+    }
+}
+
+/// Which decoded-image memo a source lives in.
+///
+/// A mod's, a resource pack's and a save's icon is a `data:` url or an `https:`
+/// one and is remembered in `ICONS`; a screenshot is a file of its own and is
+/// remembered in `SCREENSHOTS`, under its path. The cards already treat the two
+/// separately; the game view's preview rows draw both, so it names the difference
+/// once instead of branching at every call site.
+///
+/// The three steps are the three moments a caller has them: [`Memo::get`] on the
+/// UI thread when it already has a key, [`Memo::fetch`] on the runtime for what
+/// it does not, and [`Memo::put`] back on the UI thread to build the `Image`.
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum Memo {
+    Icons,
+    Screenshots,
+}
+
+impl Memo {
+    /// The image at `key`, if some earlier request already decoded it.
+    pub(crate) fn get(self, key: &str) -> Option<Image> {
+        match self {
+            Memo::Icons => cached_icon(key),
+            Memo::Screenshots => SCREENSHOTS.with(|shots| shots.borrow().get(key).cloned()),
+        }
+    }
+
+    /// Fetches and decodes what is at `key`, off the UI thread.
+    ///
+    /// Blocking, which is what `crate::support::runtime::block_on` is for and the
+    /// same call [`load_icons`] makes. A screenshot is read from the instance's
+    /// own directory rather than fetched, so it does not go through the http
+    /// cache — that is what would reject a path outright.
+    pub(crate) fn fetch(self, key: &str) -> Option<PendingImage> {
+        match self {
+            Memo::Icons => fetch_icon(key),
+            Memo::Screenshots => {
+                let bytes = std::fs::read(key).ok()?;
+                let (width, height, rgba) = decode_to_rgba(&bytes)?;
+                Some(PendingImage {
+                    key: key.to_string(),
+                    width,
+                    height,
+                    rgba,
+                })
+            }
+        }
+    }
+
+    /// Makes the `Image` on the UI thread and remembers it, so the next row that
+    /// wants the same source is a lookup rather than a decode.
+    pub(crate) fn put(self, image: PendingImage) -> Option<Image> {
+        match self {
+            Memo::Icons => resolve_icon(image),
+            Memo::Screenshots => resolve_image(image, &SCREENSHOTS),
+        }
     }
 }
 

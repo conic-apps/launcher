@@ -20,7 +20,7 @@ use std::{
     time::Duration,
 };
 
-use log::info;
+use log::{info, warn};
 
 use crate::{error::Result, library::check_library_valid, metadata::LIBRARY};
 
@@ -81,7 +81,11 @@ impl NexusService {
         self.shutdown_flag.store(true, Ordering::SeqCst);
         if let Some(handle) = self.poll_thread.lock().expect("Internal error").take() {
             info!("Joining poll thread");
-            let _ = handle.join();
+            // A panicking poll thread was discarded in silence; the join is the
+            // only place that can tell.
+            if handle.join().is_err() {
+                warn!("The Conic Nexus poll thread panicked");
+            }
         }
         if let Some(session) = self.session.lock().expect("Internal error").take() {
             info!("Destroy nexus session");
@@ -243,19 +247,29 @@ fn poll_loop(
         reconcile_ticks += 1;
         if reconcile_ticks >= RECONCILE_EVERY {
             reconcile_ticks = 0;
-            if let Ok(state) = session.get_state() {
-                let mut last = last_state_version.lock().expect("Internal error");
-                if state.version > *last {
-                    *last = state.version;
-                    let event = SessionEvent {
-                        sequence: 0,
-                        r#type: CONIC_NEXUS_EVENT_STATE_CHANGED,
-                        payload: serde_json::json!({
-                            "state": state.state,
-                            "version": state.version,
-                        }),
-                    };
-                    events(event);
+            // The reconcile reads the session's state; a failure here is silent
+            // while `poll_event`'s failure is logged a few lines below.
+            match session.get_state() {
+                Ok(state) => {
+                    let mut last = last_state_version.lock().expect("Internal error");
+                    if state.version > *last {
+                        *last = state.version;
+                        let event = SessionEvent {
+                            sequence: 0,
+                            r#type: CONIC_NEXUS_EVENT_STATE_CHANGED,
+                            payload: serde_json::json!({
+                                "state": state.state,
+                                "version": state.version,
+                            }),
+                        };
+                        events(event);
+                    }
+                }
+                // This is the read that decides whether the panel's room state is
+                // current at all, so a failure deserves a line rather than being
+                // the one unlogged result in the loop.
+                Err(error) => {
+                    log::debug!("the Conic Nexus session state could not be read: {error}")
                 }
             }
         }

@@ -189,7 +189,20 @@ fn ease_in_out(progress: f32) -> f32 {
 /// The image [`Source`] for a path that is a readable file, carrying the
 /// timestamp that decides whether a later resolution is the same picture.
 fn image_source(path: PathBuf, global: bool) -> Option<Source> {
-    let metadata = std::fs::metadata(&path).ok()?;
+    // Not a missing file: the user configured this picture, so failing to stat it
+    // means it cannot be read, and the resolution quietly falls back to the world
+    // with no hint that the setting had no effect.
+    let metadata = match std::fs::metadata(&path) {
+        Ok(metadata) => metadata,
+        Err(error) => {
+            log::warn!(
+                target: "background",
+                "the configured background at {} cannot be read: {error}",
+                path.display()
+            );
+            return None;
+        }
+    };
     if !metadata.is_file() {
         return None;
     }
@@ -327,7 +340,19 @@ impl Renderer {
                     });
                 }
             })
-            .expect("failed to start the background renderer");
+            .map(|_| {
+                log::debug!(target: "background", "the background renderer started");
+            })
+            .unwrap_or_else(|error| {
+                // The panic this replaces left `busy` set for good, so the ticker
+                // stopped asking for frames and the background froze with no
+                // explanation. Saying so is the whole point of the match.
+                log::error!(
+                    target: "background",
+                    "the background renderer could not be started: {error}; the window \
+                     background will not update"
+                );
+            });
         Self { requests, busy }
     }
 

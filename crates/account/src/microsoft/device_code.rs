@@ -32,12 +32,25 @@ pub async fn request_device_code() -> Result<DeviceCodeResponse> {
     let status = response.status();
     let body = response.text().await?;
     if !status.is_success() {
+        let shown: String = body.chars().take(512).collect();
+        log::warn!("the device code request was refused with {status}: {shown}");
         return Err(Error::HttpResponse {
             status: status.as_u16(),
             body,
         });
     }
-    serde_json::from_str(&body).map_err(Into::into)
+    let code: DeviceCodeResponse = serde_json::from_str(&body)?;
+    // The interval and the expiry drive the countdown the dialog shows, and a
+    // wrong value here is the whole explanation for a code that "expired" while
+    // the user was still typing it.
+    log::info!(
+        "the device code was issued: verify at {}, expiring in {} seconds, polling every \
+         {}",
+        code.verification_uri,
+        code.expires_in,
+        code.interval
+    );
+    Ok(code)
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -81,6 +94,11 @@ fn poll_result_from_response(status: StatusCode, body: String) -> Result<DeviceC
     let response: Value = match serde_json::from_str(&body) {
         Ok(response) => response,
         Err(_) if !status.is_success() => {
+            // No OAuth error in an answer that was not a success: a proxy's HTML
+            // page, or a 5xx with an empty body. Nothing here is an OAuth state,
+            // so it is a failed request rather than "keep polling".
+            let shown: String = body.chars().take(512).collect();
+            log::warn!("the device code poll answered {status} with no OAuth error: {shown}");
             return Err(Error::HttpResponse {
                 status: status.as_u16(),
                 body,
@@ -89,6 +107,14 @@ fn poll_result_from_response(status: StatusCode, body: String) -> Result<DeviceC
         Err(error) => return Err(error.into()),
     };
     if let Some(error) = response["error"].as_str() {
+        // Every state of the flow other than success arrives as a `400` with an
+        // OAuth error in it, and the caller decides which of them keep it going.
+        // `authorization_pending` is the ordinary one and would be noise per
+        // poll; the rest change what happens next, so they are recorded.
+        match error {
+            "authorization_pending" => {}
+            state => log::debug!("the device code poll answered {state}"),
+        }
         return Ok(DeviceCodePollResult {
             status: error.to_string(),
             access_token: None,
@@ -97,11 +123,13 @@ fn poll_result_from_response(status: StatusCode, body: String) -> Result<DeviceC
         });
     }
     if !status.is_success() {
+        log::warn!("the device code poll answered {status} with no OAuth error");
         return Err(Error::HttpResponse {
             status: status.as_u16(),
             body,
         });
     }
+    log::debug!("the device code poll succeeded");
 
     Ok(DeviceCodePollResult {
         status: "success".to_string(),

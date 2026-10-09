@@ -107,7 +107,11 @@ pub fn detect() -> InstallForm {
         }
     }
 
-    platform_default()
+    // The resolved form and *why* it was reached — the one line that answers "the
+    // updater is greyed out", which is otherwise reported only as an absence.
+    let form = platform_default();
+    log::debug!("no update policy marker was found, so this install is treated as {form}");
+    form
 }
 
 fn parse_policy(value: &str) -> Option<InstallForm> {

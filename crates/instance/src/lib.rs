@@ -14,10 +14,11 @@ use std::{
     cmp::Ordering,
     io::{BufRead, BufReader},
     path::PathBuf,
+    sync::atomic::AtomicU64,
 };
 
 use flate2::read::GzDecoder;
-use log::info;
+use log::{info, warn};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use storage::LOCATIONS;
@@ -41,7 +42,10 @@ pub async fn create_instance(config: InstanceConfig, id: Option<&str>) -> Result
         tokio::fs::create_dir_all(parent).await?
     }
     tokio::fs::write(config_file_path, toml::to_string_pretty(&config)?).await?;
-    info!("Created instance: {}", config.name);
+    // Name and id together: the id is what every other line in the workspace keys
+    // off (the lock files, the logs, `statistics.json`), and the name is the only
+    // one a user can recognise. The three CRUD lines are consistent on purpose.
+    info!("Created instance '{}' ({id})", config.name);
     Ok(id.to_string())
 }
 
@@ -67,7 +71,13 @@ pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
 
     while let Some(entry) = folder_entries.next_entry().await? {
         let file_type = match entry.file_type().await {
-            Err(_) => continue,
+            Err(error) => {
+                warn!(
+                    "Skipping a directory entry in {}: {error}",
+                    instances_folder.display()
+                );
+                continue;
+            }
             Ok(file_type) => file_type,
         };
         if !file_type.is_dir() {
@@ -82,21 +92,56 @@ pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
         .to_string();
         let instance_config = path.join("instance.toml");
         let metadata = match instance_config.metadata() {
-            Err(_) => continue,
+            Err(error) => {
+                // Every skip below is the same symptom from the user's side — an
+                // instance that used to be there is not on the list — and each one
+                // used to be silent, which made "my instance vanished"
+                // undiagnosable from the log alone.
+                warn!(
+                    "Skipping the instance in {}: its instance.toml is unreadable ({error})",
+                    path.display()
+                );
+                continue;
+            }
             Ok(result) => result,
         };
         if metadata.len() > 2_000_000 || !instance_config.is_file() {
+            warn!(
+                "Skipping the instance in {}: its instance.toml is {} bytes{}",
+                path.display(),
+                metadata.len(),
+                if !instance_config.is_file() {
+                    " and not a file"
+                } else {
+                    ""
+                }
+            );
             continue;
         }
-        let config_content = match tokio::fs::read_to_string(instance_config).await {
-            Err(_) => continue,
+        let config_content = match tokio::fs::read_to_string(&instance_config).await {
+            Err(error) => {
+                warn!(
+                    "Skipping the instance in {}: {} could not be read ({error})",
+                    path.display(),
+                    instance_config.display()
+                );
+                continue;
+            }
             Ok(content) => content,
         };
         let instance_id = folder_name;
         let instance = Instance {
             config: match toml::from_str::<InstanceConfig>(&config_content) {
                 Ok(config) => config,
-                Err(_) => continue,
+                Err(error) => {
+                    warn!(
+                        "Skipping the instance in {}: {} is not a valid instance config \
+                         ({error})",
+                        path.display(),
+                        instance_config.display()
+                    );
+                    continue;
+                }
             },
             installed: tokio::fs::metadata(path.join(".install.lock"))
                 .await
@@ -311,25 +356,43 @@ fn release_week(patch: u8) -> u8 {
 }
 
 /// Reads a single instance by id.
+///
+/// `None` means either "no such instance" or "its config is broken", and the two
+/// used to be the same silent answer — the same hazard `list_instances` has, on
+/// the path that resolves a single instance for the launcher. A missing instance
+/// is ordinary, so it stays quiet; a config that is there and does not parse is
+/// not.
 pub async fn get_instance_by_id(id: &str) -> Option<Instance> {
     let instance_root = LOCATIONS.instances.get_instance_root(id);
     let config_file = instance_root.join("instance.toml");
-    if let Ok(config_content) = tokio::fs::read_to_string(config_file).await
-        && let Ok(config) = toml::from_str::<InstanceConfig>(&config_content)
-    {
-        Some(Instance {
-            config,
-            installed: tokio::fs::metadata(instance_root.join(".install.lock"))
-                .await
-                .is_ok(),
-            last_played: get_launch_script_timestamp(id),
-            last_exit_abnormal: last_exit_abnormal(id),
-            id: id.to_string(),
-            has_background: instance_root.join("background").is_file(),
-        })
-    } else {
-        None
-    }
+    let config_content = match tokio::fs::read_to_string(&config_file).await {
+        Ok(content) => content,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return None,
+        Err(error) => {
+            warn!("Could not read {}: {error}", config_file.display());
+            return None;
+        }
+    };
+    let config = match toml::from_str::<InstanceConfig>(&config_content) {
+        Ok(config) => config,
+        Err(error) => {
+            warn!(
+                "{} is not a valid instance config: {error}",
+                config_file.display()
+            );
+            return None;
+        }
+    };
+    Some(Instance {
+        config,
+        installed: tokio::fs::metadata(instance_root.join(".install.lock"))
+            .await
+            .is_ok(),
+        last_played: get_launch_script_timestamp(id),
+        last_exit_abnormal: last_exit_abnormal(id),
+        id: id.to_string(),
+        has_background: instance_root.join("background").is_file(),
+    })
 }
 
 /// Updates the configuration file of an existing instance.
@@ -337,14 +400,14 @@ pub async fn update_instance(config: InstanceConfig, id: &str) -> Result<()> {
     let instance_root = LOCATIONS.instances.get_instance_root(id);
     let config_file = instance_root.join("instance.toml");
     tokio::fs::write(config_file, toml::to_string_pretty(&config)?).await?;
-    info!("Updated instance: {}", config.name);
+    info!("Updated instance '{}' ({id})", config.name);
     Ok(())
 }
 
 /// Deletes the instance directory corresponding to the given id.
 pub async fn delete_instance(id: &str) -> Result<()> {
     tokio::fs::remove_dir_all(LOCATIONS.instances.get_instance_root(id)).await?;
-    info!("Deleted {id}");
+    info!("Deleted instance '{id}'");
     Ok(())
 }
 
@@ -496,6 +559,12 @@ impl Instance {
 }
 
 /// Total play time of an instance in seconds, parsed from its game logs.
+///
+/// An unreadable or corrupt log contributes zero and used to do so silently, so a
+/// truncated archive quietly under-reports an instance's playtime. The count of
+/// such archives is summed and reported once rather than per file — this runs on
+/// a rayon pool, so per-file logging would interleave from several threads at
+/// once for what is usually one truncated file.
 pub fn calculate_playtime(instance_id: &str) -> Result<u64> {
     let instance_root = LOCATIONS.instances.get_instance_root(instance_id);
     let logs_root = instance_root.join("logs");
@@ -511,12 +580,28 @@ pub fn calculate_playtime(instance_id: &str) -> Result<u64> {
         .collect::<Vec<_>>()
         .into_par_iter()
         .map(|path| match try_read_flate2_log_dir_entry(path) {
-            Err(_) => 0,
+            Err(_) => {
+                UNREADABLE_LOGS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                0
+            }
             Ok(x) => x.unwrap_or_default(),
         })
         .sum();
+    let unreadable = UNREADABLE_LOGS.swap(0, std::sync::atomic::Ordering::Relaxed);
+    if unreadable > 0 {
+        warn!(
+            "{unreadable} of the log archives of {instance_id} could not be read, so its \
+             playtime is under-reported"
+        );
+    }
     Ok(total_play_time)
 }
+
+/// How many archives the in-flight [`calculate_playtime`] pass could not read.
+///
+/// A process-wide counter rather than a local one because the pass is `par_iter`,
+/// and a local would need the reduction to thread a cell through every worker.
+static UNREADABLE_LOGS: AtomicU64 = AtomicU64::new(0);
 
 fn try_read_flate2_log_dir_entry(path: PathBuf) -> Result<Option<u64>> {
     if let Some(file_name) = path.file_name()

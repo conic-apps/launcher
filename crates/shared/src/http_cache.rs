@@ -158,7 +158,18 @@ async fn get(url: &str, reload: bool) -> Option<Vec<u8>> {
         && let Some(entry) = &cached
         && entry.is_fresh(now())
     {
+        // The hit side of the axis was entirely absent, so "the icon came from
+        // disk" and "the icon came from the network" left the same trace. That is
+        // the first question about a slow or stale panel.
+        debug!(
+            "Cache hit for {url}: {} bytes, stored {} second(s) ago",
+            entry.bytes.len(),
+            now().saturating_sub(entry.stored_at)
+        );
         return Some(entry.bytes.clone());
+    }
+    if cached.is_some() {
+        debug!("{url} is cached but stale; asking the server again");
     }
 
     // Everything past this point touches the network, so this is the first
@@ -175,7 +186,7 @@ async fn get(url: &str, reload: bool) -> Option<Vec<u8>> {
     let response = match request.send().await {
         Ok(response) => response,
         Err(error) => {
-            debug!("Failed to fetch {url}: {error}");
+            warn!("Could not fetch {url}: {error}");
             return stale(cached);
         }
     };
@@ -192,22 +203,36 @@ async fn get(url: &str, reload: bool) -> Option<Vec<u8>> {
             stored_at: now(),
             ..entry
         };
+        debug!("{url} was revalidated: 304, the cached body is still current");
         store(url, path, &entry).await;
         return Some(entry.bytes);
     }
 
+    let status = response.status();
     let response = match response.error_for_status() {
         Ok(response) => response,
         Err(error) => {
-            debug!("Failed to fetch {url}: {error}");
+            // `warn`, not `debug`: a released log has to be able to say *why* an
+            // icon is missing, and the status is the one fact that separates a
+            // proxy error page from the upstream refusing. A 429 is called out
+            // because it is the one answer that says "come back later".
+            if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
+                warn!("{url} answered 429; treating it as a failure and serving the stale copy");
+            } else {
+                warn!("{url} answered {status}: {error}");
+            }
             return stale(cached);
         }
     };
+    debug!(
+        "Fetched {url}: {status}, {} bytes",
+        response.content_length().unwrap_or(0)
+    );
     // Read the headers before the body: `bytes` consumes the response, and the
     // validators are what make the next call cheap.
     let headers = response.headers().clone();
     let Ok(body) = response.bytes().await else {
-        debug!("Failed to read the body of {url}");
+        warn!("{url} answered {status} but its body could not be read");
         return stale(cached);
     };
     let entry = Entry {
@@ -341,13 +366,63 @@ fn entry_path(url: &str) -> Option<PathBuf> {
     Some(dir.join(format!("{:x}", Sha512::digest(url.as_bytes()))))
 }
 
+/// Reads one entry, or `None` if there is nothing usable there.
+///
+/// Every way this can fail used to be a bare `?` or `.ok()?`, so a truncated file
+/// — a crash mid-write, a full disk, a folder copied between machines — read as
+/// "not cached" and was refetched every single time with nothing to say why. The
+/// I/O case is `debug` (a file that vanishes mid-run is ordinary); a file that is
+/// there and malformed is `warn`, because that is the one that repeats forever.
 async fn read_entry(path: &Path) -> Option<Entry> {
-    let bytes = tokio::fs::read(path).await.ok()?;
-    let meta_len = u32::from_le_bytes(bytes.get(..4)?.try_into().ok()?) as usize;
-    let meta_end = 4usize.checked_add(meta_len)?;
-    let meta: Entry = serde_json::from_slice(bytes.get(4..meta_end)?).ok()?;
+    let bytes = match tokio::fs::read(path).await {
+        Ok(bytes) => bytes,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return None,
+        Err(error) => {
+            debug!(
+                "Could not read the cache entry at {}: {error}",
+                path.display()
+            );
+            return None;
+        }
+    };
+    let meta_len = match bytes.get(..4).and_then(|len| len.try_into().ok()) {
+        Some(len) => u32::from_le_bytes(len) as usize,
+        None => {
+            warn!(
+                "The cache entry at {} is truncated ({} bytes); it will be refetched",
+                path.display(),
+                bytes.len()
+            );
+            return None;
+        }
+    };
+    let Some(meta_end) = 4usize.checked_add(meta_len) else {
+        warn!(
+            "The cache entry at {} declares an impossible metadata length; it will be \
+             refetched",
+            path.display()
+        );
+        return None;
+    };
+    let meta: Entry = match bytes.get(4..meta_end).map(serde_json::from_slice) {
+        Some(Ok(meta)) => meta,
+        _ => {
+            warn!(
+                "The cache entry at {} has unreadable metadata; it will be refetched",
+                path.display()
+            );
+            return None;
+        }
+    };
+    let Some(body) = bytes.get(meta_end..) else {
+        warn!(
+            "The cache entry at {} is missing its body; it will be refetched",
+            path.display()
+        );
+        return None;
+    };
     Some(Entry {
-        bytes: bytes.get(meta_end..)?.to_vec(),
+        bytes: body.to_vec(),
         ..meta
     })
 }
@@ -409,17 +484,33 @@ async fn prune_if_over() {
             return;
         }
     };
-    while let Ok(Some(entry)) = reader.next_entry().await {
-        let Ok(metadata) = entry.metadata().await else {
-            continue;
-        };
-        let modified = metadata
-            .modified()
-            .ok()
-            .and_then(|modified| modified.duration_since(UNIX_EPOCH).ok())
-            .map(|since| since.as_secs())
-            .unwrap_or(0);
-        entries.push((modified, metadata.len(), entry.path()));
+    // `while let Ok(Some(..))` ends the walk on a read error as well as on the
+    // end of the directory, and a truncated walk *under*-counts the usage — so
+    // the folder then looks smaller than it is and pruning stops happening. The
+    // error is named so that is visible rather than looking like a small cache.
+    loop {
+        match reader.next_entry().await {
+            Ok(Some(entry)) => {
+                let Ok(metadata) = entry.metadata().await else {
+                    continue;
+                };
+                let modified = metadata
+                    .modified()
+                    .ok()
+                    .and_then(|modified| modified.duration_since(UNIX_EPOCH).ok())
+                    .map(|since| since.as_secs())
+                    .unwrap_or(0);
+                entries.push((modified, metadata.len(), entry.path()));
+            }
+            Ok(None) => break,
+            Err(error) => {
+                warn!(
+                    "Stopped reading the HTTP cache directory {dir:?} early: {error}; its \\
+                     measured size is an under-estimate"
+                );
+                break;
+            }
+        }
     }
     // Oldest first, so the front of the list is what goes.
     entries.sort_unstable();
@@ -481,10 +572,14 @@ async fn is_reachable(url: &str) -> bool {
         return false;
     };
     if !scheme_allows(&parsed) {
-        debug!("Refusing {url}: only http and https are fetched");
+        // A refusal is a security decision, so `warn` rather than the `debug` the
+        // other refusals use: a release log has to be able to show that a URL was
+        // rejected for naming something other than http(s).
+        warn!("Refusing {url}: only http and https are fetched");
         return false;
     }
     let Some(host) = parsed.host_str() else {
+        warn!("Refusing {url}: it names no host to resolve");
         return false;
     };
     // `Url` keeps the brackets around an IPv6 host literal.

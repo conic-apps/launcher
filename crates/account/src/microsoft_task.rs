@@ -61,9 +61,19 @@ impl LoginTaskState {
         {
             let current_task = self.task.lock().expect("Internal error");
             if current_task.is_some() {
+                // Otherwise untraceable: the second click does nothing visible and
+                // the dialog stays as it was, which reads as a dead button.
+                log::warn!("refused a Microsoft login: one is already running");
                 return Err(Error::LoginInProgress);
             }
         }
+        log::info!(
+            "starting a Microsoft {} login",
+            match &request {
+                LoginRequest::AuthCode { .. } => "browser",
+                LoginRequest::DeviceCode => "device code",
+            }
+        );
         let handle = tokio::spawn(async move {
             reporter.report(LoginEvent::Prepare);
             match request {
@@ -75,7 +85,15 @@ impl LoginTaskState {
         });
         *self.task.lock().expect("Internal error") = Some(handle.abort_handle());
         let result = match handle.await {
-            Ok(result) => result,
+            Ok(result) => {
+                // The terminal outcome, so every attempt leaves exactly one line
+                // behind it. Success is not logged: the account view updates and
+                // the chain already reported each step.
+                if let Err(error) = &result {
+                    log::warn!("the Microsoft login failed: {error}");
+                }
+                result
+            }
             Err(error) => {
                 warn!("Microsoft login cancelled");
                 Err(Error::Aborted(error))

@@ -212,7 +212,9 @@ fn wire_background_actions(ui: &App, shared: Rc<RefCell<config::Config>>, save_t
                         Duration::from_millis(50),
                         move || {
                             let config = shared.borrow();
-                            let _ = config::save_config(&config);
+                            if let Err(error) = config::save_config(&config) {
+                                log::warn!("failed to save the config: {error}");
+                            }
                         },
                     );
                 }
@@ -238,7 +240,9 @@ fn wire_background_actions(ui: &App, shared: Rc<RefCell<config::Config>>, save_t
                 crate::ui::components::background::controller::config_changed(&ui);
             }
             let config = shared.borrow();
-            let _ = config::save_config(&config);
+            if let Err(error) = config::save_config(&config) {
+                log::warn!("failed to save the config: {error}");
+            }
         });
     }
 }
@@ -310,7 +314,9 @@ fn wire_java_actions(ui: &App, shared: Rc<RefCell<config::Config>>) {
                 settings.set_java_runtimes(model);
             }
             let config = shared.borrow();
-            let _ = config::save_config(&config);
+            if let Err(error) = config::save_config(&config) {
+                log::warn!("failed to save the config: {error}");
+            }
         });
     }
 }

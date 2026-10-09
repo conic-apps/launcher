@@ -310,6 +310,19 @@ pub(crate) fn finish_tile(
             }
             Err(error) => {
                 map.failed.insert(key);
+                // The log counterpart of the rule below: one bad tile in a world
+                // of a hundred is not worth a message over the map, but a save
+                // whose region files cannot be read is worth a line — and this is
+                // the only place that knows. `map.failed` grows as a set, so the
+                // count is monotonic for the session and cannot flood the log.
+                let failed = map.failed.len();
+                log::debug!(
+                    target: "content",
+                    "world map: tile {},{} failed to render ({error}); {failed} tile(s) have \
+                     failed in this map",
+                    key.0,
+                    key.1
+                );
                 // Only show an error when nothing has loaded at all: one
                 // unreadable tile in a world of a hundred is not worth a
                 // message over the map.

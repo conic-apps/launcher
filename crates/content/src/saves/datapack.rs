@@ -65,10 +65,21 @@ pub fn parse_datapack<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<DataPack> {
 }
 
 pub fn get_all_datapacks<P: AsRef<Path>>(datapacks_folder_path: P) -> Result<Vec<DataPack>> {
-    Ok(fs::read_dir(datapacks_folder_path)?
-        .flatten()
-        .flat_map(|entry| parse_datapack(&entry.path()))
-        .collect::<Vec<_>>())
+    // As in `resourcepack.rs`: a pack that does not parse used to vanish from the
+    // list with nothing recorded.
+    let mut packs = Vec::new();
+    for entry in fs::read_dir(datapacks_folder_path)?.flatten() {
+        match parse_datapack(&entry.path()) {
+            Ok(pack) => packs.push(pack),
+            Err(error) => {
+                log::debug!(
+                    "{} is not a usable data pack: {error}",
+                    entry.path().display()
+                )
+            }
+        }
+    }
+    Ok(packs)
 }
 
 /// Every datapack of one of an instance's worlds.

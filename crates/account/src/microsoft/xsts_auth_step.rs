@@ -40,15 +40,14 @@ impl XSTSAuthBody {
 }
 
 pub(super) async fn xsts_authenticate(xbl_token: &str) -> Result<String> {
-    let response: Value = HTTP_CLIENT
+    let response = HTTP_CLIENT
         .post("https://xsts.auth.xboxlive.com/xsts/authorize")
         .header("Content-Type", "application/json")
         .header("Accept", "application/json")
         .body(serde_json::to_string(&XSTSAuthBody::new(xbl_token))?)
         .send()
-        .await?
-        .json()
         .await?;
+    let response: Value = super::decode(response, "the XSTS authorize endpoint").await?;
     Ok(response["Token"]
         .as_str()
         .ok_or(Error::MicrosoftResponseMissingKey("Token".to_string()))?

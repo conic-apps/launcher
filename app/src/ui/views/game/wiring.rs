@@ -128,7 +128,9 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
             let Some(account) = account else { return };
             let config_rc = controller.borrow().config.clone();
             config_rc.borrow_mut().current_account = Some(account);
-            let _ = config::save_config(&config_rc.borrow());
+            if let Err(error) = config::save_config(&config_rc.borrow()) {
+                log::warn!("failed to save the config: {error}");
+            }
             if let Some(ui) = weak.upgrade() {
                 controller.borrow_mut().apply(&ui);
             }
@@ -312,5 +314,7 @@ pub fn select_first_account_if_none(config: &Rc<RefCell<config::Config>>) {
         .or_else(|| accounts.offline.first().cloned().map(Account::Offline))
         .or_else(|| accounts.yggdrasil.first().cloned().map(Account::Yggdrasil));
     config.borrow_mut().current_account = selected;
-    let _ = config::save_config(&config.borrow());
+    if let Err(error) = config::save_config(&config.borrow()) {
+        log::warn!("failed to save the config: {error}");
+    }
 }

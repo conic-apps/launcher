@@ -89,10 +89,21 @@ pub fn parse_resourcepack<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<Resourcepac
 pub fn get_all_resourcepacks<P: AsRef<Path>>(
     resourcepacks_folder_path: P,
 ) -> Result<Vec<Resourcepack>> {
-    Ok(fs::read_dir(resourcepacks_folder_path)?
-        .flatten()
-        .flat_map(|entry| parse_resourcepack(&entry.path()))
-        .collect::<Vec<_>>())
+    // `flat_map` over a `Result` drops every pack that fails to parse with no
+    // line at all, so a corrupt pack and one that is merely not a pack look the
+    // same — and both simply do not appear. The mod folder's equivalent logs per
+    // file, so this is the odd one out.
+    let mut packs = Vec::new();
+    for entry in fs::read_dir(resourcepacks_folder_path)?.flatten() {
+        match parse_resourcepack(&entry.path()) {
+            Ok(pack) => packs.push(pack),
+            Err(error) => log::debug!(
+                "{} is not a usable resource pack: {error}",
+                entry.path().display()
+            ),
+        }
+    }
+    Ok(packs)
 }
 
 /// Every resource pack of an instance.

@@ -13,6 +13,10 @@
 //! [`crate::usecases::content`] as `ContentSession`, and this controller reaches
 //! it through `Deref`.
 //!
+//! It also owns the instance's local content. [`cache`] is the single parsed
+//! copy of the four lists, read by the game view's summary as well as by these
+//! panels, which is why opening a panel is not a load.
+//!
 //! Two conventions it follows from the rest of the app:
 //!
 //!   * Everything that touches the network or the disk runs on the tokio
@@ -27,7 +31,8 @@
 //!
 //! The code is split by concern: the controller, the presenters and the models
 //! live here, the callback wiring is in `wiring`, and the per-list work is in
-//! `lists`, `search`, `grid`, `body`, `detail`, `acquire` and `icon`.
+//! `cache`, `lists`, `preview`, `search`, `grid`, `body`, `detail`, `acquire`
+//! and `icon`.
 
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -49,11 +54,13 @@ use instance::InstanceRuntime;
 
 mod acquire;
 mod body;
+pub(crate) mod cache;
 mod detail;
 mod grid;
 mod icon;
 mod lists;
 mod presenter;
+mod preview;
 mod search;
 mod wiring;
 /// The world map's tile queue. It lives under `content` because the map is
@@ -62,11 +69,13 @@ pub(crate) mod world_map;
 
 pub(crate) use acquire::*;
 pub(crate) use body::*;
+pub(crate) use cache::*;
 pub(crate) use detail::*;
 pub(crate) use grid::*;
 pub(crate) use icon::*;
 pub(crate) use lists::*;
 pub(crate) use presenter::*;
+pub(crate) use preview::*;
 pub(crate) use search::*;
 pub(crate) use wiring::*;
 // The browser's plain data (cards, the search cache, the open query) is

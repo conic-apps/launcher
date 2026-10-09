@@ -49,6 +49,10 @@ impl Gate {
 
     /// Starts a new request, invalidating every earlier token.
     pub(crate) fn issue(&self) -> Token {
+        // The moment a user's action supersedes in-flight work. It produced no
+        // line at all, so a cancelled launch looked identical to one that had
+        // simply gone quiet — and `is_current() == false` drops the late result
+        // just as silently, which is the other half of the same question.
         let mine = self.generation.fetch_add(1, Ordering::SeqCst) + 1;
         Token {
             generation: Arc::clone(&self.generation),
@@ -58,6 +62,11 @@ impl Gate {
 
     /// Invalidates the outstanding token, so nothing in flight is delivered.
     pub(crate) fn invalidate(&self) {
+        // Reached by the launch view's cancel button and the multiplayer
+        // download's cancel. Without this, "launch flow started" and then
+        // nothing is the whole trace of a launch the user gave up on.
+        log::debug!(target: "shell", "the outstanding request was cancelled; its result will \
+             be dropped");
         self.generation.fetch_add(1, Ordering::SeqCst);
     }
 }

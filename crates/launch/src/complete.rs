@@ -83,7 +83,14 @@ pub async fn complete_files(
         )
         .await?;
         info!("Saving assets lock file");
-        let _ = save_lock_file(&assets_lock_file);
+        if let Err(error) = save_lock_file(&assets_lock_file) {
+            // The `info!` above says this save happened; if it did not, every
+            // launch re-verifies the whole assets set again, silently.
+            warn!(
+                "Could not write the assets lock file {}: {error}",
+                assets_lock_file.display()
+            );
+        }
     }
     if try_load_lock_file(&libraries_lock_file).is_some() {
         info!("Found file \".conic-libraries-ok\", no need to check libraries files.");
@@ -97,7 +104,14 @@ pub async fn complete_files(
         )
         .await?;
         info!("Saving libraries lock file");
-        let _ = save_lock_file(&libraries_lock_file);
+        if let Err(error) = save_lock_file(&libraries_lock_file) {
+            // The `info!` above says this save happened; if it did not, every
+            // launch re-verifies the whole libraries set again, silently.
+            warn!(
+                "Could not write the libraries lock file {}: {error}",
+                libraries_lock_file.display()
+            );
+        }
     }
     // Best-effort: a failure here must not abort the launch because the Java
     // resolution step either falls back to a system runtime or reports
@@ -168,7 +182,12 @@ async fn complete_java_runtime_files(
     info!("Checking and completing Mojang-provided Java runtime");
     install::java::install_for_instance(instance, progress, config).await?;
     info!("Saving Java runtime lock file");
-    let _ = save_lock_file(&lock_file);
+    if let Err(error) = save_lock_file(&lock_file) {
+        warn!(
+            "Could not write the Java runtime lock file {}: {error}",
+            lock_file.display()
+        );
+    }
     Ok(())
 }
 

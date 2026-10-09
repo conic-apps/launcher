@@ -218,24 +218,57 @@ fn absolute_url(url: &str) -> String {
 /// Deliberately a split rather than a date parser: both feeds put the date
 /// first and zero-padded, so this cannot fail or drift with a locale, and the
 /// crate needs no calendar dependency.
+///
+/// A component that does not parse becomes 0, and that is *not* inert: the app
+/// filters both feeds by year and month, so an entry with an unreadable date
+/// silently disappears from every filter rather than showing up undated. Hence
+/// the `debug!` — an upstream document changing its date shape is the only
+/// thing that produces a zero here.
 fn date_parts(date: &str) -> (u16, u8, u8) {
     let mut parts = date.split(['-', 'T']);
     let year = parts.next().and_then(|part| part.parse().ok()).unwrap_or(0);
     let month = parts.next().and_then(|part| part.parse().ok()).unwrap_or(0);
     let day = parts.next().and_then(|part| part.parse().ok()).unwrap_or(0);
+    if year == 0 || month == 0 {
+        log::debug!("an entry has an unreadable date {date:?}; it will not match a date filter");
+    }
     (year, month, day)
+}
+
+/// Fetches `url` and decodes it as JSON, recording what the server said.
+///
+/// These three requests do not go through `shared::http_cache`, so each one is a
+/// real round trip every time the news overlay opens — and none of them carried a
+/// log line at all, which left the app's two `error!` messages in
+/// `usecases::news` as the only evidence a fetch ever happened. The status code is
+/// what tells a proxy error page apart from Mojang being down.
+async fn fetch_json<T: serde::de::DeserializeOwned>(url: &str) -> Result<T> {
+    let response = HTTP_CLIENT.get(url).send().await.map_err(|error| {
+        log::warn!("{url} could not be reached: {error}");
+        Error::Network(error)
+    })?;
+    let status = response.status();
+    if !status.is_success() {
+        match response.headers().get(reqwest::header::RETRY_AFTER) {
+            Some(retry_after) => log::warn!(
+                "{url} answered {status} and asked to retry after {}",
+                retry_after
+                    .to_str()
+                    .unwrap_or("<an unreadable Retry-After>")
+            ),
+            None => log::warn!("{url} answered {status}"),
+        }
+    }
+    response.json().await.map_err(|error| {
+        log::warn!("{url} answered {status} but the body did not parse as JSON: {error}");
+        Error::Network(error)
+    })
 }
 
 /// The latest 100 news entries, newest first.
 pub async fn fetch_news() -> Result<Vec<NewsItem>> {
     let url = format!("{BASE_URL}/v2/news.json");
-    let feed: Feed<RawNewsItem> = HTTP_CLIENT
-        .get(url)
-        .send()
-        .await?
-        .error_for_status()?
-        .json()
-        .await?;
+    let feed: Feed<RawNewsItem> = fetch_json(&url).await?;
     let mut items: Vec<NewsItem> = feed
         .entries
         .into_iter()
@@ -262,6 +295,10 @@ pub async fn fetch_news() -> Result<Vec<NewsItem>> {
     // Newest first. The feeds are close to sorted, but relying on that would
     // put a re-ordered document on screen in the wrong order.
     items.sort_by(|a, b| b.date.cmp(&a.date));
+    // The count is the only useful success signal a feed has: an empty browser and
+    // a failed fetch look the same on screen, and the app does not retry a feed
+    // that failed once.
+    log::info!("Mojang's news feed returned {} entries", items.len());
     Ok(items)
 }
 
@@ -269,13 +306,7 @@ pub async fn fetch_news() -> Result<Vec<NewsItem>> {
 /// newest first.
 pub async fn fetch_changelogs() -> Result<Vec<ChangelogEntry>> {
     let url = format!("{BASE_URL}/v2/javaPatchNotes.json");
-    let feed: Feed<RawChangelogEntry> = HTTP_CLIENT
-        .get(url)
-        .send()
-        .await?
-        .error_for_status()?
-        .json()
-        .await?;
+    let feed: Feed<RawChangelogEntry> = fetch_json(&url).await?;
     let mut items: Vec<ChangelogEntry> = feed
         .entries
         .into_iter()
@@ -300,6 +331,7 @@ pub async fn fetch_changelogs() -> Result<Vec<ChangelogEntry>> {
         })
         .collect();
     items.sort_by(|a, b| b.date.cmp(&a.date));
+    log::info!("Mojang's changelog index returned {} entries", items.len());
     Ok(items)
 }
 
@@ -307,13 +339,14 @@ pub async fn fetch_changelogs() -> Result<Vec<ChangelogEntry>> {
 /// carries.
 pub async fn fetch_changelog_body(content_path: &str) -> Result<String> {
     let url = format!("{BASE_URL}/v2/{content_path}");
-    let body: RawChangelogBody = HTTP_CLIENT
-        .get(url)
-        .send()
-        .await?
-        .error_for_status()?
-        .json()
-        .await?;
+    // `content_path` comes straight out of the index document and is interpolated
+    // into the URL, so the resolved URL is recorded: it is the only way to tell
+    // which changelog was asked for, and what a surprising one resolved to.
+    let body: RawChangelogBody = fetch_json(&url).await?;
+    log::debug!(
+        "read the changelog body for {content_path} ({} bytes)",
+        body.body.len()
+    );
     Ok(body.body)
 }
 

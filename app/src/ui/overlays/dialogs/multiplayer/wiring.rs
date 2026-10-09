@@ -170,12 +170,15 @@ pub(crate) fn setup_code_actions(ui: &App) {
         state.on_copy_room_code(move || {
             let Some(ui) = weak.upgrade() else { return };
             let state = ui.global::<MultiplayerState>();
+            // Set only on success: it was unconditional, so the panel showed
+            // "copied" over a write that had just been logged as failing.
             if let Err(error) =
                 crate::ui::services::app_config::copy_to_clipboard(state.get_room_code().as_str())
             {
                 log::warn!(target: "multiplayer", "failed to write to the clipboard: {error}");
+            } else {
+                state.set_code_copied(true);
             }
-            state.set_code_copied(true);
         });
     }
     // Recompute the room code's validity as it changes.

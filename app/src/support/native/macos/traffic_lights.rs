@@ -189,6 +189,10 @@ pub fn watch_fullscreen(ui: &crate::slint_backend::App) {
         };
         let window = &*window as *const AnyObject as Id;
         let fullscreen = unsafe { is_fullscreen_window(window) };
+        // The only two states this module hands the UI, and they used to be
+        // silent: the observer's own registration was logged, so a run that
+        // entered fullscreen and came back looked identical to one that never did.
+        log::debug!(target: "shell", "traffic lights: the window is now fullscreen={fullscreen}");
         if let Some(ui) = weak.upgrade() {
             ui.set_window_fullscreen(fullscreen);
         }
@@ -284,6 +288,15 @@ fn install_theme_frame_class() -> bool {
         };
         let Some(original) = ffi::method_getImplementation(factory) else {
             ffi::objc_disposeClassPair(subclass);
+            // Not the same failure as the check above: the selector is there and
+            // answers nothing. Swallowing it made a renamed or already-swizzled
+            // `+[NSWindow frameViewClassForStyleMask:]` report itself as "NSThemeFrame
+            // is unavailable", which sends the reader after the wrong cause.
+            log::warn!(
+                target: "shell",
+                "traffic lights: +[NSWindow frameViewClassForStyleMask:] has no \
+                 implementation"
+            );
             return false;
         };
 

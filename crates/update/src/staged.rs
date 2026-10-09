@@ -105,15 +105,28 @@ pub async fn download_and_stage(
         log::error!("the update signature is unreadable: {error}");
         Error::Signature
     })?;
-    let mut verifier = public_key
-        .verify_stream(&signature)
-        .map_err(|_| Error::Signature)?;
+    let mut verifier = public_key.verify_stream(&signature).map_err(|error| {
+        log::error!(
+            "the update signature could not be started for {}: {error}",
+            info.version
+        );
+        Error::Signature
+    })?;
 
-    let mut response = shared::HTTP_CLIENT
-        .get(&info.url)
-        .send()
-        .await?
-        .error_for_status()?;
+    let response = shared::HTTP_CLIENT.get(&info.url).send().await?;
+    let status = response.status();
+    if !status.is_success() {
+        // `error_for_status` throws the status away with the response, and for an
+        // update server the two cases mean different things: a 404 is a stale
+        // manifest entry, a 5xx is a server having a bad day. Both abort the
+        // update, and neither is otherwise visible.
+        log::error!(
+            "the update server answered {status} for {} ({})",
+            info.version,
+            info.url
+        );
+    }
+    let mut response = response.error_for_status()?;
     let total = info.size.or_else(|| response.content_length());
 
     let dir = updates_dir();
@@ -137,10 +150,26 @@ pub async fn download_and_stage(
             sink(DownloadProgress { received, total });
         }
     }
-    file.sync_all().await?;
+    // `sync_all` is a full or read-only disk, and it fails here with every byte
+    // already written — a bundle that would have been applied if the file had
+    // landed. The rename below is what makes it visible to `apply_pending`.
+    file.sync_all().await.map_err(|error| {
+        log::error!(
+            "could not flush the staged update {} to {}: {error}",
+            info.version,
+            part.display()
+        );
+        Error::Io(error)
+    })?;
 
     // Signature first: a bundle that fails it must never be renamed into place.
-    if verifier.finalize().is_err() {
+    if let Err(error) = verifier.finalize() {
+        log::error!(
+            "the update bundle for {} ({}) failed signature verification and was discarded: \
+             {error}",
+            info.version,
+            final_path.display()
+        );
         let _ = std::fs::remove_file(&part);
         return Err(Error::Signature);
     }
@@ -154,7 +183,18 @@ pub async fn download_and_stage(
         return Err(Error::Checksum);
     }
 
-    tokio::fs::rename(&part, &final_path).await?;
+    tokio::fs::rename(&part, &final_path)
+        .await
+        .map_err(|error| {
+            // The record is written below, so a failed rename here means a
+            // `pending.json` that points at nothing: the next launch would try to
+            // apply an artifact that was never moved into place.
+            log::error!(
+                "could not move the staged update {} into place: {error}",
+                final_path.display()
+            );
+            Error::Io(error)
+        })?;
     sink(DownloadProgress {
         received,
         total: Some(received),

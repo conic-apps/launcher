@@ -27,19 +27,27 @@ pub fn library_dir() -> std::path::PathBuf {
 
 pub async fn check_library_valid() -> Result<()> {
     let mut sha256_hasher = sha2::Sha256::new();
-    let file_content = tokio::fs::read(
-        &LOCATIONS
-            .launcher
-            .native
-            .join("conic-nexus")
-            .join(LIBRARY.filename),
-    )
-    .await?;
+    let path = LOCATIONS
+        .launcher
+        .native
+        .join("conic-nexus")
+        .join(LIBRARY.filename);
+    let file_content = tokio::fs::read(&path).await?;
     sha256_hasher.update(file_content);
     let sha256 = format!("{:02x}", sha256_hasher.finalize());
-    (metadata::LIBRARY.sha256 == sha256)
-        .then_some(())
-        .ok_or(Error::ChecksumMismatch)
+    // The integrity check of a downloaded native library, and it never said
+    // anything — the caller only learned "not valid", with no expected-vs-actual
+    // and no path, so a tampered or truncated dylib was indistinguishable from a
+    // missing one.
+    if metadata::LIBRARY.sha256 != sha256 {
+        log::error!(
+            "The Conic Nexus library at {} has sha256 {sha256}, but {} was expected",
+            path.display(),
+            metadata::LIBRARY.sha256
+        );
+        return Err(Error::ChecksumMismatch);
+    }
+    Ok(())
 }
 
 pub async fn download_library(sink: LibrarySink) -> Result<()> {
@@ -66,8 +74,12 @@ pub async fn download_library(sink: LibrarySink) -> Result<()> {
             download::download(&download_task, &progress),
         )
         .await;
-        if result.is_ok() {
-            return Ok(());
+        match result {
+            Ok(()) => return Ok(()),
+            // Each source's own reason used to be dropped, so "the library never
+            // downloads" was unattributable: only the aggregate `AllSourceFailed`
+            // reached the app, naming no URL.
+            Err(error) => log::warn!("The Conic Nexus library source {} failed: {error}", source),
         };
     }
     Err(crate::error::Error::AllSourceFailed)

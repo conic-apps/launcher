@@ -93,6 +93,15 @@ pub fn render_map(cache: &MapCache, request: &WorldMapRequest) -> Result<WorldMa
         && maps.len() >= MAX_CACHED_WORLDS
         && let Some(oldest) = maps.keys().next().cloned()
     {
+        // Which world is thrown out was unlogged, so a user paging through more
+        // worlds than the cache holds saw every one re-render from disk with no
+        // way to tell that from a slow disk.
+        log::debug!(
+            "The world-map cache is full ({} worlds), dropping {} to make room for {}",
+            maps.len(),
+            oldest.world_dir().display(),
+            key.world_dir().display()
+        );
         maps.remove(&oldest);
     }
     let world = match maps.entry(key) {

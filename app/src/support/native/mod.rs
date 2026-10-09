@@ -29,6 +29,16 @@ pub(crate) fn install_backend() {
     macos::install_backend();
     #[cfg(target_os = "windows")]
     windows::install_backend();
+    // Logged on every platform, including the one that does nothing: `logs.rs`
+    // explains that a `debug!` line exists precisely so a hook that never runs
+    // is not invisible, and this function is a no-op on Linux — with nothing here,
+    // "Linux has no window-chrome hook" and "the hook was installed" look alike.
+    #[cfg(target_os = "macos")]
+    log::debug!(target: "shell", "backend hook: macOS transparent title bar");
+    #[cfg(target_os = "windows")]
+    log::debug!(target: "shell", "backend hook: Windows frameless window");
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    log::debug!(target: "shell", "backend hook: none is needed on this platform");
 }
 
 /// Registers the platform's terminate handling.
@@ -60,6 +70,8 @@ pub(crate) fn install(ui: &App) {
     macos::install(ui);
     #[cfg(target_os = "windows")]
     windows::install(ui);
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    log::debug!(target: "shell", "window integration: the title bar draws its own controls");
 
     // Only Windows draws its own caption; nothing else has one to colour.
     #[cfg(not(target_os = "windows"))]

@@ -61,7 +61,20 @@ impl LauncherLocation {
     /// logger may not run at all.
     pub fn init(&self) {
         std::fs::create_dir_all(&self.music).expect("Unable to create application data directory");
-        let _ = std::fs::create_dir_all(&self.logs);
-        let _ = std::fs::create_dir_all(&self.native);
+        // `logs` is the folder the release build's whole log goes into: if this
+        // cannot be made the logger falls back to stderr, which a GUI launch shows
+        // nobody — so the failure is recorded even though there is no logger yet.
+        if let Err(error) = std::fs::create_dir_all(&self.logs) {
+            eprintln!(
+                "Could not create the log directory {}: {error}",
+                self.logs.display()
+            );
+        }
+        if let Err(error) = std::fs::create_dir_all(&self.native) {
+            log::warn!(
+                "Could not create the Conic Nexus directory {}: {error}",
+                self.native.display()
+            );
+        }
     }
 }

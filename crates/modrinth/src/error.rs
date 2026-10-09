@@ -42,6 +42,16 @@ pub enum Error {
         url::ParseError,
     ),
 
+    /// A base URL that cannot take a path. Only reachable by a bad constant, so it
+    /// is a `Result` rather than the `expect` it used to be: a panic in a network
+    /// path takes down whatever background task was fetching.
+    #[error(transparent)]
+    UrlBuild(
+        #[from]
+        #[serde_as(as = "serde_with::DisplayFromStr")]
+        shared::UrlExtError,
+    ),
+
     #[error("Chunk length mismatch")]
     ChunkLengthMismatch,
 

@@ -41,7 +41,16 @@ pub async fn log_launch(profile: StatisticsProfile, instance_id: String) -> Resu
         instance_id,
         launch_at_unix_secs,
     };
-    let mut entries = get_statistics().await.unwrap_or_default();
+    // A failure to read the existing entries is dropped, and then the file is
+    // *overwritten* with just this one — so a corrupt `statistics.json` silently
+    // discards the whole history. Worth a line of its own.
+    let mut entries = get_statistics().await.unwrap_or_else(|error| {
+        log::warn!(
+            "The statistics history could not be read ({error}); only this launch will be \
+             recorded"
+        );
+        Vec::new()
+    });
     entries.push(entry);
     save_logs_file(entries).await?;
     Ok(())
@@ -49,8 +58,20 @@ pub async fn log_launch(profile: StatisticsProfile, instance_id: String) -> Resu
 
 pub async fn get_statistics() -> Result<Vec<StatisticsEntry>> {
     let statistics_path = LOCATIONS.launcher.root.join("statistics.json");
-    let file_content = tokio::fs::read_to_string(statistics_path).await?;
-    Ok(serde_json::from_str(&file_content)?)
+    // A missing file on a fresh install is ordinary and stays quiet; a file that
+    // is there and does not parse means the contribution graph is silently empty
+    // from now on, since every write after this point is based on what is read.
+    let file_content = tokio::fs::read_to_string(&statistics_path).await?;
+    match serde_json::from_str(&file_content) {
+        Ok(entries) => Ok(entries),
+        Err(error) => {
+            log::warn!(
+                "{} is not valid statistics json: {error}",
+                statistics_path.display()
+            );
+            Err(error.into())
+        }
+    }
 }
 
 pub async fn get_statistics_by_profile(profile: StatisticsProfile) -> Result<Vec<StatisticsEntry>> {
@@ -63,6 +84,17 @@ pub async fn get_statistics_by_profile(profile: StatisticsProfile) -> Result<Vec
 
 async fn save_logs_file(logs: Vec<StatisticsEntry>) -> Result<()> {
     let path = LOCATIONS.launcher.root.join("statistics.json");
-    tokio::fs::write(path, serde_json::to_string_pretty(&logs)?).await?;
+    // The caller aborts on this error, so it is logged here as well: a panic
+    // under `panic = "abort"` is not something a user can report usefully.
+    let entry_count = logs.len();
+    tokio::fs::write(&path, serde_json::to_string_pretty(&logs)?)
+        .await
+        .map_err(|error| {
+            log::error!(
+                "the {entry_count} recorded launch(es) could not be written to {}: {error}",
+                path.display()
+            );
+            error
+        })?;
     Ok(())
 }

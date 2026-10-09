@@ -121,19 +121,32 @@ impl SingleInstance {
     /// Returns `None` once the claim is gone — the app is shutting down — so
     /// this is the whole loop of whoever watches for later launches.
     pub fn next_launch(&self) -> Option<Launch> {
-        self.queue.recv().ok()
+        // `None` is the shutdown path: the sender is gone because the claim was
+        // dropped. Recorded so that "the watcher stopped" is never the same
+        // silence as "no further launches arrived".
+        let launch = self.queue.recv().ok();
+        if launch.is_none() {
+            log::debug!(target: "shell", "the single-instance feed closed; the claim is gone");
+        }
+        launch
     }
 }
 
 /// Collects this process' command line and working directory for a launch that
 /// has to be handed to the instance that is already running.
 pub(crate) fn current_launch() -> Launch {
+    let cwd = std::env::current_dir()
+        .ok()
+        .and_then(|directory| directory.into_os_string().into_string().ok());
+    // A non-UTF-8 directory is handed over as an empty string, and the receiving
+    // instance would then act on no working directory at all.
+    if cwd.is_none() {
+        log::debug!(target: "shell", "the working directory could not be read as text; the \
+             launch is handed over without one");
+    }
     Launch {
         args: std::env::args().collect(),
-        cwd: std::env::current_dir()
-            .ok()
-            .and_then(|directory| directory.into_os_string().into_string().ok())
-            .unwrap_or_default(),
+        cwd: cwd.unwrap_or_default(),
     }
 }
 

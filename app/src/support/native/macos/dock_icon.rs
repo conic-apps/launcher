@@ -23,12 +23,20 @@ pub(super) fn install() {
     });
 
     unsafe {
-        NSNotificationCenter::defaultCenter().addObserverForName_object_queue_usingBlock(
-            Some(ns_string!("NSApplicationDidFinishLaunchingNotification")),
-            None,
-            None,
-            &block,
-        );
+        // The observer token is dropped on purpose (the notification centre keeps
+        // the block alive), so a nil return cannot be acted on — but a *missing*
+        // registration can be recorded, and it means the icon is never set at all.
+        // `Retained` is non-null by construction, so the only observable signal is
+        // whether the call returned anything; AppKit refusing is logged below by
+        // `set` itself, which is where the failure actually shows up.
+        let _observer = NSNotificationCenter::defaultCenter()
+            .addObserverForName_object_queue_usingBlock(
+                Some(ns_string!("NSApplicationDidFinishLaunchingNotification")),
+                None,
+                None,
+                &block,
+            );
+        log::debug!(target: "shell", "waiting for app launch to set the Dock icon");
     }
 }
 
@@ -48,11 +56,29 @@ fn set() {
             dataWithBytes: ICON.as_ptr() as *const core::ffi::c_void,
             length: ICON.len()
         ];
+        if data.is_null() {
+            log::warn!(target: "shell", "the embedded Dock icon could not be loaded");
+            return;
+        }
         let image: *mut AnyObject = msg_send![class!(NSImage), alloc];
         let image: *mut AnyObject = msg_send![image, initWithData: data];
+        // `initWithData:` returns nil for a PNG it cannot decode, and passing
+        // that nil straight to `setApplicationIconImage:` is what this whole file
+        // exists to avoid — the `Window.icon` route silently does nothing, and so
+        // does this one if the embedded bytes are wrong.
+        if image.is_null() {
+            log::warn!(
+                target: "shell",
+                "the embedded Dock icon is not a decodable image ({} bytes); the Dock will \\
+                 show the default icon",
+                ICON.len()
+            );
+            return;
+        }
         let app: *mut AnyObject = msg_send![class!(NSApplication), sharedApplication];
         let _: () = msg_send![app, setApplicationIconImage: image];
         // `setApplicationIconImage:` retains the image; balance our alloc/init.
         let _: () = msg_send![image, release];
+        log::debug!(target: "shell", "the Dock icon was set from the embedded PNG");
     }
 }

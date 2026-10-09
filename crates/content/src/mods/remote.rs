@@ -186,10 +186,30 @@ fn icon_path(hash: &str) -> PathBuf {
     cache_dir().join("local-icons").join(format!("{hash}.png"))
 }
 
+/// Reads one of the on-disk mod caches.
+///
+/// A corrupt file and a missing one both became an empty map, with the parse
+/// error discarded — so a cache that cannot be read silently never repopulates:
+/// every listing re-hashes every jar and re-queries the network, forever, and
+/// the log shows nothing but the per-file hash failures.
 async fn load_cache<T: DeserializeOwned>(name: &str) -> HashMap<String, T> {
-    match tokio::fs::read(cache_dir().join(name)).await {
-        Ok(bytes) => serde_json::from_slice(&bytes).unwrap_or_default(),
-        Err(_) => HashMap::default(),
+    let path = cache_dir().join(name);
+    match tokio::fs::read(&path).await {
+        Ok(bytes) => match serde_json::from_slice(&bytes) {
+            Ok(cache) => cache,
+            Err(error) => {
+                warn!(
+                    "{} could not be read as a mod cache ({error}); it will be rebuilt",
+                    path.display()
+                );
+                HashMap::default()
+            }
+        },
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => HashMap::default(),
+        Err(error) => {
+            warn!("Could not read {}: {error}", path.display());
+            HashMap::default()
+        }
     }
 }
 
@@ -390,8 +410,20 @@ pub async fn parse_folder_with_remote<S: AsRef<Path> + ?Sized>(folder: &S) -> Ve
             needs_modrinth.push(hash.clone());
         }
     }
+    // The cache axis, recorded once for the whole pass rather than per hash: a
+    // listing that took its time entirely from disk and one that queried both
+    // platforms for every mod are indistinguishable without this.
+    let cached = remote_by_hash.len();
+    log::debug!(
+        "Resolving remote info for {} mod(s): {} answered from cache, {} to query on \
+         Modrinth",
+        group_a.len() + group_b.len(),
+        cached,
+        needs_modrinth.len()
+    );
     if !needs_modrinth.is_empty() {
         let (info, _) = query_modrinth_batch(&needs_modrinth, &mut modrinth_cache).await;
+        log::debug!("Modrinth answered with {} of them", info.len());
         for (hash, remote) in info {
             remote_by_hash.entry(hash).or_insert(remote);
         }

@@ -162,8 +162,10 @@ pub async fn download(download: &DownloadTask, progress: &DownloadState) -> Resu
     if let Some(parent) = file_path.parent() {
         tokio::fs::create_dir_all(parent).await?
     }
-    let mut file = tokio::fs::File::create(&file_path).await.unwrap();
-    let mut response = HTTP_CLIENT.get(&url).send().await?.error_for_status()?;
+    let mut file = tokio::fs::File::create(&file_path).await?;
+    let response = HTTP_CLIENT.get(&url).send().await?;
+    log_response(&url, &response);
+    let mut response = response.error_for_status()?;
     let speed_counter_input = Arc::new(AtomicU64::new(0));
     let _speed_thread = {
         let speed_counter_input = speed_counter_input.clone();
@@ -206,7 +208,15 @@ pub async fn download(download: &DownloadTask, progress: &DownloadState) -> Resu
             download.url
         );
         progress.total_bytes.store(file_size, Ordering::SeqCst);
-    };
+    } else if download.size_bytes.is_none() {
+        // Neither side declared a size. `total_bytes` stays 0, which the progress
+        // bar divides by — worth a line, because an unending progress bar is the
+        // symptom and the cause is not otherwise anywhere.
+        debug!(
+            "No size for {}: neither a declared size nor a Content-Length header",
+            download.url
+        );
+    }
     let mut hasher = Hasher::from(&download.checksum);
     while let Some(chunk) = response.chunk().await? {
         file.write_all(&chunk).await?;
@@ -224,7 +234,13 @@ pub async fn download(download: &DownloadTask, progress: &DownloadState) -> Resu
         return Err(Error::ChecksumMissmatch(url));
     }
     debug!("Checksum verified for {url}");
-    file.sync_all().await?;
+    // A `sync_all` failure is a full or read-only disk, and it arrives here with
+    // every byte already written and the checksum already satisfied — so without
+    // this line the task reports success over a file that is not on the disk.
+    file.sync_all().await.map_err(|error| {
+        error!("Could not flush {url} to {}: {error}", file_path.display());
+        Error::Io(error)
+    })?;
     progress.completed_bytes.store(
         progress.total_bytes.load(Ordering::SeqCst),
         Ordering::SeqCst,
@@ -338,11 +354,20 @@ pub async fn filter_existing_and_verified_files(
             }
             let mut file = match std::fs::File::open(&download.file) {
                 Ok(file) => file,
-                Err(_) => {
+                Err(error) => {
+                    // Not "missing", so it is not the routine case: the file is
+                    // there and cannot be read. Re-downloading it either fixes it
+                    // or fails again with the real reason, and either way the
+                    // silent skip made it look like a routine fresh download.
+                    warn!(
+                        "Could not open {} to verify it: {error}",
+                        download.file.display()
+                    );
                     return true;
                 }
             };
-            let check_result = verify_checksum_from_read(&mut file, &download.checksum);
+            let check_result =
+                verify_checksum_from_read(&mut file, &download.checksum, &download.file);
             completed.fetch_add(1, Ordering::SeqCst);
             match check_result {
                 Some(x) => !x,
@@ -369,17 +394,34 @@ pub async fn filter_existing_and_verified_files(
     Ok(downloads)
 }
 
-fn verify_checksum_from_read<R: Read>(source: &mut R, checksum: &Checksum) -> Option<bool> {
+fn verify_checksum_from_read<R: Read>(
+    source: &mut R,
+    checksum: &Checksum,
+    path: &std::path::Path,
+) -> Option<bool> {
     if checksum == &Checksum::None {
         return None;
     }
     let mut hasher = Hasher::from(checksum);
     let mut buffer = [0; 1024];
     loop {
-        let bytes_read = source.read(&mut buffer).ok()?;
-        if bytes_read == 0 {
-            break;
-        }
+        // A read that fails mid-file used to return `None`, which the caller reads
+        // as "no checksum to check" and therefore *as verified* — so a truncated or
+        // partially-readable file was accepted as complete and never re-fetched.
+        // `debug`, not `warn`: the file is re-downloaded by the caller's other
+        // arm only if the hash actually mismatches, so this records why the
+        // verdict could not be reached at all.
+        let bytes_read = match source.read(&mut buffer) {
+            Ok(0) => break,
+            Ok(read) => read,
+            Err(error) => {
+                debug!(
+                    "Could not read {} to verify its checksum: {error}",
+                    path.display()
+                );
+                return None;
+            }
+        };
         hasher.update(&buffer[..bytes_read]);
     }
     let valid = hasher.verify(checksum);
@@ -396,6 +438,37 @@ fn speed_counter_loop(input: Arc<AtomicU64>, output: Arc<AtomicU64>, finished: A
         }
         output.store(buffer.iter().sum(), Ordering::SeqCst);
         thread::sleep(Duration::from_millis(2000));
+    }
+}
+
+/// Records what the server answered before the body is consumed.
+///
+/// `error_for_status` collapses every non-2xx into one message and drops the two
+/// that mean something specific to a downloader: a 429 carries a `Retry-After` the
+/// caller should honour, and a 404 from a mirror is worth distinguishing from a
+/// 500 on the same host. Neither survives into `reqwest::Error`, and this crate's
+/// retry loop rotates mirrors on any failure — so without the status there is no
+/// way to tell a bad mirror from a bad URL.
+///
+/// Success is `debug`, not `warn`: a release log should not carry one line per
+/// successful fetch, and the retry loop's own `Download succeeded` covers it.
+fn log_response(url: &str, response: &reqwest::Response) {
+    let status = response.status();
+    if status.is_success() {
+        debug!(
+            "The server answered {status} for {url} ({} bytes declared)",
+            response.content_length().unwrap_or(0)
+        );
+        return;
+    }
+    match response.headers().get(reqwest::header::RETRY_AFTER) {
+        Some(retry_after) => warn!(
+            "The server answered {status} for {url} and asked to retry after {}",
+            retry_after
+                .to_str()
+                .unwrap_or("<an unreadable Retry-After>")
+        ),
+        None => warn!("The server answered {status} for {url}"),
     }
 }
 
@@ -434,8 +507,16 @@ async fn inner_download_future(
             Ok(_) => break,
             Err(x) => x,
         };
-        warn!("Download failed: {}, retried: {retried}", task.url);
+        // The error itself is the point of the line. Without it a failed download
+        // reads as "it failed, five times", and a 404, a mirror timeout and a
+        // disk-full are indistinguishable — the first two are worth retrying on a
+        // different mirror, the third is not retryable at all.
+        warn!("Download failed: {}: {error}, retried: {retried}", task.url);
         if let Some(mirror) = mirror {
+            debug!(
+                "Disabling mirror {} for the rest of this download",
+                mirror.0
+            );
             disabled_mirrors.push(mirror.0);
         }
         if retried >= 5 {
@@ -458,13 +539,26 @@ async fn inner_download_executer(
     if let Some(parent) = file_path.parent() {
         tokio::fs::create_dir_all(parent).await?;
     }
-    let mut response = HTTP_CLIENT.get(&url).send().await?.error_for_status()?;
+    let response = HTTP_CLIENT.get(&url).send().await?;
+    log_response(&url, &response);
+    let mut response = response.error_for_status()?;
     let mut file = tokio::fs::File::create(&file_path).await?;
     let mut hasher = Hasher::from(&task.checksum);
+    let mut throttled = false;
     while let Some(chunk) = response.chunk().await? {
-        while progress.speed.load(Ordering::SeqCst) > config.max_download_speed
+        if progress.speed.load(Ordering::SeqCst) > config.max_download_speed
             && config.max_download_speed > 1024
         {
+            // Logged once per transfer, not per chunk: the throttle itself is
+            // unobservable from the progress bar, so a download that looks stalled
+            // is otherwise indistinguishable from a hung one.
+            if !throttled {
+                debug!(
+                    "Throttling {url} to {} bytes per second",
+                    config.max_download_speed
+                );
+                throttled = true;
+            }
             tokio::time::sleep(Duration::from_millis(100)).await;
         }
         file.write_all(&chunk).await?;
@@ -474,7 +568,10 @@ async fn inner_download_executer(
             .completed_bytes
             .fetch_add(chunk.len() as u64, Ordering::SeqCst);
     }
-    file.sync_all().await?;
+    file.sync_all().await.map_err(|error| {
+        error!("Could not flush {url} to {}: {error}", file_path.display());
+        Error::Io(error)
+    })?;
     if !hasher.verify(&task.checksum) {
         error!(
             "Checksum verification failed for {}: expected {:?}",

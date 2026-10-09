@@ -30,6 +30,7 @@ use crate::slint_backend::{
     AccountActivity, AccountDay, AccountMonthLabel, AccountViewState, App, CapeItem,
     DeleteAccountState, Dialogs, GameState,
 };
+use crate::ui::services::report::report;
 
 // The account the overlay is showing. Kept here rather than in the global: the
 // global carries the *rendered* fields, and an `Account` is not a Slint type.
@@ -172,7 +173,9 @@ fn select(ui: &App, key: &str) {
     // the footer and the launch page follow. The overlay shows that account too.
     if let Some(config) = config() {
         config.borrow_mut().current_account = Some(account.clone());
-        let _ = config::save_config(&config.borrow());
+        if let Err(error) = config::save_config(&config.borrow()) {
+            log::warn!("failed to save the config: {error}");
+        }
     }
     VIEWED.with(|cell| *cell.borrow_mut() = Some(account));
     ui.global::<GameState>().invoke_refresh();
@@ -211,7 +214,7 @@ fn confirm_delete(ui: &App) {
             log::error!("failed to delete the account: {error}");
         }
         let key = account.key();
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        report(&weak, move |ui| {
             ui.global::<DeleteAccountState>().set_deleting(false);
             ui.global::<Dialogs>()
                 .set_confirm_delete_account_visible(false);
@@ -224,7 +227,9 @@ fn confirm_delete(ui: &App) {
                     .is_some_and(|account| account.key() == key);
                 if same {
                     config.borrow_mut().current_account = None;
-                    let _ = config::save_config(&config.borrow());
+                    if let Err(error) = config::save_config(&config.borrow()) {
+                        log::warn!("failed to save the config: {error}");
+                    }
                 }
             }
             ui.global::<GameState>().invoke_refresh();
@@ -298,7 +303,7 @@ fn update_offline(ui: &App, account: OfflineAccount) {
             log::error!("failed to update the offline account: {error}");
             return;
         }
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        report(&weak, move |ui| {
             let account = Account::Offline(account);
             VIEWED.with(|cell| {
                 if cell.borrow().as_ref().map(Account::key) == Some(key.clone()) {
@@ -313,7 +318,9 @@ fn update_offline(ui: &App, account: OfflineAccount) {
                     .is_some_and(|current| current.key() == key);
                 if same {
                     config.borrow_mut().current_account = Some(account);
-                    let _ = config::save_config(&config.borrow());
+                    if let Err(error) = config::save_config(&config.borrow()) {
+                        log::warn!("failed to save the config: {error}");
+                    }
                 }
             }
             ui.global::<GameState>().invoke_refresh();
@@ -536,7 +543,7 @@ fn select_cape(ui: &App, index: i32) {
         } else {
             account::microsoft::set_active_cape(uuid, &cape_id).await
         };
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        report(&weak, move |ui| {
             let state = ui.global::<AccountViewState>();
             state.set_cape_loading(false);
             // Adopt the server's answer only while this account is still the one
@@ -593,7 +600,7 @@ fn start_server_name(ui: &App, account: &Account) {
     let weak = ui.as_weak();
     crate::support::runtime::spawn(async move {
         let info = account::yggdrasil::yggdrasil_server::get_server_info(&api_root).await;
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        report(&weak, move |ui| {
             let Ok(info) = info else { return };
             let state = ui.global::<AccountViewState>();
             if state.get_viewed_key().as_str() != key.as_str() {
@@ -634,7 +641,7 @@ fn start_stats(ui: &App, account: &Account) {
                     .collect()
             })
             .unwrap_or_default();
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        report(&weak, move |ui| {
             if ui.global::<AccountViewState>().get_viewed_key().as_str() != key.as_str() {
                 return;
             }

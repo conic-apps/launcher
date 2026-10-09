@@ -86,6 +86,14 @@ pub async fn resolve_java_executable(options: &ResolveJavaOptions) -> Result<Res
     let runtimes = tokio::task::spawn_blocking(scan_java_runtimes)
         .await
         .map_err(|error| Error::Scan(error.to_string()))??;
+    // Taken before the `into_iter()` below moves the list.
+    let scanned = runtimes.len();
+    let majors: Vec<u32> = runtimes
+        .iter()
+        .map(|runtime| runtime.major_version)
+        .collect();
+    let managed = runtimes.iter().filter(|runtime| runtime.is_managed).count();
+    let invalid = runtimes.iter().filter(|runtime| !runtime.is_valid).count();
     let system_java = runtimes.into_iter().find(|runtime| {
         runtime.major_version == required_major_version
             && runtime.is_valid
@@ -101,5 +109,14 @@ pub async fn resolve_java_executable(options: &ResolveJavaOptions) -> Result<Res
             arch: runtime.arch,
         });
     }
+    // The function's own terminal failure, and it was the one outcome with no log
+    // at all — while the three branches above all announced themselves. The
+    // inventory is what tells "nothing is installed" apart from "Java 21 is
+    // installed, the game wants 8, and 8 is on the disabled list", which are very
+    // different problems for the user.
+    log::warn!(
+        "No Java runtime matches major version {required_major_version}: scanned {scanned} \
+         candidate(s) with majors {majors:?} ({invalid} invalid, {managed} launcher-managed)"
+    );
     Err(Error::NoSuitableJavaRuntime)
 }
