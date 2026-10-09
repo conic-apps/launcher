@@ -37,9 +37,6 @@ pub enum Error {
         url::ParseError,
     ),
 
-    #[error("Chunk length mismatch")]
-    ChunkLengthMismatch,
-
     #[error(transparent)]
     Aborted(
         #[from]

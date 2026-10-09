@@ -302,7 +302,6 @@ fn path_separator() -> char {
     }
 }
 
-#[allow(dead_code)]
 fn home_dir() -> Option<PathBuf> {
     #[cfg(target_os = "windows")]
     let home = env::var("USERPROFILE").ok();

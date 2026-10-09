@@ -171,12 +171,10 @@ impl ResolvedVersion {
         self
     }
     fn join_logging(&mut self, logging: Option<HashMap<String, Logging>>) -> &mut Self {
-        if let Some(logging) = logging {
-            if !logging.is_empty() {
-                self.logging = logging
-            } else {
-                self.logging = logging.clone()
-            }
+        if let Some(logging) = logging
+            && !logging.is_empty()
+        {
+            self.logging = logging
         };
         self
     }
