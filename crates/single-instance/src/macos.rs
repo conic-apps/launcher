@@ -92,11 +92,26 @@ pub(crate) fn claim(launches: Sender<Launch>) -> Result<Guard, AlreadyRunning> {
     let served = std::thread::Builder::new()
         .name("conic-single-instance".into())
         .spawn(move || serve(listener, launches));
-    if served.is_err() {
+    if let Err(error) = served {
         // The socket is bound but nothing reads it, so every later launch would
         // hand its report to a queue nobody watches and then quit. Give the
         // socket back and run unguarded instead.
-        let _ = std::fs::remove_file(&path);
+        //
+        // `warn`, because the result is a silent loss of the feature: from here
+        // the launcher is no longer single-instance, and this was the only place
+        // that could say so.
+        log::warn!(
+            target: "shell",
+            "could not start the single-instance listener ({error}); every launch of the \
+             app will open its own window"
+        );
+        if let Err(cleanup) = std::fs::remove_file(&path) {
+            log::debug!(
+                target: "shell",
+                "the abandoned socket at {} could not be removed: {cleanup}",
+                path.display()
+            );
+        }
         return Ok(Guard { path: None });
     }
 
@@ -131,8 +146,16 @@ fn serve(listener: UnixListener, launches: Sender<Launch>) {
                 continue;
             }
         }
-        if let Some(launch) = decode(&raw) {
-            report(&launches, launch);
+        match decode(&raw) {
+            Some(launch) => report(&launches, launch),
+            // Traffic loss between two launches of the app, and it was invisible:
+            // the reading process sees a report that does not parse and says
+            // nothing about it.
+            None => log::warn!(
+                target: "shell",
+                "a launch report of {} bytes could not be read",
+                raw.len()
+            ),
         }
     }
 }

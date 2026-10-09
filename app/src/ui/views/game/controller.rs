@@ -53,7 +53,6 @@ impl GameController {
             expanded: saved.expanded.into_iter().collect(),
             accounts: Vec::new(),
             playtime: HashMap::new(),
-            content: HashMap::new(),
             avatars: HashMap::new(),
             backgrounds: RefCell::new(HashMap::new()),
             rows_model,
@@ -82,7 +81,18 @@ impl GameController {
         let sort = controller().borrow().sort;
         let weak = ui.as_weak();
         crate::support::runtime::spawn(async move {
-            let instances = instance::list_instances(sort).await.unwrap_or_default();
+            // The whole game page rendered empty on a failure, with nothing but
+            // the "no instances" placeholder to show for it — which reads as "my
+            // instances are gone" rather than "the folder could not be read".
+            // `instance` itself warns per skipped directory, so this only covers
+            // the failure to read the directory at all.
+            let instances = match instance::list_instances(sort).await {
+                Ok(instances) => instances,
+                Err(error) => {
+                    log::error!("Could not list the instances: {error}");
+                    Vec::new()
+                }
+            };
             crate::ui::services::report::report(&weak, move |ui| {
                 let controller = controller();
                 controller.borrow_mut().set_instances(instances);
@@ -101,7 +111,10 @@ impl GameController {
         self.instances = instances;
         // Re-scan the per-instance caches so a refresh picks up external changes.
         self.playtime.clear();
-        self.content.clear();
+        // The content cache is keyed the same way and read the same often, so it
+        // is dropped for the same reason: the instance folder may have been
+        // edited outside the app since the listing was read.
+        crate::ui::overlays::content::cache::clear();
         // Keep the selection valid, falling back to the first instance and
         // persisting it, so a deleted instance stops being restored on the next
         // run.
@@ -140,15 +153,6 @@ impl GameController {
         }
         let value = instance::calculate_playtime(id).unwrap_or_default();
         self.playtime.insert(id.to_string(), value);
-        value
-    }
-
-    pub(crate) fn content(&mut self, id: &str) -> content::ContentCounts {
-        if let Some(value) = self.content.get(id) {
-            return *value;
-        }
-        let value = content::content_counts(id);
-        self.content.insert(id.to_string(), value);
         value
     }
 
@@ -470,13 +474,6 @@ impl GameController {
                 .retain(|id, _| live.contains(id.as_str()));
         }
 
-        // Content counts + summary need the current instance; compute them
-        // before borrowing the global mutably.
-        let content = self
-            .current_id
-            .clone()
-            .map(|id| self.content(&id))
-            .filter(|_| self.current().is_some());
         let playtime = self
             .current_id
             .clone()
@@ -523,10 +520,11 @@ impl GameController {
         );
         let current_id = current.as_ref().map(|instance| instance.id.clone());
         apply_current(&state, current.as_ref(), playtime);
-        // The preview rows draw the first few icons of each kind as well as
-        // their counts; `content` owns the decoding and the caches.
-        apply_preview_rows(ui, &state, current_id.as_deref());
-        apply_content_counts(&state, content);
+        // The four counts and the four preview rows, out of the shared content
+        // cache. This runs after `apply_current` because the cache refuses to
+        // write to the summary unless it is the current instance — a property
+        // only that writes.
+        apply_content(ui, current_id.as_deref());
         apply_account(&state, current_account.as_ref(), current_avatar);
         apply_background(ui, background_instance.as_ref());
     }
@@ -614,35 +612,26 @@ fn apply_current(state: &GameState<'_>, current: Option<&Instance>, playtime: u6
     }
 }
 
-/// The current instance's content counts.
-fn apply_content_counts(state: &GameState<'_>, content: Option<content::ContentCounts>) {
-    match content {
-        Some(content) => {
-            state.set_content_saves(content.saves as i32);
-            state.set_content_mods(content.mods as i32);
-            state.set_content_resourcepacks(content.resourcepacks as i32);
-            state.set_content_screenshots(content.screenshots as i32);
-        }
-        None => {
-            state.set_content_saves(0);
-            state.set_content_mods(0);
-            state.set_content_resourcepacks(0);
-            state.set_content_screenshots(0);
-        }
-    }
-}
-
-/// The preview rows of the current instance, or four empty models without one.
-fn apply_preview_rows(ui: &App, state: &GameState<'_>, current_id: Option<&str>) {
-    match current_id {
-        Some(id) => crate::ui::overlays::content::refresh_preview_icons(ui, id),
-        None => {
-            state.set_preview_saves(slint::ModelRc::default());
-            state.set_preview_mods(slint::ModelRc::default());
-            state.set_preview_resourcepacks(slint::ModelRc::default());
-            state.set_preview_screenshots(slint::ModelRc::default());
-        }
-    }
+/// The summary's four counts and its four preview rows, out of the content
+/// cache the overlay draws from.
+///
+/// `apply` runs on every list change — a sort, a group toggle, a keystroke in
+/// the search box — so this is where the cache is asked rather than where the
+/// instance is selected: it is a lookup while the cache answers, which is what
+/// keeps those three from re-reading the disk. It also writes the counts
+/// synchronously, so a fresh cache answers immediately instead of on the next
+/// parse to land.
+fn apply_content(ui: &App, current_id: Option<&str>) {
+    let Some(id) = current_id else {
+        // No instance: the rows and the counts are emptied rather than left
+        // showing the last one.
+        crate::ui::overlays::content::cache::counts(ui, None);
+        crate::ui::overlays::content::clear_rows();
+        return;
+    };
+    crate::ui::overlays::content::cache::ensure(ui, id);
+    crate::ui::overlays::content::cache::counts(ui, Some(id));
+    crate::ui::overlays::content::refresh_preview_icons(ui, id);
 }
 
 /// The selected account, or the logged-out footer.

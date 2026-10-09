@@ -396,6 +396,28 @@ async fn configure_first_launch_language(config: Config, instance: &Instance) {
 async fn get_version_release_time(instance: &Instance) -> Option<String> {
     let minecraft_location = LOCATIONS.minecraft.clone();
     let version_json_path = minecraft_location.get_version_json(&instance.config.runtime.minecraft);
-    let raw_version_json = tokio::fs::read_to_string(version_json_path).await.ok()?;
-    Version::from_str(&raw_version_json).ok()?.release_time
+    // Both of these used to be a silent `None`, and the consequence is not a
+    // quiet value: `language_era(None)` answers `Modern`, so an unreadable
+    // `version.json` gives a pre-1.6 instance the modern `lang` casing and the
+    // game silently falls back to English for want of the right resource pack.
+    let raw_version_json = match tokio::fs::read_to_string(&version_json_path).await {
+        Ok(raw) => raw,
+        Err(error) => {
+            warn!(
+                "Could not read {} to decide the game's language era: {error}",
+                version_json_path.display()
+            );
+            return None;
+        }
+    };
+    match Version::from_str(&raw_version_json) {
+        Ok(version) => version.release_time,
+        Err(error) => {
+            warn!(
+                "{} does not parse, so the game's language era is unknown: {error}",
+                version_json_path.display()
+            );
+            None
+        }
+    }
 }

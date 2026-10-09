@@ -132,11 +132,29 @@ fn install_should_terminate() {
 /// takes the same path as `⌘W`: confirm first when a task is running, close
 /// outright otherwise.
 unsafe extern "C" fn application_should_terminate(_this: Id, _cmd: SelPtr, _sender: Id) -> usize {
+    // Every `⌘Q`, the menu's Quit and a system logout arrive here, and the
+    // function used to log nothing on either path — so the `warn!`s above
+    // describe a state the log never showed being acted on.
+    log::debug!(
+        target: "shell",
+        "terminate: the platform asked to quit; replaying it through the close flow"
+    );
+    let mut asked = false;
     REQUEST_CLOSE.with(|slot| {
         if let Some(request) = slot.borrow().as_ref() {
+            asked = true;
             request();
         }
     });
+    if !asked {
+        // No handler installed, yet `NSTerminateCancel` still goes back — so the
+        // quit is refused with nothing on screen saying why.
+        log::warn!(
+            target: "shell",
+            "terminate: the platform asked to quit and nothing is listening, so the quit \
+             is being refused"
+        );
+    }
     // `NSTerminateCancel`. (`NSTerminateNow` is 1.)
     0
 }
@@ -165,6 +183,15 @@ fn method_types(selector: &CStr) -> *const c_char {
             }
         }
     }
+    // A hardcoded encoding is a guess: if the protocol is not registered — an
+    // unusual runtime, or a future SDK — this is the encoding AppKit will decode
+    // the selector through, and a wrong one fails as an unrecognised selector with
+    // nothing to say which of the two paths produced it.
+    log::debug!(
+        target: "shell",
+        "terminate: no protocol method description for {selector:?}; using the \
+         NSUInteger encoding"
+    );
     c"Q@:@".as_ptr()
 }
 

@@ -10,6 +10,7 @@ repository.workspace = true
 platform.workspace = true
 storage.workspace = true
 
+log.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 once_cell.workspace = true

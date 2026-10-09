@@ -25,7 +25,22 @@ fn resolve_argument(argument: &Value, enabled_features: &[String]) -> Vec<String
     };
     if check_allowed(rules, enabled_features) {
         if argument["value"].is_array() {
-            serde_json::from_value::<Vec<String>>(argument["value"].clone()).unwrap_or_default()
+            // One element that is not a string fails the whole deserialization,
+            // and the default is an *empty* list — so a single unexpected token in
+            // a loader's json silently removes every argument that entry
+            // contributes, `--add-opens` and `-p` included. That is the shape of
+            // "the game starts and then dies", so the entry is logged.
+            match serde_json::from_value::<Vec<String>>(argument["value"].clone()) {
+                Ok(values) => values,
+                Err(error) => {
+                    log::warn!(
+                        "an argument entry contributes nothing: its 'value' is not a list of \
+                         strings ({error}) — {}",
+                        argument["value"]
+                    );
+                    Vec::new()
+                }
+            }
         } else if argument["value"].is_string() {
             match argument["value"].as_str() {
                 Some(x) => vec![x.to_string()],

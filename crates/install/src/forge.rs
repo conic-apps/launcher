@@ -10,9 +10,10 @@ use std::{
     ffi::OsString,
     path::{Path, PathBuf},
     process::Stdio,
+    sync::{Arc, atomic::AtomicBool, atomic::Ordering as AtomicOrdering},
 };
 
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
@@ -122,7 +123,14 @@ pub async fn install(
 ) -> Result<()> {
     info!("Start downloading the forge installer");
     let installer_path = download_installer(mcversion, forge_version, reporter).await?;
-    let _ = prefetch_installer_dependencies(minecraft_location, &installer_path, reporter).await;
+    // The result was discarded outright, so a prefetch that failed on any of its
+    // six steps left nothing behind: the install carried on and either failed much
+    // later or the launch quietly re-downloaded the libraries.
+    if let Err(error) =
+        prefetch_installer_dependencies(minecraft_location, &installer_path, reporter).await
+    {
+        warn!("Could not prefetch the forge installer dependencies: {error}");
+    }
     let bangbang93_bootstrapper_installation_result = try_bangbang93_bootstrapper(
         &minecraft_location.root,
         &installer_path,
@@ -228,6 +236,12 @@ async fn try_bangbang93_bootstrapper(
     info!("Trying Bangbang93 forge install bootstrapper");
     let bangbang93_bootstrapper_path =
         save_bootstrapper(FORGE_INSTALL_BOOTSTRAPPER_BANGBANG93).await?;
+    // NeoForge logs the java it runs with; Forge logged nothing, so a spawn
+    // failure named neither the runtime nor the classpath.
+    info!(
+        "Running {} with the bangbang93 bootstrapper",
+        java_path.display()
+    );
     let child = Command::new(java_path)
         .arg("-cp")
         .arg(generate_classpath(
@@ -237,6 +251,10 @@ async fn try_bangbang93_bootstrapper(
         .arg("com.bangbang93.ForgeInstaller")
         .arg(install_dir)
         .stdout(Stdio::piped())
+        // Piped as well as inherited-by-default was: a Gradle stack trace on
+        // stderr is the most informative thing the installer produces, and it was
+        // inherited straight past the launcher instead of being reported.
+        .stderr(Stdio::piped())
         .spawn()?;
     let result = wait_child(child, reporter).await;
     tokio::fs::remove_file(bangbang93_bootstrapper_path).await?;
@@ -257,6 +275,10 @@ async fn try_conicmc_bootstrapper(
 ) -> Result<()> {
     info!("Trying ConicMC forge install bootstrapper");
     let conicmc_bootstrapper_path = save_bootstrapper(FORGE_INSTALL_BOOTSTRAPPER_CONIC).await?;
+    info!(
+        "Running {} with the ConicMC bootstrapper",
+        java_path.display()
+    );
     let child = Command::new(java_path)
         .arg("-cp")
         .arg(generate_classpath(
@@ -267,45 +289,100 @@ async fn try_conicmc_bootstrapper(
         .arg(install_dir)
         .arg(version_id)
         .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
         .spawn()?;
     let result = wait_child(child, reporter).await;
     tokio::fs::remove_file(conicmc_bootstrapper_path).await?;
     result
 }
 
-/// Streams the installer's stdout, reporting every line but the `true`
-/// handshake, then waits for the process to exit.
+/// Streams the installer's stdout and stderr, reporting every line but the
+/// `true` handshake, then waits for the process to exit.
 ///
 /// The subprocess can run for minutes, so it is driven by [`Command`] instead of
 /// `std::process::Command`: a blocking `read_line` would park a runtime worker
 /// thread for the whole install instead of just this task.
+///
+/// Both streams are drained rather than just stdout: a loader installer that
+/// fails usually says so on stderr, and while that stream was inherited it went
+/// past the launcher entirely — so the log kept the stdout chatter and none of the
+/// explanation. They are drained *concurrently* because draining one to EOF before
+/// touching the other blocks as soon as the other pipe's buffer fills, which for a
+/// Gradle stack trace is a matter of kilobytes.
 async fn wait_child(mut child: Child, reporter: &ModLoaderReporter) -> Result<()> {
-    let out = child.stdout.take().ok_or(Error::ForgeInstallerFailed)?;
-    let mut out = BufReader::new(out);
-    let mut buf = String::new();
-    let mut success = false;
+    let stdout = child.stdout.take().ok_or(Error::ForgeInstallerFailed)?;
+    let stderr = child.stderr.take();
     let pid = child.id().ok_or(Error::ForgeInstallerFailed)?;
-    loop {
-        buf.clear();
-        let size = out.read_line(&mut buf).await?;
-        if size == 0 {
-            break;
+    // Shared because each stream is pumped on its own future and they have to
+    // agree on one verdict: only stdout carries the `true` handshake.
+    let success = Arc::new(AtomicBool::new(false));
+
+    let stdout_pump = pump_lines(stdout, pid, reporter, Some(Arc::clone(&success)));
+    // stderr is optional: a caller that did not pipe it hands back `None`.
+    let stderr_pump = async {
+        match stderr {
+            Some(stderr) => pump_lines(stderr, pid, reporter, None).await,
+            None => Ok(()),
         }
-        let line = buf.trim();
-        if line == "true" {
-            success = true;
-            info!("Successfully ran the forge installer");
-        } else {
-            debug!("[{pid}] {line}");
-            reporter.report_installer_line(line);
-        }
-    }
+    };
+
+    let (stdout_result, stderr_result) = tokio::join!(stdout_pump, stderr_pump);
+    stdout_result?;
+    stderr_result?;
+
     let status = child.wait().await?;
-    if !success || !status.success() {
-        error!("Failed to run forge installer");
+    // The two failure modes are separate: a bootstrapper that printed its `true`
+    // and then exited non-zero is not the same thing as one that never printed
+    // it, and neither used to be named. The status carries the exit code and any
+    // signal, which is the one fact that says whether the JVM was killed or the
+    // installer rejected something.
+    let reported_success = success.load(AtomicOrdering::SeqCst);
+    if !reported_success || !status.success() {
+        error!(
+            "Failed to run forge installer: it {} and exited with {status}",
+            if reported_success {
+                "reported success"
+            } else {
+                "never reported success"
+            }
+        );
         return Err(Error::ForgeInstallerFailed);
     }
     Ok(())
+}
+
+/// Reads `stream` to EOF, reporting every line.
+///
+/// `success` is `Some` for the stream that carries the installer's `true`
+/// handshake and `None` for the rest — a `true` on stderr is not the handshake,
+/// and the stderr stack trace is the whole reason that stream is piped at all.
+async fn pump_lines<R>(
+    stream: R,
+    pid: u32,
+    reporter: &ModLoaderReporter,
+    success: Option<Arc<AtomicBool>>,
+) -> std::result::Result<(), std::io::Error>
+where
+    R: tokio::io::AsyncRead + Unpin,
+{
+    let mut reader = BufReader::new(stream);
+    let mut buf = String::new();
+    loop {
+        buf.clear();
+        if reader.read_line(&mut buf).await? == 0 {
+            return Ok(());
+        }
+        let line = buf.trim().to_string();
+        if success.is_some() && line == "true" {
+            if let Some(success) = &success {
+                success.store(true, AtomicOrdering::SeqCst);
+            }
+            info!("Successfully ran the forge installer");
+        } else {
+            debug!("[{pid}] {line}");
+            reporter.report_installer_line(&line);
+        }
+    }
 }
 
 async fn save_bootstrapper(data: &[u8]) -> Result<PathBuf> {

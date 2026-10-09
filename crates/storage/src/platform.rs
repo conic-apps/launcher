@@ -75,12 +75,35 @@ pub fn default_root() -> PathBuf {
 /// is the portable build.
 #[cfg(target_os = "windows")]
 fn portable_root() -> Option<PathBuf> {
-    let installed = windows_registry::install_location()
-        .and_then(|directory| std::env::current_exe().ok().map(|exe| (exe, directory)))
-        .map(|(exe, directory)| path_is_under(&exe, &directory))
-        .unwrap_or(false);
-    if installed {
-        return None;
+    // Each of the three readings can fail or answer differently, and all three
+    // collapse into one boolean here. That boolean picks the portable updater over
+    // the MSI one, so a registry read that fails is not a cosmetic loss — it is the
+    // wrong update path, chosen with nothing to say why.
+    match windows_registry::install_location() {
+        Some(directory) => match std::env::current_exe() {
+            Ok(exe) => {
+                let installed = path_is_under(&exe, &directory);
+                if !installed {
+                    log::debug!(
+                        "the MSI marker points at {} but this executable is at {}, so this is \
+                         a portable build",
+                        directory.display(),
+                        exe.display()
+                    );
+                }
+                if installed {
+                    return None;
+                }
+            }
+            Err(error) => {
+                log::debug!(
+                    "the MSI marker points at {} but the running executable is unknown \
+                     ({error})",
+                    directory.display()
+                );
+            }
+        },
+        None => log::debug!("no MSI install marker was found; treating this as a portable build"),
     }
     let exe = std::env::current_exe().ok()?;
     exe.parent()

@@ -120,10 +120,23 @@ fn probe_java(executable: &Path, options: &ScanOptions) -> Option<JavaRuntime> {
         raw.merge(probe.clone());
     }
 
-    let version = raw.version?;
-    let major_version = raw
-        .major_version
-        .or_else(|| parse_major_version(&version))?;
+    // Both of these dropped the candidate in silence, which is the shape of
+    // "Java was not found" for a runtime that is installed but reports itself
+    // in a way this does not parse.
+    let Some(version) = raw.version else {
+        debug!(
+            "{} reported no version at all; ignoring it",
+            executable.display()
+        );
+        return None;
+    };
+    let Some(major_version) = raw.major_version.or_else(|| parse_major_version(&version)) else {
+        debug!(
+            "Could not read a major version out of {version:?} for {}; ignoring it",
+            executable.display()
+        );
+        return None;
+    };
 
     let java_home = raw.java_home.clone().or(resolved_home);
     let is_jdk = java_home.as_ref().is_some_and(|home| {
@@ -203,7 +216,16 @@ fn run_java_probe(executable: &Path) -> Option<JavaInfoRaw> {
         }
         thread::sleep(Duration::from_millis(20));
     };
-    let _ = exited?;
+    // The status was discarded, so a probe that ran and exited non-zero — a JRE
+    // too damaged to start, a wrapper that prints a licence and dies — was
+    // treated exactly like a clean exit, and `is_valid` was set for it.
+    let status = exited?;
+    if !status.success() {
+        debug!(
+            "The Java probe for {} exited with {status}",
+            executable.display()
+        );
+    }
 
     let stdout = stdout_reader
         .and_then(|h| h.join().ok())
@@ -222,7 +244,19 @@ fn run_java_probe(executable: &Path) -> Option<JavaInfoRaw> {
         || info.java_home.is_some()
         || info.vendor.is_some()
         || info.arch.is_some();
-    if is_java_output { Some(info) } else { None }
+    if is_java_output {
+        Some(info)
+    } else {
+        // The *rejection* path, and the one that was silent: a wrapper script, a
+        // binary that happens to be called `java`, a launcher printing a banner
+        // first — all dropped here with nothing to say. A "Java was not found"
+        // report needs this line.
+        debug!(
+            "{} did not answer like a Java runtime; ignoring it",
+            executable.display()
+        );
+        None
+    }
 }
 
 fn read_all(mut reader: impl Read) -> Vec<u8> {
@@ -352,6 +386,10 @@ fn push_homes_recursive(candidates: &mut Vec<PathBuf>, root: &Path, max_depth: u
         return;
     }
     let Ok(entries) = fs::read_dir(root) else {
+        // A scan root that cannot be listed is one of the per-platform places
+        // this file looks; without this, "no Java there" and "we could not look
+        // there" are the same answer.
+        debug!("Could not scan {} for Java runtimes", root.display());
         return;
     };
     for entry in entries.flatten() {
@@ -365,6 +403,7 @@ fn push_homes_recursive(candidates: &mut Vec<PathBuf>, root: &Path, max_depth: u
 /// Treats every immediate sub-directory of `root` as a potential Java home.
 fn push_home_subdirs(candidates: &mut Vec<PathBuf>, root: &Path) {
     let Ok(entries) = fs::read_dir(root) else {
+        debug!("Could not scan {} for Java runtimes", root.display());
         return;
     };
     for entry in entries.flatten() {
@@ -379,6 +418,7 @@ fn push_home_subdirs(candidates: &mut Vec<PathBuf>, root: &Path) {
 #[cfg(target_os = "macos")]
 fn push_mac_jvm_candidates(candidates: &mut Vec<PathBuf>, root: &Path) {
     let Ok(entries) = fs::read_dir(root) else {
+        debug!("Could not scan {} for Java runtimes", root.display());
         return;
     };
     for entry in entries.flatten() {
@@ -428,8 +468,22 @@ fn query_windows_registry(candidates: &mut Vec<PathBuf>) {
         .output()
     {
         Ok(output) => output,
-        Err(_) => return,
+        Err(error) => {
+            // The only Windows-only discovery path, and a spawn failure here means
+            // the whole registry is skipped with nothing said.
+            debug!("could not run reg.exe to query JavaSoft ({error})");
+            return;
+        }
     };
+    if !output.status.success() {
+        // `reg query` answers non-zero when the key is absent, which is ordinary,
+        // and also when it failed for another reason. Either way its stdout was
+        // about to be parsed as if it were the answer, so it is said here.
+        debug!(
+            "reg.exe query for JavaSoft exited with {}; parsing its output anyway",
+            output.status
+        );
+    }
     let text = String::from_utf8_lossy(&output.stdout);
     for line in text.lines() {
         let line = line.trim();

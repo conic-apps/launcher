@@ -74,11 +74,23 @@ impl Locations {
         let instances_root = overrides
             .instances
             .unwrap_or_else(|| root.join("instances"));
-        Self {
+        let locations = Self {
             launcher: LauncherLocation::new(launcher_root),
             minecraft: MinecraftLocation::new(minecraft_root),
             instances: InstancesLocation::new(instances_root),
-        }
+        };
+        // The one line that answers "where is my data". Every other explanation of
+        // a missing library, account or instance is downstream of these three
+        // paths, and this is the only place they are all known together. `info`
+        // because the storage step can be changed at runtime and the app
+        // restarts right after — the log is how a relocation is confirmed.
+        log::info!(
+            "launcher data at {}, minecraft at {}, instances at {}",
+            locations.launcher.root.display(),
+            locations.minecraft.root.display(),
+            locations.instances.root.display()
+        );
+        locations
     }
 
     /// Creates the directories an install needs and seeds the files the game's

@@ -4,7 +4,14 @@
 
 //! The Neoforge version list and installer.
 
-use std::{path::Path, path::PathBuf, process::Stdio};
+use std::{
+    path::{Path, PathBuf},
+    process::Stdio,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering as AtomicOrdering},
+    },
+};
 
 use log::{debug, error, info};
 use serde_json::Value;
@@ -55,7 +62,12 @@ pub async fn install(
 ) -> Result<()> {
     info!("Start downloading the neoforge installer");
     let installer_path = download_installer(neoforge_version, reporter).await?;
-    info!("Running installer with {}", java_path.display());
+    info!(
+        "Running {} -jar {} --installClient {}",
+        java_path.display(),
+        installer_path.display(),
+        install_dir.display()
+    );
 
     let mut child = Command::new(java_path)
         .arg("-jar")
@@ -63,37 +75,94 @@ pub async fn install(
         .arg("--installClient")
         .arg(install_dir)
         .stdout(Stdio::piped())
+        // Inherited by default, which sent NeoForge's own error output past the
+        // launcher entirely; piped so it is reported like stdout.
+        .stderr(Stdio::piped())
         .spawn()?;
 
     let out = child.stdout.take().ok_or(Error::NeoforgeInstallerFailed)?;
-    let mut out = BufReader::new(out);
-    let mut buf = String::new();
-    let mut success = false;
+    let err = child.stderr.take();
     let pid = child.id().ok_or(Error::NeoforgeInstallerFailed)?;
+    // Both streams are drained concurrently: reading one to EOF before touching
+    // the other blocks as soon as the other's pipe buffer fills, which is a
+    // few kilobytes of NeoForge error output.
+    let success = Arc::new(AtomicBool::new(false));
 
+    // The pumps are named futures rather than inline `async` blocks so each one's
+    // `io::Result` is named rather than inferred from an ambiguous `?`.
+    let stdout_pump = pump(Some(out), pid, reporter, Some(Arc::clone(&success)));
+    let err_pump = pump(err, pid, reporter, None);
+
+    let (stdout_result, stderr_result) = tokio::join!(stdout_pump, err_pump);
+    stdout_result?;
+    stderr_result?;
+
+    let status = child.wait().await?;
+    let success = success.load(AtomicOrdering::SeqCst);
+    // The temp file is named by a bare UUID, so naming the version here is the
+    // only thing that ties a leftover jar in the temp folder to an install.
+    tokio::fs::remove_file(&installer_path)
+        .await
+        .map_err(|error| {
+            // Deliberately not fatal: the install itself succeeded, and failing on a
+            // cleanup turns a finished install into an error.
+            log::warn!(
+                "Could not remove the staged installer {}: {error}",
+                installer_path.display()
+            );
+            error
+        })?;
+    if !success || !status.success() {
+        error!(
+            "Failed to run the neoforge installer: it {} and exited with {status}",
+            if success {
+                "reported success"
+            } else {
+                "never reported success"
+            }
+        );
+        return Err(Error::NeoforgeInstallerFailed);
+    }
+    info!("neoforge {neoforge_version} installed");
+    Ok(())
+}
+
+/// Reads `stream` to EOF, reporting every line.
+///
+/// `stream` is `None` when the caller did not pipe that stream. `success` is
+/// `Some` only for the stdout stream, which is where NeoForge prints its
+/// "Successfully installed client into launcher" handshake — a line matching that
+/// on stderr is installer output, not the signal.
+async fn pump<R>(
+    stream: Option<R>,
+    pid: u32,
+    reporter: &ModLoaderReporter,
+    success: Option<Arc<AtomicBool>>,
+) -> std::result::Result<(), std::io::Error>
+where
+    R: tokio::io::AsyncRead + Unpin,
+{
+    let Some(stream) = stream else {
+        return Ok(());
+    };
+    let mut reader = BufReader::new(stream);
+    let mut buf = String::new();
     loop {
         buf.clear();
-        let size = out.read_line(&mut buf).await?;
-        if size == 0 {
-            break;
+        if reader.read_line(&mut buf).await? == 0 {
+            return Ok(());
         }
-        let line = buf.trim();
-        if line.contains("Successfully installed client into launcher") {
-            success = true;
+        let line = buf.trim().to_string();
+        if success.is_some() && line.contains("Successfully installed client into launcher") {
+            if let Some(success) = &success {
+                success.store(true, AtomicOrdering::SeqCst);
+            }
             info!("Successfully ran the neoforge installer");
         } else {
             debug!("[{pid}] {line}");
-            reporter.report_installer_line(line);
+            reporter.report_installer_line(&line);
         }
     }
-
-    let status = child.wait().await?;
-    tokio::fs::remove_file(installer_path).await?;
-    if !success || !status.success() {
-        error!("Failed to ran neoforge installer");
-        return Err(Error::NeoforgeInstallerFailed);
-    }
-    Ok(())
 }
 
 /// Downloads the Neoforge installer JAR to a temp file and returns its path.
@@ -133,5 +202,6 @@ pub async fn download_installer(
         ),
     )
     .await?;
+    info!("Downloaded the neoforge installer");
     Ok(installer_path)
 }

@@ -74,10 +74,16 @@ pub(crate) fn claim(launches: Sender<Launch>) -> Result<Guard, AlreadyRunning> {
     };
 
     match builder.build() {
-        Ok(connection) => Ok(Guard {
-            connection: Some(connection),
-            name,
-        }),
+        // macOS logs the socket it listens on; Linux was the one backend whose
+        // success was never stated, so "it is single-instance" and "the bus was
+        // never really reached" read the same.
+        Ok(connection) => {
+            log::debug!(target: "shell", "claimed the bus name {name}");
+            Ok(Guard {
+                connection: Some(connection),
+                name,
+            })
+        }
         Err(zbus::Error::NameTaken) => {
             let launch = current_launch();
             if let Err(error) = Connection::session().and_then(|connection| {

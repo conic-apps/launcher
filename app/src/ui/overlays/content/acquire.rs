@@ -75,10 +75,10 @@ pub(crate) async fn install(
     .await
     .map_err(|error| error.to_string())?;
 
-    // Re-read the mods so a later list shows the new file with its metadata.
-    if detail.kind == RemoteKind::Mods {
-        content::mods::remote::parse_mods(instance_id).await;
-    }
+    // The new file is on disk but nothing has read it yet. Whoever asked for the
+    // install invalidates the cache's entry for this kind — which both this
+    // panel and the summary's count are drawn from — so the one re-read that
+    // follows is the first thing to open the jar.
     Ok(())
 }
 

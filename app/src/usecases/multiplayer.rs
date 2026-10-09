@@ -14,7 +14,20 @@ use multiplayer::NexusService;
 /// Whether the Conic Nexus library is present and valid, which decides the
 /// screen the dialog opens on.
 pub(crate) async fn library_ready() -> bool {
-    multiplayer::check_library().await.is_ok()
+    // The result decided which screen the dialog opens on, and the error was
+    // dropped here *and* by the caller — so "the dialog always shows the download
+    // screen" had no cause anywhere. The library itself logs the checksum
+    // mismatch; this covers the rest.
+    match multiplayer::check_library().await {
+        Ok(()) => true,
+        Err(error) => {
+            log::debug!(
+                "the Conic Nexus library is not ready, so the dialog will offer to download it: \
+                 {error}"
+            );
+            false
+        }
+    }
 }
 
 pub(crate) async fn create_room(

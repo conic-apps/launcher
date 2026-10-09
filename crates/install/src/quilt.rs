@@ -103,20 +103,30 @@ pub async fn install(
     quilt_version: &str,
     minecraft: MinecraftLocation,
 ) -> Result<()> {
+    // Quilt is fabric's twin here and had no log line at all, so an install log
+    // was asymmetric between two loaders that do exactly the same work.
+    log::info!("Installing quilt {quilt_version} for {mcversion}");
     let url = format!(
         "https://meta.quiltmc.org/v3/versions/loader/{mcversion}/{quilt_version}/profile/json"
     );
     let response = HTTP_CLIENT.get(url).send().await?;
+    let status = response.status();
+    if !status.is_success() {
+        log::warn!("the quilt meta API answered {status} for {quilt_version} on {mcversion}");
+    }
     let quilt_version_json: Version = response.json().await?;
+    // `version_name` is the id everything else keys off, so it is worth recording.
     let version_name = quilt_version_json.id.clone();
     let json_path = minecraft.get_version_json(&version_name);
     if let Some(parent) = json_path.parent() {
         tokio::fs::create_dir_all(parent).await?;
     }
+    log::info!("Saving version metadata file to {}", json_path.display());
     tokio::fs::write(
         json_path,
         serde_json::to_string_pretty(&quilt_version_json)?,
     )
     .await?;
+    log::info!("Installed quilt as {version_name}");
     Ok(())
 }

@@ -48,15 +48,14 @@ impl XboxAuthBody {
 }
 
 pub(crate) async fn xbox_authenticate(access_token: &str) -> Result<XboxAuth> {
-    let response: Value = HTTP_CLIENT
+    let response = HTTP_CLIENT
         .post("https://user.auth.xboxlive.com/user/authenticate")
         .header("Content-Type", "application/json")
         .header("Accept", "application/json")
         .body(serde_json::to_string(&XboxAuthBody::new(access_token))?)
         .send()
-        .await?
-        .json()
         .await?;
+    let response: Value = super::decode(response, "the Xbox authenticate endpoint").await?;
     Ok(XboxAuth {
         xbl_token: response["Token"]
             .as_str()

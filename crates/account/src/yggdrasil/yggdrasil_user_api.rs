@@ -78,6 +78,10 @@ pub async fn authenticate(
     username: String,
     password: String,
 ) -> Result<AuthResponse> {
+    // The username is logged and the password never is: this is the one place a
+    // support log can say which account failed to sign in without recording the
+    // secret that goes with it. Logged before the body is built, which moves both.
+    log::info!("Authenticating against {api_root} as {username}");
     let request_body = AuthRequest {
         username,
         password,
@@ -156,17 +160,50 @@ async fn find_and_replace_textures_property(profile: Profile) -> Profile {
 }
 
 async fn replace_textures_property_value(value: String) -> String {
-    let textures_property_byte = general_purpose::STANDARD.decode(&value).unwrap_or_default();
-    let mut textures_property: Value =
-        serde_json::from_slice(&textures_property_byte).unwrap_or_default();
-    let textures = parse_textures(value).await.unwrap_or_default();
+    // Every one of these used to fall back silently, and the last one is the
+    // dangerous one: a failure at `to_string` produced an *empty* base64 string
+    // that was then handed to the game as the account's texture property. The
+    // property decoding is therefore replaced with an empty one rather than the
+    // URL the server sent, and the game shows a blank skin for it.
+    let textures_property_byte = match general_purpose::STANDARD.decode(&value) {
+        Ok(bytes) => bytes,
+        Err(error) => {
+            log::debug!("a textures property was not base64 ({error}); leaving it alone");
+            Vec::new()
+        }
+    };
+    let mut textures_property: Value = match serde_json::from_slice(&textures_property_byte) {
+        Ok(property) => property,
+        Err(error) => {
+            log::debug!("a textures property was not JSON ({error}); leaving it alone");
+            Value::Null
+        }
+    };
+    let textures = match parse_textures(value.clone()).await {
+        Ok(textures) => textures,
+        Err(error) => {
+            log::debug!("could not resolve a profile's textures ({error}); keeping the URLs");
+            HashMap::new()
+        }
+    };
     textures_property["textures"] = {
         #[allow(clippy::unwrap_used)]
         serde_json::to_value(textures).unwrap()
     };
-    let serialized_replaced_textures =
-        serde_json::to_string(&textures_property).unwrap_or_default();
-    general_purpose::STANDARD.encode(serialized_replaced_textures)
+    // The one that mattered: a serialization failure here used to yield `""`, and
+    // that empty string was the texture property the game was handed — a blank
+    // skin with nothing to explain it. The original property is returned instead,
+    // which is at worst the raw URLs and at best identical.
+    match serde_json::to_string(&textures_property) {
+        Ok(serialized) => general_purpose::STANDARD.encode(serialized),
+        Err(error) => {
+            log::debug!(
+                "could not re-encode the replaced textures property ({error}); keeping the \\
+                 server's own value"
+            );
+            value
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -189,6 +226,15 @@ pub async fn validate(account: YggdrasilAccount) -> Result<bool> {
         .await?
         .status()
         .as_u16();
+    // `204` is the documented "still good"; anything else is a real status worth
+    // naming, and the caller only ever sees a boolean.
+    if status != 204 {
+        log::debug!(
+            "the Yggdrasil server {} answered {status} to a session validation, which is \\
+             not the documented 204",
+            account.api_root
+        );
+    }
     Ok(status == 204)
 }
 
@@ -271,11 +317,18 @@ pub async fn invalidate(api_root: &str, access_token: String, client_token: Stri
         client_token,
     };
     let request_url = Url::parse(api_root)?.append_path(["authserver", "invalidate"])?;
-    HTTP_CLIENT
+    let status = HTTP_CLIENT
         .post(request_url)
         .json(&request_body)
         .send()
-        .await?;
+        .await?
+        .status();
+    // Logout is best-effort by design and the account is removed locally either
+    // way, so a refusal is a warning rather than an error the caller acts on —
+    // but it means the server still holds a live token, so it is recorded.
+    if !status.is_success() {
+        log::warn!("the Yggdrasil server {api_root} answered {status} to the session invalidation");
+    }
     Ok(())
 }
 

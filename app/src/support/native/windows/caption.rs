@@ -361,6 +361,15 @@ pub fn set_dark(window: &slint::Window, dark: bool) {
 /// first time there is a window to do it on.
 fn attach(ui: &App) {
     let Some(hwnd) = hwnd_of(ui.window()) else {
+        // The one path on which this module never attaches at all: without an
+        // `HWND` there is no `Frame`, so every `frame_of` returns `None` and the
+        // controls the app still draws stop being hit-testable. It used to return
+        // in silence.
+        log::warn!(
+            target: "shell",
+            "windows caption: no window handle yet, so the caption controls will not be \
+             wired up"
+        );
         return;
     };
 
@@ -592,7 +601,9 @@ unsafe fn render_glyph(
         // The first face that actually draws the glyph wins, so a Windows 10
         // build with only the old font name still gets its caption buttons rather
         // than a row of empty rectangles.
-        for face in GLYPH_FONTS {
+        // `face` is a `PCWSTR`, which derives `Debug` but not `Display`, so it
+        // cannot be interpolated — hence the index.
+        for (index, face) in GLYPH_FONTS.into_iter().enumerate() {
             let font = CreateFontW(
                 character_height,
                 0,
@@ -610,6 +621,12 @@ unsafe fn render_glyph(
                 face,
             );
             if font.is_invalid() {
+                // One per face, not per glyph: a stripped Windows image carries
+                // neither of these, and that must not produce a line per button.
+                log::debug!(
+                    target: "shell",
+                    "windows caption: caption font #{index} is unavailable"
+                );
                 continue;
             }
             let previous_font = SelectObject(screen, HGDIOBJ(font.0));
@@ -646,10 +663,30 @@ unsafe fn render_glyph(
                 .iter()
                 .any(|pixel| pixel[0] > 0)
             {
+                log::debug!(
+                    target: "shell",
+                    "windows caption: the glyph came from caption font #{index}"
+                );
                 break;
             }
             // This face had no such glyph: clear it before trying the next.
             slice::from_raw_parts_mut(bits.cast::<u8>(), bytes).fill(0);
+        }
+        // Both faces ran and neither drew the glyph, so the plate that comes out
+        // below is empty and the button is invisible rather than broken-looking.
+        // The loop above cannot tell that apart from having drawn one, so it is
+        // checked here — once per glyph, not once per frame.
+        if slice::from_raw_parts(bits.cast::<u8>(), bytes)
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .all(|pixel| pixel[0] == 0)
+        {
+            log::debug!(
+                target: "shell",
+                "windows caption: neither caption font has this glyph; the button will be \\
+                 blank"
+            );
         }
 
         // The ink at the coverage the glyph drew, in premultiplied form, which is
@@ -894,7 +931,16 @@ unsafe extern "system" fn subclass(
                     hwndTrack: hwnd,
                     dwHoverTime: 0,
                 };
-                let _ = TrackMouseEvent(&mut track);
+                // If this fails, `WM_NCMOUSELEAVE` never arrives and a caption button stays
+                // highlighted forever — a permanently wrong UI state with nothing
+                // in the log to explain it.
+                if let Err(error) = TrackMouseEvent(&mut track) {
+                    log::debug!(
+                        target: "shell",
+                        "windows caption: could not track the pointer ({error}); a control may \\
+                         stay highlighted"
+                    );
+                }
                 DefSubclassProc(hwnd, message, wparam, lparam)
             }
             WM_NCMOUSELEAVE => {
@@ -931,12 +977,24 @@ unsafe extern "system" fn subclass(
                 };
                 let maximized = frame_of(hwnd).is_some_and(|frame| frame.maximized);
                 set_pointer(hwnd, index, -1);
-                let _ = PostMessageW(
+                // The whole point of this file: the release is turned into a real
+                // `WM_SYSCOMMAND`, and the result was discarded — so a press that
+                // did nothing at all left no record that the user had clicked.
+                let command = system_command(index, maximized);
+                if let Err(error) = PostMessageW(
                     Some(hwnd),
                     WM_SYSCOMMAND,
-                    WPARAM(system_command(index, maximized) as usize),
+                    WPARAM(command as usize),
                     LPARAM(0),
-                );
+                ) {
+                    log::warn!(
+                        target: "shell",
+                        "windows caption: the {command} command could not be posted ({error}); \
+                         the button will do nothing"
+                    );
+                } else {
+                    log::debug!(target: "shell", "windows caption: posted {command}");
+                }
                 LRESULT(0)
             }
 

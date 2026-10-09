@@ -293,6 +293,9 @@ pub(crate) fn register(
         stop_requested,
         watcher: None,
     });
+    // Registration itself was never logged, so the only trace of a launch that
+    // worked was a `Spawning minecraft process` line from the caller.
+    log::info!("Registered the Minecraft process {pid} for instance {id} ({name})");
     emit(SessionEvent::Started(RunningInstance {
         id: id.clone(),
         name,
@@ -317,6 +320,14 @@ pub(crate) fn register(
         .and_then(|sessions| sessions.iter_mut().find(|session| session.token == token))
     {
         session.watcher = Some(watcher);
+    } else {
+        // The process exited before the handle could be stored, so the watcher
+        // thread is detached rather than joined at shutdown. Harmless, but it is
+        // also the shape of "the game died instantly".
+        log::debug!(
+            "The watcher for instance {id} had nowhere to be stored; the process had \
+             already been reaped"
+        );
     }
 }
 
@@ -428,7 +439,13 @@ fn pump(reader: impl Read, console: &Arc<Mutex<VecDeque<String>>>, mut on_line: 
                 push_line(console, line);
                 on_line(line);
             }
-            Err(_) => break,
+            Err(error) => {
+                // Distinguished from EOF on purpose: a truncated read is exactly
+                // when the tail of the output matters most, and it used to be
+                // indistinguishable from the stream simply ending.
+                log::debug!("The game's output stream ended with an error: {error}");
+                break;
+            }
         }
     }
 }

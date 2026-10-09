@@ -1402,6 +1402,7 @@ dependencies = [
 name = "curseforge"
 version = "0.0.0"
 dependencies = [
+ "log",
  "reqwest",
  "serde",
  "serde_json",
@@ -3892,6 +3893,7 @@ name = "modrinth"
 version = "0.0.0"
 dependencies = [
  "download",
+ "log",
  "reqwest",
  "serde",
  "serde_json",
@@ -4077,6 +4079,7 @@ checksum = "650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086"
 name = "news"
 version = "0.0.0"
 dependencies = [
+ "log",
  "reqwest",
  "serde",
  "serde_json",
@@ -4975,6 +4978,7 @@ checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
 name = "platform"
 version = "0.0.0"
 dependencies = [
+ "log",
  "once_cell",
  "os_info",
  "serde",
@@ -6443,6 +6447,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 name = "statistics"
 version = "0.0.0"
 dependencies = [
+ "log",
  "serde",
  "serde_json",
  "serde_with",
@@ -7421,6 +7426,7 @@ dependencies = [
 name = "version"
 version = "0.0.0"
 dependencies = [
+ "log",
  "once_cell",
  "platform",
  "regex",

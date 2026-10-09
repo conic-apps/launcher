@@ -85,6 +85,17 @@ pub fn layout(
     let height = round(y);
     let content_width = round(ctx.content_width);
     let chunks = runs(&ctx.items, &sections, height);
+    // This module is ~6,700 lines with no logging of any kind, and this is the
+    // one function every rendered document passes through. A summary here is what
+    // makes a document that came out empty — an unparseable fragment, a missing
+    // font, a zero-width measurement — distinguishable from one that rendered and
+    // happened to be short. `debug`, because it fires on every re-layout.
+    log::debug!(
+        "laid out {} block(s) into {} item(s) at {height}px across {} section(s)",
+        blocks.len(),
+        ctx.items.len(),
+        sections.len()
+    );
     DisplayList {
         items: ctx.items,
         height,

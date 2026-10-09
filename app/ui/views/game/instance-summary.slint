@@ -56,7 +56,9 @@ component MetaSeparator inherits Rectangle {
     }
 }
 
-// One preview row of the current-instance contents list.
+// One preview row of the current-instance contents list. The count and the
+// icons both come from the list the content overlay draws, so opening that
+// overlay costs nothing — it is already all here.
 component ContentRow inherits Rectangle {
     in property <string> icon;
     in property <string> type-label;
@@ -110,7 +112,8 @@ component ContentRow inherits Rectangle {
             cross-axis-alignment: center;
 
             // The first five items of the row, each a 20px circle with a 1px
-            // lavender outline, 1px apart. The icons are decoded by `content.rs`.
+            // lavender outline, 1px apart. `content/preview.rs` fills these one
+            // icon at a time, so the row is drawn before it is finished.
             HorizontalLayout {
                 spacing: 1px;
                 cross-axis-alignment: center;
@@ -526,7 +529,7 @@ export component InstanceSummary inherits Rectangle {
                         type-label: @tr("Saves");
                         count: GameState.content-saves;
                         icons: GameState.preview-saves;
-                        loading: GameState.content-loading;
+                        loading: GameState.content-loading-saves;
                         disabled: !GameState.has-current;
                         unit: GameState.count-unit;
                         clicked => { GameState.open-content("saves"); }
@@ -539,7 +542,7 @@ export component InstanceSummary inherits Rectangle {
                         type-label: @tr("Mods");
                         count: GameState.content-mods;
                         icons: GameState.preview-mods;
-                        loading: GameState.content-loading;
+                        loading: GameState.content-loading-mods;
                         disabled: !GameState.has-current || !GameState.current-has-loader;
                         unit: GameState.count-unit;
                         clicked => { GameState.open-content("mods"); }
@@ -552,7 +555,7 @@ export component InstanceSummary inherits Rectangle {
                         type-label: @tr("Resource packs");
                         count: GameState.content-resourcepacks;
                         icons: GameState.preview-resourcepacks;
-                        loading: GameState.content-loading;
+                        loading: GameState.content-loading-resourcepacks;
                         disabled: !GameState.has-current;
                         unit: GameState.count-unit;
                         clicked => { GameState.open-content("resourcepacks"); }
@@ -565,7 +568,7 @@ export component InstanceSummary inherits Rectangle {
                         type-label: @tr("Screenshots");
                         count: GameState.content-screenshots;
                         icons: GameState.preview-screenshots;
-                        loading: GameState.content-loading;
+                        loading: GameState.content-loading-screenshots;
                         disabled: !GameState.has-current || GameState.content-screenshots == 0;
                         unit: GameState.count-unit;
                         clicked => { GameState.open-content("screenshots"); }

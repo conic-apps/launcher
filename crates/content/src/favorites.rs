@@ -19,13 +19,22 @@ fn favorites_path() -> std::path::PathBuf {
     LOCATIONS.launcher.root.join("favorites.json")
 }
 
+/// Reads the favourites file.
+///
+/// A read or parse failure propagates to all four public entry points without a
+/// word, while the *write* failure is warned — so a corrupt `favorites.json` broke
+/// favourites everywhere with no log line at all. Not fixed here: the caller
+/// decides whether a failed read is worth showing, so this only names the file.
 fn read_favorites() -> Result<Vec<Favorite>> {
     let path = favorites_path();
     if !path.exists() {
         return Ok(Vec::new());
     }
     let data = std::fs::read_to_string(&path)?;
-    let favorites: Vec<Favorite> = serde_json::from_str(&data)?;
+    let favorites: Vec<Favorite> = serde_json::from_str(&data).map_err(|error| {
+        log::warn!("{} is not a valid favourites file: {error}", path.display());
+        error
+    })?;
     Ok(favorites)
 }
 

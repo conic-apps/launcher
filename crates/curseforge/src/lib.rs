@@ -16,6 +16,7 @@
 pub mod error;
 
 use error::*;
+use log::{debug, warn};
 use serde_json::Value;
 use shared::{HTTP_CLIENT, UrlExt};
 use std::path::Path;
@@ -39,9 +40,7 @@ const API_KEY: &str = env!("CURSEFORGE_API_KEY");
 pub const MINECRAFT_GAME_ID: i64 = 432;
 
 fn build_url(base_url: &str, segments: &[&str]) -> Result<Url> {
-    Ok(Url::parse(base_url)?
-        .append_path(segments.iter().copied())
-        .expect("Internal error"))
+    Ok(Url::parse(base_url)?.append_path(segments.iter().copied())?)
 }
 
 fn apply_query(builder: reqwest::RequestBuilder, params: &Value) -> reqwest::RequestBuilder {
@@ -63,8 +62,38 @@ fn apply_query(builder: reqwest::RequestBuilder, params: &Value) -> reqwest::Req
     }
 }
 
-async fn send(builder: reqwest::RequestBuilder) -> Result<Value> {
-    Ok(builder.send().await?.json().await?)
+/// Sends `request` and decodes the answer, recording the status.
+///
+/// Every endpoint in this crate funnels through here, so this is the one place
+/// that can see what the server actually said. `send` and `json` both yield a
+/// `reqwest::Error` and neither carries the URL, and a non-2xx whose body happens
+/// to be JSON parses into a perfectly good `Value` — so without this, a `403`
+/// from a rejected API key and a `404` from a deleted mod reach the caller as
+/// ordinary empty data.
+async fn send(url: &Url, request: reqwest::RequestBuilder) -> Result<Value> {
+    let url = url.as_str();
+    let response = request.send().await.map_err(|error| {
+        warn!("{url} could not be reached: {error}");
+        Error::Network(error)
+    })?;
+    let status = response.status();
+    if !status.is_success() {
+        // CurseForge documents 429 with a `Retry-After`, and the `x-api-key` header
+        // makes this the most throttled of the three mod APIs the launcher uses.
+        match response.headers().get(reqwest::header::RETRY_AFTER) {
+            Some(retry_after) => warn!(
+                "{url} answered {status} and asked to retry after {}",
+                retry_after
+                    .to_str()
+                    .unwrap_or("<an unreadable Retry-After>")
+            ),
+            None => warn!("{url} answered {status}"),
+        }
+    }
+    response.json().await.map_err(|error| {
+        warn!("{url} answered {status} but the body did not parse as JSON: {error}");
+        Error::Network(error)
+    })
 }
 
 /// A response is considered valid when it carries a non-empty `data` field.
@@ -87,7 +116,7 @@ async fn send_request(
     api_key: Option<&str>,
 ) -> Result<Value> {
     let url = build_url(base_url, segments)?;
-    let mut builder = HTTP_CLIENT.request(method.clone(), url);
+    let mut builder = HTTP_CLIENT.request(method.clone(), url.clone());
     if let Some(params) = params {
         builder = if *method == reqwest::Method::POST {
             builder.json(params)
@@ -98,7 +127,7 @@ async fn send_request(
     if let Some(api_key) = api_key {
         builder = builder.header("x-api-key", api_key);
     }
-    send(builder).await
+    send(&url, builder).await
 }
 
 /// Requests the cache (mirror) first, then falls back to the official API when
@@ -113,9 +142,22 @@ async fn request_with_fallback(
     if matches!(&cache_result, Ok(value) if response_is_valid(value)) {
         return cache_result;
     }
+    // Recorded before the answer is dropped: when a key is configured the mirror's
+    // `Err` is discarded and replaced wholesale by the official call's result, so
+    // a mirror outage, a DNS failure and a mirror 500 all leave no trace unless
+    // they are written down here.
+    let cache_verdict = match &cache_result {
+        Ok(value) => format!("no usable data ({value})"),
+        Err(error) => format!("{error}"),
+    };
     if API_KEY.is_empty() {
+        debug!(
+            "the CurseForge mirror did not answer ({cache_verdict}) and no API key is \
+             configured, so there is no official fallback"
+        );
         return cache_result;
     }
+    debug!("the CurseForge mirror did not answer ({cache_verdict}); asking the official API");
     send_request(OFFICIAL_BASE_URL, method, segments, params, Some(API_KEY)).await
 }
 

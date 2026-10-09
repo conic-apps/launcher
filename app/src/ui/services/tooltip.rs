@@ -24,8 +24,13 @@ use slint::ComponentHandle;
 use crate::slint_backend::{App, TooltipState};
 
 /// Installs the cursor tracker on the app window.
+///
+/// The one event stream in the app with no logging at all: a tooltip that stops
+/// following the pointer pins to a stale position, and there is no symptom
+/// anywhere else that says the tracker stopped.
 pub fn setup(ui: &App) {
     let weak = ui.as_weak();
+    log::debug!(target: "shell", "tooltip: tracking the pointer for tooltips");
     window::on_window_event(ui, move |event| {
         let winit::event::WindowEvent::CursorMoved { position, .. } = event else {
             return;

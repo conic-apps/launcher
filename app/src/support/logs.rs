@@ -117,6 +117,12 @@ impl Rotating {
 /// folder is left alone.
 fn prune_archives(directory: &Path, stem: &str, keep: usize) {
     let Ok(entries) = fs::read_dir(directory) else {
+        // Pruning is best-effort and cannot report through the log (it may run
+        // before the logger exists), so stderr is the only channel here.
+        eprintln!(
+            "the log folder at {} could not be read; it will not be pruned",
+            directory.display()
+        );
         return;
     };
     let mut archives: Vec<(PathBuf, String)> = entries
@@ -149,6 +155,28 @@ struct FileLog {
     inner: Rotating,
 }
 
+impl FileLog {
+    /// Reports the first failure on stderr, and only the first.
+    ///
+    /// Nothing here can reach `log!` — this *is* what `log!` writes to — and
+    /// `env_logger` discards the writer's `io::Error` entirely, so every `?` in
+    /// `Rotating` would otherwise vanish without a trace. That makes a "cannot
+    /// write the log" bug the one failure this crate could never report, which is
+    /// why it goes to stderr, and why it is reported once rather than per record:
+    /// a release build whose log file became unwritable would otherwise emit one
+    /// line per record for the rest of the session.
+    fn report_once(&self, error: &io::Error, path: &std::path::Path) {
+        static REPORTED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+        if !REPORTED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+            eprintln!(
+                "the log file at {} could not be written ({error}); further failures are \
+                 not reported",
+                path.display()
+            );
+        }
+    }
+}
+
 impl io::Write for FileLog {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         // `env_logger` hands a record to `write` in one piece, so this is a whole
@@ -157,7 +185,11 @@ impl io::Write for FileLog {
         // be the whole line: `write_all` would come back here in chunks and
         // could rotate between the halves of a message.
         let line = String::from_utf8_lossy(buf);
-        self.inner.append(&line)?;
+        if let Err(error) = self.inner.append(&line) {
+            let path = self.inner.path.clone();
+            self.report_once(&error, &path);
+            return Err(error);
+        }
         Ok(buf.len())
     }
 
@@ -228,7 +260,20 @@ fn init_stdout() {
     // what both a pipe and `NO_COLOR` expect.
     builder.write_style(env_logger::WriteStyle::Auto);
     builder.target(env_logger::Target::Stdout);
-    let _ = builder.try_init();
+    init_or_report(builder, "stdout");
+}
+
+/// Installs `builder`, or says on stderr that it could not.
+///
+/// `try_init` fails when a logger is already installed — including a second call
+/// to [`init`], which is `pub` and unguarded — and the discarded `Result` made
+/// that indistinguishable from success, so a run whose log went nowhere looked
+/// exactly like one that worked.
+fn init_or_report(mut builder: env_logger::Builder, sink: &str) {
+    match builder.try_init() {
+        Ok(()) => println!("logging to {sink}"),
+        Err(error) => eprintln!("the logger could not be installed for {sink}: {error}"),
+    }
 }
 
 /// A release build's logger: the log file, with stderr as the fallback when the
@@ -258,7 +303,7 @@ fn init_file() {
     builder.target(env_logger::Target::Pipe(Box::new(FileLog {
         inner: rotating,
     })));
-    let _ = builder.try_init();
+    init_or_report(builder, &directory.display().to_string());
 }
 
 fn init_stderr() {
@@ -267,5 +312,5 @@ fn init_stderr() {
     builder.format(format_record);
     builder.write_style(env_logger::WriteStyle::Never);
     builder.target(env_logger::Target::Stderr);
-    let _ = builder.try_init();
+    init_or_report(builder, "stderr");
 }
