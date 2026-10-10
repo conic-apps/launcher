@@ -28,6 +28,7 @@ pub mod error;
 pub mod library;
 mod metadata;
 pub mod nexus;
+mod nodes;
 pub mod room_code;
 
 pub use error::Error;
@@ -105,9 +106,7 @@ impl NexusService {
         let path = library_dir().join(LIBRARY.filename);
         let session = NexusSession::load(&path).await?;
         session.configure(&SessionConfig {
-            public_nodes: vec![
-                // NOTE: add other nodes here
-            ],
+            public_nodes: nodes::fetch_public_nodes().await,
             data_dir: Some(library_dir()),
             motd: None,
         })?;
