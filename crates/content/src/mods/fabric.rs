@@ -18,13 +18,11 @@ use super::{
 };
 use crate::error::{Error, Result};
 
-/// One entry of the `jars` array in `fabric.mod.json`.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct JarsEntry {
     pub file: String,
 }
 
-/// Corresponds to the `fabric.mod.json` file in the mod archive.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FabricModMetadata {

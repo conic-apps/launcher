@@ -11,24 +11,14 @@
 /// A block-level node. The variants cover everything GitHub's renderer draws
 /// inside a `.markdown-body`.
 #[derive(Debug, Clone, PartialEq)]
-// `CodeBlock` reads clearer than `Code` beside the inline `Code`, and the lint
-// that dislikes it was only suppressed while the type was a library's exported
-// API. Keep the name.
+// `CodeBlock` reads clearer than `Code` beside the inline `Code`.
 #[allow(clippy::enum_variant_names)]
 pub enum Block {
     /// `# …` through `###### …`, or a setext heading. `level` is 0-based, so
     /// `h1` is `0`.
-    Heading {
-        /// 0 for `h1`, 5 for `h6`.
-        level: u8,
-        /// The heading's own inline content, which may itself be styled.
-        inlines: Inlines,
-    },
+    Heading { level: u8, inlines: Inlines },
     /// A paragraph, or a loose list item's paragraph.
-    Paragraph {
-        /// The paragraph's inline content.
-        inlines: Inlines,
-    },
+    Paragraph { inlines: Inlines },
     /// A fenced or indented code block. `info` is the fence's language, which
     /// GitHub shows in the box's corner.
     CodeBlock {
@@ -41,21 +31,15 @@ pub enum Block {
     },
     /// A bullet or numbered list.
     List {
-        /// An ordered list, which is numbered and starts at `start`.
         ordered: bool,
-        /// The first ordinal of an ordered list.
         start: u64,
         /// A tight list does not wrap its items in paragraphs, so its items are
         /// not separated by a paragraph margin.
         tight: bool,
-        /// The list's items.
         items: Vec<ListItem>,
     },
     /// `> …`
-    Quote {
-        /// The quoted blocks.
-        blocks: Vec<Block>,
-    },
+    Quote { blocks: Vec<Block> },
     /// A `---`, `***` or `___` line.
     Rule,
     /// A GFM table. `align` is per column and drives `text-align`.
@@ -64,13 +48,11 @@ pub enum Block {
         head: Vec<Cell>,
         /// The body rows. A GFM table without a header still has one.
         rows: Vec<Vec<Cell>>,
-        /// Per column, from the `---:` style delimiter.
         align: Vec<Align>,
     },
     /// A paragraph that holds nothing but one image, which GitHub renders as a
     /// block of its own rather than as a line of text.
     Image {
-        /// Where the bitmap is.
         url: String,
         /// The title attribute, which no stylesheet uses.
         title: String,
@@ -100,18 +82,13 @@ pub enum Block {
     },
     /// Raw HTML that neither front end can model. It is shown as the text it
     /// contains, which is what a browser does with an unknown element too.
-    RawText {
-        /// The text the markup contained.
-        text: String,
-    },
+    RawText { text: String },
     /// A footnote's definition, lifted out of the flow by the renderer.
     Footnote {
-        /// The definition's label, as written in the document.
         name: String,
         /// Its ordinal: comrak's reference-order number, or the order the
         /// definition was found in for one the extension did not number.
         number: usize,
-        /// The definition's own blocks.
         blocks: Vec<Block>,
     },
 }
@@ -131,9 +108,7 @@ pub struct ListItem {
 pub struct Cell {
     /// A `th`, whose cell is filled and whose text is bold.
     pub head: bool,
-    /// The cell's inline content.
     pub inlines: Inlines,
-    /// The column's alignment.
     pub align: Align,
 }
 
@@ -183,7 +158,6 @@ pub enum Inline {
     Code(String),
     /// `[label](url)`, a reference link, or an autolink.
     Link {
-        /// The destination, as written.
         url: String,
         /// The title attribute, which no stylesheet uses.
         title: String,
@@ -193,7 +167,6 @@ pub enum Inline {
     },
     /// `![alt](url)`, inline (inside a sentence) as opposed to [`Block::Image`].
     Image {
-        /// Where the bitmap is.
         url: String,
         /// The title attribute, which no stylesheet uses.
         title: String,
@@ -204,7 +177,6 @@ pub enum Inline {
     HardBreak,
     /// A footnote reference, already numbered.
     FootnoteRef {
-        /// The definition's label.
         name: String,
         /// The definition's ordinal, or zero for a reference with no definition.
         number: usize,

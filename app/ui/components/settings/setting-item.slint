@@ -177,7 +177,6 @@ export component SettingItem inherits Rectangle {
         padding-right: 16px;
         cross-axis-alignment: center;
 
-        // ----- left: icon + text -----
         HorizontalLayout {
             horizontal-stretch: 1;
             spacing: 8px;
@@ -285,7 +284,6 @@ export component SettingItem inherits Rectangle {
                         background: transparent;
                         opacity: root.loading ? 1.0 : 0.0;
                         visible: root.loading || self.opacity > 0.001;
-                        // The spinner is drawn at 80% scale.
                         transform-scale: 80%;
                         animate opacity { duration: 100ms; easing: ease; }
 
@@ -417,7 +415,6 @@ export component SettingItem inherits Rectangle {
             }
         }
 
-        // ----- right: control / chevron -----
         HorizontalLayout {
             horizontal-stretch: 0;
             cross-axis-alignment: center;
@@ -429,7 +426,6 @@ export component SettingItem inherits Rectangle {
                 no-fill: root.icon-outline;
             }
 
-            // The chevron's 4px right margin.
             if root.navigable : Rectangle {
                 width: 4px;
                 background: transparent;
@@ -439,7 +435,6 @@ export component SettingItem inherits Rectangle {
         }
     }
 
-    // Disabled rows swallow pointer events.
     if root.item-disabled : TouchArea {
         width: root.width;
         height: root.height;

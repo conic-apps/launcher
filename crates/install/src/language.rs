@@ -35,11 +35,8 @@ enum LanguageEra {
     Modern,
 }
 
-/// Maps a launcher UI language to its Minecraft language code used in `options.txt`.
-///
-/// The launcher supports 12 languages, each using the exact code of Minecraft's
-/// modern language files: `en_us`, `zh_cn`, `zh_tw`, `ja_jp`, `ko_kr`, `de_de`,
-/// `fr_fr`, `es_es`, `pt_br`, `ru_ru`, `tr_tr`, `pl_pl`.
+/// Maps a launcher UI language code to the Minecraft code used in
+/// `options.txt`, falling back to `en_us`.
 fn launcher_language_to_game_code(language: &str) -> &'static str {
     match language {
         "en_us" => "en_us",
@@ -58,7 +55,6 @@ fn launcher_language_to_game_code(language: &str) -> &'static str {
     }
 }
 
-/// Determines the language era of a Minecraft version from its ISO-8601 release time.
 fn language_era(release_time: Option<&str>) -> LanguageEra {
     let Some(date) = release_time.and_then(|time| time.get(..10)) else {
         return LanguageEra::Modern;
@@ -72,9 +68,8 @@ fn language_era(release_time: Option<&str>) -> LanguageEra {
     }
 }
 
-/// Resolves the final `lang` value for `options.txt`.
-///
-/// Returns `None` for versions without a language option.
+/// Resolves the final `lang` value for `options.txt`, or `None` for versions
+/// without a language option.
 fn resolve_game_language_code(launcher_language: &str, era: LanguageEra) -> Option<String> {
     let code = launcher_language_to_game_code(launcher_language);
     match era {
@@ -87,7 +82,7 @@ fn resolve_game_language_code(launcher_language: &str, era: LanguageEra) -> Opti
     }
 }
 
-/// Whether the game needs `forceUnicodeFont` so CJK characters render properly.
+/// CJK characters need `forceUnicodeFont` to render properly.
 fn needs_force_unicode_font(language_code: &str) -> bool {
     language_code.starts_with("zh_")
         || language_code.starts_with("ja_")

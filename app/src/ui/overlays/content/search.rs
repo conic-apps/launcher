@@ -105,7 +105,6 @@ pub(crate) fn pages_of(
         .unwrap_or((1, 0))
 }
 
-/// Pushes the open list's page, its page count and its page buttons.
 pub(crate) fn push_pages(ui: &App) {
     let (page, total_pages) = {
         let state = controller();
@@ -121,11 +120,8 @@ pub(crate) fn push_pages(ui: &App) {
     )))));
 }
 
-/// A filter chip's height.
 pub(crate) const FILTER_CHIP_HEIGHT: f32 = 20.0;
-/// The gap between filter chips.
 pub(crate) const FILTER_CHIP_GAP: f32 = 6.0;
-/// The filter row's carousel: the 26px pager row.
 pub(crate) const FILTER_CAROUSEL_HEIGHT: f32 = 26.0;
 
 /// A row's label takes 52px and 10px of gap out of the panel's content box —
@@ -187,7 +183,6 @@ pub(crate) fn relayout_filters(ui: &App) {
     let _ = search;
 }
 
-/// Pushes the carousel's page, its page count and where the track sits.
 pub(crate) fn push_version(ui: &App) {
     let state = controller();
     let state = state.borrow();
@@ -215,7 +210,6 @@ pub(crate) fn version_chips(state: &ContentController) -> Vec<FilterChip> {
         .collect()
 }
 
-/// Pushes the filter rows, the carousel and the page range.
 pub(crate) fn push_search(ui: &App) {
     let state = controller();
     let state = state.borrow();

@@ -49,10 +49,6 @@ impl Gate {
 
     /// Starts a new request, invalidating every earlier token.
     pub(crate) fn issue(&self) -> Token {
-        // The moment a user's action supersedes in-flight work. It produced no
-        // line at all, so a cancelled launch looked identical to one that had
-        // simply gone quiet — and `is_current() == false` drops the late result
-        // just as silently, which is the other half of the same question.
         let mine = self.generation.fetch_add(1, Ordering::SeqCst) + 1;
         Token {
             generation: Arc::clone(&self.generation),

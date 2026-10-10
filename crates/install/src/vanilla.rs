@@ -144,7 +144,6 @@ fn generate_client_download_task(
     })
 }
 
-/// Generates download entries for all resolved libraries.
 pub fn generate_libraries_downloads(
     minecraft_location: &MinecraftLocation,
     resolved_libraries: &[ResolvedLibrary],
@@ -217,7 +216,6 @@ pub async fn generate_assets_downloads(
 
 pub const LOF4J2_CONFIGURATION: &[u8] = include_bytes!("./log4j2.xml");
 
-/// Overrides the `log4j2.xml` configuration file for the given version.
 pub async fn override_log4j2_configuration_file(
     minecraft_location: &MinecraftLocation,
     version: &ResolvedVersion,

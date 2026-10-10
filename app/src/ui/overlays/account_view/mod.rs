@@ -45,7 +45,6 @@ fn config() -> Option<Rc<RefCell<config::Config>>> {
     CONFIG.with(|cell| cell.borrow().clone())
 }
 
-/// Registers every account-view and delete-account callback.
 pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     CONFIG.with(|cell| *cell.borrow_mut() = Some(config));
 
@@ -218,7 +217,6 @@ fn confirm_delete(ui: &App) {
             ui.global::<DeleteAccountState>().set_deleting(false);
             ui.global::<Dialogs>()
                 .set_confirm_delete_account_visible(false);
-            // Drop the deleted account from the config if it was the current one.
             if let Some(config) = config() {
                 let same = config
                     .borrow()
@@ -294,7 +292,6 @@ fn clear_offline_skin(ui: &App) {
     update_offline(ui, account);
 }
 
-/// Writes an edited offline account back and refreshes every copy of it.
 fn update_offline(ui: &App, account: OfflineAccount) {
     let key = format!("offline-{}", account.uuid);
     let weak = ui.as_weak();
@@ -329,7 +326,6 @@ fn update_offline(ui: &App, account: OfflineAccount) {
     });
 }
 
-/// Rebuilds every field the overlay draws for [`VIEWED`].
 fn refresh(ui: &App) {
     let state = ui.global::<AccountViewState>();
     let Some(account) = VIEWED.with(|cell| cell.borrow().clone()) else {
@@ -362,11 +358,10 @@ fn refresh(ui: &App) {
     );
 
     build_skin(ui, &account);
-    start_server_name(ui, &account);
-    start_stats(ui, &account);
+    fetch_server_name(ui, &account);
+    fetch_stats(ui, &account);
 }
 
-/// The auth-service row's fallback label before a Yggdrasil server answers.
 fn default_auth_server(account: &Account) -> String {
     if matches!(account, Account::Yggdrasil(_)) {
         "Yggdrasil".to_string()
@@ -399,8 +394,6 @@ fn refresh_date(account: &Account) -> (&'static str, i32, i32, i32) {
     )
 }
 
-/// Builds the skin model and cape preview for `account` and pushes them into the
-/// overlay.
 fn build_skin(ui: &App, account: &Account) {
     let state = ui.global::<AccountViewState>();
     let uuid = account.get_profile_uuid();
@@ -589,9 +582,7 @@ fn slim_for(account: &Account, skin: &image::RgbaImage) -> bool {
     skin::detect_slim(skin)
 }
 
-/// Fetches a Yggdrasil server's display name and puts it in the auth-service
-/// row.
-fn start_server_name(ui: &App, account: &Account) {
+fn fetch_server_name(ui: &App, account: &Account) {
     let Account::Yggdrasil(account) = account else {
         return;
     };
@@ -622,9 +613,7 @@ fn statistics_profile(account: &Account) -> StatisticsProfile {
     }
 }
 
-/// Reads the account's launches and its instances, then fills the graph and the
-/// activity list.
-fn start_stats(ui: &App, account: &Account) {
+fn fetch_stats(ui: &App, account: &Account) {
     let profile = statistics_profile(account);
     let key = account.key();
     let weak = ui.as_weak();

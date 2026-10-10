@@ -126,7 +126,6 @@ impl NexusService {
         Ok(session)
     }
 
-    /// Starts the session if it is not running yet.
     pub async fn ensure_started(&self) -> Result<()> {
         self.session().await.map(|_| ())
     }
@@ -141,7 +140,6 @@ impl NexusService {
         session.create_room(player_name, room_code)
     }
 
-    /// Joins an existing room.
     pub async fn join_room(&self, room_code: &str, player_name: Option<&str>) -> Result<()> {
         let session = self.session().await?;
         session.join_room(room_code, player_name)
@@ -153,19 +151,16 @@ impl NexusService {
         session.reset_to_waiting()
     }
 
-    /// The current session snapshot.
     pub async fn get_session_state(&self) -> Result<SessionState> {
         let session = self.session().await?;
         session.get_state()
     }
 
-    /// The active mesh's peers.
     pub async fn query_peers(&self) -> Result<Vec<PeerInfo>> {
         let session = self.session().await?;
         session.query_peers()
     }
 
-    /// The most recent log lines.
     pub async fn recent_logs(&self, limit: Option<u32>) -> Result<Vec<String>> {
         let session = self.session().await?;
         session.recent_logs(limit.unwrap_or(100))
@@ -178,19 +173,16 @@ impl NexusService {
         Ok(session.room_code_is_valid(room_code))
     }
 
-    /// The library's static version string.
     pub async fn version(&self) -> Result<String> {
         let session = self.session().await?;
         Ok(session.version())
     }
 
-    /// Applies a startup configuration.
     pub async fn configure(&self, config: &SessionConfig) -> Result<()> {
         let session = self.session().await?;
         session.configure(config)
     }
 
-    /// Starts the event poll thread, unless one is already running.
     fn spawn_poll_thread(&self, session: Arc<NexusSession>) {
         let mut slot = self.poll_thread.lock().expect("Internal error");
         if slot.is_some() {
@@ -247,8 +239,6 @@ fn poll_loop(
         reconcile_ticks += 1;
         if reconcile_ticks >= RECONCILE_EVERY {
             reconcile_ticks = 0;
-            // The reconcile reads the session's state; a failure here is silent
-            // while `poll_event`'s failure is logged a few lines below.
             match session.get_state() {
                 Ok(state) => {
                     let mut last = last_state_version.lock().expect("Internal error");

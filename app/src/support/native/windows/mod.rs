@@ -34,7 +34,6 @@ pub(crate) fn install_backend() {
     set_platform(Box::new(backend)).expect("failed to install the winit backend");
 }
 
-/// Wires the platform's own window controls over the custom title bar.
 pub(crate) fn install(ui: &App) {
     // The title bar has to leave room for the controls (see `caption`).
     ui.set_window_controls_inset(caption::controls_inset());

@@ -144,7 +144,6 @@ pub(crate) struct Range {
 }
 
 impl Range {
-    /// Every tile of the range, row by row.
     fn tiles(&self) -> impl Iterator<Item = TileKey> + '_ {
         (self.z0..=self.z1).flat_map(|tz| (self.x0..=self.x1).map(move |tx| (tx, tz)))
     }

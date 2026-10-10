@@ -69,11 +69,8 @@ enum VersionToken {
     Text(String),
 }
 
-/// Splits a Forge version string into [`VersionToken`]s.
-///
-/// `.` and `-` act as separators; digit runs become [`VersionToken::Num`],
-/// all other runs become [`VersionToken::Text`] (branch suffixes such as
-/// `-prerelease`).
+/// `.` and `-` separate tokens, so a branch suffix like `-prerelease` stays
+/// text rather than joining the preceding number.
 fn tokenize_version(version: &str) -> Vec<VersionToken> {
     fn push(tokens: &mut Vec<VersionToken>, run: &mut String) {
         if run.is_empty() {
@@ -111,9 +108,8 @@ const FORGE_INSTALL_BOOTSTRAPPER_CONIC: &[u8] =
 
 /// Installs the given Forge version into the target directory.
 ///
-/// Downloads the Forge installer, tries the bundled bangbang93 bootstrapper and
-/// falls back to the ConicMC bootstrapper for legacy versions. Temporary files
-/// are removed afterwards; progress and errors are logged.
+/// Tries the bundled bangbang93 bootstrapper, falling back to the ConicMC
+/// bootstrapper for legacy versions.
 pub async fn install(
     minecraft_location: &MinecraftLocation,
     forge_version: &str,
@@ -123,9 +119,8 @@ pub async fn install(
 ) -> Result<()> {
     info!("Start downloading the forge installer");
     let installer_path = download_installer(mcversion, forge_version, reporter).await?;
-    // The result was discarded outright, so a prefetch that failed on any of its
-    // six steps left nothing behind: the install carried on and either failed much
-    // later or the launch quietly re-downloaded the libraries.
+    // Prefetch is best-effort — the install can still proceed and re-download
+    // later — but a failure must not be silent.
     if let Err(error) =
         prefetch_installer_dependencies(minecraft_location, &installer_path, reporter).await
     {
@@ -236,8 +231,8 @@ async fn try_bangbang93_bootstrapper(
     info!("Trying Bangbang93 forge install bootstrapper");
     let bangbang93_bootstrapper_path =
         save_bootstrapper(FORGE_INSTALL_BOOTSTRAPPER_BANGBANG93).await?;
-    // NeoForge logs the java it runs with; Forge logged nothing, so a spawn
-    // failure named neither the runtime nor the classpath.
+    // Log the java used: a spawn failure would otherwise name neither the
+    // runtime nor the classpath.
     info!(
         "Running {} with the bangbang93 bootstrapper",
         java_path.display()
@@ -251,9 +246,8 @@ async fn try_bangbang93_bootstrapper(
         .arg("com.bangbang93.ForgeInstaller")
         .arg(install_dir)
         .stdout(Stdio::piped())
-        // Piped as well as inherited-by-default was: a Gradle stack trace on
-        // stderr is the most informative thing the installer produces, and it was
-        // inherited straight past the launcher instead of being reported.
+        // A Gradle stack trace on stderr is the most informative thing the
+        // installer produces, so it is piped and reported rather than inherited.
         .stderr(Stdio::piped())
         .spawn()?;
     let result = wait_child(child, reporter).await;
@@ -299,16 +293,12 @@ async fn try_conicmc_bootstrapper(
 /// Streams the installer's stdout and stderr, reporting every line but the
 /// `true` handshake, then waits for the process to exit.
 ///
-/// The subprocess can run for minutes, so it is driven by [`Command`] instead of
-/// `std::process::Command`: a blocking `read_line` would park a runtime worker
-/// thread for the whole install instead of just this task.
+/// Driven by the async [`Command`] because the install can run for minutes; a
+/// blocking `read_line` would park a runtime worker for the whole install.
 ///
-/// Both streams are drained rather than just stdout: a loader installer that
-/// fails usually says so on stderr, and while that stream was inherited it went
-/// past the launcher entirely — so the log kept the stdout chatter and none of the
-/// explanation. They are drained *concurrently* because draining one to EOF before
-/// touching the other blocks as soon as the other pipe's buffer fills, which for a
-/// Gradle stack trace is a matter of kilobytes.
+/// Both streams are drained concurrently: draining one to EOF first blocks once
+/// the other pipe fills, and a failing installer usually explains itself on
+/// stderr.
 async fn wait_child(mut child: Child, reporter: &ModLoaderReporter) -> Result<()> {
     let stdout = child.stdout.take().ok_or(Error::ForgeInstallerFailed)?;
     let stderr = child.stderr.take();
@@ -331,11 +321,8 @@ async fn wait_child(mut child: Child, reporter: &ModLoaderReporter) -> Result<()
     stderr_result?;
 
     let status = child.wait().await?;
-    // The two failure modes are separate: a bootstrapper that printed its `true`
-    // and then exited non-zero is not the same thing as one that never printed
-    // it, and neither used to be named. The status carries the exit code and any
-    // signal, which is the one fact that says whether the JVM was killed or the
-    // installer rejected something.
+    // Distinguish "printed `true` and then exited non-zero" from "never printed
+    // it": the status carries the exit code and signal that separate the two.
     let reported_success = success.load(AtomicOrdering::SeqCst);
     if !reported_success || !status.success() {
         error!(
@@ -353,9 +340,8 @@ async fn wait_child(mut child: Child, reporter: &ModLoaderReporter) -> Result<()
 
 /// Reads `stream` to EOF, reporting every line.
 ///
-/// `success` is `Some` for the stream that carries the installer's `true`
-/// handshake and `None` for the rest — a `true` on stderr is not the handshake,
-/// and the stderr stack trace is the whole reason that stream is piped at all.
+/// `success` is `Some` only for the stream carrying the `true` handshake — a
+/// `true` on stderr is installer output, not the handshake.
 async fn pump_lines<R>(
     stream: R,
     pid: u32,

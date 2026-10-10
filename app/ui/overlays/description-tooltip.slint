@@ -39,7 +39,6 @@ export component DescriptionTooltipOverlay inherits Rectangle {
     private property <length> padding-v: 8px;
     private property <length> padding-h: 10px;
     private property <length> frame-width: 2px;
-    /// What the border and the vertical padding take off the content box.
     private property <length> inset: root.frame-width + root.padding-v;
     private property <length> collapsed-height: root.description-line-height + 2 * root.inset;
     /// The full text wrapped at the anchor width. `label`'s width is a plain

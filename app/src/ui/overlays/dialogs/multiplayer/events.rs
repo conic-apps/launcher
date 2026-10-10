@@ -7,7 +7,6 @@
 
 use super::*;
 
-/// Runs `body` with the controller, if the app has installed one.
 pub(crate) fn with_controller(body: impl FnOnce(&Rc<Controller>)) {
     CONTROLLER.with(|slot| {
         let slot = slot.borrow();
@@ -17,7 +16,6 @@ pub(crate) fn with_controller(body: impl FnOnce(&Rc<Controller>)) {
     });
 }
 
-/// Reads the session snapshot and (re)schedules the peer poll.
 pub(crate) fn push_refresh(ui: &App, controller: &Rc<Controller>) {
     let weak = ui.as_weak();
     let service = Arc::clone(&controller.service);
@@ -36,7 +34,6 @@ pub(crate) fn push_refresh(ui: &App, controller: &Rc<Controller>) {
     });
 }
 
-/// Reads the peer list.
 pub(crate) fn push_refresh_peers(ui: &App, controller: &Rc<Controller>) {
     let weak = ui.as_weak();
     let service = Arc::clone(&controller.service);
@@ -49,7 +46,6 @@ pub(crate) fn push_refresh_peers(ui: &App, controller: &Rc<Controller>) {
     });
 }
 
-/// Schedules or stops the peer poll according to the session state.
 pub(crate) fn schedule_peers_polling(ui: &App, controller: &Rc<Controller>) {
     let state = ui.global::<MultiplayerState>();
     let session = state.get_state();
@@ -74,7 +70,6 @@ pub(crate) fn schedule_peers_polling(ui: &App, controller: &Rc<Controller>) {
         });
 }
 
-/// One notice from the poll thread, dispatched to the view.
 pub(crate) fn handle_event(ui: &App, event: SessionEvent) {
     let state = ui.global::<MultiplayerState>();
     match event.r#type {
@@ -122,7 +117,6 @@ pub(crate) fn handle_event(ui: &App, event: SessionEvent) {
     }
 }
 
-/// Applies a session snapshot to the view.
 pub(crate) fn apply_session(ui: &App, session: SessionState) {
     let state = ui.global::<MultiplayerState>();
     state.set_state(session.state.into());
@@ -171,7 +165,6 @@ pub(crate) fn apply_session(ui: &App, session: SessionState) {
     }
 }
 
-/// Applies a peer list, including the local NAT code the header reads.
 pub(crate) fn apply_peers(ui: &App, peers: &[PeerInfo]) {
     let mut has_local = false;
     let mut local_nat = -1;

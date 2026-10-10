@@ -19,34 +19,23 @@
 /// never changes and never has to be rebuilt, which would re-measure, re-break
 /// and re-position every line of the document.
 export struct MarkdownPalette {
-    /// Body text.
     text: color,
     /// Heading text. Defaults to `text` where a stylesheet does not give
     /// headings their own colour, which is GitHub's case.
     heading: color,
     /// The text of a link, and the rule a hovered one gets.
     link: color,
-    /// Inline `code` glyphs.
     code-text: color,
-    /// The capsule behind inline `code`.
     code-background: color,
-    /// A fenced code block's glyphs.
     code-block-text: color,
-    /// A fenced code block's background.
     code-block-background: color,
-    /// A block quote's text.
     quote-text: color,
-    /// A block quote's left rule.
     quote-bar: color,
-    /// A table cell's border.
     table-border: color,
-    /// A table header cell's text.
     table-head-text: color,
-    /// A table header cell's background.
     table-head-background: color,
     /// `---`, and the rule under `h1` and `h2`.
     rule: color,
-    /// A rule drawn over struck-through text.
     strike: color,
     /// A list marker, an ordered marker, a task box and its tick.
     marker: color,
@@ -56,9 +45,7 @@ export struct MarkdownPalette {
     details-head: color,
     /// The same row under the pointer, which is what a settings row does.
     details-head-hover: color,
-    /// The row while it is held down.
     details-head-active: color,
-    /// The row's disclosure chevron.
     details-marker: color,
 }
 

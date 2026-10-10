@@ -12,7 +12,6 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use storage::LOCATIONS;
 
-/// The file the state is kept in, under the data directory's root.
 fn session_file() -> PathBuf {
     LOCATIONS.launcher.root.join("music_session.json")
 }

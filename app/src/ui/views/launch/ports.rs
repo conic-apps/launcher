@@ -26,7 +26,7 @@ pub(crate) fn update_sink(weak: Weak<App>, token: Token, loader: String) -> Sink
         LaunchUpdate::Install(progress) => {
             let view = presenter::install_view(&progress, &loader);
             deliver(&weak, &token, move |ui| {
-                presenter::apply(&ui.global::<LaunchState>(), view);
+                presenter::apply_view(&ui.global::<LaunchState>(), view);
             });
         }
         LaunchUpdate::Launch(progress) => {
@@ -43,7 +43,7 @@ pub(crate) fn update_sink(weak: Weak<App>, token: Token, loader: String) -> Sink
             }
             if let Some(view) = presenter::launch_view(&progress) {
                 deliver(&weak, &token, move |ui| {
-                    presenter::apply(&ui.global::<LaunchState>(), view);
+                    presenter::apply_view(&ui.global::<LaunchState>(), view);
                 });
             }
         }
@@ -74,7 +74,6 @@ pub(crate) fn update_sink(weak: Weak<App>, token: Token, loader: String) -> Sink
     })
 }
 
-/// Shows a refusal or failure dialog.
 fn show_dialog(weak: &Weak<App>, token: &Token, dialog: LaunchDialog) {
     deliver(weak, token, move |ui| {
         let dialogs = ui.global::<Dialogs>();
@@ -89,7 +88,6 @@ fn show_dialog(weak: &Weak<App>, token: &Token, dialog: LaunchDialog) {
     });
 }
 
-/// Shows an error message on the launch screen.
 fn set_error(weak: &Weak<App>, token: &Token, message: String) {
     deliver(weak, token, move |ui| {
         let state = ui.global::<LaunchState>();

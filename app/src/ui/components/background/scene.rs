@@ -43,8 +43,6 @@ pub const LAYER_ALPHA: f32 = 0.3;
 /// in screen space, so this is a width on screen rather than in the world.
 pub const EDGE_WIDTH_DEVICE_PX: f32 = 2.0;
 
-// ----- constants that only the scene itself needs -----
-
 /// Surface height the hills are generated around.
 const BASE_HEIGHT: i32 = 4;
 /// Hill amplitude in blocks.
@@ -74,8 +72,6 @@ const MAX_HALF_X: i32 = 74;
 /// Trees reach two blocks sideways from their column; used to keep the
 /// frustum cull conservative.
 const TREE_OVERHANG: f32 = 3.0;
-
-// ----- the height ring cache -----
 
 /// First x held by `heights`.
 const HEIGHT_X_OFF: i32 = -79; // floor(CAM_X - MAX_HALF_X) - 4
@@ -320,8 +316,6 @@ impl Scene {
             && (x as f32 - TREE_OVERHANG) <= CAM_X + reach
     }
 
-    // ----- terrain -----
-
     /// A deterministic hash of a lattice point.
     ///
     /// Implemented operation for operation (`Math.imul` is `wrapping_mul`, `>>>`
@@ -386,8 +380,6 @@ impl Scene {
         self.heights[start..start + HEIGHT_X_SPAN as usize].fill(0.0);
     }
 
-    // ----- trees -----
-
     fn tree_at(&mut self, x: i32, z: i32) -> bool {
         let h = self.height_at(x, z);
         if !(3..=6).contains(&h) {
@@ -419,8 +411,6 @@ impl Scene {
         }
         self.tree_blocks.contains(&(x, y, z))
     }
-
-    // ----- emission -----
 
     fn emit_face(&mut self, x: i32, y: i32, z: i32, face: &[usize; 4], cam_z: f32) {
         let zf = z as f32;

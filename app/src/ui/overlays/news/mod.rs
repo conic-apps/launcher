@@ -38,7 +38,6 @@ mod body;
 mod layout;
 mod wiring;
 
-/// How many card images are fetched at once.
 const IMAGE_FETCH_CONCURRENCY: usize = 8;
 
 thread_local! {
@@ -171,8 +170,7 @@ fn bind_models(ui: &App) {
     search.set_month_chips(ModelRc::from(Rc::clone(&ctrl.month_chips)));
 }
 
-/// Opens or closes the overlay. Opening fetches the feeds the first time.
-pub(crate) fn toggle(ui: &App) {
+pub(crate) fn toggle_overlay(ui: &App) {
     let state = ui.global::<NewsState>();
     if state.get_visible() {
         close(ui);
@@ -183,7 +181,7 @@ pub(crate) fn toggle(ui: &App) {
     // A feed that is still in flight should keep showing its spinner when the
     // panel reopens; one that has landed should not.
     state.set_loading(!controller().borrow().is_loaded());
-    load(ui);
+    load_feeds(ui);
 }
 
 pub(crate) fn close(ui: &App) {
@@ -198,8 +196,7 @@ pub(crate) fn close_detail(ui: &App) {
     body::clear(ui);
 }
 
-/// Fetches the two feeds, once.
-pub(crate) fn load(ui: &App) {
+pub(crate) fn load_feeds(ui: &App) {
     if !controller().borrow_mut().begin_load() {
         // Already loading or loaded: draw whatever the session has.
         ui.global::<NewsState>()
@@ -305,7 +302,6 @@ pub(crate) fn rebuild(ui: &App) {
     fetch_images(ui, images.pending);
 }
 
-/// The cards the active filter produces, before they are placed.
 fn build_cards() -> Vec<BuiltCard> {
     let ctrl = controller();
     let ctrl = ctrl.borrow();
@@ -344,7 +340,6 @@ fn banner_card(item: &news::NewsItem) -> BuiltCard {
     }
 }
 
-/// One changelog entry as the flow's row card.
 fn changelog_card(entry: &news::ChangelogEntry) -> BuiltCard {
     let ratio = image_ratio(entry.image_width, entry.image_height);
     BuiltCard {
@@ -404,7 +399,6 @@ impl ImageQueue {
     }
 }
 
-/// Fetches the card images, dropping each into its row as it arrives.
 fn fetch_images(ui: &App, pending: Vec<(String, String)>) {
     if pending.is_empty() {
         return;
@@ -474,7 +468,6 @@ pub(crate) fn open_card(ui: &App, id: &str) {
     }
 }
 
-/// Opens a changelog in the detail panel and fetches its body.
 fn open_detail(ui: &App, entry: &news::ChangelogEntry) {
     let state = ui.global::<NewsState>();
     state.set_detail_visible(true);
@@ -514,7 +507,6 @@ fn open_detail(ui: &App, entry: &news::ChangelogEntry) {
     });
 }
 
-/// Fetches the changelog's square image for the detail header.
 fn fetch_detail_image(ui: &App, url: &str) {
     if let Some(cached) = cached_icon(url) {
         ui.global::<NewsState>().set_detail_image(cached);
@@ -541,7 +533,6 @@ pub(crate) fn open_url(url: &str) {
     }
 }
 
-/// Rebuilds the three filter rows and their selected state.
 pub(crate) fn push_chips(ui: &App) {
     let ctrl = controller();
     let ctrl = ctrl.borrow();
@@ -604,7 +595,6 @@ pub(crate) fn row_height(ctrl: &NewsController, row: &str, chips: &VecModel<News
     )
 }
 
-/// Writes the three row heights the search panel draws from.
 pub(crate) fn push_row_heights(ui: &App) {
     let ctrl = controller();
     let ctrl = ctrl.borrow();
@@ -614,7 +604,6 @@ pub(crate) fn push_row_heights(ui: &App) {
     search.set_month_row_height(row_height(&ctrl, "month", &ctrl.month_chips));
 }
 
-/// The panel reported the size the cards and the filter rows lay out in.
 pub(crate) fn list_resized(ui: &App, width: f32, height: f32) {
     {
         let ctrl = controller();
@@ -694,7 +683,6 @@ fn update_visibility(ui: &App, range: std::ops::Range<usize>) {
     fetch_images(ui, images.pending);
 }
 
-/// A chip reported the width it measured, for its row's height.
 pub(crate) fn chip_measured(ui: &App, row: &str, value: &str, width: f32) {
     controller()
         .borrow_mut()
@@ -745,14 +733,12 @@ fn toggled<T: PartialEq>(current: Option<T>, clicked: Option<T>) -> Option<T> {
     if current == clicked { None } else { clicked }
 }
 
-/// The search box was committed.
 pub(crate) fn search_now(ui: &App) {
     let query = ui.global::<NewsSearch>().get_query().to_string();
     controller().borrow_mut().set_query(query);
     rebuild(ui);
 }
 
-/// The changelog body's view reported its width.
 pub(crate) fn resize_body(ui: &App, width: f32) {
     body::layout(ui, width);
 }

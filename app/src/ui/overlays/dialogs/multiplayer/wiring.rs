@@ -6,7 +6,6 @@
 
 use super::*;
 
-/// Registers every multiplayer callback on the `MultiplayerState` global.
 pub fn setup(ui: &App) {
     // The sink the poll thread reports through. `Weak<App>` is `Send` but not
     // necessarily `Sync`, which the sink type asks for, so it goes behind a
@@ -34,10 +33,8 @@ pub fn setup(ui: &App) {
     setup_download_actions(ui, Rc::clone(&controller));
 }
 
-/// Opening, joining, creating and leaving a room.
 pub(crate) fn setup_session_actions(ui: &App, controller: Rc<Controller>) {
     let state = ui.global::<MultiplayerState>();
-    // The footer's connect button.
     {
         let weak = ui.as_weak();
         state.on_open(move || {
@@ -59,7 +56,6 @@ pub(crate) fn setup_session_actions(ui: &App, controller: Rc<Controller>) {
             });
         });
     }
-    // The manager's one-time initialization.
     {
         let weak = ui.as_weak();
         let controller = Rc::clone(&controller);
@@ -71,7 +67,6 @@ pub(crate) fn setup_session_actions(ui: &App, controller: Rc<Controller>) {
             push_refresh(&ui, &controller);
         });
     }
-    // Create a room with the current profile name.
     {
         let weak = ui.as_weak();
         let controller = Rc::clone(&controller);
@@ -92,7 +87,6 @@ pub(crate) fn setup_session_actions(ui: &App, controller: Rc<Controller>) {
             });
         });
     }
-    // Join a room with the entered code and the current profile name.
     {
         let weak = ui.as_weak();
         let controller = Rc::clone(&controller);
@@ -124,7 +118,6 @@ pub(crate) fn setup_session_actions(ui: &App, controller: Rc<Controller>) {
             });
         });
     }
-    // Leave the room and reset the session state.
     {
         let weak = ui.as_weak();
         let controller = Rc::clone(&controller);
@@ -161,17 +154,13 @@ pub(crate) fn setup_session_actions(ui: &App, controller: Rc<Controller>) {
     }
 }
 
-/// The room code's copy button and its validity test.
 pub(crate) fn setup_code_actions(ui: &App) {
     let state = ui.global::<MultiplayerState>();
-    // Copy the room code to the clipboard.
     {
         let weak = ui.as_weak();
         state.on_copy_room_code(move || {
             let Some(ui) = weak.upgrade() else { return };
             let state = ui.global::<MultiplayerState>();
-            // Set only on success: it was unconditional, so the panel showed
-            // "copied" over a write that had just been logged as failing.
             if let Err(error) =
                 crate::ui::services::app_config::copy_to_clipboard(state.get_room_code().as_str())
             {
@@ -181,7 +170,6 @@ pub(crate) fn setup_code_actions(ui: &App) {
             }
         });
     }
-    // Recompute the room code's validity as it changes.
     {
         let weak = ui.as_weak();
         state.on_code_input_changed(move || {
@@ -193,10 +181,8 @@ pub(crate) fn setup_code_actions(ui: &App) {
     }
 }
 
-/// The library download screen: start, cancel, and the dialog's close.
 pub(crate) fn setup_download_actions(ui: &App, controller: Rc<Controller>) {
     let state = ui.global::<MultiplayerState>();
-    // The download screen's startup.
     {
         let weak = ui.as_weak();
         let controller = Rc::clone(&controller);
@@ -205,7 +191,6 @@ pub(crate) fn setup_download_actions(ui: &App, controller: Rc<Controller>) {
             start_download(&ui, &controller);
         });
     }
-    // Stop the task, then fall back to the description.
     {
         let weak = ui.as_weak();
         let controller = Rc::clone(&controller);
@@ -217,7 +202,6 @@ pub(crate) fn setup_download_actions(ui: &App, controller: Rc<Controller>) {
             state.set_visible(false);
         });
     }
-    // The dialog's own "close" (the scrim-less footer of a few screens).
     {
         let weak = ui.as_weak();
         state.on_close(move || {

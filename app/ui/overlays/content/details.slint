@@ -28,8 +28,6 @@ component MetadataEntry inherits Rectangle {
     // (`passes/default_geometry.rs`), so a bare `self.preferred-width` here
     // measured 0 and every entry of the row was drawn at the same place.
     width: entry.preferred-width + (root.divider ? 13px : 0px);
-    // The row is as tall as its tallest child, the 20px icon; the 14px label
-    // sits centred in it.
     height: 20px;
     background: transparent;
 
@@ -47,7 +45,6 @@ component MetadataEntry inherits Rectangle {
         alignment: center;
 
         AppIcon {
-            // Mauve in both stroke and fill.
             name: root.icon;
             size: 20px;
             icon-color: Theme.mauve;
@@ -56,7 +53,6 @@ component MetadataEntry inherits Rectangle {
         Text {
             text: root.text;
             font-size: 14px;
-            // Links are blue.
             color: root.link ? Theme.blue : Theme.default-text-color.transparentize(0.1);
             vertical-alignment: center;
             height: 20px;
@@ -83,8 +79,6 @@ component DetailButton inherits Rectangle {
     border-width: root.kind == "remove" ? 1px : 0px;
     border-color: Theme.red;
 
-    // White ink, except a hovered remove button and a favourited heart, which
-    // turn red.
     private property <color> ink:
         root.kind == "remove"
             ? (touch.has-hover ? Theme.red : white)
@@ -148,13 +142,6 @@ component DetailButton inherits Rectangle {
 // panel offers a remove button (mods only) and whether it has a gallery
 // (Modrinth only). The differences are carried by `ContentState`; Rust already
 // knows which of the six is open.
-//
-// One of the action row's buttons. `kind` picks the fill and the glyph: the
-// heart is a Latte teal square, the download a Latte teal pill with a label, and
-// the remove a surface0 pill with a red outline that turns red on hover.
-//
-// One entry of the metadata row. The entries are separated by a hairline on
-// every one but the first, which is the `divider` here.
 component DetailBody inherits Rectangle {
     width: 100%;
     height: 100%;
@@ -193,9 +180,6 @@ component DetailBody inherits Rectangle {
                 height: self.preferred-height;
                 background: transparent;
 
-                // 8px vertically and 24px horizontally. The action row, the body
-                // and the gallery are each separated by the layout's 16px
-                // spacing.
                 details-inner := VerticalLayout {
                     padding-left: 24px;
                     padding-right: 24px;
@@ -207,7 +191,6 @@ component DetailBody inherits Rectangle {
                         height: self.preferred-height;
                         spacing: 16px;
 
-                        // An 88px rounded icon.
                         Rectangle {
                             width: 88px;
                             height: 88px;
@@ -231,7 +214,6 @@ component DetailBody inherits Rectangle {
                             spacing: 8px;
                             alignment: center;
 
-                            // The name is 24px, weight 600.
                             if ContentState.detail-title != "" : Text {
                                 text: ContentState.detail-title;
                                 font-size: 24px;
@@ -241,14 +223,10 @@ component DetailBody inherits Rectangle {
                                 vertical-alignment: center;
                             }
 
-                            // 12px between the entries, with a 1px divider before
-                            // every one but the first.
                             metadata := FlexboxLayout {
                                 flex-wrap: wrap;
                                 height: 20px;
                                 spacing: 12px;
-                                // The entries are centred on the cross axis and
-                                // start at the left on the main axis.
                                 cross-axis-alignment: center;
 
                                 if ContentState.detail-source != "" : MetadataEntry {
@@ -286,12 +264,10 @@ component DetailBody inherits Rectangle {
                     }
 
                     HorizontalLayout {
-                        // 8px between the buttons.
                         height: 36px;
                         spacing: 8px;
                         alignment: start;
 
-                        // The heart is a 36px square.
                         DetailButton {
                             kind: "heart";
                             label: "";
@@ -360,7 +336,6 @@ component DetailBody inherits Rectangle {
                             }
                         }
 
-                        // The installed version is 13px italic at 60%.
                         if ContentState.detail-installed-version != "" : Text {
                             text: @tr("Installed: {}", ContentState.detail-installed-version);
                             font-size: 13px;
@@ -394,7 +369,6 @@ component DetailBody inherits Rectangle {
                     }
 
                     if ContentState.detail-gallery.length > 0 : Rectangle {
-                        // A 252px gallery with 16px of padding.
                         width: 100%;
                         height: 252px;
                         background: Theme.surface-0;
@@ -409,7 +383,6 @@ component DetailBody inherits Rectangle {
                             y: 16px;
                             width: parent.width - 48px;
                             height: parent.height - 32px;
-                            // 8px against the track rather than the row.
                             scrollbar-left: 8px;
                             scrollbar-right: 8px;
 
@@ -417,7 +390,6 @@ component DetailBody inherits Rectangle {
                                 spacing: 12px;
                                 cross-axis-alignment: center;
 
-                                // 204px in the 220px row, centred.
                                 for shot in ContentState.detail-gallery : Rectangle {
                                     width: shot.ratio * 204px;
                                     height: 204px;

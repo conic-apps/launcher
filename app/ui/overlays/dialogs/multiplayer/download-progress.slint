@@ -32,7 +32,6 @@ export component MultiplayerDownloadProgress inherits VerticalLayout {
             horizontal-stretch: 1;
             alignment: center;
 
-            // The phase on the left and the counter on the right, bottom-aligned.
             HorizontalLayout {
                 alignment: space-between;
                 cross-axis-alignment: end;
@@ -48,7 +47,6 @@ export component MultiplayerDownloadProgress inherits VerticalLayout {
                     color: Theme.default-text-color.transparentize(0.1);
                 }
 
-                // Shown while the byte counter has a value and a maximum.
                 if MultiplayerState.show-download-bytes: Text {
                     text: MultiplayerState.download-value-text + " / " + MultiplayerState.download-max-text;
                     font-size: 14px;
@@ -76,7 +74,6 @@ export component MultiplayerDownloadProgress inherits VerticalLayout {
         padding-top: 16px;
         spacing: 12px;
 
-        // A red outline that fills red on hover.
         Button {
             horizontal-stretch: 1;
             text: @tr("Multiplayer" => "Stop download");

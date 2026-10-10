@@ -49,8 +49,7 @@ thread_local! {
         const { RefCell::new(None) };
 }
 
-/// The controller, for use on the UI thread. Named apart from `setup`'s own
-/// `controller` binding, which would otherwise shadow it.
+/// Named apart from `setup`'s own `controller` binding, which would shadow it.
 pub(crate) fn launch_controller() -> Rc<RefCell<LaunchController>> {
     CONTROLLER
         .with(|cell| cell.borrow().clone())
@@ -62,9 +61,7 @@ pub(crate) fn launch_controller() -> Rc<RefCell<LaunchController>> {
 /// A run's [`Token`] is invalidated when it is cancelled or superseded, so a
 /// late report from a dead run is dropped instead of writing into a fresh one.
 pub(crate) struct LaunchController {
-    /// The running flow, aborted by [`LaunchController::cancel`].
     task: Option<tokio::task::JoinHandle<()>>,
-    /// Issues the run's [`Token`] and invalidates it on cancel.
     gate: Gate,
 }
 

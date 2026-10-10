@@ -34,7 +34,6 @@ const CHIP_LABEL: f32 = 62.0;
 pub(crate) const CHIP_HEIGHT: f32 = 20.0;
 pub(crate) const CHIP_GAP: f32 = 6.0;
 
-/// A banner card's height: the fixed banner over the copy block.
 pub(crate) fn banner_height() -> f32 {
     NEWS_MEDIA_HEIGHT + BANNER_INFO_HEIGHT
 }

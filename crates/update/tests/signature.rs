@@ -38,7 +38,6 @@ fn a_crate_signature_streams_through_the_app_verifier() {
     verifier.update(data);
     verifier.finalize().expect("the signature verifies");
 
-    // A single flipped byte must fail.
     let mut verifier = public_key.verify_stream(&signature).unwrap();
     verifier.update(b"the quick brown fox jumps over the lazy DOG");
     assert!(

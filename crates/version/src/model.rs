@@ -218,7 +218,7 @@ mod tests {
     fn a_malformed_version_is_an_error_not_a_panic() {
         assert!(MinecraftVersion::from_str("1.").is_err());
         assert!(MinecraftVersion::from_str("1.a").is_err());
-        // Fewer than two week digits used to slice out of bounds.
+        // Fewer than two week digits must be rejected, not sliced out of bounds.
         assert!(MinecraftVersion::from_str("24w").is_err());
         assert!(MinecraftVersion::from_str("24wa").is_err());
     }

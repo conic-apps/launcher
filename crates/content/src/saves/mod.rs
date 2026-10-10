@@ -24,7 +24,6 @@ mod nbt;
 /// world map opens centred on it.
 #[derive(Debug, Clone, Default)]
 pub struct LevelSummary {
-    /// The world's display name, absent when `level.dat` does not carry one.
     pub name: Option<String>,
     /// `Data.GameType`: 0 survival, 1 creative, 2 adventure, 3 spectator.
     pub game_type: Option<i32>,
@@ -35,7 +34,6 @@ pub struct LevelSummary {
     pub spawn: Option<[i32; 3]>,
 }
 
-/// Reads a [`LevelSummary`] out of a `level.dat` root (`level::get_all_levels`).
 pub fn summarize_level(root: &Value) -> LevelSummary {
     let Some(data) = compound_field(root, "Data") else {
         return LevelSummary::default();
@@ -54,11 +52,9 @@ pub fn summarize_level(root: &Value) -> LevelSummary {
     }
 }
 
-/// `Data.spawn.pos`, the `ListTag` of three ints the Java writes as
-/// `[x, y, z]`. A world that predates the tag (or a `level.dat` that carries
+/// `Data.spawn.pos`, the `ListTag` of three ints the Java writes as `[x, y, z]`.
+/// A world that predates the tag (or a `level.dat` that carries
 /// `SpawnX`/`SpawnZ` instead, which the format did before 1.2) has none.
-/// `worldmap.rs` falls back to the spawn `conic-worldmap` reads for itself only
-/// when a render request carries no centre.
 fn spawn_field(data: &Value) -> Option<[i32; 3]> {
     let pos = compound_field(compound_field(data, "spawn")?, "pos")?;
     let coords: &[i32] = match pos {
@@ -133,9 +129,6 @@ mod tests {
 
     use super::*;
 
-    /// A `Data` compound out of the three shapes `summarize_level` has to tell
-    /// apart: the modern `spawn.pos` list, the pre-1.2 `SpawnX`/`SpawnZ` pair
-    /// with no list at all, and a list of the wrong length.
     fn data_with_spawn(spawn: Option<Value>) -> Value {
         let mut fields = HashMap::new();
         fields.insert(
@@ -168,8 +161,6 @@ mod tests {
 
     #[test]
     fn a_world_without_a_spawn_tag_has_none() {
-        // A missing spawn tag yields `None`; `worldmap.rs` asks the world for
-        // its own spawn only when a request carries no centre, not for `(0, 0)`.
         assert_eq!(summarize_level(&data_with_spawn(None)).spawn, None);
     }
 

@@ -14,10 +14,8 @@ use multiplayer::NexusService;
 /// Whether the Conic Nexus library is present and valid, which decides the
 /// screen the dialog opens on.
 pub(crate) async fn library_ready() -> bool {
-    // The result decided which screen the dialog opens on, and the error was
-    // dropped here *and* by the caller — so "the dialog always shows the download
-    // screen" had no cause anywhere. The library itself logs the checksum
-    // mismatch; this covers the rest.
+    // The library logs a checksum mismatch itself; this covers the rest, so a
+    // dialog stuck on its download screen has a cause in the log.
     match multiplayer::check_library().await {
         Ok(()) => true,
         Err(error) => {

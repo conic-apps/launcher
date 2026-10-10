@@ -75,21 +75,21 @@ pub async fn install(
         .arg("--installClient")
         .arg(install_dir)
         .stdout(Stdio::piped())
-        // Inherited by default, which sent NeoForge's own error output past the
-        // launcher entirely; piped so it is reported like stdout.
+        // NeoForge writes its own error output to stderr; piped so it is
+        // reported like stdout instead of passing the launcher by.
         .stderr(Stdio::piped())
         .spawn()?;
 
     let out = child.stdout.take().ok_or(Error::NeoforgeInstallerFailed)?;
     let err = child.stderr.take();
     let pid = child.id().ok_or(Error::NeoforgeInstallerFailed)?;
-    // Both streams are drained concurrently: reading one to EOF before touching
-    // the other blocks as soon as the other's pipe buffer fills, which is a
-    // few kilobytes of NeoForge error output.
+    // Draining one stream to EOF before touching the other blocks once the
+    // other's pipe buffer fills, which a few kilobytes of NeoForge error output
+    // does.
     let success = Arc::new(AtomicBool::new(false));
 
-    // The pumps are named futures rather than inline `async` blocks so each one's
-    // `io::Result` is named rather than inferred from an ambiguous `?`.
+    // Named futures rather than inline `async` blocks so each one's `io::Result`
+    // is named rather than inferred from an ambiguous `?`.
     let stdout_pump = pump(Some(out), pid, reporter, Some(Arc::clone(&success)));
     let err_pump = pump(err, pid, reporter, None);
 
@@ -99,8 +99,8 @@ pub async fn install(
 
     let status = child.wait().await?;
     let success = success.load(AtomicOrdering::SeqCst);
-    // The temp file is named by a bare UUID, so naming the version here is the
-    // only thing that ties a leftover jar in the temp folder to an install.
+    // The temp file is named by a bare UUID, so naming the version is the only
+    // thing tying a leftover jar to an install.
     tokio::fs::remove_file(&installer_path)
         .await
         .map_err(|error| {

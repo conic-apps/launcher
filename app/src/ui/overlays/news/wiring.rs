@@ -12,12 +12,11 @@
 use super::*;
 
 pub(crate) fn register_callbacks(ui: &App) {
-    // The title bar's newspaper button.
     {
         let weak = ui.as_weak();
         ui.on_open_news(move || {
             if let Some(ui) = weak.upgrade() {
-                toggle(&ui);
+                toggle_overlay(&ui);
             }
         });
     }

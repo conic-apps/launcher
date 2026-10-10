@@ -91,7 +91,6 @@ component PaletteRow inherits Rectangle {
             // Two mutually exclusive branches: Slint has no `else if` in the
             // element form.
             if root.item.has-icon-image : Rectangle {
-                // An 18px square with a 4px radius and `object-fit: cover`.
                 x: (parent.width - self.width) / 2;
                 y: (parent.height - self.height) / 2;
                 width: 18px;
@@ -152,7 +151,6 @@ component PaletteRow inherits Rectangle {
                     text: CommandText.title(root.item.title-kind, root.item.title);
                     font-size: 13px;
                     font-weight: Theme.font-weight-normal;
-                    // The default text colour at full strength.
                     color: Theme.default-text-color;
                     horizontal-alignment: left;
                     vertical-alignment: center;
@@ -182,8 +180,6 @@ component PaletteRow inherits Rectangle {
                 }
             }
 
-            // 4px between tags; each is a 14px surface0 box, below the title's
-            // 13px line and 3px away from it.
             if root.item.loaders.length > 0 : Rectangle {
                 x: 0px;
                 y: 16px;
@@ -278,7 +274,6 @@ component PaletteRow inherits Rectangle {
 export component CommandPaletteOverlay inherits Rectangle {
     width: 100%;
     height: 100%;
-    // A full-window scrim: `background: #00000042`.
     background: #00000042;
     border-radius: 16px;
     // Above the music player and the content overlays (which set no `z` of their
@@ -312,7 +307,6 @@ export component CommandPaletteOverlay inherits Rectangle {
     // the footer (8 + 14 + 8 + a 1px rule) + 1px of border.
     private property <length> panel-height: 74px + root.results-height + 2px;
 
-    // The overlay is shown while the palette is visible.
     private property <bool> shown: CommandPaletteState.visible;
     visible: root.shown;
 
@@ -320,14 +314,12 @@ export component CommandPaletteOverlay inherits Rectangle {
         // The same span the title bar's search field is given.
         width: max(600px, root.width - 500px);
         height: root.panel-height;
-        // Centred horizontally.
         x: (root.width - self.width) / 2;
         // 4px below the top edge: the backdrop is the whole window, so the panel
         // hangs inside the title bar.
         y: 4px;
         drop-shadow-color: #00000071;
         drop-shadow-blur: 50px;
-        // A base fill with a 1px surface1 border and a 12px radius.
         background: Theme.base;
         border-width: 1px;
         border-color: Theme.surface-1.with-alpha(0.9);
@@ -428,7 +420,6 @@ export component CommandPaletteOverlay inherits Rectangle {
                     height: 41px;
                     background: transparent;
 
-                    // The rule below the input row.
                     Rectangle {
                         x: 0px;
                         y: 40px;
@@ -438,7 +429,6 @@ export component CommandPaletteOverlay inherits Rectangle {
                     }
 
                     AppIcon {
-                        // A 16px icon centred in the row.
                         x: 16px;
                         y: 12px;
                         name: "search";
@@ -454,7 +444,6 @@ export component CommandPaletteOverlay inherits Rectangle {
                         text: CommandText.placeholder(CommandPaletteState.mode, CommandPaletteState.source);
                         font-size: 15px;
                         font-weight: Theme.font-weight-normal;
-                        // The placeholder is dimmed to 50%.
                         color: Theme.default-text-color.transparentize(0.5);
                         vertical-alignment: center;
                         overflow: elide;
@@ -469,7 +458,6 @@ export component CommandPaletteOverlay inherits Rectangle {
                         text <=> CommandPaletteState.query;
                         font-size: 15px;
                         font-weight: Theme.font-weight-normal;
-                        // The default text colour at full strength.
                         color: Theme.default-text-color;
                         // The macOS backend draws the caret in the selection
                         // background colour, forced to full alpha, so a
@@ -483,8 +471,6 @@ export component CommandPaletteOverlay inherits Rectangle {
                         edited => { CommandPaletteState.query-changed(); }
                     }
                 }
-                // The area is as tall as the list needs and no taller: the content
-                // height Rust sums plus 12px of padding, capped at 320px.
                 results := Rectangle {
                     x: 0px;
                     y: 41px;
@@ -493,7 +479,6 @@ export component CommandPaletteOverlay inherits Rectangle {
                     background: transparent;
 
                     results-view := ScrollView {
-                        // 6px of padding.
                         x: 6px;
                         y: 6px;
                         width: parent.width - 12px;
@@ -543,10 +528,8 @@ export component CommandPaletteOverlay inherits Rectangle {
                             let first = self.content-y;
                             let last = self.content-y - self.height;
                             if top > first {
-                                // Above the viewport: 8px below its top.
                                 self.scroll-to(top + 8px, true);
                             } else if bottom < last {
-                                // Below it: 8px above its bottom.
                                 self.scroll-to(bottom + self.height - 8px, true);
                             }
                         }
@@ -592,8 +575,6 @@ export component CommandPaletteOverlay inherits Rectangle {
                             }
                         }
 
-                        // The empty state, in place of the whole list: a centred
-                        // `padding: 24px 16px` box.
                         if CommandPaletteState.items.length == 0 && root.empty-kind != "none" : Rectangle {
                             width: 100%;
                             height: root.empty-height;
@@ -629,7 +610,6 @@ export component CommandPaletteOverlay inherits Rectangle {
                     width: 100%;
                     height: 31px;
                     background: transparent;
-                    // The rule above the footer.
                     border-width: 1px;
                     border-color: Theme.surface-1.with-alpha(0.8);
 
@@ -647,7 +627,6 @@ export component CommandPaletteOverlay inherits Rectangle {
                         height: 14px;
                         spacing: 12px;
 
-                        // A single elided line.
                         breadcrumb := Text {
                             horizontal-stretch: 1;
                             text: CommandText.breadcrumb(
@@ -664,8 +643,6 @@ export component CommandPaletteOverlay inherits Rectangle {
                             vertical-alignment: center;
                         }
 
-                        // 12px between the hints, and the group keeps its own
-                        // width. The hints are packed against each other.
                         hints := HorizontalLayout {
                             horizontal-stretch: 0;
                             spacing: 12px;

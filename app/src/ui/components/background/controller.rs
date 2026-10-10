@@ -498,8 +498,6 @@ impl Controller {
         }
     }
 
-    // ----- the source -----
-
     /// Which of the three sources the app is asking for.
     fn resolve(&self) -> Source {
         if let Some((id, use_as_launcher, has_background, _)) = &self.instance
@@ -839,8 +837,6 @@ impl Controller {
         });
     }
 
-    // ----- the tick -----
-
     /// Advances the camera, the fades and the parallax, and asks for a frame
     /// when the world needs one.
     fn tick(&mut self, ui: &App) {
@@ -989,8 +985,6 @@ impl Controller {
         }
     }
 
-    // ----- the frame -----
-
     /// Asks the rasteriser for a frame. Returns whether it took the request.
     fn request_frame(&mut self, ui: &App) -> bool {
         let logical = ui.window().size();
@@ -1100,8 +1094,6 @@ impl Controller {
         background.set_parallax_x(offset.0);
         background.set_parallax_y(offset.1);
     }
-
-    // ----- the layers -----
 
     fn camera_moves(&self) -> bool {
         // The camera only advances while the world is what the window shows: it

@@ -107,7 +107,6 @@ mod tests {
     use super::*;
     use std::collections::HashMap;
 
-    /// The query of a URL, as the pairs it is made of.
     fn query_of(url: &str) -> HashMap<String, String> {
         let (base, query) = url.split_once('?').expect("the authorize url has a query");
         assert_eq!(

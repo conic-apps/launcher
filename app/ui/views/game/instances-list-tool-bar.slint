@@ -81,13 +81,11 @@ export component InstancesListToolBar inherits Rectangle {
             scroll-event(event) => { accept }
         }
 
-        // A 16px padding and a 12px gap lay out the two rows.
         VerticalLayout {
             padding: 16px;
             spacing: 12px;
             alignment: start;
 
-            // A full-width field beside a fixed 40px button.
             search-row := HorizontalLayout {
                 height: 40px;
 
@@ -97,7 +95,6 @@ export component InstancesListToolBar inherits Rectangle {
                     border-top-left-radius: 8px;
                     border-bottom-left-radius: 8px;
 
-                    // `input { padding-left: 16px; height: 100% }`.
                     HorizontalLayout {
                         padding-left: 16px;
                         cross-axis-alignment: center;

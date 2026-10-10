@@ -15,10 +15,10 @@ pub struct TokenPair {
 /// Reads the token endpoint's answer.
 ///
 /// The body is the only place the endpoint explains itself — a rejected grant
-/// arrives as a `400` carrying `error` and `error_description` — and it was read
-/// and then dropped without a word. `invalid_grant` in particular means the user
-/// revoked the app or the refresh token expired, which is the one thing a user
-/// asking "why did I have to sign in again" needs to hear.
+/// arrives as a `400` carrying `error` and `error_description`. `invalid_grant`
+/// in particular means the user revoked the app or the refresh token expired,
+/// which is the one thing a user asking "why did I have to sign in again" needs
+/// to hear.
 async fn check_response(response: reqwest::Response, what: &str) -> Result<Value> {
     let status = response.status();
     let body = response.text().await?;
@@ -112,8 +112,8 @@ pub(super) async fn get_access_token_from_refresh_token(refresh_token: &str) -> 
         )
         .send()
         .await?;
-    // This runs before every launch that needs a fresh token, so it is one of the
-    // most frequent requests the launcher makes and it used to leave no trace.
+    // One of the most frequent requests the launcher makes: it runs before every
+    // launch that needs a fresh token.
     let response =
         check_response(response, "exchanging the refresh token for an access token").await?;
     let access_token = response["access_token"]

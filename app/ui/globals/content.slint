@@ -768,7 +768,6 @@ export global ContentText {
         return @tr("ContentText" => "Modpack info");
     }
 
-    /// The search field's placeholder.
     public pure function search-placeholder(kind: string) -> string {
         if kind == "mods" { return @tr("ContentText" => "Search mods..."); }
         if kind == "resourcepacks" { return @tr("ContentText" => "Search resource packs..."); }

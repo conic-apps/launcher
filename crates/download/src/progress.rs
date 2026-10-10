@@ -36,7 +36,6 @@ pub struct DownloadSnapshot {
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
-/// Tracks the progress of an installation task.
 pub struct DownloadState {
     pub completed_tasks: Arc<AtomicU64>,
     pub total_tasks: Arc<AtomicU64>,
@@ -67,7 +66,6 @@ impl DownloadState {
         self.speed.store(0, ordering);
     }
 
-    /// Reads the plain values out of the shared counters.
     pub fn snapshot(&self) -> DownloadSnapshot {
         DownloadSnapshot {
             phase: *self.phase.lock().expect("Internal error"),

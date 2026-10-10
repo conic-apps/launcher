@@ -20,7 +20,6 @@ use super::{
 };
 use crate::error::{Error, Result};
 
-/// A file entry extracted from a mod archive.
 #[derive(Debug, Clone)]
 pub struct Entry {
     pub name: String,
@@ -29,8 +28,8 @@ pub struct Entry {
 
 /// Collect the requested entries from a zip archive into a map keyed by entry name.
 ///
-/// Entries that are not present (or can't be read) are simply skipped, so the
-/// caller can distinguish "missing" from "present" via `HashMap::get`.
+/// Entries that cannot be read are skipped, so the caller can distinguish
+/// "missing" from "present" via `HashMap::get`.
 pub fn filter_entries<R: Read + Seek>(
     zip: &mut ZipArchive<R>,
     entries: &[&str],
@@ -52,7 +51,6 @@ pub fn filter_entries<R: Read + Seek>(
     resolved_entries
 }
 
-/// Represent the forge `mcmod.info` format.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ForgeModMcmodInfo {
     #[serde(rename = "modid", alias = "modId")]
@@ -172,7 +170,6 @@ pub struct ForgeModTOMLData {
     pub mods: Option<Vec<ForgeModTOMLMod>>,
 }
 
-/// One `[[mods]]` entry of a `mods.toml` file.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ForgeModTOMLMod {
     #[serde(rename = "modId")]
@@ -292,14 +289,12 @@ fn resolve_jar_version(version: Option<String>, jar_version: Option<&str>) -> Op
     }
 }
 
-/// Parse a `mods.toml` / `neoforge.mods.toml` file.
 pub fn parse_mods_toml(content: &str) -> Result<ForgeModTOMLData> {
     let data: ForgeModTOMLData = toml::from_str(strip_bom(content))
         .map_err(|e| Error::ModParseFailed(format!("mods.toml: {e}")))?;
     Ok(data)
 }
 
-/// The metadata inferred from a `META-INF/MANIFEST.MF` file.
 #[derive(Debug, Clone, Default)]
 pub struct ManifestMetadata {
     pub mod_id: Option<String>,
@@ -361,7 +356,6 @@ pub fn parse_manifest(content: &str) -> HashMap<String, String> {
     let mut current_value = String::new();
     for line in content.lines() {
         if line.starts_with(' ') {
-            // Continuation of the previous header.
             if current_key.is_some() {
                 current_value.push_str(line.strip_prefix(' ').unwrap_or_default());
             }
@@ -456,7 +450,6 @@ fn non_empty(value: Option<&Value>) -> Option<&str> {
     value.and_then(Value::as_str).filter(|s| !s.is_empty())
 }
 
-/// The `META-INF/jarjar/metadata.json` format describing embedded dependencies.
 #[derive(Debug, Clone, Deserialize)]
 struct JarInJarMetadata {
     jars: Vec<EmbeddedJar>,
@@ -467,8 +460,6 @@ struct EmbeddedJar {
     path: String,
 }
 
-/// Parse `META-INF/jarjar/metadata.json` and resolve every embedded jar as a
-/// (possibly nested) mod archive.
 fn parse_jarjar<R: Read + Seek>(archive: &mut ZipArchive<R>) -> Vec<ResolvedMod> {
     let Some(bytes) = read_entry(archive, "META-INF/jarjar/metadata.json") else {
         return Vec::new();

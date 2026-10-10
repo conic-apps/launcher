@@ -31,19 +31,15 @@ thread_local! {
 /// The mod loader names, as the select and the version lists spell them.
 const MOD_LOADERS: [&str; 4] = ["Fabric", "Quilt", "Forge", "Neoforge"];
 
-/// Registers every create-instance callback on the `CreateInstanceState` global.
 pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     setup_minecraft_choose(ui);
     setup_create(ui);
     setup_background_and_wiki(ui, config);
 }
 
-/// The manifest, its category filter and the four mod loader fetches a picked
-/// version kicks off.
 fn setup_minecraft_choose(ui: &App) {
     let state = ui.global::<CreateInstanceState>();
 
-    // Fetch the manifest, then filter it.
     {
         let weak = ui.as_weak();
         state.on_load_minecraft_versions(move || {
@@ -76,7 +72,6 @@ fn setup_minecraft_choose(ui: &App) {
         });
     }
 
-    // The category select: re-filter the manifest.
     {
         let weak = ui.as_weak();
         state.on_set_version_category(move |category| {
@@ -87,7 +82,6 @@ fn setup_minecraft_choose(ui: &App) {
         });
     }
 
-    // Picking a version stores it and refreshes the four loader lists.
     {
         let weak = ui.as_weak();
         state.on_select_minecraft_version(move |version| {
@@ -115,8 +109,6 @@ fn setup_minecraft_choose(ui: &App) {
     }
 }
 
-/// The create callback (`on_create`): a free id, the instance, the background,
-/// then the game view refreshes and the dialog closes.
 fn setup_create(ui: &App) {
     let state = ui.global::<CreateInstanceState>();
     {
@@ -171,12 +163,9 @@ fn setup_create(ui: &App) {
     }
 }
 
-/// The background picker's preview and the version wiki link.
 fn setup_background_and_wiki(ui: &App, config: Rc<RefCell<config::Config>>) {
     let state = ui.global::<CreateInstanceState>();
 
-    // The background callback (`on_pick_background`): the native file picker,
-    // then the preview image.
     {
         let weak = ui.as_weak();
         state.on_pick_background(move |filter_name| {
@@ -228,8 +217,6 @@ fn apply_category(state: &CreateInstanceState, manifest: &[MinecraftVersionItem]
     state.set_minecraft_versions(ModelRc::new(VecModel::from(rows)));
 }
 
-/// A manifest entry as the chooser shows it: the id, its type and the release
-/// date split into parts, in local time.
 fn version_item(info: install::vanilla::VersionInfo) -> MinecraftVersionItem {
     let date = chrono::DateTime::parse_from_rfc3339(&info.release_time)
         .map(|time| time.with_timezone(&Local));
@@ -242,8 +229,6 @@ fn version_item(info: install::vanilla::VersionInfo) -> MinecraftVersionItem {
     }
 }
 
-/// Fetches one mod loader's versions for `mcversion` and reports the result
-/// into the dialog's state.
 fn spawn_mod_loader_fetch(weak: Weak<App>, loader: &'static str, mcversion: String) {
     crate::support::runtime::spawn(async move {
         let result: Result<Vec<String>, install::Error> = match loader {
@@ -279,7 +264,6 @@ fn spawn_mod_loader_fetch(weak: Weak<App>, loader: &'static str, mcversion: Stri
             let state = ui.global::<CreateInstanceState>();
             match result {
                 Ok(versions) => {
-                    // A loader is available only when its list is not empty.
                     let available = !versions.is_empty();
                     let versions: ModelRc<SharedString> = ModelRc::new(VecModel::from(
                         versions
@@ -310,7 +294,6 @@ fn spawn_mod_loader_fetch(weak: Weak<App>, loader: &'static str, mcversion: Stri
                     log::error!("failed to fetch the {loader} version list: {error}");
                 }
             }
-            // Regardless of the outcome, the loader is no longer loading.
             match loader {
                 "Fabric" => state.set_fabric_loading(false),
                 "Quilt" => state.set_quilt_loading(false),
@@ -377,8 +360,6 @@ fn neoforge_minecraft_version(version: &str) -> Option<String> {
     None
 }
 
-/// Splits `version` into `count` dot-separated numeric groups plus an optional
-/// `-suffix`.
 fn neoforge_groups(version: &str, count: usize) -> Option<Vec<&str>> {
     let (numbers, suffix) = match version.split_once('-') {
         Some((numbers, suffix)) => (numbers, Some(suffix)),
@@ -449,7 +430,6 @@ async fn create_instance(
     Ok(id)
 }
 
-/// The loader name of the dialog's select as the instance config's enum.
 fn mod_loader_type(value: &str) -> Option<ModLoaderType> {
     match value {
         "Fabric" => Some(ModLoaderType::Fabric),

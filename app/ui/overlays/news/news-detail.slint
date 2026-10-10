@@ -62,7 +62,6 @@ export component NewsDetailPanel inherits Rectangle {
                         height: self.preferred-height;
                         spacing: 16px;
 
-                        // A 96px rounded square, the image's own proportions.
                         Rectangle {
                             width: 96px;
                             height: 96px;
@@ -78,8 +77,6 @@ export component NewsDetailPanel inherits Rectangle {
                             }
                         }
 
-                        // The title and the two metadata entries, centred in
-                        // the 96px the image gives the header.
                         VerticalLayout {
                             horizontal-stretch: 1;
                             spacing: 8px;
@@ -99,7 +96,6 @@ export component NewsDetailPanel inherits Rectangle {
                                 alignment: start;
                                 cross-axis-alignment: center;
 
-                                // The release / snapshot pill.
                                 Rectangle {
                                     height: 20px;
                                     width: kind-label.preferred-width + 16px;

@@ -16,7 +16,6 @@ use crate::ui::components::markdown::{
 
 const WIDTH: f32 = 600.0;
 
-/// A renderer with the default style over a document, laid out for [`WIDTH`].
 fn render(source: &str) -> Vec<MdItem> {
     render_with(source, MdStyle::default())
 }
@@ -43,10 +42,6 @@ fn rects(items: &[MdItem]) -> Vec<&MdItem> {
         .filter(|item| item.kind == ItemKind::Rect)
         .collect()
 }
-
-// ---------------------------------------------------------------------------
-// paragraphs and line breaking
-// ---------------------------------------------------------------------------
 
 #[test]
 fn a_short_paragraph_is_one_line_inside_the_width() {
@@ -144,10 +139,6 @@ fn runs_of_one_line_share_a_baseline() {
     // And the code run is narrower than the same text at body size.
     assert!(runs[1].font_size < runs[0].font_size);
 }
-
-// ---------------------------------------------------------------------------
-// decorations
-// ---------------------------------------------------------------------------
 
 #[test]
 fn inline_code_gets_a_capsule_behind_it() {
@@ -294,10 +285,6 @@ fn strong_and_emphasis_reach_the_item() {
             .any(|item| item.color == ColorRole::Strike)
     );
 }
-
-// ---------------------------------------------------------------------------
-// block structure
-// ---------------------------------------------------------------------------
 
 #[test]
 fn a_heading_is_larger_and_heavier_than_body_text() {
@@ -514,10 +501,6 @@ fn a_footnote_definition_ends_the_document() {
         assert!(note.y > reference.y, "the definition comes after the text");
     }
 }
-
-// ---------------------------------------------------------------------------
-// the whole list
-// ---------------------------------------------------------------------------
 
 #[test]
 fn the_list_starts_at_the_top_left_and_never_goes_back_up() {
@@ -784,11 +767,6 @@ fn a_link_rule_sits_below_the_text_and_above_the_box_top() {
     assert!(rule_y >= top, "the rule is above its own box");
 }
 
-// ---------------------------------------------------------------------------
-// inline images
-// ---------------------------------------------------------------------------
-
-/// An image store holding one bitmap of the given size, at `url`.
 fn store_with(url: &str, width: u32, height: u32) -> crate::ui::components::markdown::ImageStore {
     let mut store = crate::ui::components::markdown::ImageStore::default();
     let buffer = slint::SharedPixelBuffer::<slint::Rgba8Pixel>::new(width, height);
@@ -958,10 +936,6 @@ fn an_image_has_the_same_below_it_as_a_paragraph_does() {
         style.paragraph_margin_bottom
     );
 }
-
-// ---------------------------------------------------------------------------
-// <details>
-// ---------------------------------------------------------------------------
 
 /// A renderer over a document, keeping the sections as well as the items.
 fn display(source: &str) -> crate::ui::components::markdown::DisplayList {

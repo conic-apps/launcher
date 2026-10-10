@@ -64,7 +64,6 @@ pub(crate) struct Controller {
     /// times a second does not allocate sixty times a second. The idle branch
     /// leaves it alone, so the next live frame reuses whatever capacity it has.
     levels: Vec<f32>,
-    /// Whether the window has the focus.
     focused: bool,
     /// Whether the clock is running (see [`start_clock`]).
     ticking: Arc<AtomicBool>,
@@ -86,7 +85,6 @@ pub(crate) struct BeatMap {
 }
 
 impl BeatMap {
-    // The mapping's constants.
     const MIN_DB: f32 = -70.0;
     const PEAK_DECAY: f32 = 0.97;
     const MIN_PEAK_LEVEL: f32 = 0.05;

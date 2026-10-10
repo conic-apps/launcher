@@ -55,8 +55,6 @@ export component Button inherits Rectangle {
     border-radius: root.button-radius;
     border-width: 1px;
     border-color: root.button-border-color != transparent ? root.button-border-color : Theme.controllers-border;
-    // Normal controller background, hover surface-2 at 85%, active raw
-    // surface-2.
     background: root.button-background != transparent ? root.button-background
         : button-touch.pressed ? Theme.surface-2
         : button-touch.has-hover ? (root.hover-background != transparent
@@ -68,7 +66,6 @@ export component Button inherits Rectangle {
     // buttons have left.
     transform-scale: button-touch.pressed ? 97% : button-touch.has-hover ? 102% : 100%;
     opacity: root.button-enabled ? 1.0 : 0.5;
-    // One 150ms ease covers both tracks.
     animate background, transform-scale { duration: 150ms; easing: ease; }
 
     button-label := Text {

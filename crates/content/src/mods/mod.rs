@@ -43,7 +43,6 @@ pub mod liteloader;
 pub mod quilt;
 pub mod remote;
 
-/// The mod loader a resolved mod is targeting.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ModLoader {
@@ -60,14 +59,12 @@ pub enum ModLoader {
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 #[serde(untagged)]
 pub enum ModIcon {
-    /// A single path to a PNG file inside the archive.
     Path(String),
-    /// A map of resolutions to paths. The largest resolution is preferred.
+    /// The largest resolution is preferred.
     Sizes(HashMap<String, String>),
 }
 
 impl ModIcon {
-    /// The path to read from the archive, preferring the largest resolution.
     pub fn path(&self) -> &str {
         match self {
             ModIcon::Path(p) => p,
@@ -115,12 +112,8 @@ pub struct ResolvedMod {
     /// still deserialize.
     #[serde(default)]
     pub embedded: bool,
-    /// Where the mod was resolved from online (`modrinth` / `curseforge`),
-    /// when an online lookup matched this file.
     pub source: Option<RemoteModPlatform>,
-    /// The project/mod id on the source platform.
     pub source_id: Option<String>,
-    /// The version/file id on the source platform.
     pub version_id: Option<String>,
 }
 
@@ -191,7 +184,6 @@ pub fn parse_mod<P: AsRef<Path>>(path: P) -> Result<Vec<ResolvedMod>> {
     Ok(mods)
 }
 
-/// A per-loader archive parser function.
 pub type LoaderParser<R> = fn(&mut ZipArchive<R>) -> Result<Vec<ResolvedMod>>;
 
 /// Parse a mod archive, trying each supported loader in order until one of them
@@ -212,8 +204,6 @@ pub fn parse_mod_archive<R: Read + Seek>(archive: &mut ZipArchive<R>) -> Result<
             Err(e) => return Err(e),
         }
     }
-    // None of the four claimed it. A jar that is really a mod is the case worth
-    // naming — it is what "my mod has no name and no icon" looks like.
     log::debug!("No loader recognised this archive as one of its own format");
     Err(Error::NotAModFile)
 }
@@ -241,8 +231,8 @@ pub fn parse_folder<S: AsRef<OsStr> + ?Sized>(folder: &S) -> Result<Vec<Resolved
     Ok(result)
 }
 
-/// Whether a mod file is disabled, i.e. its file name carries the `.jar.disabled`
-/// (or `.jar.disable`) suffix that launchers use to keep a mod out of the mods folder.
+/// Whether a mod file's name carries the `.jar.disabled` / `.jar.disable` suffix
+/// that keeps it out of the mods folder.
 pub fn is_disabled_file<P: AsRef<Path>>(path: P) -> bool {
     path.as_ref()
         .file_name()
@@ -251,7 +241,6 @@ pub fn is_disabled_file<P: AsRef<Path>>(path: P) -> bool {
         .unwrap_or(false)
 }
 
-/// Strip a UTF-8 BOM from the start of a metadata file.
 pub(crate) fn strip_bom(s: &str) -> &str {
     s.trim_start_matches('\u{feff}')
 }
@@ -262,7 +251,6 @@ pub(crate) fn sanitize_json(s: &str) -> String {
     strip_bom(s).replace(['\n', '\r'], "")
 }
 
-/// Read an entry from the archive and encode it as a base64 PNG data URL.
 pub(crate) fn read_icon<R: Read + Seek>(archive: &mut ZipArchive<R>, path: &str) -> Option<String> {
     let mut buf = Vec::new();
     if let Ok(mut file) = archive.by_name(path)
@@ -273,7 +261,6 @@ pub(crate) fn read_icon<R: Read + Seek>(archive: &mut ZipArchive<R>, path: &str)
     None
 }
 
-/// `data:image/png;base64,…` — the form an icon takes inside a [`ResolvedMod`].
 pub(crate) fn encode_icon(bytes: Vec<u8>) -> String {
     format!(
         "data:image/png;base64,{}",
@@ -294,7 +281,6 @@ pub(crate) fn decode_icon_data_url(url: &str) -> Option<Vec<u8>> {
     general_purpose::STANDARD_NO_PAD.decode(payload).ok()
 }
 
-/// Read a whole entry from the archive as bytes. Used to open nested jars.
 pub(crate) fn read_entry<R: Read + Seek>(
     archive: &mut ZipArchive<R>,
     path: &str,
@@ -308,7 +294,6 @@ pub(crate) fn read_entry<R: Read + Seek>(
     None
 }
 
-/// Open a nested jar (given as raw bytes) as a zip archive.
 pub(crate) fn open_nested_jar<R: Read + Seek>(
     archive: &mut ZipArchive<R>,
     path: &str,

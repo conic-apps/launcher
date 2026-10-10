@@ -27,7 +27,6 @@ component InstanceListCard inherits Rectangle {
     in property <color> accent;
     callback clicked();
 
-    // The current card is pulled 20px further left, over 200ms.
     private property <length> current-shift: root.item.current ? -20px : 0px;
     animate current-shift {
         duration: 200ms;
@@ -60,7 +59,6 @@ component InstanceListCard inherits Rectangle {
             ? Theme.lavender.with-alpha(0.85)
             : Theme.surface-1.with-alpha(0.85);
 
-        // The outer card, clockwise.
         MoveTo { x: 8; y: 0; }
         LineTo { x: 472; y: 0; }
         ArcTo { radius-x: 8; radius-y: 8; x: 480; y: 8; sweep: true; }
@@ -116,8 +114,6 @@ component InstanceListCard inherits Rectangle {
         }
     }
 
-    // The 8px/16px padding starts *after* the 16px colour strip, so the card's
-    // text sits 32px in.
     Text {
         text: root.item.name;
         font-size: 15.2px;
@@ -216,7 +212,6 @@ component InstanceGroupRow inherits Rectangle {
         commands: "M 8 0 L 472 0 A 8 8 0 0 1 480 8 L 480 32 A 8 8 0 0 1 472 40 L 8 40 A 8 8 0 0 1 0 32 L 0 8 A 8 8 0 0 1 8 0 Z M 26 1 A 6 6 0 0 0 20 7 L 20 33 A 6 6 0 0 0 26 39 L 471 39 A 6 6 0 0 0 477 33 L 477 7 A 6 6 0 0 0 471 1 L 26 1 Z";
     }
 
-    // The content card, offset past the 20px colour strip.
     Rectangle {
         x: 20px;
         y: 1px;
@@ -229,7 +224,6 @@ component InstanceGroupRow inherits Rectangle {
         animate background { duration: 200ms; }
     }
 
-    // 4px inside the 20px colour strip.
     AppIcon {
         name: "chevron-forward";
         size: 14px;
@@ -243,8 +237,6 @@ component InstanceGroupRow inherits Rectangle {
         }
     }
 
-    // The 8px/16px padding starts *after* the 20px colour strip, so the title
-    // sits 36px in.
     HorizontalLayout {
         x: 20px + 16px;
         height: 14px;
@@ -291,8 +283,6 @@ component InstanceGroupRow inherits Rectangle {
 // trackpad input, and the row clicks are reported back as callbacks so the list
 // keeps the collapse lock and the centring a selection needs.
 //
-// The rail
-// ========
 // Cards glide along a parabola: `rail-x` pulls a row `rail-offset` to the left
 // at the vertical centre of the viewport and eases it part-way back towards its
 // resting x as it nears the top and bottom. It is a pure function of the row's
@@ -343,7 +333,6 @@ component InstanceListContent inherits Rectangle {
         self.intro-top = root.scroll-y;
     }
 
-    /// The rail.
     /// `viewport-center-y` is the row's centre as it appears on screen, i.e. its
     /// content position minus the scroll offset — callers subtract `scroll-y`,
     /// so the sign of the scroll can only be got wrong in one place.
@@ -496,8 +485,6 @@ component InstanceListContent inherits Rectangle {
 // The list is anchored so its right edge sits 320px past the viewport, with the
 // cards peeking from the right.
 //
-// Scrolling
-// =========
 // The rail and the custom scrollbar both follow a smoothed offset
 // (`lerp: 0.16`: every frame the offset closes 16% of the remaining distance to
 // the target). That is a `Timer` easing `scroll-y` towards `target-y`, instead
@@ -845,7 +832,6 @@ export component InstancesList inherits Rectangle {
         thumb := Rectangle {
             width: track-touch.has-hover || track-touch.pressed ? 10px : 8px;
             x: track-touch.has-hover || track-touch.pressed ? -2px : 0px;
-            // At least 32px, or the track height scaled by the visible fraction.
             height: root.max-scroll > 0px
                 ? max(32px, parent.track-height * root.height
                 / max(GameState.list-content-height, root.height))

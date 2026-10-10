@@ -99,7 +99,6 @@ export component InstanceCard inherits Rectangle {
         Close { }
     }
 
-    // The content card, filling the frame's hole.
     Rectangle {
         x: 16px;
         y: 1px;
@@ -123,7 +122,6 @@ export component InstanceCard inherits Rectangle {
         }
     }
 
-    // ----- the name -----
     if !root.name-editing : name-row := Rectangle {
         x: 32px;
         y: 9px;
@@ -152,7 +150,6 @@ export component InstanceCard inherits Rectangle {
             size: 16px;
             x: name-text.width + 4px;
             icon-color: Theme.default-text-color.transparentize(0.1);
-            // Hover swells the icon; pressing shrinks it.
             transform-scale: edit-touch.pressed ? 97% : edit-touch.has-hover ? 102% : 100%;
             animate transform-scale { duration: 100ms; }
         }
@@ -196,14 +193,11 @@ export component InstanceCard inherits Rectangle {
         changed clear-sequence => { self.clear-focus(); }
     }
 
-    // ----- details -----
     details := HorizontalLayout {
         x: 32px;
-        // 6px under the 16px title row.
         y: 9px + 16px + 6px;
         width: parent.width - 49px;
         height: 13px;
-        // The tag is always first and carries no margin of its own.
         spacing: 8px;
         alignment: start;
         cross-axis-alignment: center;
@@ -244,7 +238,6 @@ export component InstanceCard inherits Rectangle {
             }
         }
 
-        // The delete dialog's third row.
         if root.playtime != "" : HorizontalLayout {
             spacing: 0px;
             alignment: start;

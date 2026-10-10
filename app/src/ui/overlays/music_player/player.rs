@@ -6,7 +6,6 @@
 
 use super::*;
 
-/// Runs `action` on the player, then refreshes the global.
 pub(crate) fn with_player(weak: &Weak<App>, action: impl FnOnce(&music::Player)) {
     let Some(ui) = weak.upgrade() else {
         return;
@@ -22,7 +21,6 @@ pub fn pause() {
     with_controller(|controller| controller.player.pause());
 }
 
-/// Runs `action` on the controller.
 pub(crate) fn with_controller(action: impl FnOnce(&mut Controller)) {
     CONTROLLER.with(|slot| {
         if let Some(controller) = slot.borrow_mut().as_mut() {

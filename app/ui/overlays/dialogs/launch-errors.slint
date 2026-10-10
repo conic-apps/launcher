@@ -27,7 +27,6 @@ export component LaunchErrorDialogs inherits Rectangle {
         dialog-width: 500px;
         dialog-height: 146px;
 
-        // 8px of padding and a 16px gap between the message and the button.
         VerticalLayout {
             padding: 8px;
             spacing: 16px;
@@ -122,7 +121,6 @@ export component LaunchErrorDialogs inherits Rectangle {
         }
     }
 
-    // A two-line message and a filled blue button.
     no-java := Dialog {
         dialog-visible: Dialogs.no-suitable-java-error-visible;
         dialog-width: 500px;

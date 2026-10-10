@@ -20,7 +20,6 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use storage::LOCATIONS;
 
-/// The file the state is kept in, under the data directory's root.
 fn state_file() -> PathBuf {
     LOCATIONS.launcher.root.join("instance_view.json")
 }
@@ -115,8 +114,6 @@ impl InstanceViewState {
 pub fn save(state: &InstanceViewState) {
     let path = state_file();
     let Ok(bytes) = serde_json::to_vec_pretty(state) else {
-        // The doc comment above says a failure is logged; this arm was the one
-        // that did not log it, leaving only the write side covered.
         log::warn!("the instance view state could not be serialised; it is not being saved");
         return;
     };

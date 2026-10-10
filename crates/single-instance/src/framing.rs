@@ -17,9 +17,6 @@ use crate::Launch;
 const SEPARATOR: &str = "\0\0";
 
 /// Frames a launch for the trip to the process that is already running.
-///
-/// The fields are NUL separated, and a path or an argument cannot contain a
-/// NUL, so nothing in a report can shift the boundary the reader splits on.
 pub(crate) fn encode(launch: &Launch) -> String {
     format!(
         "{cwd}{SEPARATOR}{args}",
@@ -55,8 +52,7 @@ mod tests {
 
     #[test]
     fn a_field_may_look_like_the_boundary() {
-        // A NUL cannot appear in either field, so the first pair of them is
-        // always the boundary: a `|` in a path is just a byte.
+        // `|` is not a separator; only the NUL pair splits a report.
         let launch = Launch {
             args: vec!["conic-launcher".into(), "|not a boundary|".into()],
             cwd: "/home/user/Games|weird".into(),

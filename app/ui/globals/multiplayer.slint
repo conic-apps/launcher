@@ -46,7 +46,6 @@ export global MultiplayerState {
 
     /// The join-code screen is up regardless of the session state.
     in-out property <bool> code-input-open: false;
-    /// The typed join code.
     in-out property <string> code-input: "";
     /// Whether the typed code is valid; computed in Rust, since Slint has no
     /// regular expressions.
@@ -89,7 +88,6 @@ export global MultiplayerState {
     /// untranslated.
     out property <string> local-nat-label: root.nat-label(root.local-nat-code);
 
-    /// Whether to show the NAT line at all.
     out property <bool> show-nat: root.has-local-peer;
 
     /// The bottom button's label. The join-code screen swaps the whole bar for

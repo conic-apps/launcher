@@ -81,7 +81,6 @@ use crate::mods::{
     is_disabled_file, parse_mod,
 };
 
-/// The platform an online mod lookup was resolved from.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum RemoteModPlatform {
@@ -89,7 +88,6 @@ pub enum RemoteModPlatform {
     CurseForge,
 }
 
-/// The online metadata of a mod, as reported by its source platform.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RemoteModInfo {
     pub platform: RemoteModPlatform,
@@ -105,7 +103,6 @@ pub struct RemoteModInfo {
     pub game_versions: Vec<String>,
 }
 
-/// SHA-512 checksum of a file, hex-encoded.
 pub(crate) fn sha512_file<P: AsRef<Path>>(path: P) -> std::io::Result<String> {
     let file = std::fs::File::open(path)?;
     let mut reader = std::io::BufReader::new(file);
@@ -121,7 +118,6 @@ pub(crate) fn sha512_file<P: AsRef<Path>>(path: P) -> std::io::Result<String> {
     Ok(format!("{:x}", hasher.finalize()))
 }
 
-/// How long a Modrinth/CurseForge lookup result stays valid.
 const REMOTE_CACHE_TTL_SECS: u64 = 24 * 60 * 60;
 
 const MODRINTH_CACHE: &str = "modrinth.json";
@@ -186,12 +182,6 @@ fn icon_path(hash: &str) -> PathBuf {
     cache_dir().join("local-icons").join(format!("{hash}.png"))
 }
 
-/// Reads one of the on-disk mod caches.
-///
-/// A corrupt file and a missing one both became an empty map, with the parse
-/// error discarded — so a cache that cannot be read silently never repopulates:
-/// every listing re-hashes every jar and re-queries the network, forever, and
-/// the log shows nothing but the per-file hash failures.
 async fn load_cache<T: DeserializeOwned>(name: &str) -> HashMap<String, T> {
     let path = cache_dir().join(name);
     match tokio::fs::read(&path).await {
@@ -281,9 +271,6 @@ fn cache_is_fresh(entry: &RemoteCacheEntry, timestamp: u64) -> bool {
     timestamp.saturating_sub(entry.timestamp) < REMOTE_CACHE_TTL_SECS
 }
 
-/// Resolve every mod inside a folder, merging online info when available.
-///
-/// This is the entry point the frontend calls to list all mods of an instance.
 pub async fn parse_folder_with_remote<S: AsRef<Path> + ?Sized>(folder: &S) -> Vec<ResolvedMod> {
     let folder = folder.as_ref();
     let files: Vec<PathBuf> = folder
@@ -410,9 +397,6 @@ pub async fn parse_folder_with_remote<S: AsRef<Path> + ?Sized>(folder: &S) -> Ve
             needs_modrinth.push(hash.clone());
         }
     }
-    // The cache axis, recorded once for the whole pass rather than per hash: a
-    // listing that took its time entirely from disk and one that queried both
-    // platforms for every mod are indistinguishable without this.
     let cached = remote_by_hash.len();
     log::debug!(
         "Resolving remote info for {} mod(s): {} answered from cache, {} to query on \
@@ -589,7 +573,6 @@ fn own_icon(mods: &[ResolvedMod]) -> Option<&str> {
         .and_then(|mod_info| mod_info.icon.as_deref())
 }
 
-/// The icon stored beside the JSON caches for the file with this checksum.
 async fn read_icon_file(hash: &str) -> Option<String> {
     let bytes = tokio::fs::read(icon_path(hash)).await.ok()?;
     Some(encode_icon(bytes))
@@ -624,7 +607,6 @@ async fn query_modrinth_batch(
         return (HashMap::new(), identity);
     }
 
-    // Fetch the matching projects in one request.
     let project_ids: Vec<String> = versions
         .values()
         .filter_map(|version| version.get("project_id").and_then(Value::as_str))
@@ -952,7 +934,6 @@ async fn resolve_platform_single(
     }
 }
 
-/// The install status of a mod, looked up by its platform id.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModInstalledInfo {
     pub installed: bool,
@@ -992,7 +973,6 @@ pub async fn check_mod_installed(
         return empty;
     }
 
-    // Scan the instance's mods folder for a file carrying one of the hashes.
     let mods_folder = storage::LOCATIONS
         .instances
         .get_instance_root(instance_id)
@@ -1021,7 +1001,6 @@ pub async fn check_mod_installed(
         return empty;
     }
 
-    // Re-parse the matched files and resolve them from the requested platform.
     let mut modrinth_cache = load_cache::<RemoteCacheEntry>(MODRINTH_CACHE).await;
     let mut curseforge_cache = load_cache::<RemoteCacheEntry>(CURSEFORGE_CACHE).await;
     let mut modrinth_identity: HashMap<String, Option<String>> = HashMap::new();
@@ -1134,7 +1113,6 @@ fn merge_remote(mod_info: &mut ResolvedMod, remote: &RemoteModInfo) {
     mod_info.version_id = remote.version_id.clone();
 }
 
-/// List every mod of an instance, merged with online info.
 pub async fn parse_mods(instance_id: &str) -> Vec<ResolvedMod> {
     let mods_folder = storage::LOCATIONS
         .instances
@@ -1143,8 +1121,6 @@ pub async fn parse_mods(instance_id: &str) -> Vec<ResolvedMod> {
     parse_folder_with_remote(&mods_folder).await
 }
 
-/// Check whether the mod with the given id on the given platform is
-/// installed in an instance.
 pub async fn check_installed(
     instance_id: &str,
     platform: RemoteModPlatform,

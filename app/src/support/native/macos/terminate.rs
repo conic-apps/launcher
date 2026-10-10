@@ -64,9 +64,9 @@ thread_local! {
 pub(super) fn install(request_close: impl Fn() + 'static, run_exit_work: impl Fn() + 'static) {
     REQUEST_CLOSE.with(|slot| *slot.borrow_mut() = Some(Box::new(request_close)));
 
-    // AppKit posts this on its way out. Now that the terminate request is
-    // cancelled and replayed as a close, this is only reached when the app
-    // really is terminating, so it is the last chance to run the exit-time work.
+    // AppKit posts this on its way out, and the terminate request is cancelled
+    // and replayed as a close, so this is reached only when the app really is
+    // terminating — the last chance to run the exit-time work.
     let block = RcBlock::new(move |_notification: NonNull<NSNotification>| {
         run_exit_work();
     });
@@ -85,7 +85,6 @@ pub(super) fn install(request_close: impl Fn() + 'static, run_exit_work: impl Fn
     install_should_terminate();
 }
 
-/// Adds `applicationShouldTerminate:` to winit's application delegate class.
 fn install_should_terminate() {
     const SELECTOR: &CStr = c"applicationShouldTerminate:";
 
@@ -132,9 +131,6 @@ fn install_should_terminate() {
 /// takes the same path as `⌘W`: confirm first when a task is running, close
 /// outright otherwise.
 unsafe extern "C" fn application_should_terminate(_this: Id, _cmd: SelPtr, _sender: Id) -> usize {
-    // Every `⌘Q`, the menu's Quit and a system logout arrive here, and the
-    // function used to log nothing on either path — so the `warn!`s above
-    // describe a state the log never showed being acted on.
     log::debug!(
         target: "shell",
         "terminate: the platform asked to quit; replaying it through the close flow"

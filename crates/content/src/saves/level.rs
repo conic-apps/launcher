@@ -15,10 +15,8 @@ use flate2::write::GzEncoder;
 use crate::error::*;
 use crate::saves::nbt::modify_nbt;
 
-/// Get level data
-///
-/// Note: This function returns the `level.dat` root compound; the level fields
-/// live under its `Data` tag.
+/// Returns the `level.dat` root compound; the level fields live under its `Data`
+/// tag.
 pub fn parse_level_data<P: AsRef<Path>>(leveldat_path: P) -> Result<Value> {
     let file = fs::File::open(leveldat_path)?;
     let mut decoder = GzDecoder::new(file);
@@ -27,10 +25,6 @@ pub fn parse_level_data<P: AsRef<Path>>(leveldat_path: P) -> Result<Value> {
     Ok(fastnbt::from_bytes(&bytes)?)
 }
 
-/// Modify level
-///
-/// * `value_path` - You need to use a colon to connect the path. For example, if you want to modify the
-///   seed, you should use `Data:world_gen_settings:seed`.
 pub fn modify_level<P: AsRef<Path>>(level_path: P, value_path: &str, value: Value) -> Result<()> {
     let level_path = level_path.as_ref();
     let file = fs::File::options().read(true).open(level_path)?;
@@ -56,7 +50,6 @@ pub fn modify_level<P: AsRef<Path>>(level_path: P, value_path: &str, value: Valu
     Ok(())
 }
 
-/// Get all levels from 'saves' folder
 pub fn get_all_levels<P: AsRef<Path>>(saves_folder_path: P) -> Result<HashMap<String, Value>> {
     Ok(fs::read_dir(saves_folder_path)?
         .flatten()

@@ -27,7 +27,6 @@ export component ListItem inherits Rectangle {
     callback button-clicked(string);
 
     width: 100%;
-    // The 53px row plus the 1px that separates two rows.
     height: 54px;
     background: transparent;
 
@@ -46,7 +45,6 @@ export component ListItem inherits Rectangle {
             padding-bottom: 10px;
             cross-axis-alignment: center;
 
-            // ----- the leading icon -----
             icon-box := Rectangle {
                 width: 28px + 8px;
                 height: 28px;
@@ -68,7 +66,6 @@ export component ListItem inherits Rectangle {
                 }
             }
 
-            // ----- title + description -----
             text-column := Rectangle {
                 horizontal-stretch: 1;
                 height: 100%;
@@ -115,7 +112,6 @@ export component ListItem inherits Rectangle {
                 }
             }
 
-            // ----- buttons -----
             for button in root.buttons : Rectangle {
                 width: 16px + 12px;
                 height: 100%;

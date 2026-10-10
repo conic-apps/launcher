@@ -100,7 +100,6 @@ export component AccountAddOffline inherits VerticalLayout {
                     color: Theme.default-text-color.transparentize(0.1);
                 }
 
-                // Turns red while the typed UUID does not parse.
                 Text {
                     text: AccountAddState.offline-uuid-invalid
                         ? @tr("The UUID you entered is not valid")
@@ -122,8 +121,6 @@ export component AccountAddOffline inherits VerticalLayout {
         }
     }
 
-    // Each button takes an equal share of the row minus the 8px gap between
-    // them.
     HorizontalLayout {
         padding-top: 12px;
         spacing: 8px;

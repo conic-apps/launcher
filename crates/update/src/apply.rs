@@ -60,8 +60,8 @@ pub fn apply_pending() -> Result<bool> {
 /// [`clear_pending`] deliberately drops only the record: on Windows the bundle
 /// has to outlive this process, because a detached script is what consumes it.
 /// On the platforms that apply in-process the artifact is dead weight the moment
-/// the swap succeeds, and leaving it behind is what made a used `updates/`
-/// directory keep one tarball per update.
+/// the swap succeeds, and leaving it behind would let a used `updates/` directory
+/// keep one tarball per update.
 #[cfg(not(windows))]
 fn discard_artifact(staged: &Staged) {
     if let Err(error) = std::fs::remove_file(&staged.artifact)
