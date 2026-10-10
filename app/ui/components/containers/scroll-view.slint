@@ -47,9 +47,7 @@ import { ScrollInput, ScrollSource } from "../../globals/scroll.slint";
 // convention: 0 at the top, negative when scrolled down. Everything below works
 // with its positive twin, `scroll-y`.
 export component ScrollView inherits Rectangle {
-    /// Distance between the view's top edge and the top of the scrollbar track.
     in property <length> scrollbar-top: 8px;
-    /// Distance between the view's bottom edge and the bottom of the track.
     in property <length> scrollbar-bottom: 8px;
     /// Hides the scrollbar without touching the scrolling. The offset still moves.
     in property <bool> scrollbar-disabled: false;
@@ -67,14 +65,10 @@ export component ScrollView inherits Rectangle {
     /// Smoothed scroll offset, negative when scrolled down.
     out property <length> content-y: -root.scroll-y;
 
-    // ----- geometry -----
-    // The track is 8px in from the right edge, 6px wide and 8px from the top and
-    // bottom; the thumb hangs 2px off each side while hovered or dragged.
     private property <length> scrollbar-inset-right: 8px;
     private property <length> scrollbar-width: 6px;
     private property <length> track-height: max(0px, root.height - root.scrollbar-top - root.scrollbar-bottom);
 
-    // ----- scroll state -----
     /// Smoothed offset: 0 at the top, growing as the content scrolls down.
     /// Drives the content's position and the scrollbar thumb.
     private property <length> scroll-y: 0px;
@@ -150,7 +144,6 @@ export component ScrollView inherits Rectangle {
         root.target-y = clamp(root.target-y, 0px, root.max-scroll);
     }
 
-    // ----- programmatic scrolling -----
     /// Scrolls so that `y` — the same sign as `content-y` — ends up at the top of
     /// the viewport. `smooth` glides there along the lerp; `!smooth` moves the
     /// offset with the target.
@@ -236,10 +229,6 @@ export component ScrollView inherits Rectangle {
         }
     }
 
-    // ----- scrollbar -----
-    // The track is pinned to this view's right edge (the instance list, which
-    // overhangs the window, subtracts the overhang instead). A 6px track with an
-    // 8px thumb that widens to 10px on hover and shrinks slightly while dragged.
     scrollbar := Rectangle {
         visible: !root.scrollbar-disabled && root.max-scroll > 0.5px;
         x: root.width - root.scrollbar-inset-right - root.scrollbar-width;
@@ -314,13 +303,11 @@ export component ScrollView inherits Rectangle {
         ? max(32px, root.track-height * root.height / max(root.content-height, root.height))
         : root.track-height;
 
-    // ----- scrollbar drag -----
     private property <bool> dragging: false;
     /// Where inside the thumb the pointer grabbed it, so dragging does not make
     /// the thumb jump under the cursor.
     private property <length> drag-anchor: 0px;
 
-    /// Maps a pointer position inside the scrollbar track to a scroll offset.
     function drag-scrollbar(mouse-y: length) {
         if root.max-scroll <= 0px || scrollbar.height <= thumb.height {
             return;

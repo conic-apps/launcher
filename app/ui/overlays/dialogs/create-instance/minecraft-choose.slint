@@ -26,7 +26,6 @@ export component MinecraftChoose inherits ZoomTransition {
 
     height: root.screen-height;
     padding: 8px;
-    // 8px between the filter, the list and the button.
     spacing: 8px;
 
     /// The row icon: the release texture, the command block for a snapshot and
@@ -43,7 +42,6 @@ export component MinecraftChoose inherits ZoomTransition {
 
     filter := Rectangle {
         width: 100%;
-        // 8px vertical padding around the 24px segmented select.
         height: 40px;
         border-radius: 8px;
         background: Theme.surface-0;
@@ -117,7 +115,6 @@ export component MinecraftChoose inherits ZoomTransition {
                     title: "Minecraft " + version.id;
                     description: GameTime.year-month-day(version.month, version.day, version.year);
                     icon: root.version-icon(version.kind);
-                    // Only the release icon is drawn at 80% opacity.
                     icon-opacity: version.kind == "release" ? 0.8 : 1.0;
                     clickable: true;
                     buttons: ["about"];
@@ -133,7 +130,6 @@ export component MinecraftChoose inherits ZoomTransition {
             }
         }
 
-        // Loading veil. It appears without a transition.
         if CreateInstanceState.minecraft-loading : Rectangle {
             width: 100%;
             height: 100%;

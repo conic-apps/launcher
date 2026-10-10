@@ -65,11 +65,8 @@ pub struct SpanStyle {
     /// names a real monospace face gets that face, and a caller that leaves the
     /// generic name — as GitHub's `.markdown-body` does — gets the platform's.
     pub mono: bool,
-    /// The font size, in logical pixels.
     pub size: f32,
-    /// The `font-weight`, 100 to 900.
     pub weight: u16,
-    /// Whether the run is slanted.
     pub italic: bool,
 }
 
@@ -79,9 +76,7 @@ pub struct SpanStyle {
 pub struct Cluster {
     /// Byte range of the cluster within the measured run.
     pub start: usize,
-    /// One past the last byte of the cluster.
     pub end: usize,
-    /// Its advance, in logical pixels.
     pub advance: f32,
 }
 
@@ -96,11 +91,9 @@ pub struct SpanMetrics {
     pub text: String,
     /// The clusters, in reading order. Their advances add up to `width`.
     pub clusters: Vec<Cluster>,
-    /// The run's total advance.
     pub width: f32,
-    /// The run's own ascent, descent and leading, in logical pixels.
+    /// The run's own ascent, in logical pixels.
     pub ascent: f32,
-    /// Typographic descent, in logical pixels.
     pub descent: f32,
     /// The font's own leading, which a run with a taller neighbour does not
     /// contribute to the line box.
@@ -110,11 +103,9 @@ pub struct SpanMetrics {
     /// Where a strikethrough sits, measured from the baseline and upwards. The
     /// layout draws it as a box, because Slint's `Text` cannot.
     pub strike_offset: f32,
-    /// The rule's thickness, in logical pixels.
     pub strike_size: f32,
     /// Where an underline sits, measured from the baseline and downwards.
     pub underline_offset: f32,
-    /// The rule's thickness, in logical pixels.
     pub underline_size: f32,
 }
 
@@ -178,12 +169,10 @@ impl Measurer {
         }
     }
 
-    /// The scale factor the measurement is taken at.
     pub fn scale(&self) -> f32 {
         self.scale
     }
 
-    /// Shapes one run.
     pub fn measure(&mut self, text: &str, style: &SpanStyle) -> SpanMetrics {
         if text.is_empty() {
             return SpanMetrics::default();
@@ -226,7 +215,6 @@ impl Measurer {
         metrics
     }
 
-    /// Shapes a run and hands back both the layout and the text it addressed.
     fn shape(&mut self, text: &str, style: &SpanStyle) -> (Layout<Brush>, String) {
         let family = family_list(&style.family, style.mono);
         let mut text_style = TextStyle {

@@ -9,8 +9,6 @@ import { Switch } from "../../components/controls/switch.slint";
 import { Loading } from "../../components/controls/loading.slint";
 import { AppConfig, JavaRuntime } from "../../globals/settings.slint";
 
-// Runtime rows (JavaRuntime[]). Three branches: error, then empty, then the
-// list.
 component JavaRuntimeList inherits VerticalLayout {
     in property <[JavaRuntime]> runtimes: [];
     in property <string> scan-error: "";

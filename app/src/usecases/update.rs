@@ -37,7 +37,6 @@ pub(crate) fn channel(configured: &config::UpdateChannel) -> Channel {
     }
 }
 
-/// One check, followed by a staging download if something newer exists.
 pub(crate) async fn run(configured_channel: config::UpdateChannel) {
     let Some(kind) = install_form().kind() else {
         log::info!("update check skipped: this install is managed by a package manager");

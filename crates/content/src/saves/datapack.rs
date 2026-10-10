@@ -65,8 +65,6 @@ pub fn parse_datapack<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<DataPack> {
 }
 
 pub fn get_all_datapacks<P: AsRef<Path>>(datapacks_folder_path: P) -> Result<Vec<DataPack>> {
-    // As in `resourcepack.rs`: a pack that does not parse used to vanish from the
-    // list with nothing recorded.
     let mut packs = Vec::new();
     for entry in fs::read_dir(datapacks_folder_path)?.flatten() {
         match parse_datapack(&entry.path()) {
@@ -82,7 +80,6 @@ pub fn get_all_datapacks<P: AsRef<Path>>(datapacks_folder_path: P) -> Result<Vec
     Ok(packs)
 }
 
-/// Every datapack of one of an instance's worlds.
 pub fn get_instance_datapacks(instance_id: &str, world_folder_name: &str) -> Result<Vec<DataPack>> {
     get_all_datapacks(
         LOCATIONS

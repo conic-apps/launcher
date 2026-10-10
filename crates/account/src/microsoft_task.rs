@@ -36,14 +36,12 @@ pub enum LoginRequest {
     AuthCode { code: String, redirect_uri: String },
 }
 
-/// The at-most-one running Microsoft login task.
 #[derive(Clone, Default)]
 pub struct LoginTaskState {
     task: Arc<Mutex<Option<tokio::task::AbortHandle>>>,
 }
 
 impl LoginTaskState {
-    /// Whether a login task is running right now.
     pub fn is_running(&self) -> bool {
         self.task.lock().expect("Internal error").is_some()
     }
@@ -103,7 +101,6 @@ impl LoginTaskState {
         result
     }
 
-    /// Aborts the running login task.
     pub fn cancel(&self) {
         let mut current_task = self.task.lock().expect("Internal error");
         if let Some(handle) = current_task.take() {

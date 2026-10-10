@@ -177,11 +177,8 @@ pub async fn group_install(
     Ok(())
 }
 
-/// The error for a platform Mojang publishes no runtime for.
-///
-/// The bare `NoSupportedJavaRuntime` named nothing, so "why did the Java install
-/// not happen" had no answer beyond an enum variant; the platform and
-/// architecture are the two facts that decide it.
+/// Warns with the platform and architecture: the bare
+/// `NoSupportedJavaRuntime` variant names nothing on its own.
 fn no_runtime_for() -> Error {
     log::warn!(
         "Mojang publishes no Java runtime for {:?}/{:?}",
@@ -204,10 +201,8 @@ pub async fn install_for_instance(
     let resolved_version = resolve_version(&unresolved_version, &minecraft_location, &[])?;
     let java_version_list = MojangJavaVersionList::new().await?;
 
-    // "Which Java did this install?" was unanswerable: the component and the
-    // platform group are only ever visible here, in local bindings, and every
-    // path below can quietly take a different one — including the arm64 -> x64
-    // fallback, which is a real substitution and used to be invisible.
+    // Record the component and platform group: the arm64 -> x64 fallback below
+    // can pick a different runtime, so which one was installed is not implied.
     log::info!(
         "Installing Mojang's Java runtime for component {} on {:?}/{:?}",
         resolved_version.java_version.component,
@@ -273,9 +268,8 @@ pub async fn install_for_instance(
                 match arm64 {
                     Some(runtime) => runtime,
                     None => {
-                        // An arm64 Mac with no arm64 build of this runtime gets the
-                        // x64 one instead, which runs under Rosetta. That is a real
-                        // substitution and used to be invisible.
+                        // No arm64 build: fall back to the x64 one, which runs
+                        // under Rosetta.
                         log::warn!(
                             "Mojang has no arm64 build of {}; using the x64 build, which \
                              needs Rosetta",

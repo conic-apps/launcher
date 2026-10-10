@@ -56,14 +56,12 @@ fn unix_now() -> u64 {
         .unwrap_or_default()
 }
 
-/// The cached copy of a version list, if the last fetch is still fresh.
-fn cached<T: Clone>(cache: &std::sync::Mutex<Option<(u64, T)>>) -> Option<T> {
+fn cached_if_fresh<T: Clone>(cache: &std::sync::Mutex<Option<(u64, T)>>) -> Option<T> {
     let guard = cache.lock().expect("Internal error");
     let (fetched_at, value) = guard.as_ref()?;
     (unix_now().saturating_sub(*fetched_at) < CACHE_EXPIRATION_SECONDS).then(|| value.clone())
 }
 
-/// Stores a freshly fetched list and hands it back.
 fn store<T: Clone>(cache: &std::sync::Mutex<Option<(u64, T)>>, value: T) -> T {
     *cache.lock().expect("Internal error") = Some((unix_now(), value.clone()));
     value
@@ -79,7 +77,7 @@ static NEOFORGE_VERSION_LIST_CACHE: Lazy<std::sync::Mutex<Option<(u64, Vec<Strin
 
 /// Every Minecraft version Mojang knows, newest first.
 pub async fn get_minecraft_version_list() -> Result<VersionManifest> {
-    if let Some(cached) = cached(&MANIFEST_CACHE) {
+    if let Some(cached) = cached_if_fresh(&MANIFEST_CACHE) {
         return Ok(cached);
     }
     Ok(store(&MANIFEST_CACHE, VersionManifest::new().await?))
@@ -98,7 +96,7 @@ pub async fn get_quilt_version_list(mcversion: &str) -> Result<QuiltVersionList>
 
 /// Every Forge version, keyed by Minecraft version.
 pub async fn get_forge_version_list() -> Result<ForgeVersionList> {
-    if let Some(cached) = cached(&FORGE_VERSION_LIST_CACHE) {
+    if let Some(cached) = cached_if_fresh(&FORGE_VERSION_LIST_CACHE) {
         return Ok(cached);
     }
     Ok(store(
@@ -109,7 +107,7 @@ pub async fn get_forge_version_list() -> Result<ForgeVersionList> {
 
 /// Every Neoforge version, newest first.
 pub async fn get_neoforge_version_list() -> Result<Vec<String>> {
-    if let Some(cached) = cached(&NEOFORGE_VERSION_LIST_CACHE) {
+    if let Some(cached) = cached_if_fresh(&NEOFORGE_VERSION_LIST_CACHE) {
         return Ok(cached);
     }
     Ok(store(
@@ -134,14 +132,14 @@ pub enum InstallProgress {
 /// Fine-grained progress of a mod loader installation.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ModLoaderProgress {
-    /// Preparing the installation (resolving versions and Java).
     Prepare,
-    /// Downloading the loader installer JAR.
     DownloadInstaller(DownloadSnapshot),
-    /// Prefetching the libraries named in the installer JAR (Forge).
+    /// Only Forge prefetches the libraries named in its installer JAR.
     PrefetchDependencies(DownloadSnapshot),
-    /// Running the installer subprocess, carrying its latest log line.
-    RunInstaller { message: String },
+    /// Carries the installer's latest log line.
+    RunInstaller {
+        message: String,
+    },
 }
 
 /// The output port [`install`] reports through.
@@ -166,9 +164,8 @@ impl ModLoaderReporter {
             .report(InstallProgress::InstallModLoader(progress));
     }
 
-    /// Reports one output line of the installer subprocess as
-    /// [`ModLoaderProgress::RunInstaller`]. Empty lines are skipped and overly
-    /// long lines are clamped to keep the payload small.
+    /// Reports one installer output line; empty lines are skipped and long
+    /// lines clamped.
     pub fn report_installer_line(&self, line: &str) {
         let line = line.trim();
         if line.is_empty() {
@@ -201,10 +198,6 @@ pub(crate) async fn fetch_maven_sha1(url: &str) -> Checksum {
 ///
 /// Runs the full pipeline: download the game files, install Java, then install
 /// the mod loader (Fabric, Forge, Quilt or NeoForge).
-///
-/// The caller spawns this and hands in the [`InstallSink`] the progress is
-/// reported through, then aborts the task to cancel. The crate samples its own
-/// download counters, so a caller sees only [`InstallProgress`] snapshots.
 pub async fn install(config: Config, instance: Instance, sink: InstallSink) -> Result<()> {
     let reporter = Arc::new(ChangeReporter::new(sink));
     reporter.report(InstallProgress::Prepare);
@@ -396,10 +389,9 @@ async fn configure_first_launch_language(config: Config, instance: &Instance) {
 async fn get_version_release_time(instance: &Instance) -> Option<String> {
     let minecraft_location = LOCATIONS.minecraft.clone();
     let version_json_path = minecraft_location.get_version_json(&instance.config.runtime.minecraft);
-    // Both of these used to be a silent `None`, and the consequence is not a
-    // quiet value: `language_era(None)` answers `Modern`, so an unreadable
-    // `version.json` gives a pre-1.6 instance the modern `lang` casing and the
-    // game silently falls back to English for want of the right resource pack.
+    // A silent `None` is not harmless: `language_era(None)` answers `Modern`,
+    // so an unreadable version.json gives a pre-1.6 instance the wrong `lang`
+    // casing and the game falls back to English.
     let raw_version_json = match tokio::fs::read_to_string(&version_json_path).await {
         Ok(raw) => raw,
         Err(error) => {

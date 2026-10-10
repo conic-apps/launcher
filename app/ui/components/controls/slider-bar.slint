@@ -64,8 +64,6 @@ export component SliderBar inherits Rectangle {
     /// area below).
     private property <bool> dragging: false;
 
-    // ----- the glide -----
-    //
     // `value` snaps to `step` — 15px a tick where the settings pages run it,
     // `step: 5` over 0..100 of this 300px track — and the drawn position is a
     // step, never a share of one between two: the thumb rests exactly where the
@@ -175,11 +173,10 @@ export component SliderBar inherits Rectangle {
     }
 
     // The value, under the cursor: the generic pointer tooltip
-    // (`components/controls/tooltip-area.slint`) replaces the old panel that sat
-    // centred above the thumb. It shows on hover and stays up through a drag
-    // (`pressed: root.dragging`), so the value is readable before a drag starts
-    // and keeps following the pointer while one is in progress. The pointer's
-    // own position is the Rust tracker's job, not this component's.
+    // (`components/controls/tooltip-area.slint`). It shows on hover and stays up
+    // through a drag (`pressed: root.dragging`), so the value is readable before
+    // a drag starts and keeps following the pointer while one is in progress.
+    // The pointer's own position is the Rust tracker's job, not this component's.
     TooltipArea {
         text: round(root.percent * 100) + "%";
         hovered: thumb-touch.has-hover;

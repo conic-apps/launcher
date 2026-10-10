@@ -18,7 +18,6 @@ pub fn setup(ui: &App) {
     setup_search(ui);
 }
 
-/// Opening, closing and the `Ctrl`/`⌘` + `/` toggle.
 pub(crate) fn setup_visibility(ui: &App) {
     let controller = controller();
     {
@@ -29,7 +28,6 @@ pub(crate) fn setup_visibility(ui: &App) {
             controller.borrow_mut().toggle(&ui);
         });
     }
-    // Opening an already-open palette does nothing.
     {
         let weak = ui.as_weak();
         ui.global::<CommandPaletteState>().on_open(move || {
@@ -50,10 +48,8 @@ pub(crate) fn setup_visibility(ui: &App) {
     }
 }
 
-/// Moving through the rows and choosing one, plus query edits and mode changes.
 pub(crate) fn setup_selection(ui: &App) {
     let controller = controller();
-    // A row's click.
     {
         let controller = Rc::clone(&controller);
         let weak = ui.as_weak();

@@ -28,7 +28,6 @@ pub enum JavaVendor {
 }
 
 impl JavaVendor {
-    /// A human friendly vendor name.
     pub fn display_name(self) -> &'static str {
         match self {
             JavaVendor::Oracle => "Oracle",
@@ -57,7 +56,6 @@ pub enum JavaArch {
 }
 
 impl JavaArch {
-    /// A human friendly architecture name.
     pub fn display_name(self) -> &'static str {
         match self {
             JavaArch::X64 => "x86_64",
@@ -130,8 +128,6 @@ pub struct JavaScanResult {
 }
 
 impl JavaScanResult {
-    /// Builds a [`JavaScanResult`] from a flat runtime list, grouping it by
-    /// major version for direct UI consumption.
     pub fn from_runtimes(mut runtimes: Vec<JavaRuntime>) -> Self {
         runtimes.sort();
         let mut by_version: BTreeMap<u32, Vec<JavaRuntime>> = BTreeMap::new();

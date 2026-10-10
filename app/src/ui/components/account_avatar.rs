@@ -324,7 +324,6 @@ fn head(skin: &image::RgbaImage, size: u32) -> Image {
     let inset = ((size as f32) / 18.0).round() as u32;
     let face_side = size.saturating_sub(inset.saturating_mul(2)).max(1);
 
-    // The face first, then the hat over it.
     let face = Layer {
         region: (8.0, 8.0),
         origin: inset,
@@ -382,7 +381,6 @@ pub fn round_image(image: &Image, radius: f32, draw_size: f32) -> Image {
     if width == 0 || height == 0 || draw_size <= 0.0 {
         return image.clone();
     }
-    // The requested radius, carried into the source's pixels.
     let radius = radius * width as f32 / draw_size;
     for (index, pixel) in buffer.make_mut_slice().iter_mut().enumerate() {
         let x = index as u32 % width;
@@ -425,7 +423,6 @@ pub fn drop_shadow(
     let pad = pad.max(0.0).round() as u32;
     let out = size + pad * 2;
 
-    // The head's alpha, placed on the padded canvas and shifted by the offset.
     let mut alpha = vec![0f32; (out * out) as usize];
     let shift = offset_y.round() as i32;
     for y in 0..size {
@@ -558,7 +555,6 @@ struct Layer {
     region: (f32, f32),
     /// The image coordinate the destination square starts at.
     origin: u32,
-    /// The destination square's side.
     side: u32,
 }
 

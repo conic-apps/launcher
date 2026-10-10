@@ -103,7 +103,6 @@ impl<H: ComponentHandle> WindowService<H> {
         }
     }
 
-    /// The underlying Slint window.
     pub fn window(&self) -> &slint::Window {
         self.component.window()
     }
@@ -117,9 +116,8 @@ impl<H: ComponentHandle> WindowService<H> {
         self.component.as_weak()
     }
 
-    /// Minimizes the window.
     pub fn minimize(&self) {
-        self.minimize_to(true);
+        self.set_minimized(true);
     }
 
     /// Toggles the maximized state (Windows/Linux).
@@ -140,7 +138,6 @@ impl<H: ComponentHandle> WindowService<H> {
         log::debug!("the window was asked to be maximized={maximized}");
     }
 
-    /// Toggles fullscreen mode.
     pub fn toggle_fullscreen(&self) {
         let fullscreen = !self.window().is_fullscreen();
         self.window().set_fullscreen(fullscreen);
@@ -171,12 +168,10 @@ impl<H: ComponentHandle> WindowService<H> {
         });
     }
 
-    /// Reports whether the window is currently maximized.
     pub fn is_maximized(&self) -> bool {
         self.window().is_maximized()
     }
 
-    /// Reports whether the window is currently in fullscreen mode.
     pub fn is_fullscreen(&self) -> bool {
         self.window().is_fullscreen()
     }
@@ -207,7 +202,7 @@ impl<H: ComponentHandle> WindowService<H> {
         log::debug!("bringing the window forward");
         if self.window().is_minimized() {
             log::debug!("the window was minimized; restoring it");
-            self.minimize_to(false);
+            self.set_minimized(false);
         }
         if !self.window().is_visible() {
             // A launch of the app that arrives after the window was hidden — a
@@ -216,11 +211,10 @@ impl<H: ComponentHandle> WindowService<H> {
                 log::debug!("the window could not be shown: {error}");
             }
         }
-        self.focus();
+        self.focus_window();
     }
 
-    /// Restores or minimizes the window.
-    fn minimize_to(&self, minimized: bool) {
+    fn set_minimized(&self, minimized: bool) {
         use i_slint_backend_winit::WinitWindowAccessor;
         match self
             .window()
@@ -239,8 +233,7 @@ impl<H: ComponentHandle> WindowService<H> {
         }
     }
 
-    /// Asks the platform to make the window the focused one.
-    fn focus(&self) {
+    fn focus_window(&self) {
         use i_slint_backend_winit::WinitWindowAccessor;
         let focused = self
             .window()

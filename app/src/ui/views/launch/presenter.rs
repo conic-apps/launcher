@@ -8,7 +8,7 @@
 //! This is the testable half of the Humble Object pair. It decides how a byte
 //! count becomes text and which stage shows a spinner, but it does not know
 //! Slint: the mapping is a pure function of a crate event, so it is unit-tested
-//! without a window, and [`apply`] is the only Slint-touching line.
+//! without a window, and [`apply_view`] is the only Slint-touching line.
 
 use crate::slint_backend::LaunchState;
 use crate::support::formatting::bytes;
@@ -31,7 +31,6 @@ pub(crate) struct LaunchView {
 }
 
 impl LaunchView {
-    /// A stage that shows only its text and the spinner.
     fn stage(kind: &'static str, name: &str) -> Self {
         Self {
             kind,
@@ -146,8 +145,7 @@ pub(crate) fn launch_view(progress: &LaunchProgress) -> Option<LaunchView> {
     Some(view)
 }
 
-/// Writes one view into the launch screen's global.
-pub(crate) fn apply(state: &LaunchState, view: LaunchView) {
+pub(crate) fn apply_view(state: &LaunchState, view: LaunchView) {
     state.set_progress_kind(view.kind.into());
     state.set_progress_name(view.name.into());
     state.set_progress_current(view.current.into());

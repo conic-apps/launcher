@@ -19,7 +19,6 @@ pub(super) async fn get_game_profile(minecraft_access_token: &str) -> Result<Val
         .await?)
 }
 
-/// The body the cape endpoint takes: `{"capeId": "…"}`.
 #[derive(Serialize)]
 struct ActiveCapeBody<'a> {
     #[serde(rename = "capeId")]

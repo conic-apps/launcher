@@ -6,14 +6,12 @@
 
 use super::*;
 
-/// Registers the launch view's callbacks.
 pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     SHARED_CONFIG.with(|slot| *slot.borrow_mut() = Some(Rc::clone(&config)));
     let controller = Rc::new(RefCell::new(LaunchController::new()));
     CONTROLLER.with(|cell| *cell.borrow_mut() = Some(Rc::clone(&controller)));
     let state = ui.global::<LaunchState>();
 
-    // The launch button: cancel any running flow and start a new one.
     {
         let controller = Rc::clone(&controller);
         let weak = ui.as_weak();
@@ -57,7 +55,6 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         });
     }
 
-    // The back button. Leaving the page cancels the flow too.
     {
         let controller = Rc::clone(&controller);
         let weak = ui.as_weak();
@@ -72,7 +69,6 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         });
     }
 
-    // Leaving the page (title bar Home/Settings) cancels the flow.
     {
         let controller = Rc::clone(&controller);
         let weak = ui.as_weak();

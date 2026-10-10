@@ -24,7 +24,6 @@ pub struct MapCache {
     maps: Mutex<HashMap<WorldMapKey, Arc<WorldMap>>>,
 }
 
-/// Identifies an open world inside the cache.
 #[derive(Clone, PartialEq, Eq, Hash)]
 struct WorldMapKey {
     instance_id: String,
@@ -82,7 +81,6 @@ pub struct WorldMapResult {
     pub pixels: Vec<u8>,
 }
 
-/// Renders a rectangle of a world save into an RGBA bitmap.
 pub fn render_map(cache: &MapCache, request: &WorldMapRequest) -> Result<WorldMapResult> {
     let key = WorldMapKey::from(request);
     let world_dir = key.world_dir();
@@ -93,9 +91,6 @@ pub fn render_map(cache: &MapCache, request: &WorldMapRequest) -> Result<WorldMa
         && maps.len() >= MAX_CACHED_WORLDS
         && let Some(oldest) = maps.keys().next().cloned()
     {
-        // Which world is thrown out was unlogged, so a user paging through more
-        // worlds than the cache holds saw every one re-render from disk with no
-        // way to tell that from a slow disk.
         log::debug!(
             "The world-map cache is full ({} worlds), dropping {} to make room for {}",
             maps.len(),
@@ -187,12 +182,6 @@ mod tests {
 
     use super::*;
 
-    /// A world directory the renderer will open: a `level.dat` naming a data
-    /// version the colour tables cover, and the `region/` the legacy overworld
-    /// layout keeps its `r.*.*.mca` files in. Empty on the inside, so a tile
-    /// comes back transparent — which is all this is about: the request goes
-    /// out, an RGBA buffer comes back, and the same world is served from the
-    /// cache the second time.
     fn write_world(folder: &str) -> String {
         let world_dir = LOCATIONS
             .instances
@@ -250,8 +239,7 @@ mod tests {
 
         let first = render_map(&cache, &request(&folder)).expect("a tile");
         assert_eq!((first.width, first.height), (64, 64));
-        // One block per pixel, four bytes of RGBA — the buffer the Slint side
-        // wraps in a `SharedPixelBuffer`. No PNG, no base64.
+        // One block per pixel, four bytes of RGBA.
         assert_eq!(first.pixels.len(), 64 * 64 * 4);
 
         // A second tile of the same world is served with the world still open,

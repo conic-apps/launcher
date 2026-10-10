@@ -20,10 +20,8 @@ pub fn setup(ui: &App) {
     setup_yggdrasil_login(ui);
 }
 
-/// Puts the dialog back to its first screen.
-///
 /// The dialog calls this as it opens. Without it a session that ended in the
-/// "saving account" state — or on an error, or a device code — was still
+/// "saving account" state — or on an error, or a device code — would still be
 /// mounted the next time it opened.
 pub(crate) fn setup_reset(ui: &App) {
     let state = ui.global::<AccountAddState>();
@@ -61,8 +59,6 @@ pub(crate) fn setup_reset(ui: &App) {
     });
 }
 
-/// The shell every screen shares: the auth-service switch, dismissal, and the
-/// copy/open helpers the screens use.
 pub(crate) fn setup_shell(ui: &App) {
     let state = ui.global::<AccountAddState>();
     {
@@ -95,7 +91,6 @@ pub(crate) fn setup_shell(ui: &App) {
     });
 }
 
-/// The offline screen: the username-to-UUID derivation and the submit.
 pub(crate) fn setup_offline_screen(ui: &App) {
     let state = ui.global::<AccountAddState>();
     {
@@ -118,8 +113,6 @@ pub(crate) fn setup_offline_screen(ui: &App) {
             let advanced = !state.get_offline_advanced();
             state.set_offline_advanced(advanced);
             state.set_offline_uuid_invalid(false);
-            // Switching advanced mode on hands the field over empty; switching
-            // it off takes the derived value back.
             if advanced {
                 state.set_offline_uuid("".into());
             } else {
@@ -182,7 +175,6 @@ pub(crate) fn setup_offline_screen(ui: &App) {
     }
 }
 
-/// The Microsoft screen: the device-code and browser (auth-code) flows.
 pub(crate) fn setup_microsoft_screen(ui: &App) {
     let state = ui.global::<AccountAddState>();
     {
@@ -218,7 +210,6 @@ pub(crate) fn setup_microsoft_screen(ui: &App) {
         let weak = ui.as_weak();
         state.on_cancel_microsoft_login(move || {
             let Some(ui) = weak.upgrade() else { return };
-            // Cancel, then dismiss.
             MICROSOFT.with(|flow| flow.borrow().login.cancel());
             release_auth_code_flow(&ui);
             ui.global::<Dialogs>().set_account_add_visible(false);
@@ -240,8 +231,6 @@ pub(crate) fn setup_microsoft_screen(ui: &App) {
     }
 }
 
-/// The Yggdrasil screen's form: the reset, the submit gate and the server-name
-/// lookup.
 pub(crate) fn setup_yggdrasil_form(ui: &App) {
     let state = ui.global::<AccountAddState>();
     {
@@ -297,7 +286,6 @@ pub(crate) fn setup_yggdrasil_form(ui: &App) {
     }
 }
 
-/// The Yggdrasil login and the profile chooser it may open.
 pub(crate) fn setup_yggdrasil_login(ui: &App) {
     let state = ui.global::<AccountAddState>();
     {

@@ -42,13 +42,12 @@ pub fn bootstrap_path() -> PathBuf {
 }
 
 /// Reads the bootstrap file, falling back to no overrides when it is missing or
-/// unreadable. A broken file must not keep the launcher from starting.
+/// unreadable.
 ///
-/// It must not keep the launcher from *starting*, but it does move every root back
-/// to the platform default — which reads as an empty library and accounts the
-/// user cannot account for having signed out of. So both ways of getting nothing
-/// are `warn!`ed with the path: a missing file is ordinary and silent, a broken
-/// one is the support question.
+/// A missing file is ordinary and silent. A file that exists but cannot be read
+/// or parsed is `warn!`ed with its path, because falling back moves every root
+/// back to the platform default — which reads as an empty library and accounts
+/// the user cannot account for having signed out of.
 pub fn load_overrides() -> LocationOverrides {
     let path = bootstrap_path();
     let text = match fs::read_to_string(&path) {

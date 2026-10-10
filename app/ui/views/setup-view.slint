@@ -21,15 +21,10 @@ import { SetupJavaSettings } from "setup/setup-java-settings.slint";
 import { SetupLaunchOptions } from "setup/setup-launch-options.slint";
 import { SetupImportInstances } from "setup/setup-import-instances.slint";
 
-// A button of the wizard's bottom bar: 40px tall, 8px rounded, with the white
-// hover and press wash. "Back" is 200px with a chevron in front of its label;
-// "Next" takes the rest of the row.
 component FooterButton inherits Rectangle {
     in property <string> text: "";
     in property <bool> show-icon: false;
     in property <color> fill: Theme.blue;
-    /// A disabled button dims and stops taking clicks; "Back" carries this on
-    /// the first step.
     in property <bool> disabled: false;
     callback clicked;
 
@@ -103,8 +98,6 @@ export component SetupView inherits Rectangle {
     // header, card and bar read it; "shown" is at rest.
     private property <string> motion: PageMotion.phase("setup");
 
-    // The header band is 100px narrower than the window and the card 186px,
-    // both centred.
     private property <length> header-inset: 100px;
     private property <length> body-inset: 186px;
     // The card's height is the window's less 176px: the header band and its
@@ -140,8 +133,6 @@ export component SetupView inherits Rectangle {
             border-bottom-left-radius: 12px;
             border-bottom-right-radius: 12px;
 
-            // The two paragraphs sit at 16px and 12px with a 4px gap; the close
-            // button is pinned over the right-hand end.
             Text {
                 x: 32px;
                 y: 16px;
@@ -160,7 +151,6 @@ export component SetupView inherits Rectangle {
                 color: Theme.default-text-color.transparentize(0.1);
             }
 
-            // A 20x20 box around the 16px glyph.
             close := Rectangle {
                 x: parent.width - self.width - 32px;
                 y: 16px;
@@ -375,7 +365,6 @@ export component SetupView inherits Rectangle {
             return;
         }
         root.close-add-account-host();
-        // The direction follows the way the index moves.
         root.direction = towards-left ? "left" : "right";
         root.wanted = index;
         if root.shown == "" {

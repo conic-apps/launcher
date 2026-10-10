@@ -221,8 +221,6 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     // (`content`), which registers them after this one — a Slint `on_*`
     // setter replaces the handler, so nothing is wired for them here.
     {
-        // The footer's "+" avatar and its "not logged in" label open the
-        // add-account dialog.
         let weak = ui.as_weak();
         state.on_open_add_account(move || {
             if let Some(ui) = weak.upgrade() {
@@ -231,8 +229,6 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         });
     }
     {
-        // The footer's globe opens the multiplayer dialog: it checks the Conic
-        // Nexus library and shows either the download screen or the manager.
         let weak = ui.as_weak();
         state.on_open_connect(move || {
             if let Some(ui) = weak.upgrade() {
@@ -241,7 +237,6 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         });
     }
     {
-        // The footer's "New instance" opens the create-instance dialog.
         let weak = ui.as_weak();
         state.on_new_instance(move || {
             if let Some(ui) = weak.upgrade() {
@@ -264,7 +259,6 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     }
     state.on_debug_log(|message| log::info!(target: "probe", "{message}"));
     {
-        // The footer's avatar opens the account view overlay.
         let weak = ui.as_weak();
         state.on_open_accounts(move || {
             if let Some(ui) = weak.upgrade() {

@@ -134,8 +134,7 @@ export component LaunchView inherits Rectangle {
     private property <length> avatar-target-y:
         avatar.absolute-position.y - root.absolute-position.y + avatar.height / 2;
 
-    // Beat one, the hero's flight: GSAP's `power2.out`
-    // (`cubic-bezier(0.215, 0.61, 0.355, 1)`).
+    // Beat one, the hero's flight: GSAP's `power2.out`.
     animate hero-size, hero-first-cx, hero-first-cy, hero-opacity {
         duration: root.entrance-duration;
         easing: cubic-bezier(0.215, 0.61, 0.355, 1);
@@ -219,7 +218,6 @@ export component LaunchView inherits Rectangle {
         }
         Rectangle { height: 16px; }
 
-        // The version / loader line.
         info-slot := Rectangle {
             width: info-layout.preferred-width;
             height: info-layout.preferred-height;
@@ -279,7 +277,6 @@ export component LaunchView inherits Rectangle {
                     Text {
                         height: 14px;
                         width: 100%;
-                        // Both the progress line and the error message are centred.
                         horizontal-alignment: center;
                         vertical-alignment: center;
                         color: LaunchState.error ? Theme.red : Theme.default-text-color.transparentize(0.1);

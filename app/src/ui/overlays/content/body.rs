@@ -40,15 +40,16 @@ pub(crate) struct BodyRenderer {
     /// width — which a `changed width` binding produces while nothing has moved —
     /// does not re-measure the document.
     width: f32,
-    /// The two models, kept rather than rebuilt per layout for the reason the
-    /// grids keep theirs (`set_cards`): a document is re-laid out on every pixel
-    /// of a window drag, and replacing the model would destroy and re-create
-    /// every item element each time.
-    /// The runs, and each run's own items and bitmaps. A `VecModel` per run rather
-    /// than one for the document, because a run is what a view stacks and what a
-    /// `<details>` moves: the items have to be nested inside it or the view cannot
-    /// put them back where they belong. The count is the number of `<details>` in
-    /// the document plus one, so these are few.
+    /// The runs, kept rather than rebuilt per layout for the reason the grids
+    /// keep theirs (`set_cards`): a document is re-laid out on every pixel of a
+    /// window drag, and replacing the model would destroy and re-create every
+    /// item element each time.
+    ///
+    /// A `VecModel` per run rather than one for the document, because a run is
+    /// what a view stacks and what a `<details>` moves: the items have to be
+    /// nested inside it or the view cannot put them back where they belong. The
+    /// count is the number of `<details>` in the document plus one, so these are
+    /// few.
     chunks: Rc<VecModel<MdChunk>>,
     /// A run's items and bitmaps, kept beside it so a re-layout rewrites them in
     /// place: a window drag re-lays the document out, and replacing a model would
@@ -311,7 +312,6 @@ pub(crate) fn body_has_document() -> bool {
     })
 }
 
-/// Lays the body out for a width the view reported, and pushes the result.
 pub(crate) fn layout_detail_body(ui: &App, width: f32) {
     let changed = BODY.with(|slot| {
         let mut slot = slot.borrow_mut();
@@ -497,7 +497,6 @@ pub(crate) fn body_layout() -> Option<BodyLayout> {
     })
 }
 
-/// Pushes the display list into the model the panel draws.
 pub(crate) fn push_detail_body(ui: &App) {
     let Some(BodyLayout {
         chunks,
@@ -514,7 +513,6 @@ pub(crate) fn push_detail_body(ui: &App) {
     push_detail_body_rows(ui, chunks, section_open, height);
 }
 
-/// The mechanical half of [`push_detail_body`], once there is something to push.
 pub(crate) fn push_detail_body_rows(
     ui: &App,
     runs: Vec<BodyRun>,
@@ -640,12 +638,7 @@ pub(crate) fn clear_detail_body(ui: &App) {
 }
 
 /// Throws the engine's document away, for a panel that is about to show another
-/// one.
-///
-/// The *width* stays. It belongs to the view, and the view does not go away
-/// between panels — so clearing it would mean waiting for a `changed width` that
-/// never comes, because a panel reopened at the width it already had reports the
-/// same width, and the new body would never be laid out.
+/// one. The width stays — see [`clear_detail_body`].
 pub(crate) fn forget_body_document() {
     BODY.with(|slot| {
         if let Some(body) = slot.borrow_mut().as_mut() {
@@ -665,7 +658,7 @@ pub(crate) fn forget_body_document() {
 /// That is done per image rather than per batch, because a README is written by
 /// whoever published the mod and its images come from wherever they please: a
 /// batch would hold the document's height still for as long as the slowest of
-/// them, which is the whole reason this used to look broken.
+/// them.
 ///
 /// The fetches are the same `fetch_icon` path the project icons take, including
 /// the shared cache, so a logo and a README that show the same image download it

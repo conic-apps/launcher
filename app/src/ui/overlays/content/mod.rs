@@ -102,7 +102,6 @@ pub(crate) const GRID_GAP: i32 = 12;
 pub(crate) const GRID_PAD_X: i32 = 32;
 pub(crate) const GRID_PAD_TOP: i32 = 16;
 pub(crate) const GRID_PAD_BOTTOM: i32 = 32;
-/// A card sits 4px right of its column.
 pub(crate) const CARD_SHIFT: i32 = 4;
 /// The height of a panel's header bar, which the empty-state placeholder is
 /// given the room below.
@@ -167,7 +166,6 @@ pub(crate) fn finish_card(card: PendingCard) -> ContentCard {
     }
 }
 
-/// The Slint tag behind one [`PendingTag`].
 fn finish_tag(tag: PendingTag) -> CardTag {
     let (time_kind, hours, month, day, year) = tag.time.unwrap_or(("", 0, 0, 0, 0));
     CardTag {
@@ -195,7 +193,6 @@ thread_local! {
         Rc::new(RefCell::new(ContentController::new()));
 }
 
-/// The controller, for use on the UI thread.
 fn controller() -> Rc<RefCell<ContentController>> {
     CONTROLLER.with(Rc::clone)
 }
@@ -300,7 +297,6 @@ impl ContentController {
         }
     }
 
-    /// The model of one grid.
     fn model(&self, grid: Grid) -> Rc<VecModel<ContentCard>> {
         match grid {
             Grid::Saves => Rc::clone(&self.saves),

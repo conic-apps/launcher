@@ -61,7 +61,6 @@ pub(crate) fn progress_kind(event: &LoginEvent) -> Option<&'static str> {
     })
 }
 
-/// Runs the login task and reports its outcome back into the dialog.
 pub(crate) fn start_microsoft_login(weak: Weak<App>, request: LoginRequest, device_flow: bool) {
     let Some(ui) = weak.upgrade() else { return };
     let state = ui.global::<AccountAddState>();
@@ -154,7 +153,6 @@ pub(crate) fn release_auth_code_flow(ui: &App) {
         .set_auth_code_login_url("".into());
 }
 
-/// What the browser's redirect turned out to be.
 pub(crate) fn auth_code_flow_finished(ui: &App, redirect_uri: &str, outcome: Outcome) {
     // The listener has served its one request, or given up; either way the port
     // is the screen's to give back. Done first, so a bind of the port again is
@@ -218,7 +216,6 @@ pub(crate) fn callback_palette(ui: &App) -> authcode::Palette {
     }
 }
 
-/// The callback page's sentences, off the `@tr` catalog.
 pub(crate) fn callback_messages(ui: &App) -> authcode::Messages {
     let text = ui.global::<AccountAddState>().get_auth_code_page_text();
     authcode::Messages {
@@ -299,7 +296,6 @@ pub(crate) fn urlencoding(value: &str) -> String {
     encoded
 }
 
-/// Moves the Microsoft screen to the state a login event calls for.
 pub(crate) fn apply_login_event(ui: &App, event: LoginEvent) {
     let state = ui.global::<AccountAddState>();
     if let LoginEvent::WaitingForAuthorization {
@@ -326,7 +322,6 @@ pub(crate) fn apply_login_event(ui: &App, event: LoginEvent) {
     }
 }
 
-/// Handles a failed login.
 pub(crate) fn handle_login_error(ui: &App, error: Error, device_flow: bool) {
     let state = ui.global::<AccountAddState>();
     match error {
@@ -353,7 +348,6 @@ pub(crate) fn handle_login_error(ui: &App, error: Error, device_flow: bool) {
     }
 }
 
-/// Fills the profile chooser.
 pub(crate) fn show_profile_chooser(ui: &App, credentials: &PendingYggdrasil) {
     let existing = account::list_accounts();
     let rows: Vec<YggdrasilProfileItem> = credentials

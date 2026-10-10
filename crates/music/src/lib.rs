@@ -43,8 +43,6 @@ pub struct MusicFile {
     pub path: String,
 }
 
-/// Lists the files in the music directory that carry a recognised audio
-/// extension.
 pub fn list_music_files() -> Result<Vec<MusicFile>> {
     let entries = std::fs::read_dir(&storage::LOCATIONS.launcher.music)?;
     let mut files = Vec::new();

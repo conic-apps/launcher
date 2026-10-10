@@ -30,12 +30,10 @@ export struct MinecraftVersionItem {
 export struct YggdrasilProfileItem {
     /// The profile UUID, which the selection is keyed on.
     id: string,
-    /// The profile name.
     name: string,
     /// Whether the launcher already holds this profile on this server, which
     /// the row shows as an " (added)" suffix and does not let you pick.
     added: bool,
-    /// Whether the row is selected.
     selected: bool,
     /// The head `AccountAvatar` draws. Rust builds it from the profile's
     /// `textures` property, because Slint cannot crop an image itself.
@@ -299,7 +297,6 @@ export global AccountAddState {
     /// "request-device-code", …). The screen turns it into text, so the
     /// translation stays in the UI.
     in-out property <string> ms-progress: "";
-    /// The failure the screen reports.
     in-out property <string> ms-error: "";
     in-out property <string> ms-user-code: "";
     in-out property <string> ms-verification-uri: "";
@@ -310,9 +307,7 @@ export global AccountAddState {
     ///
     /// Each is set on a click and cleared when the pointer leaves the box it
     /// belongs to, so the tooltip reads "Click to copy" again the next time it
-    /// is hovered. The screen does that from the box's own `changed has-hover`;
-    /// the third hint that used to exist — a "已复制！" bubble on the "copy the
-    /// link" span inside the description paragraph — is gone with that span.
+    /// is hovered. The screen does that from the box's own `changed has-hover`.
     in-out property <bool> ms-copied: false;
     in-out property <bool> ms-copied-code: false;
     /// The URL the browser flow opens.
@@ -352,7 +347,6 @@ export global AccountAddState {
     in-out property <string> yggdrasil-api-root: "";
     in-out property <string> yggdrasil-username: "";
     in-out property <string> yggdrasil-password: "";
-    /// The failure the screen reports.
     in-out property <string> yggdrasil-error: "";
     /// The `meta.serverName` the API root answered with, shown under the field.
     in-out property <string> yggdrasil-server-name: "";
@@ -380,7 +374,6 @@ export global AccountAddState {
     /// Opens a URL with the platform's default handler.
     callback open-url(string);
 
-    /// Resets the form to its initial state.
     callback reset-offline-form();
     /// The advanced switch was flipped: mirror the new mode into the button's
     /// state and reset the UUID field.
@@ -408,7 +401,6 @@ export global AccountAddState {
     /// the URL with it, which frees the port.
     callback release-auth-code-flow();
 
-    /// Resets the form to its initial state.
     callback reset-yggdrasil-form();
     /// 500 ms after the API root stopped changing: look its name up.
     callback lookup-server-name();

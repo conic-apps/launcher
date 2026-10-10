@@ -372,7 +372,6 @@ impl Response {
     }
 }
 
-/// Decides what a request means.
 fn route(request: &http::Request, shared: &Shared) -> Response {
     match request.path.as_str() {
         CALLBACK_PATH => callback(request, shared),
@@ -396,7 +395,6 @@ fn route(request: &http::Request, shared: &Shared) -> Response {
     }
 }
 
-/// The one request that matters.
 fn callback(request: &http::Request, shared: &Shared) -> Response {
     if request.param("state").as_deref() != Some(shared.state.as_str()) {
         // Someone else's callback, or a replay of an old one. Saying so and

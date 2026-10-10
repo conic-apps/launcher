@@ -29,18 +29,7 @@ use super::options::LaunchOptions;
 
 const DEFAULT_GAME_ICON: &[u8] = include_bytes!("./minecraft.icns");
 
-/// Generates the full list of command-line arguments to launch Minecraft.
-///
-/// # Arguments
-///
-/// * `minecraft_location` - Reference to MinecraftLocation struct for file paths.
-/// * `instance` - The game instance configuration and info.
-/// * `launch_options` - User specified launch options and settings.
-/// * `version` - The resolved Minecraft version data.
-///
-/// # Returns
-///
-/// A vector of strings representing the full command-line arguments to pass to the Java launcher.
+/// Generates the full command-line argument list to launch Minecraft.
 pub async fn generate_command_arguments(
     minecraft_location: &MinecraftLocation,
     instance: &Instance,
@@ -63,11 +52,9 @@ pub async fn generate_command_arguments(
     tokio::fs::write(&game_icon, DEFAULT_GAME_ICON).await?;
     if PLATFORM_INFO.os_family == OsFamily::Macos {
         command_arguments.push("-Xdock:name=Minecraft".to_string());
-        // Raw, unquoted: the launch script quotes every argument for the shell
-        // it runs under (`spawn_minecraft_process`). Quoting here as well used
-        // to produce `"-Xdock:icon="/path with spaces/icon"` — the doubled
-        // quotes split the path on a space, and Java took the tail as the main
-        // class.
+        // Raw, unquoted: `spawn_minecraft_process` quotes every argument for
+        // the shell, and quoting here too would double the quotes and split a
+        // path with spaces.
         command_arguments.push(format!("-Xdock:icon={game_icon}"));
     }
     if launch_options.xmn_memory > 0 {
@@ -284,21 +271,9 @@ pub async fn generate_command_arguments(
     Ok(command_arguments)
 }
 
-/// Resolves the classpath string needed for the Java launch command.
-///
-/// This includes the common library paths (unzipping native libraries as it
-/// goes), extra classpaths, and the version jar — or, when the version inherits,
-/// the root Minecraft jar at the end of the inheritance chain.
-///
-/// # Arguments
-///
-/// * `version` - The resolved Minecraft version metadata.
-/// * `minecraft` - Reference to MinecraftLocation for path resolving.
-/// * `extra_class_paths` - Additional class paths as a string.
-///
-/// # Returns
-///
-/// A string with the complete classpath, joined by platform-specific delimiter.
+/// Builds the classpath: common libraries (unzipping natives as it goes), the
+/// extra paths, then the version jar — or the root jar at the end of the
+/// inheritance chain.
 fn resolve_classpath(
     version: &ResolvedVersion,
     minecraft: &MinecraftLocation,
@@ -312,11 +287,9 @@ fn resolve_classpath(
                 let path = minecraft.get_library_by_path(&native_library.path);
                 let native_folder = minecraft.get_natives_root(&version.id);
                 info!("Unzip native library {path:#?} to {native_folder:#?}");
-                // Three failures swallowed in a row: a missing native jar, a
-                // corrupt one, and a per-entry write error inside the archive. The
-                // game then fails to start with an `UnsatisfiedLinkError` and the
-                // `info!` above — which fires *before* the work — reads as though
-                // it had worked.
+                // Each failure is warned because the game then dies with an
+                // `UnsatisfiedLinkError` far from here, and the `info!` above
+                // fires before the work.
                 match std::fs::File::open(&path) {
                     Ok(file) => match ZipArchive::new(file) {
                         Ok(mut zip_archive) => {
@@ -391,10 +364,8 @@ fn decompression_all<R: Read + io::Seek, S: AsRef<OsStr> + ?Sized>(
         let mut zip_file = zip_archive.by_index(i)?;
         let name = zip_file.name().to_string();
         if zip_file.is_dir() {
-            // Under `to`, not relative to the process working directory: this used
-            // to create every directory entry in the directory the launcher
-            // happened to be started from, and an unwritable one aborted the
-            // whole extraction before a single library was unpacked.
+            // Under `to`, never relative to the process working directory, so an
+            // unwritable CWD cannot abort the extraction.
             std::fs::create_dir_all(to.join(&name))?;
             continue;
         }

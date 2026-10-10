@@ -36,7 +36,6 @@ import { WorldMapState, WorldSource } from "../../globals/worldmap.slint";
 // while the map zooms.
 
 export component WorldMap inherits Rectangle {
-    // ----- what it is showing -----
     /// The save's folder name — the world's own identifier in the saves list.
     in property <string> folder-name: "";
     /// The instance the save belongs to.
@@ -62,7 +61,6 @@ export component WorldMap inherits Rectangle {
     in property <bool> show-cursor-coords: false;
     in property <string> cursor-coordinates-position: "bottom-center";
 
-    // ----- geometry -----
     // The size is given by the caller rather than read off `parent`: a component
     // under an `if` does not get its parent's size for free, and this one is
     // mounted inside a card's expansion.
@@ -76,7 +74,6 @@ export component WorldMap inherits Rectangle {
     border-radius: 8px;
     background: Theme.base;
 
-    // ----- the render transform -----
     // `in-out` rather than `in` because these are written here as well as read:
     // the zoom animation assigns them every frame.
     /// Pixels per block.
@@ -255,7 +252,6 @@ export component WorldMap inherits Rectangle {
         root.request-visible-tiles();
     }
 
-    // ----- the fade clock -----
     // A tile fades in over its own `appear-ms`. The clock is
     // `ScrollInput.now-ms()` — Slint has no clock of its own a binding can read,
     // and a callback call is not pure enough to go into one — so it is held here
@@ -281,7 +277,6 @@ export component WorldMap inherits Rectangle {
         }
     }
 
-    // ----- the tiles -----
     //
     // The tile pass, as a repetition: same range, same order, same geometry.
     // What runs when is the difference — these are bindings, so a pan or a zoom
@@ -308,7 +303,6 @@ export component WorldMap inherits Rectangle {
             : clamp((root.fade-clock - tile.appear-ms) / 100, 0, 1);
     }
 
-    // ----- status -----
     // The status overlay is full-size and centred. The spinner and the error
     // glyph + message share one element with two contents.
     if WorldMapState.loading || WorldMapState.error != "" : Rectangle {
@@ -322,7 +316,6 @@ export component WorldMap inherits Rectangle {
             x: 0;
             y: (parent.height - self.height) / 2;
             width: parent.width;
-            // A row of glyph + text is the same height as the glyph.
             height: 22px;
             alignment: center;
             spacing: 8px;
@@ -348,7 +341,6 @@ export component WorldMap inherits Rectangle {
         }
     }
 
-    // ----- the cursor's block -----
     // The cursor-coordinates label is 12px text on a translucent mantle panel
     // with a 1px surface border, 6px radius, and one of six corners 8px in. It
     // is non-interactive by declaration order: it is written after the area that
@@ -386,7 +378,6 @@ export component WorldMap inherits Rectangle {
     private property <int> cursor-x: floor((map-area.mouse-x - root.offset-x) / root.block-size);
     private property <int> cursor-z: floor((map-area.mouse-y - root.offset-y) / root.block-size);
 
-    // ----- input -----
     // One element handles both gestures: a drag pans, a wheel zooms.
     //
     // It sits *under* the coords label and the status overlay in declaration
@@ -470,7 +461,6 @@ export component WorldMap inherits Rectangle {
     private property <bool> pointed: map-area.has-hover;
     changed pointed => { WorldMapState.hovered = self.pointed; }
 
-    // ----- the zoom animation -----
     // A `Timer` pumps the glide (see `components/containers/scroll-view.slint`), and the
     // step is scaled by the real elapsed time so the glide lasts the same at
     // 30fps as at 120.
@@ -545,7 +535,6 @@ export component WorldMap inherits Rectangle {
         root.target-zoom = root.scale;
     }
 
-    // ----- pinch -----
     // winit reports the magnification as its own event, with the cursor as the
     // centre and a factor already relative to the start of the gesture — a
     // *factor* rather than a per-event delta.

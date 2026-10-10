@@ -42,7 +42,6 @@ pub(crate) async fn search_modrinth(keyword: &str) -> Result<Vec<RemoteResult>, 
         .collect())
 }
 
-/// Searches CurseForge mods for the keyword.
 pub(crate) async fn search_curseforge(keyword: &str) -> Result<Vec<RemoteResult>, String> {
     let params = serde_json::json!({
         "searchFilter": keyword,
@@ -135,7 +134,6 @@ pub(crate) fn strings(value: Option<&Value>) -> Vec<String> {
         .unwrap_or_default()
 }
 
-/// The first of `names` that `value` carries with a non-empty string.
 pub(crate) fn first_present(value: &Value, names: &[&str]) -> String {
     names
         .iter()

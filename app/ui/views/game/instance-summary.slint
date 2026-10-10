@@ -9,8 +9,6 @@ import { Dropdown, DropdownOption } from "../../globals/dropdown.slint";
 import { FocusManager } from "../../globals/focus.slint";
 import { GameState, GameIntro, GameTime } from "../../globals/game.slint";
 
-// A labelless metadata column (label on top, value below) used by the detail
-// row of the current-instance summary.
 component MetaColumn inherits Rectangle {
     in property <string> label;
     in property <string> value;
@@ -42,7 +40,6 @@ component MetaColumn inherits Rectangle {
     }
 }
 
-// The 1px divider between metadata columns.
 component MetaSeparator inherits Rectangle {
     width: 17px;
     height: 26px;
@@ -86,7 +83,6 @@ component ContentRow inherits Rectangle {
         padding-right: 16px;
         cross-axis-alignment: center;
 
-        // left: icon + type
         HorizontalLayout {
             horizontal-stretch: 1;
             spacing: 8px;
@@ -105,7 +101,6 @@ component ContentRow inherits Rectangle {
             }
         }
 
-        // right: preview dots + count / spinner
         HorizontalLayout {
             horizontal-stretch: 0;
             spacing: 8px;
@@ -231,11 +226,6 @@ export component InstanceSummary inherits Rectangle {
 
         row2-cell := Rectangle {
             background: transparent;
-            // `cross-axis-alignment: start` on the stack sizes each cell to its
-            // *preferred* size, and a `Rectangle`'s preferred size is 0 — so
-            // without these two the cell collapses, the slide inside it is 0x0,
-            // and the row lands at the default `x`/`y` of a zero-sized parent
-            // (centred, i.e. half its own width off to the left).
             preferred-width: row2.preferred-width;
             preferred-height: row2.preferred-height;
 
@@ -304,11 +294,6 @@ export component InstanceSummary inherits Rectangle {
 
         row3-cell := Rectangle {
             background: transparent;
-            // `cross-axis-alignment: start` on the stack sizes each cell to its
-            // *preferred* size, and a `Rectangle`'s preferred size is 0 — so
-            // without these two the cell collapses, the slide inside it is 0x0,
-            // and the row lands at the default `x`/`y` of a zero-sized parent
-            // (centred, i.e. half its own width off to the left).
             preferred-width: row3.preferred-width;
             preferred-height: row3.preferred-height;
 
@@ -497,11 +482,6 @@ export component InstanceSummary inherits Rectangle {
         contents-cell := Rectangle {
             border-radius: 12px;
             background: transparent;
-            // `cross-axis-alignment: start` on the stack sizes each cell to its
-            // *preferred* size, and a `Rectangle`'s preferred size is 0 — so
-            // without these two the cell collapses, the slide inside it is 0x0,
-            // and the row lands at the default `x`/`y` of a zero-sized parent
-            // (centred, i.e. half its own width off to the left).
             preferred-width: contents.preferred-width;
             preferred-height: contents.preferred-height;
 

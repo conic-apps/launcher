@@ -35,10 +35,8 @@ pub async fn check_library_valid() -> Result<()> {
     let file_content = tokio::fs::read(&path).await?;
     sha256_hasher.update(file_content);
     let sha256 = format!("{:02x}", sha256_hasher.finalize());
-    // The integrity check of a downloaded native library, and it never said
-    // anything — the caller only learned "not valid", with no expected-vs-actual
-    // and no path, so a tampered or truncated dylib was indistinguishable from a
-    // missing one.
+    // Log expected and actual so a tampered or truncated dylib is
+    // distinguishable from a missing one.
     if metadata::LIBRARY.sha256 != sha256 {
         log::error!(
             "The Conic Nexus library at {} has sha256 {sha256}, but {} was expected",
@@ -76,9 +74,8 @@ pub async fn download_library(sink: LibrarySink) -> Result<()> {
         .await;
         match result {
             Ok(()) => return Ok(()),
-            // Each source's own reason used to be dropped, so "the library never
-            // downloads" was unattributable: only the aggregate `AllSourceFailed`
-            // reached the app, naming no URL.
+            // Name the failing source so "the library never downloads" is
+            // attributable, not just an aggregate `AllSourceFailed`.
             Err(error) => log::warn!("The Conic Nexus library source {} failed: {error}", source),
         };
     }

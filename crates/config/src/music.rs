@@ -4,20 +4,15 @@
 
 use serde::{Deserialize, Serialize};
 
-/// Configuration related to background music.
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct MusicConfig {
-    /// Whether background music is enabled.
     pub enabled: bool,
 
-    /// Whether to resume the last playing track and its position on startup.
     pub resume_on_startup: bool,
 
-    /// Whether to show the audio visualizer in the game view footer.
     pub show_visualizer: bool,
 
-    /// Whether to pause background music after the game launches.
     pub pause_on_launch: bool,
 
     pub main_volumn: u8,

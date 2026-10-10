@@ -27,12 +27,11 @@ pub use microsoft_auth_step::redeem_access_token;
 
 /// Decodes one Microsoft endpoint's answer, naming the endpoint when it refuses.
 ///
-/// None of these endpoints were status-checked before. A `401` body is perfectly
-/// good JSON, so it parsed and then failed on a missing `Token` key, and surfaced
-/// as `MicrosoftResponseMissingKey` — which reads like a schema bug rather than
-/// an authentication refusal. XSTS answering `401` is in fact the ordinary
-/// outcome for an account with no Xbox profile, and it is the single most
-/// misdiagnosed failure in the whole chain.
+/// The status is checked before the body is parsed: a `401` body is perfectly
+/// good JSON, so parsing first would fail on a missing `Token` key and surface
+/// as [`Error::MicrosoftResponseMissingKey`] rather than an authentication
+/// refusal. XSTS answering `401` is the ordinary outcome for an account with no
+/// Xbox profile, and it is the single most misdiagnosed failure in the chain.
 ///
 /// The body is kept in the error and the log because the endpoints explain
 /// themselves in it: XSTS names the problem in `XErr`, and the token endpoints
@@ -66,11 +65,10 @@ pub async fn list_accounts() -> Result<Vec<MicrosoftAccount>> {
     if !accounts_list_file.exists() {
         return Ok(vec![]);
     }
-    // Both of these used to become an empty list without a word, which is the
-    // worst outcome this file has: `add_account` reads the list, appends one
-    // entry and writes it back — so a corrupt or unreadable file reads as "no
-    // accounts" and the very next sign-in overwrites it with a single element.
-    // The user's other accounts are gone, and nothing said so.
+    // Both of these read as "no accounts" without a word, and `add_account`
+    // reads the list, appends one entry and writes it back — so a corrupt or
+    // unreadable file is silently replaced by the next sign-in, losing the
+    // user's other accounts.
     let serialized_account_list = match tokio::fs::read_to_string(&accounts_list_file).await {
         Ok(contents) => contents,
         Err(error) => {
@@ -177,8 +175,8 @@ pub async fn refresh_account(uuid: Uuid, force_refresh: bool) -> Result<Microsof
     let mut saved_account = account;
     saved_account.refresh_token = refresh_token.clone();
     update_account(uuid, &saved_account).await?;
-    // This save is the load-bearing one, and it was the only step of the refresh
-    // with no line of its own.
+    // Records the rotated token's save; it is the load-bearing step of the
+    // refresh, and the only one that has to happen before anything else.
     log::debug!("The rotated refresh token for {uuid} is stored");
     let refreshed_account = access_token_auth_flow(&access_token, &refresh_token)
         .await

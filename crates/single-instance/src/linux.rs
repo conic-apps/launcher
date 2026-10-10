@@ -74,9 +74,8 @@ pub(crate) fn claim(launches: Sender<Launch>) -> Result<Guard, AlreadyRunning> {
     };
 
     match builder.build() {
-        // macOS logs the socket it listens on; Linux was the one backend whose
-        // success was never stated, so "it is single-instance" and "the bus was
-        // never really reached" read the same.
+        // Logged so that "it is single-instance" and "the bus was never really
+        // reached" do not read the same.
         Ok(connection) => {
             log::debug!(target: "shell", "claimed the bus name {name}");
             Ok(Guard {
@@ -121,7 +120,7 @@ pub(crate) struct Guard {
     /// the app running without the guard.
     connection: Option<Connection>,
 
-    /// The name being held, kept for the log line when it is given up.
+    /// The name being held, so [`Guard`] can release it when it is dropped.
     name: String,
 }
 

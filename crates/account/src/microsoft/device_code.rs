@@ -147,9 +147,8 @@ mod tests {
         poll_result_from_response(status, body.to_string())
     }
 
-    /// The states that keep the flow going all arrive as `400`s. Reading one as
-    /// a failed request is what ended the login on the first poll, before the
-    /// user had opened the browser at all.
+    /// The states that keep the flow going all arrive as `400`s; reading one as
+    /// a failed request would end the login on the first poll.
     #[test]
     fn oauth_errors_are_statuses_even_on_a_bad_request() {
         for error in [
@@ -182,7 +181,6 @@ mod tests {
         assert_eq!(result.expires_in, Some(3599));
     }
 
-    /// A body that is not an OAuth answer at all is still a failed request.
     #[test]
     fn a_body_without_an_oauth_error_fails_the_request() {
         for (status, body) in [
