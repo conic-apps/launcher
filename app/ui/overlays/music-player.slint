@@ -38,8 +38,6 @@ component PlayerButton inherits Rectangle {
         easing: Easing.ease;
     }
 
-    /// The icon ink: `mauve` while the button is *on* or is the primary play
-    /// button, otherwise text with a lighter hover step.
     private property <color> ink: root.primary || root.on
         ? Theme.mauve
         : touch.has-hover ? Theme.text : Theme.subtext-0;
@@ -63,14 +61,12 @@ component PlayerButton inherits Rectangle {
     }
 }
 
-// A playlist row (`.playlist-item`); the playing row draws its name in blue.
 component PlaylistItem inherits Rectangle {
     in property <string> name;
     in property <bool> playing: false;
     callback clicked;
 
     width: 100%;
-    // A 12px line box with 7px of padding above and below.
     height: 26px;
     border-radius: 8px;
     background: touch.has-hover
@@ -126,7 +122,6 @@ component PlaylistItem inherits Rectangle {
 //   ─────────────────────────────
 //                  125px
 export component MusicPlayerOverlay inherits Rectangle {
-    // Whether the panel is open.
     in property <bool> open: MusicState.panel-open;
 
     width: 100%;
@@ -257,8 +252,6 @@ export component MusicPlayerOverlay inherits Rectangle {
         easing: Easing.ease;
     }
 
-    // Whether the progress bar is being dragged, so a move only seeks while it
-    // is.
     private property <bool> dragging: false;
 
     // Whether this drag is the one that stopped the music, so the release puts
@@ -432,7 +425,6 @@ export component MusicPlayerOverlay inherits Rectangle {
                             color: Theme.subtext-0;
                         }
 
-                        // The progress bar, and the drag target for seeking.
                         progress-bar := Rectangle {
                             horizontal-stretch: 1;
                             height: 4px;
@@ -639,7 +631,6 @@ export component MusicPlayerOverlay inherits Rectangle {
 
                     ScrollView {
 
-                        // 4px above and 8px below the rows.
                         playlist-items := VerticalLayout {
                             alignment: start;
                             padding-top: 4px;

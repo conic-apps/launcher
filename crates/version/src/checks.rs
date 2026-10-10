@@ -10,11 +10,9 @@ use serde_json::Value;
 /// enabled features. Matching rules are applied in order, so the last match
 /// wins; an empty rule list is allowed, a non-empty one defaults to disallowed.
 pub(crate) fn check_allowed(rules: Vec<Value>, enabled_features: &[String]) -> bool {
-    // by default it's allowed
     if rules.is_empty() {
         return true;
     }
-    // else it's disallow by default
     let mut allow = false;
     for rule in rules {
         let action = if let Some(action) = rule["action"].as_str() {

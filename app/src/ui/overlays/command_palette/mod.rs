@@ -86,7 +86,7 @@ pub(crate) const ICON_TIMEOUT: std::time::Duration = std::time::Duration::from_s
 /// One of the root mode's five commands.
 ///
 /// `title` is the source string, which is what the *filter* matches against. The
-/// row shows `CommandText.title(title_kind, title)`, the translated form; see `build`
+/// row shows `CommandText.title(title_kind, title)`, the translated form; see `rebuild`
 /// for why the two can differ.
 pub(crate) struct Command {
     key: &'static str,
@@ -164,15 +164,19 @@ pub(crate) enum Action {
         kind: &'static str,
         source: &'static str,
     },
-    /// Opens the create-instance dialog.
     CreateInstance,
-    /// Opens the add-account dialog.
     AddAccount,
     /// Selects the instance, and opens the launch page when the row came out of
     /// the "launch instance" mode.
-    SelectInstance { id: String, launch: bool },
+    SelectInstance {
+        id: String,
+        launch: bool,
+    },
     /// The game page, then the project's detail panel.
-    OpenProject { platform: &'static str, id: String },
+    OpenProject {
+        platform: &'static str,
+        id: String,
+    },
 }
 
 /// A row as it is built, before it becomes a `PaletteItem`.
@@ -199,13 +203,12 @@ pub(crate) struct PendingItem {
     section_kind: &'static str,
     action: Action,
     /// The row's offset from the top of the list, heading included. Set by
-    /// `build`, and only read for the selected row's reveal — the rows
+    /// `rebuild`, and only read for the selected row's reveal — the rows
     /// themselves are placed by the list's own layout.
     row_y: f32,
 }
 
 impl PendingItem {
-    /// The height of the heading above this row, or none.
     fn label_height(&self) -> f32 {
         if self.section_kind.is_empty() {
             0.0
@@ -214,7 +217,6 @@ impl PendingItem {
         }
     }
 
-    /// The height of the row itself.
     fn row_height(&self) -> f32 {
         if self.loaders.is_empty() {
             ROW_HEIGHT
@@ -387,7 +389,7 @@ impl PaletteController {
         state.set_online_searching(false);
         state.set_online_error(false);
         state.set_visible(true);
-        self.build(ui);
+        self.rebuild(ui);
     }
 
     fn close(&self, ui: &App) {
@@ -426,16 +428,14 @@ impl PaletteController {
         // field kept the root placeholder while a search ran.
         state.set_mode(SharedString::from(self.mode));
         state.set_source(SharedString::from(self.source));
-        self.build(ui);
+        self.rebuild(ui);
     }
 
-    /// Returns to the root mode.
     fn back_to_root(&mut self, ui: &App) {
         self.enter_mode(ui, "root", self.source);
     }
 
-    /// Rebuilds the model from the mode, the query and the results.
-    fn build(&mut self, ui: &App) {
+    fn rebuild(&mut self, ui: &App) {
         self.publish(ui, true)
     }
 
@@ -447,7 +447,6 @@ impl PaletteController {
     /// time an image landed.
     fn publish(&mut self, ui: &App, reset_scroll: bool) {
         let state = ui.global::<CommandPaletteState>();
-        // The trimmed, lower-cased query.
         let query = state.get_query().trim().to_lowercase();
         state.set_query_empty(state.get_query().trim().is_empty());
 
@@ -635,7 +634,6 @@ impl PaletteController {
         self.perform(ui, index);
     }
 
-    /// Performs the action of the row at `index`.
     fn perform(&mut self, ui: &App, index: usize) {
         if index < self.items.len() {
             self.select(ui, index);
@@ -685,7 +683,7 @@ impl PaletteController {
         if self.mode == "search-online" && keyword_of(ui).is_empty() {
             self.reset_search(ui);
         }
-        self.build(ui);
+        self.rebuild(ui);
     }
 
     /// The emptied-query reset: the results, the spinner and the error all go,
@@ -770,7 +768,7 @@ impl PaletteController {
         let ui_state = ui.global::<CommandPaletteState>();
         ui_state.set_online_searching(false);
         ui_state.set_online_error(failed);
-        self.build(ui);
+        self.rebuild(ui);
     }
 }
 
@@ -786,7 +784,6 @@ pub(crate) fn keyword_of(ui: &App) -> String {
         .to_string()
 }
 
-/// Builds a row for an instance.
 pub(crate) fn instance_item(instance: &Instance, action_kind: &'static str) -> PendingItem {
     let runtime = &instance.config.runtime;
     let loader = runtime.mod_loader_type.as_ref().map(ToString::to_string);

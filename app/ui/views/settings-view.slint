@@ -16,8 +16,6 @@ import { SettingsDownload } from "settings/settings-download.slint";
 import { SettingsAccessibility } from "settings/settings-accessibility.slint";
 import { SettingsAbout } from "settings/settings-about.slint";
 
-// Sidebar entry. The active marker is a 3x22px mauve pill sitting 6px to the
-// left of the item.
 component NavItem inherits Rectangle {
     in property <string> icon;
     in property <string> label;
@@ -69,7 +67,6 @@ component NavItem inherits Rectangle {
     }
 }
 
-// A titled settings section.
 component SettingsSection inherits VerticalLayout {
     in property <string> title;
 
@@ -100,12 +97,10 @@ export component SettingsView inherits Rectangle {
 
     private property <string> motion: PageMotion.phase("settings");
 
-    // The entrance and exit are the tint and the content together. The root used
-    // to keep its translucent `base` fixed while only the content moved; the
-    // tint now fades on the content's own beat, so the whole page — backdrop
-    // included — comes and goes as one rather than the content sliding over a
-    // tint that is already there. `transparentize(1.0)` is the fully
-    // transparent end, the same colour at alpha 0.
+    // The tint fades on the content's own beat, so the whole page — backdrop
+    // included — comes and goes as one rather than the content sliding over an
+    // already-present tint. `transparentize(1.0)` is the fully transparent end,
+    // the same colour at alpha 0.
     background: Theme.base.transparentize(root.motion == "shown" ? 0.4 : 1.0);
     animate background { duration: 250ms; easing: cubic-bezier(0, 0.65, 0.26, 1); }
 

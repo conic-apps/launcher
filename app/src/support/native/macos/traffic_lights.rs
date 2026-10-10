@@ -98,7 +98,6 @@ static WIDGET_INSET_CALLS: AtomicUsize = AtomicUsize::new(0);
 static CENTER_TRAFFIC_LIGHTS_CALLS: AtomicUsize = AtomicUsize::new(0);
 static STYLE_MASK_CALLS: AtomicUsize = AtomicUsize::new(0);
 
-/// Where the buttons should end up, derived from the design constants above.
 const EXPECTED_CENTER_Y: f64 = TITLEBAR_HEIGHT / 2.0;
 
 /// Self-check tolerance, in points: AppKit rounds to the backing store.
@@ -189,9 +188,6 @@ pub fn watch_fullscreen(ui: &crate::slint_backend::App) {
         };
         let window = &*window as *const AnyObject as Id;
         let fullscreen = unsafe { is_fullscreen_window(window) };
-        // The only two states this module hands the UI, and they used to be
-        // silent: the observer's own registration was logged, so a run that
-        // entered fullscreen and came back looked identical to one that never did.
         log::debug!(target: "shell", "traffic lights: the window is now fullscreen={fullscreen}");
         if let Some(ui) = weak.upgrade() {
             ui.set_window_fullscreen(fullscreen);
@@ -467,7 +463,6 @@ unsafe fn method_implementation(cls: *const ffi::objc_class, name: &CStr) -> ffi
     unsafe { ffi::method_getImplementation(method) }
 }
 
-/// Packs an IMP into a pointer for storage in an [`AtomicPtr`].
 fn imp_to_ptr(imp: ffi::IMP) -> *mut c_void {
     match imp {
         Some(function) => function as *const () as *mut c_void,
@@ -542,7 +537,6 @@ fn arm_self_check() {
     observe(&[ns_string!("NSWindowDidUpdateNotification")], &block);
 }
 
-/// Gives up on the metric route: log what we saw and hand over to the fallback.
 fn settle_failed(window: Id) {
     unsafe { log_window_state(window) };
     if let Some(observed) = unsafe { close_button_position(window) } {
@@ -557,8 +551,6 @@ fn settle_failed(window: Id) {
     install_fallback();
 }
 
-/// One debug line with everything the self-check looked at.
-///
 /// Debug level, and only on the path that is about to give up: when a future
 /// macOS makes this mechanism fall through, this is what says which part moved.
 unsafe fn log_window_state(window: Id) {
@@ -623,7 +615,6 @@ unsafe fn log_window_state(window: Id) {
     }
 }
 
-/// A view's frame, expressed in `target`'s coordinates.
 unsafe fn position_in(view: Id, target: Id) -> Option<CGRect> {
     unsafe {
         let superview: Id = msg_send![view, superview];
@@ -635,7 +626,6 @@ unsafe fn position_in(view: Id, target: Id) -> Option<CGRect> {
     }
 }
 
-/// The runtime class name of an object, for logs.
 unsafe fn class_name(object: Id) -> String {
     if object.is_null() {
         return "<nil>".to_owned();
@@ -660,7 +650,6 @@ struct Position {
     center_y: f64,
 }
 
-/// Reads the close button's position in window coordinates.
 unsafe fn close_button_position(window: Id) -> Option<Position> {
     let close: Id = unsafe { msg_send![window, standardWindowButton: CLOSE_BUTTON] };
     if close.is_null() {
@@ -730,7 +719,6 @@ unsafe fn uses_conic_theme_frame(window: Id) -> bool {
     }
 }
 
-/// Whether `class` is `target`, or inherits from it.
 unsafe fn inherits_from(mut class: *const ffi::objc_class, target: *const ffi::objc_class) -> bool {
     while !class.is_null() {
         if class == target {
@@ -741,8 +729,6 @@ unsafe fn inherits_from(mut class: *const ffi::objc_class, target: *const ffi::o
     false
 }
 
-// --- Fallback -----------------------------------------------------------------
-//
 // Everything below is only used when the metric route is unavailable. It is the
 // frame-writing approach, with two safeguards taken from Electron's
 // `WindowButtonsProxy`: the geometry is derived from AppKit instead of
@@ -757,7 +743,6 @@ struct Metrics {
     pad_below: f64,
     /// Distance between the left edges of two neighbouring buttons.
     pitch: f64,
-    /// Button height.
     button_height: f64,
 }
 
@@ -788,7 +773,7 @@ fn install_fallback() {
         let mut cached = metrics.borrow_mut();
         if cached.is_none() {
             // SAFETY: called on the main thread from a notification, and before
-            // the first `apply` — so this still describes AppKit's own layout.
+            // the first `apply_metrics` — so this still describes AppKit's own layout.
             match unsafe { measure(window) } {
                 Some(measured) => *cached = Some(measured),
                 // No buttons yet (or no frame view): try again on the next event
@@ -797,7 +782,7 @@ fn install_fallback() {
             }
         }
         if let Some(measured) = cached.as_ref() {
-            unsafe { apply(window, measured) };
+            unsafe { apply_metrics(window, measured) };
             if !reported.get() {
                 reported.set(true);
                 // One line per run, so the fallback's result is checkable the
@@ -859,8 +844,7 @@ unsafe fn measure(window: Id) -> Option<Metrics> {
     }
 }
 
-/// Moves the container and the buttons to the derived geometry.
-unsafe fn apply(window: Id, metrics: &Metrics) {
+unsafe fn apply_metrics(window: Id, metrics: &Metrics) {
     let Some(container) = (unsafe { titlebar_container(window) }) else {
         return;
     };
@@ -890,8 +874,6 @@ unsafe fn apply(window: Id, metrics: &Metrics) {
     }
 }
 
-// --- Shared helpers -----------------------------------------------------------
-
 /// Registers `block` for every notification in `names` on the default center.
 ///
 /// Neither the observer tokens nor the block are kept: the center copies the
@@ -906,7 +888,6 @@ fn observe(names: &[&NSString], block: &block2::Block<dyn Fn(NonNull<NSNotificat
     }
 }
 
-/// Whether the given `NSWindow` is currently on screen.
 unsafe fn window_visible(window: Id) -> bool {
     unsafe { msg_send![window, isVisible] }
 }

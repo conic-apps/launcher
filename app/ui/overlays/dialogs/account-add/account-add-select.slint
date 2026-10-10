@@ -38,7 +38,6 @@ component ServiceButton inherits Rectangle {
         AppIcon {
             name: root.icon;
             size: 15px;
-            // Fully opaque when active, 70% otherwise.
             icon-color: Theme.text.with-alpha(root.active ? 1.0 : 0.7);
         }
 

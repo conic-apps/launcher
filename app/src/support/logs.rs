@@ -31,10 +31,8 @@ use env_logger::fmt::Formatter;
 use log::Record;
 use storage::LOCATIONS;
 
-/// The active log file's stem. See the module comment.
 const FILE_NAME: &str = "conic-launcher";
 
-/// Rotate once the active file passes this many bytes.
 const MAX_FILE_SIZE: u64 = 50_000;
 
 /// How many files to keep in the folder, the active one included.
@@ -43,16 +41,14 @@ const KEEP: usize = 10;
 /// The archive suffix: `[year]-[month]-[day]_[hour]-[minute]-[second]`.
 const DATE_FORMAT: &str = "%Y-%m-%d_%H-%M-%S";
 
-/// The size of the active file, or where it is if there is none yet.
 struct Rotating {
     path: PathBuf,
     written: u64,
 }
 
 impl Rotating {
-    /// Opens (or accounts for) the active file, then prunes the folder down to
-    /// [`KEEP`]. Pruning on open as well as on rotate keeps a folder that was
-    /// copied from another machine from growing.
+    /// Pruning on open as well as on rotate keeps a folder that was copied from
+    /// another machine from growing.
     fn open(directory: &Path) -> std::io::Result<Self> {
         let stem = FILE_NAME.to_string();
         prune_archives(directory, &stem, KEEP.saturating_sub(1));
@@ -63,7 +59,6 @@ impl Rotating {
         Ok(Self { path, written })
     }
 
-    /// Appends one already-formatted line, rotating first if the file is full.
     fn append(&mut self, line: &str) -> std::io::Result<()> {
         if self.written >= MAX_FILE_SIZE {
             self.rotate()?;
@@ -77,8 +72,6 @@ impl Rotating {
         Ok(())
     }
 
-    /// Moves the active file aside under a timestamped name and prunes the
-    /// archives down to what is left of the budget once the new file is counted.
     fn rotate(&mut self) -> std::io::Result<()> {
         let directory = self
             .path
@@ -109,8 +102,6 @@ impl Rotating {
     }
 }
 
-/// Removes the oldest archives until `keep` of them are left.
-///
 /// The sort is on the timestamp the name carries rather than on the file's
 /// modification time, so it survives a folder that was copied around. Only names
 /// of the form `<stem>_<timestamp>.log` are touched, so anything else in the
@@ -250,8 +241,6 @@ pub fn init() {
     }
 }
 
-/// A debug build's logger: stdout, with the level coloured when stdout is a
-/// terminal.
 fn init_stdout() {
     let mut builder =
         env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("debug"));
@@ -276,8 +265,6 @@ fn init_or_report(mut builder: env_logger::Builder, sink: &str) {
     }
 }
 
-/// A release build's logger: the log file, with stderr as the fallback when the
-/// file cannot be opened.
 fn init_file() {
     let directory = LOCATIONS.launcher.logs.clone();
     let rotating = match fs::create_dir_all(&directory).and_then(|()| Rotating::open(&directory)) {

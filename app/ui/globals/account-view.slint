@@ -63,7 +63,6 @@ export struct CapeItem {
 }
 
 export global AccountViewState {
-    /// Whether the overlay is open.
     in-out property <bool> visible: false;
 
     in-out property <bool> has-account: false;
@@ -84,7 +83,6 @@ export global AccountViewState {
     in-out property <int> refresh-month: 0;
     in-out property <int> refresh-day: 0;
 
-    // ----- contribution graph + activity -----
     /// Whether the statistics have been read for the viewed account.
     in-out property <bool> stats-loaded: false;
     in-out property <int> total-launches: 0;
@@ -96,7 +94,6 @@ export global AccountViewState {
     /// The empty-state flag for the activity list.
     in-out property <bool> activities-empty: true;
 
-    // ----- capes -----
     /// Every cape the account owns, active one flagged, prefixed by the "no
     /// cape" entry. Only a Microsoft profile carries capes.
     in-out property <[CapeItem]> capes: [];
@@ -104,7 +101,6 @@ export global AccountViewState {
     /// it until the server's answer lands.
     in-out property <bool> cape-loading: false;
 
-    // ----- skin (kept for when the skin editor returns) -----
     in-out property <bool> has-skin: false;
     /// The front-facing model, drawn by Rust from the skin texture.
     in-out property <image> skin-model;
@@ -115,7 +111,6 @@ export global AccountViewState {
     /// Whether a local skin can be removed (offline accounts).
     in-out property <bool> can-clear-skin: false;
 
-    /// Closes the overlay.
     callback close();
     /// The switcher picked another account. This is the same act as the footer's
     /// switcher — it becomes the launcher's current account — and the overlay

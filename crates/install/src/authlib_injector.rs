@@ -30,10 +30,8 @@ pub async fn ensure_latest(progress: &DownloadState) -> Result<()> {
         .as_str()
         .ok_or(Error::InvalidAuthlibResponse)?;
     let published = latest_version["version"].as_str().unwrap_or("<unknown>");
-    // A missing or unreadable injector means it has to be downloaded, not that
-    // the launch is broken — this is the only code in the workspace that writes
-    // the file, so treating absence as an error meant a fresh install could never
-    // launch against a Yggdrasil server at all.
+    // A missing or unreadable injector means it must be downloaded, not that the
+    // launch is broken.
     let current = std::fs::File::open(&path)
         .ok()
         .and_then(|mut file| verify_sha256_from_read(&mut file, sha256));

@@ -171,10 +171,6 @@ fn first_past(items: &[MdItem], y: f32, from: usize) -> usize {
         .unwrap_or(items.len())
 }
 
-// ---------------------------------------------------------------------------
-// inline flattening
-// ---------------------------------------------------------------------------
-
 /// The style of one run, as far as layout is concerned.
 #[derive(Debug, Clone)]
 struct RunStyle {
@@ -190,7 +186,6 @@ struct RunStyle {
     /// Draw the inline-code capsule behind this run.
     chip: bool,
     strike: bool,
-    /// The capsule's padding.
     pad_x: f32,
     /// The capsule's own padding and the space outside it, relative to the code
     /// font's size, carried here so an inline code span can be built without the
@@ -319,7 +314,6 @@ impl Run {
         }
     }
 
-    /// Whether this run is an inline image whose bitmap is on hand.
     fn is_placed_image(&self, images: &ImageStore) -> bool {
         self.image.as_ref().is_some_and(|url| images.contains(url))
     }
@@ -461,21 +455,15 @@ fn collapse_whitespace(text: &str) -> String {
             out.push(ch);
         }
     }
-    // The run's own trailing space, if it had one.
     if space {
         out.push(' ');
     }
     out
 }
 
-// ---------------------------------------------------------------------------
-// line breaking
-// ---------------------------------------------------------------------------
-
 /// One shaped cluster, placed in the line it belongs to.
 #[derive(Debug, Clone, Copy)]
 struct Atom {
-    /// Which run it belongs to.
     run: usize,
     /// Byte range within that run's text.
     start: usize,
@@ -493,9 +481,7 @@ struct Atom {
     trailing: f32,
     /// A line may start here.
     break_before: bool,
-    /// The cluster is nothing but whitespace.
     space: bool,
-    /// A hard break follows this cluster.
     hard_after: bool,
 }
 
@@ -584,7 +570,6 @@ fn build_atoms(metrics: &Metrics, hard_breaks: bool) -> Vec<Atom> {
     atoms
 }
 
-/// Decides where a line may start.
 fn mark_breaks(atoms: &mut [Atom], metrics: &Metrics) {
     for index in 1..atoms.len() {
         // An image is a replaced element with no letters around it, so the rules
@@ -613,7 +598,6 @@ fn mark_breaks(atoms: &mut [Atom], metrics: &Metrics) {
     }
 }
 
-/// Whether an atom is an inline image rather than a piece of text.
 fn is_image_atom(metrics: &Metrics, atom: &Atom) -> bool {
     metrics.measured[atom.run].clusters.is_empty() && atom.advance > 0.0
 }
@@ -630,7 +614,6 @@ fn last_char(metrics: &Metrics, atom: &Atom) -> Option<char> {
         .next_back()
 }
 
-/// Whether a line may start between `before` and `after`.
 fn break_allowed(before: Option<char>, after: Option<char>) -> bool {
     let (Some(before), Some(after)) = (before, after) else {
         return false;
@@ -814,7 +797,6 @@ fn line_metrics(metrics: &Metrics, atoms: &[Atom], line: &[usize]) -> LineInfo {
     }
 }
 
-/// The atoms of one run that fall on one line.
 fn segment_of(atoms: &[Atom], line: &[usize], run: usize) -> Option<Vec<usize>> {
     let indices: Vec<usize> = line
         .iter()
@@ -914,7 +896,6 @@ struct Ctx<'a> {
 }
 
 impl Ctx<'_> {
-    /// Records an item and keeps the document's width up to date.
     fn push(&mut self, mut item: MdItem) {
         if item.width > 0.0 {
             let right = item.x + item.width;
@@ -928,8 +909,6 @@ impl Ctx<'_> {
         item.height = round(item.height);
         self.items.push(item);
     }
-
-    // ----- blocks -----
 
     /// Lays a block out and returns the y below it, margins included.
     fn block(&mut self, block: &Block, x: f32, y: f32, avail: f32) -> f32 {
@@ -1188,8 +1167,6 @@ impl Ctx<'_> {
         flow_bottom
     }
 
-    // ----- text -----
-    /// Lays inlines out as wrapped lines and draws them. Returns the height.
     fn text(
         &mut self,
         base: &RunStyle,
@@ -1237,7 +1214,6 @@ impl Ctx<'_> {
         }
     }
 
-    /// Measures one stretch between two hard line breaks.
     fn part(&mut self, runs: Vec<Run>, avail: f32, wrap: bool, hard_breaks: bool) -> Part {
         let mut measured = Vec::with_capacity(runs.len());
         for run in &runs {
@@ -1318,7 +1294,6 @@ impl Ctx<'_> {
         }
     }
 
-    /// Draws one line, and returns the y below it.
     fn draw_line(&mut self, part: &Part, line: &[usize], x: f32, y: f32) -> f32 {
         {
             let plan = part;
@@ -1756,8 +1731,6 @@ impl Ctx<'_> {
         y
     }
 
-    // ----- images and markers -----
-
     /// A block image: its own size, capped to the width of the line it is on.
     fn image(&mut self, url: &str, alt: &str, x: f32, y: f32, avail: f32) -> f32 {
         let Some(asset) = self.images.get(url) else {
@@ -1883,7 +1856,6 @@ fn empty_plan() -> Plan {
     }
 }
 
-/// The x offset of a run's slice of a line: the advance of everything before it.
 /// Where the given run's glyphs start on this line.
 ///
 /// The sum of the atoms before it, plus its own first atom's leading margin: that

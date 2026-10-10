@@ -14,8 +14,6 @@ pub use memory::get_available_memory_bytes;
 pub static PLATFORM_INFO: Lazy<PlatformInfo> = Lazy::new(PlatformInfo::new);
 
 /// The path delimiter character used in environment variables like `PATH`.
-///
-/// On Windows, this is `";"`, and on other systems it is `":"`.
 #[cfg(windows)]
 pub const DELIMITER: &str = ";";
 #[cfg(not(windows))]
@@ -53,46 +51,33 @@ pub enum OsArch {
 
 /// Represents the high-level operating system family.
 ///
-/// This is an abstraction over detailed OS types (e.g., Ubuntu, Windows 10)
-/// to group them by family: Windows, Linux, or macOS.
+/// Groups the detailed `os_info` types (Ubuntu, Windows 10, …) into the three
+/// families the rest of the app branches on.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub enum OsFamily {
-    /// Microsoft Windows OS family
     Windows,
 
-    /// Linux-based distributions (e.g., Ubuntu, Arch, Debian)
     Linux,
 
-    /// Apple macOS family
     Macos,
 }
 
-/// Contains detailed platform-related information, such as architecture,
-/// OS type, version, and edition.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct PlatformInfo {
     /// The real hardware CPU architecture, detected at runtime via `os_info`.
     pub arch: OsArch,
 
-    /// The operating system type, as reported by the `os_info` crate.
     pub os_type: Type,
 
-    /// The general OS family classification (Windows/Linux/macOS).
     pub os_family: OsFamily,
 
-    /// The version of the OS (e.g., 10.15.7, 22.04, etc.).
     pub os_version: Version,
 
-    /// The edition of the OS (e.g., "Home", "Professional"), if available.
     pub edition: Option<String>,
 }
 
 impl PlatformInfo {
     /// Constructs a new [`PlatformInfo`] instance using runtime system data.
-    ///
-    /// - Detects hardware architecture at runtime via `os_info`
-    /// - Detects OS family using `cfg!(target_os)`
-    /// - Uses the `os_info` crate to get detailed version, type, and edition info
     ///
     /// # Panics
     /// Panics if the OS is not supported by the program.

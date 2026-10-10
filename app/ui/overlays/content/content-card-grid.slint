@@ -18,17 +18,13 @@ export component ContentCardGrid inherits Rectangle {
     in property <[CardData]> cards: [];
     /// 72px for the content lists, 64px for the saves.
     in property <length> icon-size: 72px;
-    /// Which line style the cards' second row takes — see `ContentCard`.
     in property <string> subtitle-style: "authors";
-    /// The panel's height, which the placeholder needs when the grid is empty.
-    /// The height of the grid: Rust's rows × row height plus the padding. It
-    /// has to be given rather than measured — the cards are positioned
-    /// absolutely, and an absolutely-positioned child contributes nothing to
-    /// its parent's measurement, so the panel's `ScrollView` would otherwise
-    /// see a grid of zero height and stop scrolling.
+    /// Rust's rows × row height plus the padding. It has to be given rather
+    /// than measured — the cards are positioned absolutely, and an
+    /// absolutely-positioned child contributes nothing to its parent's
+    /// measurement, so the panel's `ScrollView` would otherwise see a grid of
+    /// zero height and stop scrolling.
     in property <length> grid-height: 0px;
-    /// The `ContentNotFound` over an empty grid, with pointer events passing
-    /// through so the cards stay clickable underneath.
 
     callback select(string);
     callback open-path(string);
@@ -40,10 +36,6 @@ export component ContentCardGrid inherits Rectangle {
     callback open-link(string);
     callback play(string);
 
-    // The height is `grid-height` itself, which Rust recomputes from the cards'
-    // positions. It has to be given rather than measured: the cards are
-    // positioned absolutely, so they contribute nothing to the grid's own
-    // measurement (see the property above).
     width: 100%;
     height: root.grid-height;
     background: transparent;

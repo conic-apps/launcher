@@ -70,7 +70,6 @@ export struct NewsChip {
 
 /// The news overlay's state and callbacks.
 export global NewsState {
-    /// The list overlay is open.
     in-out property <bool> visible: false;
     /// The first response is still on its way.
     in-out property <bool> loading: true;
@@ -190,7 +189,6 @@ export global NewsText {
         return "";
     }
 
-    /// The search field's placeholder.
     public pure function search-placeholder() -> string {
         return @tr("NewsText" => "Search news...");
     }

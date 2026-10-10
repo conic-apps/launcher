@@ -215,8 +215,6 @@ fn target_size(ui: &App) -> (i32, i32) {
     )
 }
 
-// ---------------------------------------------------------------- the shaders
-//
 // The four shaders, with two differences: the corner-radius clipping is gone
 // (Slint rounds the window's corners when it composites the image), and the
 // layer's 0.3 opacity is folded in, because this image is one layer of Slint's
@@ -531,8 +529,6 @@ impl Program {
         self.uniforms.get(name)
     }
 }
-
-// ------------------------------------------------------------------ the world
 
 /// The fill pass's vertex layout: `x y z alpha`.
 const FILL_STRIDE: i32 = 16;

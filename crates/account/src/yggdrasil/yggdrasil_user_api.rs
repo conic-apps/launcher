@@ -160,11 +160,8 @@ async fn find_and_replace_textures_property(profile: Profile) -> Profile {
 }
 
 async fn replace_textures_property_value(value: String) -> String {
-    // Every one of these used to fall back silently, and the last one is the
-    // dangerous one: a failure at `to_string` produced an *empty* base64 string
-    // that was then handed to the game as the account's texture property. The
-    // property decoding is therefore replaced with an empty one rather than the
-    // URL the server sent, and the game shows a blank skin for it.
+    // Logged rather than silent: a decode failure here becomes an empty texture
+    // property, which the game shows as a blank skin.
     let textures_property_byte = match general_purpose::STANDARD.decode(&value) {
         Ok(bytes) => bytes,
         Err(error) => {
@@ -190,10 +187,9 @@ async fn replace_textures_property_value(value: String) -> String {
         #[allow(clippy::unwrap_used)]
         serde_json::to_value(textures).unwrap()
     };
-    // The one that mattered: a serialization failure here used to yield `""`, and
-    // that empty string was the texture property the game was handed — a blank
-    // skin with nothing to explain it. The original property is returned instead,
-    // which is at worst the raw URLs and at best identical.
+    // On a serialization failure the server's original property is returned
+    // rather than an empty string: at worst that is the raw URLs, and the game
+    // never gets a blank skin with nothing to explain it.
     match serde_json::to_string(&textures_property) {
         Ok(serialized) => general_purpose::STANDARD.encode(serialized),
         Err(error) => {

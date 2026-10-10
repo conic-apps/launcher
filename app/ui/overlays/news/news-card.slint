@@ -20,8 +20,6 @@ import { NewsCard as CardData, NewsText } from "../../globals/news.slint";
 // absolutely so it can cull the ones outside the viewport, and the height is
 // part of that stacking.
 
-// The image box both cards share: a clipped, rounded frame that draws a
-// spinner until the bitmap arrives.
 component CardMedia inherits Rectangle {
     in property <image> source;
     in property <bool> loading: false;
@@ -41,7 +39,6 @@ component CardMedia inherits Rectangle {
         animate opacity { duration: 200ms; easing: ease-out; }
     }
 
-    // Centred by its default `x`/`y`.
     if root.loading : Loading {
         size: 24px;
         stroke-width: 4;
@@ -122,7 +119,6 @@ export component NewsBannerCard inherits Rectangle {
             spacing: 4px;
             alignment: start;
 
-            // 16px title, weight 700, one elided line.
             Text {
                 height: 22px;
                 text: root.card.title;
@@ -133,7 +129,6 @@ export component NewsBannerCard inherits Rectangle {
                 vertical-alignment: center;
             }
 
-            // The category, 12px. The date is on the banner itself now.
             Text {
                 height: 16px;
                 text: root.card.subtitle;
@@ -143,7 +138,6 @@ export component NewsBannerCard inherits Rectangle {
                 vertical-alignment: center;
             }
 
-            // The blurb, 13px, at most two lines.
             Text {
                 height: 40px;
                 text: root.card.description;
@@ -171,7 +165,6 @@ export component NewsBannerCard inherits Rectangle {
     }
 }
 
-// A changelog: the square image on the left, the copy to its right.
 export component NewsRowCard inherits Rectangle {
     in property <CardData> card;
     callback clicked;
@@ -216,7 +209,6 @@ export component NewsRowCard inherits Rectangle {
             spacing: 8px;
             cross-axis-alignment: center;
 
-            // The tag as a small pill, to the left of the version.
             Rectangle {
                 height: 18px;
                 width: tag-label.preferred-width + 14px;
@@ -259,7 +251,6 @@ export component NewsRowCard inherits Rectangle {
             }
         }
 
-        // The short body, two elided lines.
         Text {
             x: 0;
             y: 32px;
@@ -279,7 +270,6 @@ export component NewsRowCard inherits Rectangle {
     }
 }
 
-// The card the flow draws, whichever shape the entry's image calls for.
 export component NewsCardView inherits Rectangle {
     in property <CardData> card;
     callback clicked;

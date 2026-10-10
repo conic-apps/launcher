@@ -18,7 +18,6 @@ use super::{
 };
 use crate::error::{Error, Result};
 
-/// The `quilt_loader` field of `quilt.mod.json`.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct QuiltLoaderData {
     pub group: String,
@@ -36,7 +35,6 @@ pub struct QuiltLoaderData {
     pub minecraft: Option<Value>,
 }
 
-/// The `quilt_loader.metadata` object of `quilt.mod.json`.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct QuiltMetadata {
     pub name: Option<String>,
@@ -49,7 +47,6 @@ pub struct QuiltMetadata {
     pub fabric_icon: Option<ModIcon>,
 }
 
-/// Corresponds to the `quilt.mod.json` file in the mod archive.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct QuiltModMetadata {
     #[serde(rename = "schema_version")]

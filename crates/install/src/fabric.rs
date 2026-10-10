@@ -103,14 +103,13 @@ pub async fn install(
     let response = HTTP_CLIENT.get(url).send().await?;
     let status = response.status();
     if !status.is_success() {
-        // The status was never checked, so a 404 for a version that does not exist
-        // reached the caller as a JSON parse error against an error page.
+        // A non-success status surfaces below only as a JSON parse error, so
+        // report the status here.
         log::warn!("the fabric meta API answered {status} for {fabric_version} on {mcversion}");
     }
     let fabric_version_json: Version = response.json().await?;
-    // `version_name` is the id everything else keys off — it is the directory the
-    // json lands in and the id the launcher later resolves — so it is the one
-    // thing worth having on record.
+    // The version id everything else keys off: the directory the json lands in
+    // and the id resolved at launch.
     let version_name = fabric_version_json.id.clone();
     let json_path = minecraft.get_version_json(&version_name);
     if let Some(parent) = json_path.parent() {

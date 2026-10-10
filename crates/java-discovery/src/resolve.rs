@@ -25,7 +25,6 @@ use crate::scan_java_runtimes;
 /// A resolved Java runtime: the executable path together with its architecture.
 #[derive(Debug, Clone)]
 pub struct ResolvedJava {
-    /// Absolute path of the `java` executable.
     pub path: PathBuf,
     pub arch: JavaArch,
 }
@@ -36,11 +35,9 @@ pub struct ResolvedJava {
 /// this crate stays independent of them.
 #[derive(Debug, Clone, Default)]
 pub struct ResolveJavaOptions {
-    /// Instance-specific `java` executable configured by the user.
     pub instance_java_path: Option<String>,
     /// Whether the Mojang-provided runtime is preferred over system runtimes.
     pub prefer_mojang_java: bool,
-    /// User-disabled Java executable paths.
     pub disabled_java_runtimes: Vec<String>,
     /// Required Java major version of the game version.
     pub required_major_version: u32,
@@ -109,9 +106,7 @@ pub async fn resolve_java_executable(options: &ResolveJavaOptions) -> Result<Res
             arch: runtime.arch,
         });
     }
-    // The function's own terminal failure, and it was the one outcome with no log
-    // at all — while the three branches above all announced themselves. The
-    // inventory is what tells "nothing is installed" apart from "Java 21 is
+    // The inventory distinguishes "nothing is installed" from "Java 21 is
     // installed, the game wants 8, and 8 is on the disabled list", which are very
     // different problems for the user.
     log::warn!(

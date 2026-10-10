@@ -77,7 +77,9 @@ fn write_pending(staged: &Staged) -> Result<()> {
     Ok(())
 }
 
-/// The last path segment of a URL, percent-decoded into a file name.
+/// The file name a bundle is staged under, taken from the URL's last path
+/// segment. Asset names are restricted to URL-safe characters, so the segment is
+/// used as-is.
 pub fn artifact_name(url: &str) -> Option<String> {
     let url = url::Url::parse(url).ok()?;
     let last = url.path_segments()?.next_back()?.to_string();

@@ -32,9 +32,7 @@ import { ScrollInput, ScrollSource } from "../../globals/scroll.slint";
 // itself — the detail gallery can, because its item widths come from its own
 // model.
 export component ScrollViewHorizontal inherits Rectangle {
-    /// Distance between the view's left edge and the left of the scrollbar track.
     in property <length> scrollbar-left: 8px;
-    /// Distance between the view's right edge and the right of the track.
     in property <length> scrollbar-right: 8px;
     /// Hides the scrollbar without touching the scrolling.
     in property <bool> scrollbar-disabled: false;
@@ -53,15 +51,10 @@ export component ScrollViewHorizontal inherits Rectangle {
     /// positive twin, the one the position and the thumb are written in.
     out property <length> content-x: -root.scroll-x;
 
-    // ----- geometry -----
-    // The track sits 4px above the bottom, is 6px tall and 8px in from each
-    // edge, and the thumb hangs 2px off the top of the track while hovered or
-    // dragged.
     private property <length> scrollbar-inset-bottom: 4px;
     private property <length> scrollbar-height: 6px;
     private property <length> track-width: max(0px, root.width - root.scrollbar-left - root.scrollbar-right);
 
-    // ----- scroll state -----
     /// Smoothed offset: 0 at the left edge, growing as the content scrolls right.
     private property <length> scroll-x: 0px;
     /// Where `scroll-x` is heading (wheel input, `scroll-to`, dragging).
@@ -103,7 +96,6 @@ export component ScrollViewHorizontal inherits Rectangle {
         root.target-x = clamp(root.target-x, 0px, root.max-scroll);
     }
 
-    // ----- programmatic scrolling -----
     /// Scrolls so that `x` — the same sign as `content-x` — ends up at the left of
     /// the viewport.
     public function scroll-to(x: length, smooth: bool) {
@@ -196,7 +188,6 @@ export component ScrollViewHorizontal inherits Rectangle {
         }
     }
 
-    // ----- scrollbar -----
     scrollbar := Rectangle {
         visible: !root.scrollbar-disabled && root.max-scroll > 0.5px;
         x: root.scrollbar-left;
@@ -266,13 +257,11 @@ export component ScrollViewHorizontal inherits Rectangle {
         ? max(32px, root.track-width * root.width / max(root.content-width, root.width))
         : root.track-width;
 
-    // ----- scrollbar drag -----
     private property <bool> dragging: false;
     /// Where inside the thumb the pointer grabbed it, so dragging does not make
     /// the thumb jump under the cursor.
     private property <length> drag-anchor: 0px;
 
-    /// Maps a pointer position inside the scrollbar track to a scroll offset.
     function drag-scrollbar(mouse-x: length) {
         if root.max-scroll <= 0px || scrollbar.width <= thumb.width {
             return;

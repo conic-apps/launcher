@@ -37,12 +37,11 @@ const ICON_SOURCES: &[(&str, &str)] = &[
 const COMPILER_STACK_BYTES: usize = 64 * 1024 * 1024;
 
 fn main() {
-    // `slint-build` compiles the UI files below `ui/` into a generated Rust
-    // module that `slint::include_modules!()` pulls into `main`.
-    //
-    // Custom fonts are embedded via `import "*.ttf"` in `ui/theme.slint`;
-    // translations are bundled from `i18n/<lang>/LC_MESSAGES/<crate>.po` and
-    // selected at runtime with `slint::select_bundled_translation()`.
+    // `slint-build` compiles the UI under `ui/` into a generated module that
+    // `slint::include_modules!()` pulls into `main`. Fonts are embedded via
+    // `import "*.ttf"` in `ui/theme.slint`; translations are bundled from
+    // `i18n/<lang>/LC_MESSAGES/<crate>.po` and selected at runtime with
+    // `slint::select_bundled_translation()`.
     //
     // `ui/icons.slint` is generated first: it is a build product, and the
     // compiler reads it like any other `.slint` file.
@@ -57,7 +56,6 @@ fn main() {
         .expect("the UI compiler thread panicked");
 }
 
-/// Compile the UI, on the thread [`main`] set up for it.
 fn compile_ui() {
     let config = slint_build::CompilerConfiguration::new().with_bundled_translations("i18n");
     slint_build::compile_with_config("ui/app.slint", config).expect("failed to compile the app UI");
@@ -178,7 +176,6 @@ fn generate_icons() {
         .unwrap_or_else(|error| panic!("failed to write {}: {error}", out.display()));
 }
 
-/// Read one SVG into the two passes `AppIcon` draws.
 fn parse_icon(path: &Path) -> Icon {
     let data =
         fs::read(path).unwrap_or_else(|error| panic!("failed to read {}: {error}", path.display()));
@@ -223,7 +220,6 @@ fn viewbox_edge(tree: &Tree) -> i32 {
     (tree.size().width().round() as i32).max(1)
 }
 
-/// Walk the group's children in document order and collect every shape.
 fn collect_group(group: &usvg::Group, icon: &mut Icon, path: &Path) {
     for node in group.children() {
         match node {

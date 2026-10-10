@@ -41,9 +41,6 @@ pub fn load_config_file() -> Result<Config> {
     }
     let data = match std::fs::read_to_string(config_file_path) {
         Ok(x) => x,
-        // The error was discarded and the path was in no message, so a permission
-        // problem and a missing file were the same line — and this one *resets*
-        // the config.
         Err(error) => {
             error!(
                 "Could not read {}: {error}; resetting the config",
@@ -52,10 +49,6 @@ pub fn load_config_file() -> Result<Config> {
             return reset_config();
         }
     };
-    // Every message here used to name neither the file nor the reason, and the
-    // toml error was thrown away with `if let Ok`. That is the worst line in the
-    // crate: the reset below *overwrites* the user's config, so the parse error
-    // is the only chance to say what was wrong with it.
     match toml::from_str::<Config>(&data) {
         Ok(config) => {
             // The write-back canonicalises the file. A failure here leaves the
@@ -89,7 +82,6 @@ pub fn reset_config() -> Result<Config> {
     Ok(default_config)
 }
 
-/// Saves the configuration to the configuration file.
 pub fn save_config(config: &Config) -> Result<()> {
     save_config_to(&LOCATIONS.launcher.config, config)
 }
@@ -121,13 +113,11 @@ pub fn set_background_image(path: &Path) -> Result<String> {
     Ok("background_image".to_string())
 }
 
-/// Sets `path`'s modified time to now.
+/// Stamps `path` as modified now, so a replacement is a distinct revision.
 ///
-/// `fs::copy` carries the *source* file's timestamp over on macOS, so replacing
-/// the stored background with an image that happens to share its mtime leaves
-/// the file looking unchanged — and the background loader tells a replacement
-/// from a re-read by that timestamp, so the new wallpaper would not appear until
-/// a restart. Stamping now makes every replacement a distinct revision.
+/// `fs::copy` carries the source's timestamp over on macOS: replacing the stored
+/// background with an image sharing its mtime would look unchanged to the loader
+/// and the new wallpaper would not appear until a restart.
 fn stamp_now(path: &Path) {
     if let Err(error) = File::options()
         .write(true)
@@ -139,7 +129,6 @@ fn stamp_now(path: &Path) {
     }
 }
 
-/// Removes the stored custom background image, if any.
 pub fn remove_background_image() -> Result<()> {
     let dest = LOCATIONS.launcher.root.join("background_image");
     if dest.exists() {
@@ -197,7 +186,6 @@ impl UpdateChannel {
     }
 }
 
-/// Configuration options related to accessibility.
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AccessibilityConfig {
@@ -220,7 +208,6 @@ impl Default for AccessibilityConfig {
     }
 }
 
-/// Configuration options related to UI appearance.
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AppearanceConfig {
@@ -245,18 +232,16 @@ impl Default for AppearanceConfig {
     }
 }
 
-/// The main application configuration.
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Config {
     pub auto_update: bool,
     /// Whether the first-run setup wizard has been finished or skipped.
     ///
-    /// A key that predates this field is missing from an older `config.toml`,
-    /// so it reads as `false` and the wizard is shown once; the wizard writes it
-    /// back as `true` when it finishes or is dismissed.
+    /// An older `config.toml` that predates this field is missing the key, so it
+    /// reads as `false` and the wizard is shown once; the wizard writes it back
+    /// as `true` when it finishes or is dismissed.
     pub setup_completed: bool,
-    /// The currently selected account.
     pub current_account: Option<Account>,
     pub appearance: AppearanceConfig,
     pub accessibility: AccessibilityConfig,
@@ -268,8 +253,6 @@ pub struct Config {
     pub download: download::DownloadConfig,
     pub music: music::MusicConfig,
 
-    /// Keys the config does not model, kept so a load/save round-trip does not
-    /// drop one a newer build wrote.
     #[serde(flatten)]
     pub extra: BTreeMap<String, toml::Value>,
 }
@@ -359,7 +342,6 @@ mod tests {
         assert_eq!(config.download.max_connections, 100);
         assert_eq!(config.music.main_volumn, 100);
         assert_eq!(config.music.main_volumn_background, 25);
-        // A fresh config shows the setup wizard.
         assert!(!config.setup_completed);
     }
 
@@ -377,7 +359,6 @@ mod tests {
         assert_eq!(UpdateChannel::from_slug("nightly"), UpdateChannel::Nightly);
         assert_eq!(UpdateChannel::from_slug("beta"), UpdateChannel::Beta);
         assert_eq!(UpdateChannel::from_slug("stable"), UpdateChannel::Stable);
-        // Anything else falls back to the default channel.
         assert_eq!(UpdateChannel::from_slug("nonsense"), UpdateChannel::Stable);
         assert_eq!(UpdateChannel::Nightly.as_str(), "nightly");
         assert_eq!(UpdateChannel::Stable.as_str(), "stable");
@@ -401,10 +382,6 @@ mod tests {
         assert_eq!(parse("Snapshot"), UpdateChannel::Beta);
     }
 
-    /// `fs::copy` carries the source's timestamp over on macOS, so replacing
-    /// the stored background with an image that shares its mtime could leave the
-    /// file looking unchanged — and a new wallpaper then only appeared after a
-    /// restart. `stamp_now` is what makes every replacement a fresh revision.
     #[test]
     fn stamp_now_makes_a_replaced_file_look_new() {
         let dir = std::env::temp_dir().join(format!("conic-stamp-{}", std::process::id()));

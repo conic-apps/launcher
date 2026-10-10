@@ -8,16 +8,11 @@ use serde::{Deserialize, Serialize};
 
 use config::launch::{GC, Server};
 
-/// Supported mod loader types.
 #[derive(Clone, Deserialize, Serialize)]
 pub enum ModLoaderType {
-    /// Fabric mod loader
     Fabric,
-    /// Quilt mod loader
     Quilt,
-    /// Forge mod loader
     Forge,
-    /// Neoforge mod loader
     Neoforge,
 }
 
@@ -32,106 +27,79 @@ impl fmt::Display for ModLoaderType {
     }
 }
 
-/// Defines the runtime environment for a Minecraft instance.
 #[derive(Clone, Deserialize, Serialize, Default)]
 pub struct InstanceRuntime {
-    /// Minecraft version (e.g., "1.20.1")
     pub minecraft: String,
 
-    /// Optional mod loader type (e.g., Forge, Fabric)
     pub mod_loader_type: Option<ModLoaderType>,
 
-    /// Optional mod loader version (e.g., "44.1.23")
     pub mod_loader_version: Option<String>,
 }
 
-/// Configuration for how the instance should be launched.
-/// The global launch config will be overridden by this.
+/// How this instance launches; its fields override the global launch config.
 #[derive(Clone, Deserialize, Serialize, Default)]
 pub struct InstanceLaunchConfig {
-    /// Whether to use instance-specific settings
     pub enable_instance_specific_settings: bool,
 
-    /// Override built-in Java environment
+    /// Overrides the built-in Java environment.
     pub java_path: Option<String>,
 
-    /// Whether to automatically allocate memory based on available physical memory
     pub auto_memory: Option<bool>,
 
-    /// Maximum allocated memory in MB (adds `-Xmx` to JVM args).
+    /// Maximum heap in MB; emitted to the JVM as `-Xmx`.
     pub max_memory: Option<usize>,
 
-    /// Minecraft server configuration for the instance
     pub server: Option<Server>,
 
-    /// Game window width in pixels
     pub width: Option<usize>,
 
-    /// Game window height in pixels
     pub height: Option<usize>,
 
-    /// Whether to launch in fullscreen mode
     pub fullscreen: Option<bool>,
 
-    /// Additional JVM arguments specified by user
     pub extra_jvm_args: Option<String>,
 
-    /// Additional Minecraft arguments specified by user
     pub extra_mc_args: Option<String>,
 
-    /// Whether to launch the game in demo mode
     pub is_demo: Option<bool>,
 
-    /// Adds `-Dfml.ignoreInvalidMinecraftCertificates=true` to JVM args
+    /// Adds `-Dfml.ignoreInvalidMinecraftCertificates=true` to the JVM args.
     pub ignore_invalid_minecraft_certificates: Option<bool>,
 
-    /// Adds `-Dfml.ignorePatchDiscrepancies=true` to JVM args
+    /// Adds `-Dfml.ignorePatchDiscrepancies=true` to the JVM args.
     pub ignore_patch_discrepancies: Option<bool>,
 
-    /// Extra class paths to include in launch
     pub extra_class_paths: Option<String>,
 
-    /// Garbage collection configuration
     pub gc: Option<GC>,
 
-    /// Launcher name override
     pub launcher_name: Option<String>,
 
-    /// Optional command wrapper (e.g., script or proxy)
     pub wrap_command: Option<String>,
 
-    /// Script or command to execute before launch
     pub execute_before_launch: Option<String>,
 
-    /// Script or command to execute after launch
     pub execute_after_launch: Option<String>,
 
-    /// If true, skips integrity checks of the game files.
     pub skip_check_files: Option<bool>,
 
     pub quit_app_after_launch: Option<bool>,
 }
 
-/// Main configuration structure for a Minecraft instance.
 #[derive(Clone, Deserialize, Serialize, Default)]
 pub struct InstanceConfig {
-    /// Instance name (displayed to user)
     pub name: String,
 
     pub icon: Option<String>,
 
-    /// Minecraft runtime configuration
     pub runtime: InstanceRuntime,
 
-    /// Optional tags or groupings for the instance
     #[serde(default)]
     pub group: Option<Vec<String>>,
 
-    /// Instance-specific launch configuration
     #[serde(default)]
     pub launch_config: InstanceLaunchConfig,
 
-    /// Whether to use this instance's background image as the launcher background
     #[serde(default)]
     pub use_as_launcher_background: bool,
 
@@ -144,8 +112,6 @@ pub struct InstanceConfig {
 }
 
 impl InstanceConfig {
-    /// Creates a new instance configuration with the specified name and
-    /// Minecraft version.
     pub fn new(instance_name: &str, minecraft_version: &str) -> Self {
         Self {
             name: instance_name.to_string(),

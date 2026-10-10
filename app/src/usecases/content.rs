@@ -17,8 +17,7 @@ use content::mods::remote::RemoteModPlatform;
 
 use crate::usecases::generation::Gate;
 
-/// Which remote list is showing: the kind and the platform are state, because
-/// only one is ever open.
+/// The kind of remote list showing; only one list is ever open.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum RemoteKind {
     Mods,
@@ -35,7 +34,7 @@ impl RemoteKind {
         }
     }
 
-    /// CurseForge's `classId`: 6 mods, 12 resource packs, 4471 modpacks.
+    /// CurseForge's `classId`.
     pub(crate) fn curseforge_class(self) -> i64 {
         match self {
             Self::Mods => 6,
@@ -54,7 +53,6 @@ impl RemoteKind {
     }
 
     /// Whether the kind's cards carry loader tags and use the loader filter.
-    /// A resource pack has no loader.
     pub(crate) fn has_loaders(self) -> bool {
         matches!(self, Self::Mods | Self::Packs)
     }

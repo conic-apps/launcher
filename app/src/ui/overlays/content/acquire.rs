@@ -130,8 +130,7 @@ pub(crate) async fn modrinth_install_task(
     ))
 }
 
-/// The download of a CurseForge mod: its first available file, through the
-/// separate download-url endpoint for the files whose `downloadUrl` is null.
+/// The download of a CurseForge mod: its first available file.
 pub(crate) async fn curseforge_install_task(
     detail: &OpenDetail,
     minecraft: Option<&str>,

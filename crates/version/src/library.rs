@@ -39,10 +39,6 @@ pub fn resolve_libraries(libraries: Vec<Value>) -> Result<Vec<ResolvedLibrary>> 
             result.push(resolve_modloader_libraries(&library)?);
         }
     }
-    // A library missing from the classpath surfaces at launch as a
-    // `ClassNotFoundException` or an `UnsatisfiedLinkError` with nothing in the
-    // launcher log to explain it, so the tally of what was dropped is reported
-    // once rather than being a set of silent skips.
     let resolved = result.len();
     if resolved == 0 && declared > 0 {
         log::warn!("no library at all could be resolved out of {declared} declared");

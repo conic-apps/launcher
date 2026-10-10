@@ -36,7 +36,6 @@ component SettingsStep inherits ZoomTransition {
         return Theme.green;
     }
 
-    // The 4px above the card.
     Rectangle {
         width: 100%;
         height: 4px;
@@ -50,7 +49,6 @@ component SettingsStep inherits ZoomTransition {
         clip: true;
         background: Theme.surface-0.with-alpha(0.4);
 
-        // A 1px surface1 border at 80%.
         Rectangle {
             border-width: 1px;
             border-color: Theme.surface-1.with-alpha(0.8);
@@ -131,7 +129,6 @@ component SettingsStep inherits ZoomTransition {
                 animate transform-scale { duration: 100ms; }
             }
 
-            // Clicking the row starts the edit.
             edit-touch := TouchArea {
                 width: parent.width;
                 height: parent.height;
@@ -142,7 +139,6 @@ component SettingsStep inherits ZoomTransition {
             }
         }
 
-        // The edit field, swapped in for the name text while editing.
         if CreateInstanceState.name-editing : name-input := TextInput {
             x: 32px;
             y: 9px;
@@ -190,7 +186,6 @@ component SettingsStep inherits ZoomTransition {
 
         details := HorizontalLayout {
             x: 32px;
-            // 6px below the 16px name row.
             y: 9px + 16px + 6px;
             width: parent.width - 32px - 17px;
             height: 13px;
@@ -222,7 +217,6 @@ component SettingsStep inherits ZoomTransition {
                 Text {
                     text: "Minecraft: ";
                     font-size: 11px;
-                    // The label is lighter: weight 300 at 72%.
                     font-weight: 300;
                     color: Theme.default-text-color.transparentize(0.1).with-alpha(0.72);
                 }
@@ -237,7 +231,6 @@ component SettingsStep inherits ZoomTransition {
         }
     }
 
-    // The 12px below the card.
     Rectangle {
         width: 100%;
         height: 12px;
@@ -270,7 +263,6 @@ component SettingsStep inherits ZoomTransition {
         }
     }
 
-    // 16px between two groups.
     Rectangle {
         width: 100%;
         height: 16px;
@@ -326,7 +318,6 @@ component SettingsStep inherits ZoomTransition {
         }
     }
 
-    // 16px before the buttons.
     Rectangle {
         width: 100%;
         height: 16px;
@@ -392,7 +383,6 @@ export component CreateInstance inherits Rectangle {
     height: 100%;
     background: transparent;
 
-    // 8px top + a 16px line + 16px bottom.
     private property <length> title-height: 40px;
     // The version chooser is `height: calc(100% - 42px)` and the mod loader one
     // is `height: 100%`, so each screen gets its own number here rather than one
@@ -414,19 +404,14 @@ export component CreateInstance inherits Rectangle {
     // sight — `visible: false`, or clipped away — jumps straight to the leave
     // values the moment it is shown, without animating.
     private property <string> shown: "";
-    // Whether the mounted screen is playing its leave.
     private property <bool> leaving: false;
-    // "enter" while the arriving screen sits at the start of its enter, then
-    // "shown".
     private property <string> arrive-phase: "shown";
-    // "in" = zoom-in, "out" = zoom-out.
     private property <string> direction: "in";
     private property <bool> leave-armed: false;
     private property <bool> enter-armed: false;
 
     changed open => {
         if open {
-            // Every open starts at the chooser.
             CreateInstanceState.step = "minecraft-choose";
         } else {
             // Clean the form on close: clearing the step unmounts the screens so
@@ -546,7 +531,6 @@ export component CreateInstance inherits Rectangle {
                 VerticalLayout {
                     alignment: start;
 
-                    // The title.
                     title := Rectangle {
                         width: 100%;
                         height: root.title-height;

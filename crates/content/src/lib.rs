@@ -42,7 +42,7 @@ pub mod saves;
 pub mod screenshots;
 pub mod worldmap;
 
-/// Absolute path of an instance directory (helper for the app layer).
+/// Absolute path of an instance directory.
 pub fn instance_root(instance_id: &str) -> PathBuf {
     LOCATIONS.instances.get_instance_root(instance_id)
 }

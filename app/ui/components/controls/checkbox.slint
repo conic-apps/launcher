@@ -23,7 +23,6 @@ export component Checkbox inherits Rectangle {
         width: parent.width;
         height: parent.height;
         border-radius: 4px;
-        // The hairline is overlay-0, turning subtext-0 on hover.
         border-width: 1.5px;
         border-color: root.checked ? Theme.latte-lavender
             : hover.has-hover ? Theme.subtext-0
@@ -32,8 +31,6 @@ export component Checkbox inherits Rectangle {
         opacity: root.checkbox-enabled ? 1.0 : 0.5;
         animate background, border-color { duration: 150ms; easing: ease; }
 
-        // The tick: a 5x9 box carrying only its right and bottom borders, turned
-        // 45 degrees. It is centred with a 1px lift.
         if root.checked : glyph := Rectangle {
             width: 5px;
             height: 9px;

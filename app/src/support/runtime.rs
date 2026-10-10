@@ -15,11 +15,10 @@
 //! `crate::ui::services::report::report` — see `create_instance.rs`.
 //!
 //! Every spawned task is wrapped so that a panic in it reaches the log before it
-//! reaches the process. Nothing awaited the handles: the ~30 call sites drop them,
-//! and tokio *detaches* on a drop rather than aborting, so the work still ran to
-//! completion — but a panicking task was previously only ever visible through the
-//! default panic hook on stderr, which a GUI launch has nowhere to show. See
-//! [`spawn`].
+//! reaches the process. Nothing awaits the handles — the ~30 call sites drop them,
+//! and tokio *detaches* on a drop rather than aborting — so without the wrapper a
+//! panicking task would only ever be visible through the default panic hook on
+//! stderr, which a GUI launch has nowhere to show. See [`spawn`].
 
 use std::{
     future::Future,
@@ -64,8 +63,6 @@ where
     })
 }
 
-/// Runs `task` on the runtime's blocking pool.
-///
 /// Wrapped the same way [`spawn`] is; see it for why.
 pub fn spawn_blocking<F, R>(task: F) -> tokio::task::JoinHandle<R>
 where

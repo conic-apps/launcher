@@ -45,29 +45,19 @@ pub enum ColorRole {
     /// The text of a link. Deliberately *not* the same as `Text`: links are the
     /// one thing a stylesheet always recolours.
     Link,
-    /// Inline `code` glyphs.
     CodeText,
-    /// The capsule behind inline `code`.
     CodeBackground,
-    /// A fenced/indented code block's glyphs.
     CodeBlockText,
-    /// A fenced/indented code block's background.
     CodeBlockBackground,
     /// A block quote's text, dimmed a shade below the body.
     QuoteText,
-    /// A block quote's left rule.
     QuoteBar,
-    /// Table cell borders.
     TableBorder,
-    /// A table header cell's text.
     TableHeadText,
-    /// A table header cell's background.
     TableHeadBackground,
     /// A `---` thematic break, and the rule under `h1`/`h2`.
     Rule,
-    /// A strikethrough drawn over deleted text.
     Strike,
-    /// A list bullet, an ordered marker, a task box's tick.
     Marker,
     /// An inline image that could not be fetched, drawn as its alt text. A block
     /// image's alt text is drawn in the body colour instead.
@@ -135,7 +125,6 @@ impl ItemKind {
 /// covers.
 #[derive(Clone)]
 pub struct MdItem {
-    /// Which of the three things this item draws.
     pub kind: ItemKind,
     /// Left edge, in logical pixels from the list's own origin.
     pub x: f32,
@@ -146,7 +135,6 @@ pub struct MdItem {
     /// The box's width. For a `Text` item this is the run's advance, which is
     /// what a link's rule and a strikethrough are drawn across.
     pub width: f32,
-    /// The box's height.
     pub height: f32,
 
     /// The glyphs of a `Text` item, and empty for the other kinds. An `Image`
@@ -161,21 +149,17 @@ pub struct MdItem {
     /// The `font-weight`, 100 to 900. A variable font interpolates it, which is
     /// how a heading gets 600 rather than the boldest weight the family has.
     pub font_weight: u16,
-    /// Whether the run is slanted.
     pub font_italic: bool,
-    /// Draw with the code font instead of the text font.
     pub mono: bool,
     /// Which slot of the view's palette this item takes its colour from.
     pub color: ColorRole,
 
-    /// A `Rect` item's corner radius.
     pub radius: f32,
     /// Whether a `Rect` item is filled. A table cell that has no background of
     /// its own — every cell but a header's — is an outline and nothing else.
     pub filled: bool,
     /// A `Rect` item's outline width, drawn inside the box.
     pub border_width: f32,
-    /// A `Rect` item's outline colour.
     pub border_color: ColorRole,
 
     /// Set on a `Rect` item that acts as a link: a transparent box that takes the
@@ -200,7 +184,6 @@ pub struct MdItem {
     /// which is the one place a README is guaranteed to have a row of them.
     pub rule: bool,
 
-    /// An `Image` item's bitmap.
     pub image: Option<Image>,
     /// The natural size of that bitmap, which the caller supplies because
     /// Slint's `Image` cannot report it.
@@ -268,7 +251,6 @@ impl std::fmt::Debug for MdItem {
 }
 
 impl MdItem {
-    /// A text run.
     pub fn text(x: f32, y: f32, width: f32, height: f32, text: impl Into<String>) -> Self {
         Self {
             kind: ItemKind::Text,
@@ -281,7 +263,6 @@ impl MdItem {
         }
     }
 
-    /// A box.
     pub fn rect(x: f32, y: f32, width: f32, height: f32) -> Self {
         Self {
             kind: ItemKind::Rect,
@@ -297,7 +278,6 @@ impl MdItem {
 /// A decoded bitmap, keyed by the URL it was fetched from.
 #[derive(Clone)]
 pub struct ImageAsset {
-    /// The decoded bitmap, ready for an `Image` element.
     pub image: Image,
     /// The bitmap's own size, which Slint cannot read back.
     pub size: (u32, u32),
@@ -325,27 +305,22 @@ pub struct ImageStore {
 }
 
 impl ImageStore {
-    /// Adds or replaces the asset for a URL.
     pub fn insert(&mut self, url: impl Into<String>, asset: ImageAsset) {
         self.assets.insert(url.into(), asset);
     }
 
-    /// The asset for a URL, if one has been handed over.
     pub fn get(&self, url: &str) -> Option<&ImageAsset> {
         self.assets.get(url)
     }
 
-    /// Whether a URL has an asset already.
     pub fn contains(&self, url: &str) -> bool {
         self.assets.contains_key(url)
     }
 
-    /// How many assets have been handed over.
     pub fn len(&self) -> usize {
         self.assets.len()
     }
 
-    /// Whether nothing has been handed over yet.
     pub fn is_empty(&self) -> bool {
         self.assets.is_empty()
     }
@@ -377,7 +352,6 @@ impl ImageStore {
 /// a font file or a window, it only produces geometry from what it is given.
 #[derive(Debug, Clone, PartialEq)]
 pub struct MdStyle {
-    // ----- type -----
     /// The family body text is shaped with, before the generic fallbacks.
     pub font_family: String,
     /// The family inline `code` and code blocks are shaped with.
@@ -398,10 +372,8 @@ pub struct MdStyle {
     /// browser's user-agent defaults, which the launcher's stylesheet leaves
     /// alone because it only overrides `h1`–`h4`.
     pub heading_sizes: [f32; 6],
-    /// The line height of every heading level.
     pub heading_line_height: f32,
 
-    // ----- block spacing (logical pixels) -----
     /// `p { margin: 0 0 16px }`
     pub paragraph_margin_bottom: f32,
     /// The `margin-top` half of `h1..h6 { margin: 24px 0 16px }`.
@@ -463,8 +435,6 @@ pub struct MdStyle {
     /// The separator drawn above the collected footnote definitions.
     pub footnote_rule_margin: f32,
 
-    // ----- <details> -----
-    //
     // A `<details>` is a control, not prose, so it is sized like the launcher's
     // settings rows rather than like GitHub's own `<summary>`: a 13px title in a
     // padded, rounded, hoverable row with a chevron. GitHub draws a bare
@@ -502,7 +472,6 @@ pub struct MdStyle {
     /// top margin. Folded into the section's own height.
     pub details_margin_bottom: f32,
 
-    // ----- relative sizing -----
     /// `code, pre { font-size: 85% }`, applied to both inline code and code
     /// blocks. GitHub's own inline code is a touch smaller still; the launcher
     /// stylesheet uses 85% for both.
@@ -537,7 +506,6 @@ pub struct MdStyle {
     /// strikethrough. One pixel is what a 1px CSS decoration comes out as.
     pub decoration_width: f32,
 
-    // ----- behaviour -----
     /// `word-wrap: break-word` on the container: a word wider than the line is
     /// split instead of overflowing.
     ///
@@ -667,7 +635,6 @@ pub struct DisplayList {
     /// The height a scroll container has to offer, which is the bottom of the
     /// last item plus the container's bottom margin.
     pub height: f32,
-    /// The width the list was laid out for.
     pub width: f32,
     /// The widest single line, which is what a shrink-to-fit container wants.
     pub content_width: f32,

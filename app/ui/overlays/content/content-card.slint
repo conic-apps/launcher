@@ -38,8 +38,6 @@ import { GameState, GameTime } from "../../globals/game.slint";
 //     card image comes from the content service as a bitmap, so there is no such
 //     place to put it.
 //
-// One tag of the info block; its kind picks the fill.
-//
 // One button of the card's action column: invisible until the card is hovered,
 // then `.8` opacity and full scale, over 200ms.
 //
@@ -69,7 +67,6 @@ component ActionButton inherits Rectangle {
         easing: ease-out-quad;
     }
 
-    // The heart is outlined until it is favourited, when it also turns red.
     AppIcon {
         name: root.kind == "heart" && !root.favorited ? "heart-outline" : root.kind;
         size: 14px;
@@ -81,14 +78,6 @@ component ActionButton inherits Rectangle {
 component TagChip inherits Rectangle {
     in property <CardTag> tag;
 
-    // The tag family. A loader or game-mode tag is a 9px pill with 2px/6px
-    // padding, a 4px right margin, a 100px radius, weight 500 and inverse text;
-    // its kind picks the fill (fabric and liteloader yellow, forge blue,
-    // neoforge and adventure peach, quilt and creative mauve, survival green).
-    // A version tag is the one outline: a 1px sky border and body text, no fill.
-    // A command tag is yellow with a 4px left margin; a last-played tag is 10px
-    // with a 4px left margin.
-    //
     // The margins are *outside* the pill, which is why the background lives on
     // an inner box: a tag's own box is `margin + padding + label`.
     private property <bool> pill: tag.kind != "last-played" && tag.kind != "plain";
@@ -142,7 +131,6 @@ component TagChip inherits Rectangle {
             : tag.kind == "game-mode-adventure" ? Theme.peach
             : tag.kind == "game-mode-spectator" ? Theme.blue
             : transparent;
-        // The version tag is the only outlined one.
         border-width: tag.kind == "version" ? 1px : 0px;
         border-color: Theme.sky;
 
@@ -156,8 +144,6 @@ component TagChip inherits Rectangle {
                 ? Theme.default-text-color.transparentize(root.pill ? 0.1 : 0.3)
                 : Theme.text-inverse;
             font-size: root.pill ? 9px : 10px;
-            // The pill classes are weight 500; a last-played tag keeps the body
-            // weight.
             font-weight: root.pill ? 500 : Theme.font-weight-normal;
             x: root.pill ? 6px : 0px;
             vertical-alignment: center;
@@ -194,10 +180,8 @@ export component ContentCard inherits Rectangle {
     width: card.width;
     height: card.height;
     visible: card.in_view;
-    // surface0 at 40%.
     background: Theme.surface-0.transparentize(0.6);
     border-radius: 8px;
-    // A disabled mod is dimmed.
     opacity: card.mod-disabled ? 0.7 : 1.0;
     // An expanded save rises over its neighbours.
     z: card.selected ? 10 : 0;
@@ -210,10 +194,6 @@ export component ContentCard inherits Rectangle {
     // an action button the card stopped being hovered — the column faded out from
     // under the pointer, the pointer was over the card again, and the two chased
     // each other every time the mouse moved.
-    //
-    // The column sits 4px from the right with 12px of padding, exactly as wide as
-    // a button's 14px glyph, and the play button is an 18px button vertically
-    // centred 20px from the left.
     hover-area := TouchArea {
         enabled: root.interactive;
         clicked => {
@@ -290,7 +270,6 @@ export component ContentCard inherits Rectangle {
         background: transparent;
 
         actions := VerticalLayout {
-            // 12px of padding, with the two buttons pushed to the ends.
             padding-top: 12px;
             padding-bottom: 12px;
             alignment: space-between;
@@ -384,7 +363,6 @@ export component ContentCard inherits Rectangle {
             stroke-width: 4;
             gap: 8;
             opacity: root.loading-fade;
-            // Nothing to draw once it has faded all the way out.
             visible: root.loading-fade > 0.0;
             animate opacity {
                 duration: 200ms;
@@ -414,7 +392,6 @@ export component ContentCard inherits Rectangle {
             easing: ease-out-quad;
         }
 
-        // 8px vertically and 12px horizontally.
         info-layout := VerticalLayout {
             padding-top: 8px;
             padding-bottom: 8px;
@@ -422,12 +399,10 @@ export component ContentCard inherits Rectangle {
             padding-right: 12px;
             spacing: 0px;
 
-            // The name is 14px, weight 700, nowrap + ellipsis. Its line box is
-            // its *own* font size: everything uses `line-height: 1`, and a
-            // block's strut comes from its own font, not the parent's.
-            // The line box is its own 14px row: the strikethrough below is
-            // drawn over it, and a layout child may not set its own `y`, so the
-            // two live inside this wrapper.
+            // The line box follows its own font size: everything uses
+            // `line-height: 1`, and a block's strut comes from its own font, not
+            // the parent's. The strikethrough below is drawn over it, and a layout
+            // child may not set its own `y`, so the two live inside this wrapper.
             Rectangle {
                 height: 14px;
                 background: transparent;
@@ -457,7 +432,6 @@ export component ContentCard inherits Rectangle {
                 }
             }
 
-            // The authors line is 11px at 90%; the folder line is 10px at 60%.
             if root.card.has-subtitle : Text {
                 text: root.card.subtitle;
                 font-size: root.subtitle-style == "folder" ? 10px : 11px;
@@ -468,19 +442,15 @@ export component ContentCard inherits Rectangle {
                 );
                 overflow: elide;
                 vertical-alignment: center;
-                // 2px around the authors line, 4px around the folder one.
                 height: root.subtitle-style == "folder" ? 18px : 15px;
             }
 
-            // The description is 10px at 60%. A card with no description — a
-            // save — draws no line at all.
             if root.card.description != "" : Text {
                 text: root.card.description;
                 font-size: 10px;
                 color: Theme.default-text-color.transparentize(0.4);
                 overflow: elide;
                 vertical-alignment: center;
-                // 2px around the 10px line box.
                 height: 14px;
             }
 
@@ -492,7 +462,6 @@ export component ContentCard inherits Rectangle {
                 height: 16px;
                 // The tags carry their own margins (see `TagChip`).
                 spacing: 0px;
-                // The run starts at the block's left edge.
                 cross-axis-alignment: center;
 
                 for tag in root.card.tags : TagChip {
@@ -502,8 +471,6 @@ export component ContentCard inherits Rectangle {
         }
     }
 
-    // The saves' play button: 20px from the left, vertically centred, revealed
-    // with the hover.
     if root.card.shows-play : Rectangle {
         x: 20px;
         width: 18px;

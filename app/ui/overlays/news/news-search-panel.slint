@@ -20,8 +20,6 @@ import { NewsChip, NewsSearch, NewsText } from "../../globals/news.slint";
 // given. Each chip therefore *reports* the width it measured and Rust computes
 // the row's height, the same arrangement as the content panel's filter rows.
 
-// A filter pill. Its label is the chip's own text, except on the type row,
-// where the value names a translated label.
 component NewsChipView inherits Rectangle {
     in property <NewsChip> chip;
     /// Which row this chip belongs to: "type" | "year" | "month". It is what
@@ -71,8 +69,6 @@ component NewsChipView inherits Rectangle {
     changed width => { root.measured(root.width); }
 }
 
-// One filter row: a 52px label and a wrapping run of chips. The row's height is
-// Rust's, from the chips' reported widths.
 component NewsFilterRow inherits Rectangle {
     in property <string> row-key: "";
     in property <string> label: "";

@@ -13,7 +13,6 @@ use serde_json::Value;
 use super::{ModLoader, ResolvedDepends, ResolvedMod};
 use crate::error::{Error, Result};
 
-/// Corresponds to the `litemod.json` file in a LiteLoader mod archive.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LiteLoaderModMetadata {

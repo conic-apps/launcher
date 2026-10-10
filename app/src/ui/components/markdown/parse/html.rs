@@ -25,7 +25,6 @@
 
 use crate::ui::components::markdown::doc::{Align, Block, Cell, Inline, Inlines, ListItem};
 
-/// Parses an HTML fragment into its top-level blocks.
 pub fn parse(source: &str) -> Vec<Block> {
     let tokens = tokenize(source);
     let mut parser = Parser { tokens, pos: 0 };
@@ -44,10 +43,6 @@ pub fn fragment_inlines(source: &str) -> Inlines {
     let mut parser = Parser { tokens, pos: 0 };
     parser.inlines(&InlineContext::default(), &[])
 }
-
-// ---------------------------------------------------------------------------
-// tokenizer
-// ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone)]
 enum Token {
@@ -302,10 +297,6 @@ fn parse_attributes(source: &str) -> Vec<(String, String)> {
     attrs
 }
 
-// ---------------------------------------------------------------------------
-// entities
-// ---------------------------------------------------------------------------
-
 /// The named entities these descriptions actually carry, plus the punctuation a
 /// hand-written description tends to use. Numeric references — decimal and
 /// hexadecimal — are handled generically below.
@@ -426,10 +417,6 @@ pub fn text_content(source: &str) -> String {
     out.trim().to_string()
 }
 
-// ---------------------------------------------------------------------------
-// walker
-// ---------------------------------------------------------------------------
-
 /// Tags whose contents are code, not prose.
 const DROPPED: &[&str] = &[
     "script", "style", "head", "title", "noscript", "template", "iframe", "object", "svg", "math",
@@ -464,7 +451,6 @@ impl Flags {
     }
 }
 
-/// The inline context: a decoration stack plus the innermost link.
 #[derive(Debug, Clone, Default)]
 struct InlineContext {
     flags: Flags,
@@ -489,8 +475,6 @@ impl Parser {
         token
     }
 
-    /// Skips to the end of the element `name` opened at the current position,
-    /// honouring nesting.
     fn skip_element(&mut self, name: &str) {
         let mut depth = 1usize;
         while let Some(token) = self.next_token() {
@@ -511,8 +495,6 @@ impl Parser {
         }
     }
 
-    /// Block-level content up to a closing tag in `stop`, or to the end of the
-    /// input. Runs of inline content become paragraphs.
     fn blocks(&mut self, stop: &[&str]) -> Vec<Block> {
         self.blocks_until(stop, &[])
     }
@@ -575,7 +557,6 @@ impl Parser {
         out
     }
 
-    /// The body of a block-level element, which the caller has already consumed.
     fn block(&mut self, name: &str, attrs: &[(String, String)], out: &mut Vec<Block>) {
         let attr = |key: &str| {
             attrs
@@ -678,7 +659,6 @@ impl Parser {
         }
     }
 
-    /// The `li` children of a list, or the contents of a single one.
     fn list_items(&mut self, stop: &[&str], _ordered: bool) -> Vec<ListItem> {
         let mut items = Vec::new();
         while let Some(token) = self.peek().cloned() {
@@ -776,7 +756,6 @@ impl Parser {
         vec![Block::Table { head, rows, align }]
     }
 
-    /// The verbatim text of the element the caller is inside, used for `pre`.
     fn raw_text(&mut self) -> String {
         // The caller has consumed the open tag, so the matching close is what
         // ends this. Anything that looks like a tag before it is dropped, which
@@ -799,8 +778,6 @@ impl Parser {
         out
     }
 
-    /// Inline content up to a closing tag in `stop`, or up to a block-level tag
-    /// that the caller has to handle itself.
     fn inlines(&mut self, context: &InlineContext, stop: &[&str]) -> Inlines {
         let mut out: Inlines = Vec::new();
         while let Some(token) = self.peek().cloned() {
@@ -925,7 +902,6 @@ fn wrap(tag: &str, context: &InlineContext, contents: Inlines) -> Inline {
     }
 }
 
-/// The tags that end an inline run and start a block of their own.
 fn is_block_tag(name: &str) -> bool {
     matches!(
         name,

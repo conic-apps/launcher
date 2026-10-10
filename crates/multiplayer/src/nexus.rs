@@ -232,7 +232,6 @@ impl NexusSession {
         }
     }
 
-    /// Joins an existing room.
     pub fn join_room(&self, room_code: &str, player_name: Option<&str>) -> Result<()> {
         match player_name {
             Some(player_name) => info!("Joining room with player name: {player_name}"),
@@ -260,7 +259,6 @@ impl NexusSession {
         }
     }
 
-    /// Fills the current session snapshot.
     pub fn get_state(&self) -> Result<SessionState> {
         unsafe {
             let get_state: Symbol<ConicNexusGetStateFn> = self.symbol(b"conic_nexus_get_state")?;
@@ -319,7 +317,6 @@ impl NexusSession {
         }
     }
 
-    /// Returns the static version string of the library.
     pub fn version(&self) -> String {
         unsafe {
             let Ok(version) = self.symbol::<ConicNexusVersionFn>(b"conic_nexus_version") else {
@@ -360,7 +357,7 @@ impl NexusSession {
         }
     }
 
-    /// Fills `out` with the `limit` most recent log lines as a JSON array.
+    /// The `limit` most recent log lines.
     pub fn recent_logs(&self, limit: u32) -> Result<Vec<String>> {
         unsafe {
             let recent_logs: Symbol<ConicNexusRecentLogsFn> =

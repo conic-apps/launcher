@@ -81,9 +81,9 @@ pub async fn list_accounts() -> Result<Vec<YggdrasilAccount>> {
     if !yggdrasil_accounts_list_file.exists() {
         return Ok(vec![]);
     }
-    // Same hazard as the Microsoft list: both of these read as "no accounts", and
-    // the next add writes the file back with one entry in it. A corrupt file here
-    // silently costs the user every Yggdrasil account they had.
+    // Both of these read as "no accounts" without a word, and the next add
+    // writes the file back with one entry in it — a corrupt file here silently
+    // costs the user every Yggdrasil account they had.
     let serialized_yggdrasil_accounts_list =
         match tokio::fs::read_to_string(&yggdrasil_accounts_list_file).await {
             Ok(contents) => contents,

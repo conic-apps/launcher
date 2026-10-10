@@ -32,7 +32,6 @@ mod error;
 pub use crate::config::*;
 pub use crate::error::*;
 
-/// Creates a new game instance using the provided configuration.
 pub async fn create_instance(config: InstanceConfig, id: Option<&str>) -> Result<String> {
     let random_uuid = Uuid::new_v4().to_string();
     let id = id.unwrap_or(&random_uuid);
@@ -49,20 +48,18 @@ pub async fn create_instance(config: InstanceConfig, id: Option<&str>) -> Result
     Ok(id.to_string())
 }
 
-/// Sorting strategies for listing instances.
 #[derive(Clone, Copy, Deserialize)]
 pub enum SortBy {
-    /// Sort by instance name (ascending).
+    /// Ascending by name.
     Name,
-    /// Sort by Minecraft version (newest first).
+    /// Newest version first.
     Version,
-    /// Sort by total play time (most played first).
+    /// Most played first.
     Playtime,
-    /// Sort by last played date (most recent first).
+    /// Most recently played first.
     LastPlayed,
 }
 
-/// Reads all instances stored in the data directory.
 pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
     let instances_folder = &LOCATIONS.instances.root;
     tokio::fs::create_dir_all(instances_folder).await?;
@@ -94,9 +91,9 @@ pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
         let metadata = match instance_config.metadata() {
             Err(error) => {
                 // Every skip below is the same symptom from the user's side — an
-                // instance that used to be there is not on the list — and each one
-                // used to be silent, which made "my instance vanished"
-                // undiagnosable from the log alone.
+                // instance that should be there is not on the list — so each one
+                // is logged; silence makes "my instance vanished" undiagnosable
+                // from the log alone.
                 warn!(
                     "Skipping the instance in {}: its instance.toml is unreadable ({error})",
                     path.display()
@@ -190,16 +187,18 @@ pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
     Ok(instances)
 }
 
-/// Compares two Minecraft version strings, ordering older versions first.
 fn compare_minecraft_versions(a: &str, b: &str) -> Ordering {
     compare_version_keys(&parse_version_key(a), &parse_version_key(b))
 }
 
-/// Parsed representation of a Minecraft version string used for ordering.
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum VersionKey {
     /// Dated snapshot, e.g. "24w14a" or "25w14craftmine".
-    Snapshot { year: u16, week: u8, letter: String },
+    Snapshot {
+        year: u16,
+        week: u8,
+        letter: String,
+    },
     /// Regular release, optionally with a "pre" / "rc" suffix, e.g. "1.20.1".
     Releaseish {
         major: u8,
@@ -207,7 +206,6 @@ enum VersionKey {
         patch: u8,
         prerelease: Option<(u8, u8)>,
     },
-    /// Anything that could not be parsed.
     Unknown(String),
 }
 
@@ -217,7 +215,6 @@ fn parse_version_key(raw: &str) -> VersionKey {
         .unwrap_or_else(|| VersionKey::Unknown(raw.to_string()))
 }
 
-/// Parses dated snapshots like "24w14a" (year, week, letter).
 fn parse_snapshot(raw: &str) -> Option<VersionKey> {
     let bytes = raw.as_bytes();
     if bytes.len() < 5 || !bytes[..2].iter().all(u8::is_ascii_digit) || bytes[2] != b'w' {
@@ -238,7 +235,6 @@ fn parse_snapshot(raw: &str) -> Option<VersionKey> {
     Some(VersionKey::Snapshot { year, week, letter })
 }
 
-/// Parses releases like "1.20.1", "1.20.1-pre1" or "1.21-rc3".
 fn parse_release(raw: &str) -> Option<VersionKey> {
     let (version_part, prerelease) = match raw.split_once('-') {
         Some((version, suffix)) => (version, parse_prerelease(suffix)),
@@ -256,7 +252,6 @@ fn parse_release(raw: &str) -> Option<VersionKey> {
     })
 }
 
-/// Parses a "preN" / "rcN" suffix into `(stage, index)` where pre = 0, rc = 1.
 fn parse_prerelease(suffix: &str) -> Option<(u8, u8)> {
     let (stage, rest) = suffix
         .strip_prefix("pre")
@@ -325,7 +320,6 @@ fn compare_prerelease(a: &Option<(u8, u8)>, b: &Option<(u8, u8)>) -> Ordering {
     }
 }
 
-/// Places a dated snapshot relative to a release by comparing dates.
 fn compare_snapshot_to_release(snapshot: &VersionKey, release: &VersionKey) -> Ordering {
     let (VersionKey::Snapshot { year, week, .. }, VersionKey::Releaseish { minor, patch, .. }) =
         (snapshot, release)
@@ -337,7 +331,6 @@ fn compare_snapshot_to_release(snapshot: &VersionKey, release: &VersionKey) -> O
     snapshot_date.cmp(&release_date)
 }
 
-/// Approximate year in which the first release of a given minor version shipped.
 fn release_year(minor: u8) -> u16 {
     match minor {
         16 => 2020,
@@ -350,18 +343,13 @@ fn release_year(minor: u8) -> u16 {
     }
 }
 
-/// Rough week-of-year a release with the given patch number shipped.
 fn release_week(patch: u8) -> u8 {
     (24 + patch * 8).min(52)
 }
 
-/// Reads a single instance by id.
-///
-/// `None` means either "no such instance" or "its config is broken", and the two
-/// used to be the same silent answer — the same hazard `list_instances` has, on
-/// the path that resolves a single instance for the launcher. A missing instance
-/// is ordinary, so it stays quiet; a config that is there and does not parse is
-/// not.
+/// `None` covers both "no such instance" and "its config is broken". A missing
+/// instance is ordinary and stays quiet; a config that is there and does not
+/// parse is not, so the latter is logged.
 pub async fn get_instance_by_id(id: &str) -> Option<Instance> {
     let instance_root = LOCATIONS.instances.get_instance_root(id);
     let config_file = instance_root.join("instance.toml");
@@ -395,7 +383,6 @@ pub async fn get_instance_by_id(id: &str) -> Option<Instance> {
     })
 }
 
-/// Updates the configuration file of an existing instance.
 pub async fn update_instance(config: InstanceConfig, id: &str) -> Result<()> {
     let instance_root = LOCATIONS.instances.get_instance_root(id);
     let config_file = instance_root.join("instance.toml");
@@ -404,14 +391,12 @@ pub async fn update_instance(config: InstanceConfig, id: &str) -> Result<()> {
     Ok(())
 }
 
-/// Deletes the instance directory corresponding to the given id.
 pub async fn delete_instance(id: &str) -> Result<()> {
     tokio::fs::remove_dir_all(LOCATIONS.instances.get_instance_root(id)).await?;
     info!("Deleted instance '{id}'");
     Ok(())
 }
 
-/// Removes the `.install.lock` marker file of an instance.
 pub async fn remove_install_lock(id: &str) -> Result<()> {
     let lock_file = LOCATIONS
         .instances
@@ -425,9 +410,6 @@ pub async fn remove_install_lock(id: &str) -> Result<()> {
     Ok(())
 }
 
-/// The marker file whose presence means the instance's last run exited
-/// abnormally.
-///
 /// A file rather than a field in `instance.toml`, for the same reason
 /// `.install.lock` is one: it is runtime state, not user configuration, so a
 /// hand-edited config cannot clear it and an interrupted run cannot corrupt it.
@@ -438,14 +420,11 @@ fn crash_marker(id: &str) -> PathBuf {
         .join(".last-exit-crash")
 }
 
-/// Records that the instance's last run exited abnormally.
 pub fn mark_last_exit_abnormal(id: &str) -> Result<()> {
     std::fs::write(crash_marker(id), b"")?;
     Ok(())
 }
 
-/// Clears the abnormal-exit marker, after a clean exit.
-///
 /// Idempotent: an instance with no marker is already "not crashed".
 pub fn clear_last_exit_abnormal(id: &str) -> Result<()> {
     match std::fs::remove_file(crash_marker(id)) {
@@ -455,17 +434,14 @@ pub fn clear_last_exit_abnormal(id: &str) -> Result<()> {
     }
 }
 
-/// Whether the instance's last run exited abnormally.
 pub fn last_exit_abnormal(id: &str) -> bool {
     crash_marker(id).is_file()
 }
 
-/// The path of an instance's background image.
 pub fn get_background_path(id: &str) -> PathBuf {
     LOCATIONS.instances.get_instance_root(id).join("background")
 }
 
-/// Copies `path` over the instance's background image.
 pub async fn add_background_image(path: &std::path::Path, id: &str) -> Result<()> {
     let dest = get_background_path(id);
     tokio::fs::copy(path, &dest).await?;
@@ -473,8 +449,6 @@ pub async fn add_background_image(path: &std::path::Path, id: &str) -> Result<()
     Ok(())
 }
 
-/// Sets `path`'s modified time to now.
-///
 /// `fs::copy` carries the *source* file's timestamp over on macOS, so replacing
 /// the background with an image that shares its mtime leaves the file looking
 /// unchanged — and the background loader tells a replacement from a re-read by
@@ -491,26 +465,20 @@ fn stamp_now(path: &std::path::Path) {
     }
 }
 
-/// Removes an instance's background image.
 pub async fn remove_background(id: &str) -> Result<()> {
     tokio::fs::remove_file(get_background_path(id)).await?;
     Ok(())
 }
 
-/// Represents a game instance, including its configuration, installation status
-/// and unique id.
 #[derive(Clone, Deserialize, Serialize, Default)]
 pub struct Instance {
-    /// The configuration of the instance.
     pub config: InstanceConfig,
-    /// Whether the instance has been installed.
     pub installed: bool,
-    /// Unique identifier of the instance.
     pub id: String,
     pub last_played: Option<u64>,
     pub has_background: bool,
-    /// Whether the instance's last run exited abnormally. Derived from a marker
-    /// file (see [`mark_last_exit_abnormal`]), not persisted in `instance.toml`.
+    /// Derived from a marker file (see [`mark_last_exit_abnormal`]), not
+    /// persisted in `instance.toml`.
     #[serde(default)]
     pub last_exit_abnormal: bool,
 }
@@ -549,7 +517,6 @@ impl Instance {
             .unwrap_or(Ok(config.runtime.minecraft.clone()))
     }
 
-    /// Whether the instance is marked as a favorite.
     pub fn is_starred(&self) -> bool {
         self.config
             .group
@@ -560,11 +527,11 @@ impl Instance {
 
 /// Total play time of an instance in seconds, parsed from its game logs.
 ///
-/// An unreadable or corrupt log contributes zero and used to do so silently, so a
-/// truncated archive quietly under-reports an instance's playtime. The count of
-/// such archives is summed and reported once rather than per file — this runs on
-/// a rayon pool, so per-file logging would interleave from several threads at
-/// once for what is usually one truncated file.
+/// An unreadable or corrupt log contributes zero, which quietly under-reports an
+/// instance's playtime. The count of such archives is summed and reported once
+/// rather than per file — this runs on a rayon pool, so per-file logging would
+/// interleave from several threads at once for what is usually one truncated
+/// file.
 pub fn calculate_playtime(instance_id: &str) -> Result<u64> {
     let instance_root = LOCATIONS.instances.get_instance_root(instance_id);
     let logs_root = instance_root.join("logs");

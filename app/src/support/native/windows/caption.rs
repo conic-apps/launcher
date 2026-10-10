@@ -240,7 +240,6 @@ struct Controls {
 }
 
 impl Controls {
-    /// How wide the whole row is.
     fn width(&self) -> i32 {
         self.unit * CONTROL_COUNT as i32
     }
@@ -279,17 +278,14 @@ thread_local! {
     static DARK: Cell<bool> = const { Cell::new(true) };
 }
 
-/// A copy of the attached window's state, if this module is attached at all.
 fn frame() -> Option<Frame> {
     FRAME.with(|slot| *slot.borrow())
 }
 
-/// The attached window's state, or `None` if `hwnd` is not the attached window.
 fn frame_of(hwnd: HWND) -> Option<Frame> {
     frame().filter(|frame| frame.hwnd == hwnd)
 }
 
-/// Changes the attached window's state, if `hwnd` is the attached window.
 fn update_frame(hwnd: HWND, change: impl FnOnce(&mut Frame)) {
     FRAME.with(|slot| {
         if let Some(frame) = slot.borrow_mut().as_mut()
@@ -300,9 +296,8 @@ fn update_frame(hwnd: HWND, change: impl FnOnce(&mut Frame)) {
     });
 }
 
-/// Records the pointer's state, which is the only state the platform reports
-/// outward — nothing redraws the buttons for a window, so nothing else has to be
-/// told about them.
+/// The pointer's state is the only state the platform reports outward: nothing
+/// redraws the buttons for a window, so nothing else has to be told about them.
 fn set_pointer(hwnd: HWND, hovered: i32, pressed: i32) {
     update_frame(hwnd, |frame| {
         frame.hovered = hovered;
@@ -311,7 +306,6 @@ fn set_pointer(hwnd: HWND, hovered: i32, pressed: i32) {
     publish_state(hwnd);
 }
 
-/// Publishes which control the pointer is on, and whether it is pressed.
 fn publish_state(hwnd: HWND) {
     let Some(frame) = frame_of(hwnd) else {
         return;
@@ -357,14 +351,11 @@ pub fn set_dark(window: &slint::Window, dark: bool) {
     }
 }
 
-/// Installs the subclass, and takes the window's frame and controls over, the
-/// first time there is a window to do it on.
 fn attach(ui: &App) {
     let Some(hwnd) = hwnd_of(ui.window()) else {
         // The one path on which this module never attaches at all: without an
         // `HWND` there is no `Frame`, so every `frame_of` returns `None` and the
-        // controls the app still draws stop being hit-testable. It used to return
-        // in silence.
+        // controls the app still draws stop being hit-testable.
         log::warn!(
             target: "shell",
             "windows caption: no window handle yet, so the caption controls will not be \
@@ -401,12 +392,10 @@ fn attach(ui: &App) {
     log::debug!(target: "shell", "windows caption: window controls installed");
 }
 
-/// The app, if the window this module belongs to is still alive.
 fn app() -> Option<App> {
     APP.with(|slot| slot.borrow().as_ref().and_then(Weak::upgrade))
 }
 
-/// The controls' geometry for the window, if this module is attached to it.
 fn controls_of(hwnd: HWND) -> Option<Controls> {
     let frame = frame_of(hwnd)?;
     // SAFETY: the window is live and this runs on the thread that owns it; both
@@ -427,8 +416,6 @@ fn controls_of(hwnd: HWND) -> Option<Controls> {
     })
 }
 
-/// Re-renders the controls if anything they are drawn from moved, and reports
-/// the pointer's state either way.
 fn render_and_publish(hwnd: HWND) {
     let Some(mut frame) = frame_of(hwnd) else {
         return;
@@ -450,14 +437,6 @@ fn render_and_publish(hwnd: HWND) {
     publish_state(hwnd);
 }
 
-/// Renders the three controls and hands them to the app.
-///
-/// The glyph is the only artwork: the fill behind it is published as a pair of
-/// colours, because for two of the three controls the fill is the only thing that
-/// changes between resting, hovered and pressed, and handing it over as a colour
-/// is what lets the app interpolate it. (A fill baked into the bitmap would force
-/// a cross-fade between whole rasters, and three of those cannot be stacked: they
-/// composite additively, so a press would read as hover *plus* pressed.)
 fn render_controls(frame: &Frame) {
     let Some(ui) = app() else {
         return;
@@ -789,7 +768,6 @@ unsafe fn round_corners(hwnd: HWND) {
     }
 }
 
-/// The index of the control a screen point is on, or `None`.
 fn control_at(hwnd: HWND, point: POINT) -> Option<usize> {
     let controls = controls_of(hwnd)?;
     if point.x < controls.left
@@ -977,9 +955,8 @@ unsafe extern "system" fn subclass(
                 };
                 let maximized = frame_of(hwnd).is_some_and(|frame| frame.maximized);
                 set_pointer(hwnd, index, -1);
-                // The whole point of this file: the release is turned into a real
-                // `WM_SYSCOMMAND`, and the result was discarded — so a press that
-                // did nothing at all left no record that the user had clicked.
+                // The release becomes a real `WM_SYSCOMMAND`; logging a failure is
+                // what records a press that did nothing.
                 let command = system_command(index, maximized);
                 if let Err(error) = PostMessageW(
                     Some(hwnd),

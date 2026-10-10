@@ -6,7 +6,6 @@
 
 use super::*;
 
-/// Resets `LaunchState` and seeds the instance and account fields.
 pub(crate) fn reset_state(ui: &App, instance: Option<&Instance>, config: &Config) {
     let state = ui.global::<LaunchState>();
     state.set_error(false);

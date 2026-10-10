@@ -18,7 +18,6 @@ export component SettingsGeneral inherits VerticalLayout {
     spacing: 16px;
     alignment: start;
 
-    // Maps a language code to its display name.
     pure function language-label(value: string) -> string {
         if value == "en_us" { return "English"; }
         if value == "zh_cn" { return "简体中文"; }

@@ -269,7 +269,6 @@ pub(crate) fn pump(ui: &App) {
     }
 }
 
-/// A tile finished rendering, or failed to.
 pub(crate) fn finish_tile(
     ui: &App,
     key: TileKey,

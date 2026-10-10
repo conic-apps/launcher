@@ -227,10 +227,6 @@ fn a_script_block_is_its_text_and_never_its_markup() {
     }));
 }
 
-// ---------------------------------------------------------------------------
-// the HTML front end
-// ---------------------------------------------------------------------------
-
 #[test]
 fn html_paragraphs_and_headings() {
     let blocks = html("<h2>Title</h2><p>One.</p><p>Two <b>bold</b>.</p>");

@@ -26,9 +26,7 @@ import { Button } from "../../components/controls/button.slint";
 // an unhandled `cancel` is.
 export component ConfirmWarningBody inherits VerticalLayout {
     in property <length> content-width: 0px;
-    /// The question, drawn at 17px.
     in property <string> title-text: "";
-    /// The consequence line, drawn at 12px.
     in property <string> detail-text: "";
     in property <string> cancel-text: "";
     in property <string> confirm-text: "";
@@ -38,8 +36,6 @@ export component ConfirmWarningBody inherits VerticalLayout {
     callback cancel();
     callback confirm();
 
-    // 8px of padding, with the buttons separated by the layout's own 16px
-    // spacing.
     width: root.content-width;
     spacing: 16px;
     padding: 8px;
@@ -57,7 +53,6 @@ export component ConfirmWarningBody inherits VerticalLayout {
             size: 50px;
         }
 
-        // The message column; its 16px gap from the icon is the row's spacing.
         VerticalLayout {
             alignment: center;
             spacing: 8px;
@@ -86,7 +81,6 @@ export component ConfirmWarningBody inherits VerticalLayout {
             horizontal-stretch: 1;
             text: root.cancel-text;
             text-color: Theme.text-inverse;
-            // A 4px radius, overriding the controller's own.
             button-radius: 4px;
             button-background: Theme.blue;
             clicked => { root.cancel(); }

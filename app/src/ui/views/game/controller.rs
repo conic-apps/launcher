@@ -81,11 +81,9 @@ impl GameController {
         let sort = controller().borrow().sort;
         let weak = ui.as_weak();
         crate::support::runtime::spawn(async move {
-            // The whole game page rendered empty on a failure, with nothing but
-            // the "no instances" placeholder to show for it — which reads as "my
-            // instances are gone" rather than "the folder could not be read".
-            // `instance` itself warns per skipped directory, so this only covers
-            // the failure to read the directory at all.
+            // Fall back to an empty listing rather than leaving the page blank:
+            // `instance` warns per skipped directory, so this covers only the
+            // failure to read the directory at all.
             let instances = match instance::list_instances(sort).await {
                 Ok(instances) => instances,
                 Err(error) => {
@@ -529,8 +527,6 @@ impl GameController {
         apply_background(ui, background_instance.as_ref());
     }
 
-    /// Pushes the list's own view state: the sort, the grouping, the height, the
-    /// current row and the account rows.
     fn apply_list(
         &self,
         state: &GameState<'_>,
@@ -570,7 +566,6 @@ impl GameController {
     }
 }
 
-/// Pushes the current instance's summary, or clears it when none is selected.
 fn apply_current(state: &GameState<'_>, current: Option<&Instance>, playtime: u64) {
     match current {
         Some(instance) => {
@@ -634,7 +629,6 @@ fn apply_content(ui: &App, current_id: Option<&str>) {
     crate::ui::overlays::content::refresh_preview_icons(ui, id);
 }
 
-/// The selected account, or the logged-out footer.
 fn apply_account(state: &GameState<'_>, account: Option<&Account>, avatar: Image) {
     state.set_has_account(account.is_some());
     state.set_current_account_avatar(avatar);
@@ -652,8 +646,6 @@ fn apply_account(state: &GameState<'_>, account: Option<&Account>, avatar: Image
     }
 }
 
-/// Hands the current instance to the background controller: its own image when
-/// it asks to be the launcher's, the global one, or the 3D world.
 fn apply_background(ui: &App, instance: Option<&(String, bool, bool, u8)>) {
     crate::ui::components::background::controller::set_instance(
         ui,

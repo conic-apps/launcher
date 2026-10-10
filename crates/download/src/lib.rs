@@ -355,10 +355,9 @@ pub async fn filter_existing_and_verified_files(
             let mut file = match std::fs::File::open(&download.file) {
                 Ok(file) => file,
                 Err(error) => {
-                    // Not "missing", so it is not the routine case: the file is
-                    // there and cannot be read. Re-downloading it either fixes it
-                    // or fails again with the real reason, and either way the
-                    // silent skip made it look like a routine fresh download.
+                    // Not "missing", so not the routine case: the file is there
+                    // and cannot be read. Re-downloading it either fixes it or
+                    // fails again with the real reason.
                     warn!(
                         "Could not open {} to verify it: {error}",
                         download.file.display()
@@ -405,12 +404,11 @@ fn verify_checksum_from_read<R: Read>(
     let mut hasher = Hasher::from(checksum);
     let mut buffer = [0; 1024];
     loop {
-        // A read that fails mid-file used to return `None`, which the caller reads
-        // as "no checksum to check" and therefore *as verified* — so a truncated or
-        // partially-readable file was accepted as complete and never re-fetched.
-        // `debug`, not `warn`: the file is re-downloaded by the caller's other
-        // arm only if the hash actually mismatches, so this records why the
-        // verdict could not be reached at all.
+        // A read failure returns `None` (below), and the caller takes `None` to
+        // mean "no checksum" — that is, *verified* — so a truncated or
+        // partially-readable file would be accepted as complete and never
+        // re-fetched. `debug`, not `warn`: this only records why no verdict was
+        // reached.
         let bytes_read = match source.read(&mut buffer) {
             Ok(0) => break,
             Ok(read) => read,

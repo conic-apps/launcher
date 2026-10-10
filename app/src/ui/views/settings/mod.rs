@@ -37,7 +37,6 @@ fn format_java_path(path: &str) -> String {
     }
 }
 
-/// Builds the Java runtime model, marking the paths present in `disabled`.
 fn java_model(runtimes: &[ScannedJava], disabled: &[String]) -> ModelRc<JavaRuntime> {
     let rows: Vec<JavaRuntime> = runtimes
         .iter()

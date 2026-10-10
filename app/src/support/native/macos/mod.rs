@@ -39,7 +39,6 @@ pub(crate) fn install_backend() {
     traffic_lights::install();
 }
 
-/// Wires the AppKit traffic lights and the Dock icon.
 pub(crate) fn install(ui: &App) {
     // The title bar stops leaving room for the traffic lights while they are
     // hidden by fullscreen.
@@ -49,9 +48,6 @@ pub(crate) fn install(ui: &App) {
     dock_icon::install();
 }
 
-/// Routes AppKit's terminate requests (`⌘Q`, the menu's Quit, a system logout)
-/// through the same close flow as `⌘W`, and runs `run_exit_work` if AppKit does
-/// end up terminating.
 pub(crate) fn install_terminate_handler(
     request_close: impl Fn() + 'static,
     run_exit_work: impl Fn() + 'static,

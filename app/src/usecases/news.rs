@@ -114,10 +114,9 @@ impl NewsSession {
         news: Result<Vec<NewsItem>, String>,
         changelogs: Result<Vec<ChangelogEntry>, String>,
     ) {
-        // Both arms are logged on each side. Neither the successes nor the
-        // partial-failure case were: the two `error!` lines are the whole
-        // observability of this feature, and the app does not retry a feed that
-        // failed once — so a failed fetch is a permanently empty panel.
+        // Both arms are logged: the app never retries a feed that failed, so a
+        // failed fetch is a permanently empty panel and these lines are its only
+        // trace.
         match news {
             Ok(items) => {
                 log::info!("the Mojang news feed loaded with {} entries", items.len());

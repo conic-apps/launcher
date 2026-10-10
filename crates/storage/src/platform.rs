@@ -12,8 +12,7 @@ use platform::{OsFamily, PLATFORM_INFO};
 ///
 /// macOS names it after the bundle identifier (`app.conicmc.launcher`), which is
 /// what [`platform_anchor`] joins the Application Support directory with; the
-/// `-debug` suffix keeps a debug build out of a release install's data, the way
-/// the old home-directory folder did.
+/// `-debug` suffix keeps a debug build out of a release install's data.
 #[cfg(target_os = "macos")]
 pub const APP_DIR_NAME: &str = if cfg!(debug_assertions) {
     "app.conicmc.launcher-debug"

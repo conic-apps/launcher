@@ -29,10 +29,8 @@ pub(crate) fn install_backend() {
     macos::install_backend();
     #[cfg(target_os = "windows")]
     windows::install_backend();
-    // Logged on every platform, including the one that does nothing: `logs.rs`
-    // explains that a `debug!` line exists precisely so a hook that never runs
-    // is not invisible, and this function is a no-op on Linux — with nothing here,
-    // "Linux has no window-chrome hook" and "the hook was installed" look alike.
+    // Logged even where this is a no-op, so "no hook is needed" and "the hook was
+    // installed" do not look alike in the log.
     #[cfg(target_os = "macos")]
     log::debug!(target: "shell", "backend hook: macOS transparent title bar");
     #[cfg(target_os = "windows")]

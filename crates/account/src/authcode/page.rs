@@ -20,7 +20,6 @@ use std::sync::LazyLock;
 use log::error;
 use regex::Regex;
 
-/// The page, as written next door.
 const TEMPLATE: &str = include_str!("page.html");
 
 /// One `{{ name }}` placeholder, however it is spaced.
@@ -226,7 +225,6 @@ fn fill(screen: Screen, palette: &Palette, title: &str, body: &str, messages: &M
     page
 }
 
-/// Whether the template has a placeholder by this name.
 fn asked_for(name: &str) -> bool {
     PLACEHOLDER_RE.is_match(TEMPLATE)
         && PLACEHOLDER_RE

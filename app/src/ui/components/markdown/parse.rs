@@ -78,11 +78,9 @@ type Collected = Vec<(String, usize, Vec<Block>)>;
 
 /// A `<details>` that has been opened and not yet closed.
 struct Open {
-    /// Whether its tag carried `open`.
     open: bool,
     /// Its `<summary>`'s content, read from whichever raw HTML block held it.
     summary: Inlines,
-    /// Everything the walker converted between the open and the close.
     blocks: Vec<Block>,
 }
 
@@ -111,7 +109,6 @@ impl Sink {
         }
     }
 
-    /// Hands back what a container (a quote, a list item) collected.
     fn into_root(mut self) -> Vec<Block> {
         // An unclosed `<details>` is still a section: a document truncated
         // mid-tag is one a README is not, but a fragment handed to the API is.
@@ -524,11 +521,11 @@ pub mod html;
 
 /// What a raw HTML block did to the `<details>` around it.
 enum DetailsEvent {
-    /// A `<details>` tag, and whether it carried `open`.
-    Open { open: bool },
+    Open {
+        open: bool,
+    },
     /// A `<summary>`'s raw content, which is HTML rather than text.
     Summary(String),
-    /// A `</details>`.
     Close,
 }
 

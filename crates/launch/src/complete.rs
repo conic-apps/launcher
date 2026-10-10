@@ -20,23 +20,12 @@ use version::{Version, resolve_version};
 use crate::error::*;
 
 /// Completes and verifies all assets, libraries and Mojang-provided Java
-/// runtime files for the given instance and Minecraft location.
+/// runtime files for the given instance.
 ///
-/// This function checks if lock files exist to skip redundant verification. If a
-/// lock file is missing or older than its TTL, it will verify and download
-/// missing or corrupted assets, libraries and the Mojang-provided Java runtime
-/// (when preferred and the instance has no Java path of its own), then create
-/// the lock files.
-///
-/// If the instance's last run ended abnormally (its crash marker is set), the
-/// lock files are ignored and deleted first, so this run re-verifies every file;
-/// the marker is then cleared.
-///
-/// # Arguments
-///
-/// * `instance` - The Minecraft instance whose files to verify.
-/// * `minecraft_location` - The Minecraft location to resolve file paths.
-/// * `prefer_mojang_java` - Whether the Mojang-provided Java runtime is used.
+/// A lock file is honoured until its TTL; when one is missing or stale the
+/// corresponding set is re-verified and the lock rewritten. An abnormal last
+/// run (its crash marker set) deletes the locks first, forcing one full
+/// re-check, then clears the marker.
 pub async fn complete_files(
     instance: &Instance,
     minecraft_location: &MinecraftLocation,
@@ -45,11 +34,9 @@ pub async fn complete_files(
     config: &DownloadConfig,
 ) -> Result<()> {
     let instance_root = LOCATIONS.instances.get_instance_root(&instance.id);
-    // A run that ended abnormally may have left half-written files behind — that
-    // is often *why* it crashed — and the lock files would otherwise vouch for
-    // them. This mirrors HMCL's `unmarkLaunchedAbnormally`: the marker forces a
-    // full re-check exactly once, then is cleared. The Java-runtime lock lives
-    // here too (see `complete_java_runtime_files`).
+    // An abnormal run may have left half-written files, so the locks must not
+    // vouch for them: the crash marker forces one full re-check, then clears.
+    // Mirrors HMCL's `unmarkLaunchedAbnormally`.
     if instance::last_exit_abnormal(&instance.id) {
         info!(
             "The previous run of instance {} exited abnormally; re-checking files",
@@ -84,8 +71,8 @@ pub async fn complete_files(
         .await?;
         info!("Saving assets lock file");
         if let Err(error) = save_lock_file(&assets_lock_file) {
-            // The `info!` above says this save happened; if it did not, every
-            // launch re-verifies the whole assets set again, silently.
+            // If this save is lost, every launch re-verifies the whole assets
+            // set again, silently.
             warn!(
                 "Could not write the assets lock file {}: {error}",
                 assets_lock_file.display()
@@ -105,8 +92,8 @@ pub async fn complete_files(
         .await?;
         info!("Saving libraries lock file");
         if let Err(error) = save_lock_file(&libraries_lock_file) {
-            // The `info!` above says this save happened; if it did not, every
-            // launch re-verifies the whole libraries set again, silently.
+            // If this save is lost, every launch re-verifies the whole
+            // libraries set again, silently.
             warn!(
                 "Could not write the libraries lock file {}: {error}",
                 libraries_lock_file.display()
@@ -125,7 +112,6 @@ pub async fn complete_files(
     Ok(())
 }
 
-/// Completes missing or corrupted asset files for the given instance.
 async fn complete_assets_files(
     instance: &Instance,
     minecraft_location: &MinecraftLocation,
@@ -146,7 +132,6 @@ async fn complete_assets_files(
     Ok(())
 }
 
-/// Completes missing or corrupted library files for the given instance.
 async fn complete_libraries_files(
     instance: &Instance,
     minecraft_location: &MinecraftLocation,

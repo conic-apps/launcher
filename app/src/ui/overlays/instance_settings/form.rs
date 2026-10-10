@@ -23,14 +23,13 @@ pub fn open(ui: &App) {
             log::warn!("the instance settings were opened without a current instance");
             return;
         };
-        crate::ui::services::report::report(&weak, move |ui| show(&ui, &instance));
+        crate::ui::services::report::report(&weak, move |ui| show_instance(&ui, &instance));
     });
 }
 
-/// Fills the overlay in and shows it, for an instance already read off disk.
-pub(crate) fn show(ui: &App, instance: &Instance) {
+pub(crate) fn show_instance(ui: &App, instance: &Instance) {
     let state = ui.global::<InstanceSettingsState>();
-    apply(&state, instance);
+    apply_instance(&state, instance);
     state.set_background(load_background(instance));
     state.set_visible(true);
     EDITING.with(|editing| *editing.borrow_mut() = Some(instance.clone()));
@@ -47,13 +46,11 @@ thread_local! {
     static EDITING: RefCell<Option<Instance>> = const { RefCell::new(None) };
 }
 
-/// The instance the overlay is editing.
 pub(crate) fn current_instance() -> Option<Instance> {
     EDITING.with(|editing| editing.borrow().clone())
 }
 
-/// Puts an instance into the overlay's fields.
-pub(crate) fn apply(state: &InstanceSettingsState, instance: &Instance) {
+pub(crate) fn apply_instance(state: &InstanceSettingsState, instance: &Instance) {
     state.set_name(instance.config.name.clone().into());
     state.set_loader(loader_name(instance).into());
     state.set_minecraft_version(instance.config.runtime.minecraft.clone().into());
@@ -72,13 +69,13 @@ pub(crate) fn apply_launch(state: &InstanceSettingsState, config: &InstanceConfi
     let launch = &config.launch_config;
     state.set_use_as_launcher_background(config.use_as_launcher_background);
     state.set_enable_specific(launch.enable_instance_specific_settings);
-    state.set_width(number(launch.width).into());
-    state.set_height(number(launch.height).into());
+    state.set_width(number_text(launch.width).into());
+    state.set_height(number_text(launch.height).into());
     state.set_fullscreen(launch.fullscreen.unwrap_or(false));
     state.set_quit_after_launch(launch.quit_app_after_launch.unwrap_or(false));
     state.set_skip_file_check(launch.skip_check_files.unwrap_or(false));
     state.set_auto_memory(launch.auto_memory.unwrap_or(false));
-    state.set_max_memory(number(launch.max_memory).into());
+    state.set_max_memory(number_text(launch.max_memory).into());
     // An unset collector is an empty string rather than the default one, so no
     // option is highlighted and the "is this still the default?" test against
     // `"G1"` fails, which is what an unset `gc` should do.
@@ -112,8 +109,7 @@ pub(crate) fn apply_launch(state: &InstanceSettingsState, config: &InstanceConfi
     state.set_ignore_patch_discrepancies(launch.ignore_patch_discrepancies.unwrap_or(false));
 }
 
-/// An optional number as the field that edits it.
-pub(crate) fn number(value: Option<usize>) -> String {
+pub(crate) fn number_text(value: Option<usize>) -> String {
     value.map(|value| value.to_string()).unwrap_or_default()
 }
 
@@ -242,20 +238,16 @@ pub(crate) fn schedule_save(
     });
 }
 
-/// Registers every instance settings callback, and the delete dialog's.
 pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     setup_form(ui, config);
     setup_background(ui);
     setup_delete(ui);
 }
 
-/// The form itself: every field, the instance-specific switch and the advanced
-/// reset, each debounced into a save.
 pub(crate) fn setup_form(ui: &App, config: Rc<RefCell<config::Config>>) {
     let state = ui.global::<InstanceSettingsState>();
     let save_timer = Rc::new(Timer::default());
 
-    // Any field of the form.
     {
         let weak = ui.as_weak();
         let save_timer = Rc::clone(&save_timer);
@@ -342,7 +334,6 @@ pub(crate) fn setup_form(ui: &App, config: Rc<RefCell<config::Config>>) {
     }
 }
 
-/// The instance background: the native picker and the red remove button.
 pub(crate) fn setup_background(ui: &App) {
     let state = ui.global::<InstanceSettingsState>();
     // The native picker, the copy into the instance, and a re-list so the
@@ -393,7 +384,6 @@ pub(crate) fn setup_background(ui: &App) {
         });
     }
 
-    // The red "Remove image" button.
     {
         let weak = ui.as_weak();
         state.on_remove_background(move || {
@@ -422,10 +412,8 @@ pub(crate) fn setup_background(ui: &App) {
     }
 }
 
-/// The overlay's own close, the open-delete hand-off, and the delete dialog.
 pub(crate) fn setup_delete(ui: &App) {
     let state = ui.global::<InstanceSettingsState>();
-    // Closes this overlay first, then opens the delete dialog.
     {
         let weak = ui.as_weak();
         state.on_open_delete(move || {

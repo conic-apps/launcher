@@ -35,7 +35,6 @@ import { Theme } from "../../theme.slint";
 // reason, and its differing enter/leave durations are the same shape as the
 // two below.
 export component ContentOverlay inherits Rectangle {
-    /// Whether the overlay is open.
     in property <bool> overlay-visible: false;
     /// How much of the window width the container leaves free — 150px, or 200px
     /// for the instance-settings panel.
@@ -144,7 +143,6 @@ export component ContentOverlay inherits Rectangle {
         easing: root.leaving ? cubic-bezier(0.47, 0, 1, 0.75) : cubic-bezier(0, 0.47, 0.25, 1);
     }
 
-    // 200ms both ways; on the way out it is delayed by 100ms.
     private property <float> scrim-alpha: root.settled == "shown" ? 1.0 : 0.0;
     animate scrim-alpha {
         duration: 200ms;

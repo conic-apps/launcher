@@ -59,8 +59,7 @@ pub(crate) fn setup(ui: &App) {
 fn show(ui: &App, crash: CrashReport) {
     let state = ui.global::<CrashState>();
     // The crash crate logs what it diagnosed; this is the line that says an
-    // instance crashed and where to look, which is the first thing anyone reading
-    // a support log wants and it was nowhere in it.
+    // instance crashed and where to look, which a support log is read for.
     log::error!(
         "'{}' crashed: {} ({}){}",
         crash.instance_name,

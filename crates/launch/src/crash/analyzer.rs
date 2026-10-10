@@ -39,7 +39,6 @@ pub struct Reason {
     pub fields: Vec<String>,
 }
 
-/// A compiled rule: its name, regex and the groups that carry its fields.
 struct Rule {
     name: &'static str,
     regex: Regex,

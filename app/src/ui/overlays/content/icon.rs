@@ -116,7 +116,6 @@ pub(crate) enum Memo {
 }
 
 impl Memo {
-    /// The image at `key`, if some earlier request already decoded it.
     pub(crate) fn get(self, key: &str) -> Option<Image> {
         match self {
             Memo::Icons => cached_icon(key),
@@ -319,7 +318,6 @@ pub(crate) fn decode_base64(data: &str) -> Option<Vec<u8>> {
         .ok()
 }
 
-/// The decoded pixels, as the background thread produces them.
 pub(crate) fn decode_to_rgba(bytes: &[u8]) -> Option<(u32, u32, Vec<u8>)> {
     let decoded = image::load_from_memory(bytes).ok()?;
     let rgba = decoded.to_rgba8();

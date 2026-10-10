@@ -23,12 +23,10 @@ pub(super) fn install() {
     });
 
     unsafe {
-        // The observer token is dropped on purpose (the notification centre keeps
-        // the block alive), so a nil return cannot be acted on — but a *missing*
-        // registration can be recorded, and it means the icon is never set at all.
-        // `Retained` is non-null by construction, so the only observable signal is
-        // whether the call returned anything; AppKit refusing is logged below by
-        // `set` itself, which is where the failure actually shows up.
+        // The observer token is dropped on purpose: the centre keeps the block
+        // alive for the process. A registration that fails cannot be told apart
+        // here — the return is non-null by construction — so the failure surfaces
+        // in `set`.
         let _observer = NSNotificationCenter::defaultCenter()
             .addObserverForName_object_queue_usingBlock(
                 Some(ns_string!("NSApplicationDidFinishLaunchingNotification")),

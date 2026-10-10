@@ -70,7 +70,6 @@ export component AccountAddYggdrasil inherits VerticalLayout {
                         color: Theme.default-text-color.transparentize(0.1);
                     }
 
-                    // Clips to one 200px line.
                     if AccountAddState.yggdrasil-server-name != "" : Text {
                         text: @tr("Auth service: {}", AccountAddState.yggdrasil-server-name);
                         font-size: 12px;
@@ -186,7 +185,6 @@ export component AccountAddYggdrasil inherits VerticalLayout {
         height: 120px;
         background: transparent;
 
-        // A 16px gap, with the description's 8px bottom margin on top of it.
         VerticalLayout {
             width: parent.width;
             height: parent.height;
@@ -258,9 +256,6 @@ export component AccountAddYggdrasil inherits VerticalLayout {
                         width: 100%;
                         height: 44px;
                         border-radius: 8px;
-                        // Surface 1, surface 2 when selected or hovered, overlay 0
-                        // while pressed, with a lavender hairline around a
-                        // selected one.
                         background: profile-touch.pressed ? Theme.overlay-0
                             : profile.selected || profile-touch.has-hover ? Theme.surface-2
                             : Theme.surface-1;
@@ -317,8 +312,6 @@ export component AccountAddYggdrasil inherits VerticalLayout {
             }
         }
 
-        // The 8px gap, plus the second button's 8px left margin, so this pair
-        // has 16px between them.
         HorizontalLayout {
             padding-top: 12px;
             spacing: 16px;

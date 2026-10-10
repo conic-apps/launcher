@@ -154,7 +154,6 @@ pub fn running_instances() -> Vec<RunningInstance> {
     running
 }
 
-/// Whether `id` has at least one registered process.
 pub fn is_running(id: &str) -> bool {
     registry()
         .get(id)
@@ -293,8 +292,6 @@ pub(crate) fn register(
         stop_requested,
         watcher: None,
     });
-    // Registration itself was never logged, so the only trace of a launch that
-    // worked was a `Spawning minecraft process` line from the caller.
     log::info!("Registered the Minecraft process {pid} for instance {id} ({name})");
     emit(SessionEvent::Started(RunningInstance {
         id: id.clone(),
@@ -407,7 +404,7 @@ fn watch(
         None => error!("Could not read the exit status of the Minecraft process for {id}"),
     }
 
-    remove(&id, token);
+    unregister(&id, token);
     emit(SessionEvent::Exited {
         instance: RunningInstance {
             id,
@@ -441,8 +438,7 @@ fn pump(reader: impl Read, console: &Arc<Mutex<VecDeque<String>>>, mut on_line: 
             }
             Err(error) => {
                 // Distinguished from EOF on purpose: a truncated read is exactly
-                // when the tail of the output matters most, and it used to be
-                // indistinguishable from the stream simply ending.
+                // when the tail of the output matters most.
                 log::debug!("The game's output stream ended with an error: {error}");
                 break;
             }
@@ -453,7 +449,6 @@ fn pump(reader: impl Read, console: &Arc<Mutex<VecDeque<String>>>, mut on_line: 
 /// How many console lines are kept for crash analysis.
 const CONSOLE_LINE_LIMIT: usize = 20_000;
 
-/// Appends one line to the bounded console buffer.
 fn push_line(console: &Arc<Mutex<VecDeque<String>>>, line: &str) {
     let mut console = console.lock().unwrap_or_else(PoisonError::into_inner);
     if console.len() == CONSOLE_LINE_LIMIT {
@@ -494,8 +489,7 @@ fn wait(process: &Arc<Mutex<Child>>) -> Option<ExitStatus> {
     }
 }
 
-/// Drops one launch, identified by its token, and the instance's now-empty list.
-fn remove(id: &str, token: u64) -> bool {
+fn unregister(id: &str, token: u64) -> bool {
     let mut registry = registry();
     let Some(sessions) = registry.get_mut(id) else {
         return false;

@@ -76,11 +76,9 @@ pub(crate) fn apply(locale: &str) {
 }
 
 fn set_fallback(collection: &mut Collection, script: Script, names: &[&str]) {
-    // The *resolved* families, not the requested names: a family that is absent is
-    // dropped from `families` here, so logging `names` claimed a font was set when
-    // possibly none was. `filter_map` was silent, which meant the realistic case —
-    // eight of the nine missing on a stripped Windows image — produced a log
-    // identical to a complete one.
+    // The *resolved* families, not the requested names: an absent family is dropped
+    // here, so logging `names` would claim a font was set when possibly none was —
+    // the realistic case on a stripped Windows image, where most are missing.
     let resolved: Vec<FamilyId> = names
         .iter()
         .filter_map(|name| {

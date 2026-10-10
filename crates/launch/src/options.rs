@@ -33,32 +33,25 @@ pub struct LaunchOptions {
     /// Server to join after launch. TODO: support 1.21.1
     pub server: Option<Server>,
 
-    /// Window width.
     pub width: usize,
 
-    /// Window height.
     pub height: usize,
 
     pub fullscreen: bool,
 
-    /// User custom additional java virtual machine command line arguments.
     pub extra_jvm_args: String,
 
-    /// User custom additional minecraft command line arguments.
     pub extra_mc_args: String,
 
     /// Launch the game in demo mode.
     ///
-    /// NOTE: A user without game access must not reach this, for legal reasons.
+    /// A user without game access must not reach this, for legal reasons.
     pub is_demo: bool,
 
-    /// Adds `-Dfml.ignoreInvalidMinecraftCertificates=true` to the JVM arguments.
     pub ignore_invalid_minecraft_certificates: bool,
 
-    /// Adds `-Dfml.ignorePatchDiscrepancies=true` to the JVM arguments.
     pub ignore_patch_discrepancies: bool,
 
-    /// Adds extra classpath entries.
     pub extra_class_paths: String,
 
     pub gc: GC,
@@ -76,13 +69,9 @@ pub struct LaunchOptions {
 }
 
 impl LaunchOptions {
-    /// Creates a new [`LaunchOptions`] instance from the given Minecraft instance and account.
+    /// Per-instance launch settings take priority over the global ones.
     ///
-    /// Launch configuration is resolved from both global and per-instance settings,
-    /// with per-instance settings taking priority when defined.
-    ///
-    /// `java_arch` is the architecture of the Java runtime that will be used to
-    /// launch the game; a 32-bit runtime caps the auto-allocated heap at 1 GiB.
+    /// A 32-bit `java_arch` caps the auto-allocated heap at 1 GiB.
     pub fn new(config: &Config, instance: &Instance, java_arch: JavaArch) -> Result<Self> {
         let global_launch_config = config.launch.clone();
         let launch_config = &instance.config.launch_config;
@@ -170,12 +159,10 @@ impl LaunchOptions {
     }
 }
 
-/// Returns whether the instance has a mod loader installed.
 fn instance_has_mod_loader(instance: &Instance) -> bool {
     instance.config.runtime.mod_loader_type.is_some()
 }
 
-/// Returns whether the Java runtime architecture is 32-bit.
 fn is_32_bit_java(arch: JavaArch) -> bool {
     matches!(arch, JavaArch::X86 | JavaArch::Arm)
 }
@@ -193,9 +180,8 @@ fn count_instance_mods(instance: &Instance) -> usize {
             .flatten()
             .filter(|entry| entry.file_type().map(|t| t.is_file()).unwrap_or(false))
             .count(),
-        // Not "0 mods": an unreadable `mods` folder is reported as 0 and fed
-        // straight into the heap calculation, so the log would confidently say
-        // "mod count 0" and hand the game a heap sized for an empty instance.
+        // An unreadable `mods` folder must be reported, not silently treated
+        // as 0: the count feeds the heap calculation.
         Err(error) => {
             log::debug!(
                 "Could not read {} to count the mods ({error}); assuming none",
@@ -206,16 +192,10 @@ fn count_instance_mods(instance: &Instance) -> usize {
     }
 }
 
-/// Calculates the maximum heap (`-Xmx`) and young generation (`-Xmn`) memory
-/// in MB, following the same algorithm PCL uses for its auto allocation.
+/// Calculates the maximum heap (`-Xmx`) and young generation (`-Xmn`) memory in
+/// MB, following PCL's auto-allocation algorithm.
 ///
-/// # Arguments
-///
-/// * `available_bytes` - The currently available physical memory in bytes.
-/// * `has_mod_loader` - Whether the instance supports mods.
-/// * `mod_count` - Number of mod files in the instance's `mods` directory.
-/// * `is_32_bit` - Whether the Java runtime is 32-bit; the heap is then capped
-///   at 1 GiB because a 32-bit JVM cannot address much more.
+/// A 32-bit JVM cannot address much, so its heap is capped at 1 GiB.
 fn auto_allocate_memory(
     available_bytes: u64,
     has_mod_loader: bool,

@@ -110,7 +110,6 @@ pub(crate) fn loader_name(instance: &Instance) -> String {
         .unwrap_or_default()
 }
 
-/// Fills the delete dialog's card and opens it.
 pub(crate) fn open_delete_dialog(ui: &App, instance: &Instance) {
     let delete = ui.global::<DeleteInstanceState>();
     delete.set_id(instance.id.clone().into());
@@ -130,7 +129,6 @@ pub(crate) fn open_delete_dialog(ui: &App, instance: &Instance) {
         .set_confirm_delete_instance_visible(true);
 }
 
-/// Registers the delete dialog's two callbacks.
 pub(crate) fn setup_delete_dialog(ui: &App) {
     let delete = ui.global::<DeleteInstanceState>();
 

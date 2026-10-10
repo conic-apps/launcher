@@ -77,13 +77,12 @@ fn main() {
 
     // The version this build was made as, for the User-Agent, the JVM's
     // `launcher_version` and the self-update check. `shared` cannot read it
-    // itself — its own manifest version is the placeholder `0.0.0` — so the app
-    // hands its compiled-in version over here. It has to land before the config
-    // load: `UpdateChannel`'s default derives from this version, so a
-    // pre-release build seeds `update_channel = "beta"` rather than `stable`.
+    // itself — its manifest version is the placeholder `0.0.0` — so the app
+    // hands its compiled-in version over. It must land before the config load:
+    // `UpdateChannel`'s default derives from it, seeding `update_channel =
+    // "beta"` for a pre-release build rather than `stable`.
     shared::set_app_version(env!("CARGO_PKG_VERSION"));
 
-    // Configuration.
     let config = config::load_config_file().unwrap_or_else(|error| {
         log::error!("failed to load config: {error}");
         config::Config::default()
@@ -95,18 +94,16 @@ fn main() {
     // so one call reaches every crate that uses it.
     shared::set_system_proxy(config.download.use_system_proxy);
 
-    // Same one-call, before-the-first-request shape as the proxy preference
-    // above, and for the same reason: the cache is settled once and has to be
-    // pointed somewhere before anything is fetched through it. It is a directory
-    // rather than a setting because nothing about it is a preference — there is
-    // only one place it could sensibly go.
+    // Same before-the-first-request shape as the proxy preference: the cache is
+    // settled before anything is fetched through it. It is a directory rather
+    // than a setting because it is not a preference — there is only one place it
+    // could sensibly go.
     shared::http_cache::set_dir(storage::LOCATIONS.launcher.cache.join("http"));
 
     // Pick the bundled translation. Must run after a component exists (that's
     // what installs the translation bundle).
     ui::services::app_config::select_locale(config.language.as_deref());
 
-    // Platform.
     let platform = platform::PLATFORM_INFO.clone();
     ui.set_macos(platform.os_family == platform::OsFamily::Macos);
     ui.set_linux(platform.os_family == platform::OsFamily::Linux);
@@ -136,7 +133,6 @@ fn main() {
     // drawn, so it is wired with the other components rather than a view.
     ui::components::account_avatar::setup(&ui);
 
-    // Settings + game view + overlay "scripts".
     ui::views::settings::wire(&ui, Rc::clone(&shared), Rc::clone(&save_timer));
     ui::views::game::setup(&ui, Rc::clone(&shared));
     ui::overlays::account_view::setup(&ui, Rc::clone(&shared));
@@ -148,9 +144,6 @@ fn main() {
     ui::views::crash::setup(&ui);
     ui::overlays::dialogs::create_instance::setup(&ui, Rc::clone(&shared));
     ui::overlays::dialogs::account_add::setup(&ui);
-    // The first-run wizard: the import-instances screen's two "create a blank
-    // instance" buttons, the platform answer its Java screen asks for, and the
-    // storage step that commits the location choice when the wizard finishes.
     ui::views::setup::setup(&ui, Rc::clone(&shared));
     ui::overlays::dialogs::multiplayer::setup(&ui);
     // The clock and the wheel/trackpad classification the scroll containers use.
@@ -168,12 +161,9 @@ fn main() {
     // The news browser: the title bar's newspaper button opens it, and it
     // fetches the feeds itself the first time it does.
     ui::overlays::news::setup(&ui);
-    // The command palette, mounted on the same layer — it opens from the title
-    // bar's search field and from the `Ctrl`/`⌘` + `/` shortcut, so it is up for
-    // the whole session too. Its two openers are wired in the view, the way the
-    // title bar's other actions are: `CommandPaletteState.open()` for the search
-    // field's click, and `CommandPaletteState.toggle()` for the `Ctrl`/`⌘` + `/`
-    // shortcut, which the app-level key scope in `app.slint` binds.
+    // The command palette, on the same whole-session layer as the news browser;
+    // it opens from the title bar's search field and the `Ctrl`/`⌘` + `/`
+    // shortcut, both bound in the view.
     ui::overlays::command_palette::setup(&ui);
 
     // Self-update, run silently. The install form (AppImage / .app / MSI /
@@ -204,25 +194,14 @@ fn main() {
     // this one. See `ui::services::app_config::relaunch` for the hand-over.
     ui.on_restart_app(ui::services::app_config::relaunch);
 
-    // The window system's own close — the macOS traffic light, `Alt`+`F4`, a
-    // window menu's Close, a taskbar's close — asks here first.
+    // Every close asks here first: the title bar's controls, the Windows caption
+    // buttons (their `SC_CLOSE` does come through Slint), macOS's AppKit red
+    // button (which closes without the UI ever seeing it), and `⌘W`/`⌘Q` — both
+    // call `App.close()`. Asking at the window is what covers all of them.
     //
-    // This is where the platform's own close arrives. The title bar's
-    // `close-window` callback covers the controls *this app draws* (Linux) and
-    // the caption buttons Windows substitutes (`native/windows/caption.rs` sends
-    // `SC_CLOSE`, which does come through Slint) — but on macOS the red button is
-    // AppKit's, and it closes the window without the UI ever seeing it. Asking at
-    // the window covers all three, and is also where a close that is not a button
-    // at all belongs.
-    //
-    // `Dialogs.confirm-quit-app-visible` is the flag the title bar's callback sets
-    // too, which is what makes it the "already answered" test below as well as
-    // the dialog's own: `App.close()` at the end of the exit animation comes back
-    // through here, and the only close that must not be re-asked about is that one.
-    //
-    // `⌘W` (`Control`+`W`, bound in `app.slint`) and the macOS `⌘Q`
-    // (`native/macos/quit.rs`) both reach this too — they call `App.close()`,
-    // which runs this same callback.
+    // `Dialogs.confirm-quit-app-visible` is the "already answered" test as well
+    // as the dialog's own flag: `App.close()` at the end of the exit animation
+    // comes back through here, and that close must not be re-asked.
     window.window().on_close_requested({
         let weak = ui.as_weak();
         move || {
@@ -281,26 +260,21 @@ fn main() {
         }
     });
 
-    // A fresh install lands on the setup wizard rather than the game view. The
-    // flag is stored in the config, so a wizard that was finished or skipped
-    // does not come back; an older config without the key reads it as `false`
-    // and is shown the wizard once.
-    //
-    // Set before `run` so the wizard is the first frame, and after the config is
-    // loaded and applied, since the wizard's steps read the `AppConfig` global.
+    // A fresh install lands on the setup wizard, not the game view; the flag is
+    // stored, so finishing or skipping it is final, and a config without the key
+    // reads `false` and shows it once. Set before `run` (first frame) and after
+    // the config is applied, since the wizard's steps read `AppConfig`.
     if !shared.borrow().setup_completed {
         ui.global::<slint_backend::Navigation>()
             .set_current_page("setup".into());
     }
 
-    // The platform's own terminate requests — macOS `⌘Q`, the menu's Quit and a
-    // system logout — have to run the same close flow as `⌘W`, because the
-    // launch-page confirm lives in the window's close-requested callback. `⌘W`
-    // and the title bar's button bound `root.close()` in `app.slint`; the same is
-    // exposed as `request-close` for AppKit's terminate hook, which asks on the
-    // main thread but outside Slint's own dispatch — hence the hop through the
-    // event loop. `run_exit_work` stays the fallback for a terminate that really
-    // does end the process.
+    // The platform's terminate requests — macOS `⌘Q`, the menu's Quit, a system
+    // logout — must run the same close flow as `⌘W`, whose launch-page confirm
+    // lives in the window's close-requested callback. `request-close` replays
+    // them as that close; it hops through the event loop because AppKit asks
+    // outside Slint's dispatch. `run_exit_work` is the fallback for a terminate
+    // that really ends the process.
     let request_close = {
         let weak = ui.as_weak();
         move || {
@@ -319,12 +293,10 @@ fn main() {
 /// The work that has to happen as the process goes away, whichever way it was
 /// asked to.
 ///
-/// It runs once. A window close returns from `ui.run` and calls it here; the
-/// platform's terminate requests reach it the same way, since the macOS hook
-/// replays them as a close. A terminate that still ends the process out of
-/// AppKit reaches it through [`support::native::install_terminate_handler`]. The
-/// exit-time update apply must not run twice, so an already-shut gate is what
-/// the second caller finds.
+/// It runs once: a window close returns from `ui.run` and calls it here, and
+/// [`support::native::install_terminate_handler`] routes a terminate that really
+/// ends the process through it too. The exit-time update apply must not run
+/// twice, so a second caller finds the gate already shut.
 fn run_exit_work() {
     use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -379,14 +351,10 @@ fn cleanup_temp_folder() {
 
 /// Brings the window forward for every later launch of the app.
 ///
-/// Each later launch brings the running window forward through
-/// [`WindowService::bring_to_front`].
-///
 /// The launches arrive on a platform thread — a D-Bus worker, a `WM_COPYDATA`
-/// window message, a socket reader — so the window is only ever touched from
-/// the event loop, which is what the weak handle is upgraded in. `SingleInstance`
-/// moves in here as well: it holds the single-instance claim, which has to
-/// outlive the setup in `main`.
+/// window message, a socket reader — so the window is only ever touched from the
+/// event loop, which is what the weak handle is upgraded in. `SingleInstance`
+/// moves in here because it holds the claim, which has to outlive `main`.
 fn watch_launches(single_instance: single_instance::SingleInstance, app: Weak<App>) {
     std::thread::Builder::new()
         .name("conic-single-instance".into())

@@ -83,7 +83,6 @@ pub fn scan_java_runtimes_with(options: &ScanOptions) -> Result<Vec<JavaRuntime>
     Ok(runtimes)
 }
 
-/// Resolves the canonical (symlink-free) path of `path`.
 fn canonicalize(path: &Path) -> Option<PathBuf> {
     match fs::canonicalize(path) {
         Ok(path) => Some(path),
@@ -120,9 +119,9 @@ fn probe_java(executable: &Path, options: &ScanOptions) -> Option<JavaRuntime> {
         raw.merge(probe.clone());
     }
 
-    // Both of these dropped the candidate in silence, which is the shape of
-    // "Java was not found" for a runtime that is installed but reports itself
-    // in a way this does not parse.
+    // A runtime that is installed but reports itself in a way this does not
+    // parse is otherwise indistinguishable from Java not being found, so each
+    // rejection is logged.
     let Some(version) = raw.version else {
         debug!(
             "{} reported no version at all; ignoring it",
@@ -216,9 +215,6 @@ fn run_java_probe(executable: &Path) -> Option<JavaInfoRaw> {
         }
         thread::sleep(Duration::from_millis(20));
     };
-    // The status was discarded, so a probe that ran and exited non-zero — a JRE
-    // too damaged to start, a wrapper that prints a licence and dies — was
-    // treated exactly like a clean exit, and `is_valid` was set for it.
     let status = exited?;
     if !status.success() {
         debug!(
@@ -247,9 +243,8 @@ fn run_java_probe(executable: &Path) -> Option<JavaInfoRaw> {
     if is_java_output {
         Some(info)
     } else {
-        // The *rejection* path, and the one that was silent: a wrapper script, a
-        // binary that happens to be called `java`, a launcher printing a banner
-        // first — all dropped here with nothing to say. A "Java was not found"
+        // A wrapper script, a binary that happens to be called `java`, a launcher
+        // printing a banner first — all land here, and a "Java was not found"
         // report needs this line.
         debug!(
             "{} did not answer like a Java runtime; ignoring it",
@@ -346,7 +341,6 @@ fn collect_candidates(options: &ScanOptions) -> Vec<PathBuf> {
     candidates
 }
 
-/// Adds `<home>/bin/java` to the candidate list if it exists.
 fn push_home_candidate(candidates: &mut Vec<PathBuf>, home: &Path) {
     let executable = home.join("bin").join(java_executable_name());
     if executable.is_file() {
@@ -354,8 +348,6 @@ fn push_home_candidate(candidates: &mut Vec<PathBuf>, home: &Path) {
     }
 }
 
-/// Pushes `<home>/bin/java` (or the macOS `jre.bundle` variant) to
-/// `candidates` when `dir` is a Java home. Returns `true` if a home was found.
 fn try_push_home(candidates: &mut Vec<PathBuf>, dir: &Path) -> bool {
     let direct = dir.join("bin").join(java_executable_name());
     if direct.is_file() {
@@ -376,7 +368,7 @@ fn try_push_home(candidates: &mut Vec<PathBuf>, dir: &Path) -> bool {
 }
 
 /// Recursively collects Java homes below `root`, stopping a branch as soon as a
-/// home is found. `max_depth` bounds how far each branch is descended.
+/// home is found; `max_depth` bounds how far each branch is descended.
 fn push_homes_recursive(candidates: &mut Vec<PathBuf>, root: &Path, max_depth: usize) {
     if max_depth == 0 {
         return;
@@ -399,7 +391,6 @@ fn push_homes_recursive(candidates: &mut Vec<PathBuf>, root: &Path, max_depth: u
     }
 }
 
-/// Treats every immediate sub-directory of `root` as a potential Java home.
 fn push_home_subdirs(candidates: &mut Vec<PathBuf>, root: &Path) {
     let Ok(entries) = fs::read_dir(root) else {
         debug!("Could not scan {} for Java runtimes", root.display());
@@ -413,7 +404,6 @@ fn push_home_subdirs(candidates: &mut Vec<PathBuf>, root: &Path) {
     }
 }
 
-/// Treats every immediate sub-directory of `root` as a macOS Java home bundle.
 #[cfg(target_os = "macos")]
 fn push_mac_jvm_candidates(candidates: &mut Vec<PathBuf>, root: &Path) {
     let Ok(entries) = fs::read_dir(root) else {
@@ -468,16 +458,14 @@ fn query_windows_registry(candidates: &mut Vec<PathBuf>) {
     {
         Ok(output) => output,
         Err(error) => {
-            // The only Windows-only discovery path, and a spawn failure here means
-            // the whole registry is skipped with nothing said.
+            // A spawn failure skips the whole registry with nothing said.
             debug!("could not run reg.exe to query JavaSoft ({error})");
             return;
         }
     };
     if !output.status.success() {
-        // `reg query` answers non-zero when the key is absent, which is ordinary,
-        // and also when it failed for another reason. Either way its stdout was
-        // about to be parsed as if it were the answer, so it is said here.
+        // `reg query` answers non-zero both for an absent key (ordinary) and for
+        // a real failure; its stdout is parsed as the answer either way.
         debug!(
             "reg.exe query for JavaSoft exited with {}; parsing its output anyway",
             output.status

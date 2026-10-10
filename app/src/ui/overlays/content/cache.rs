@@ -7,11 +7,8 @@
 //!
 //! The game view's summary and the content overlay are the same content twice
 //! over: the summary says "12 mods" and draws five of their icons, and the
-//! overlay lists all twelve. They used to answer that separately — the summary
-//! from a folder scan in the `content` crate and the overlay from
-//! `parse_mods` — so every switch re-hashed every jar and every panel open
-//! parsed it again, and the two numbers could disagree. This is the one parsed
-//! copy both read.
+//! overlay lists all twelve. Both read one parsed copy, so the two numbers
+//! cannot disagree and a panel open does not re-hash every jar.
 //!
 //! Three rules make that work, and each one costs something:
 //!
@@ -26,9 +23,8 @@
 //!     by instance and will be correct if that instance is opened again — but it
 //!     must not draw itself on another instance's summary.
 //!
-//! The TTL exists for the same reason it did in the original design: a jar
-//! dropped into `mods/` by hand, outside the app, is only noticed when the list
-//! goes stale and is re-read.
+//! The TTL is what notices a jar dropped into `mods/` by hand, outside the app:
+//! it is only seen when the list goes stale and is re-read.
 
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -93,7 +89,6 @@ struct InstanceContent {
 }
 
 impl InstanceContent {
-    /// When this kind was parsed, if it ever was.
     fn parsed_at(&self, kind: Kind) -> Option<Instant> {
         match kind {
             Kind::Saves => self.saves.as_ref().map(|cached| cached.at),
@@ -155,8 +150,7 @@ pub(crate) fn clear() {
 }
 
 /// The instance's saves, each a folder name and the summary read out of its
-/// `level.dat`, sorted by folder so the summary's previews and the panel's list
-/// are the same five worlds in the same order.
+/// `level.dat`.
 pub(crate) fn saves(instance: &str) -> Option<Arc<Vec<(String, LevelSummary)>>> {
     CACHE.with(|cache| {
         cache
@@ -180,7 +174,6 @@ pub(crate) fn mods(instance: &str) -> Option<Arc<Vec<ResolvedMod>>> {
     })
 }
 
-/// The instance's resource packs.
 pub(crate) fn resourcepacks(instance: &str) -> Option<Arc<Vec<Resourcepack>>> {
     CACHE.with(|cache| {
         cache
@@ -191,7 +184,6 @@ pub(crate) fn resourcepacks(instance: &str) -> Option<Arc<Vec<Resourcepack>>> {
     })
 }
 
-/// The instance's screenshots.
 pub(crate) fn screenshots(instance: &str) -> Option<Arc<Vec<PathBuf>>> {
     CACHE.with(|cache| {
         cache
@@ -231,7 +223,7 @@ fn start(ui: &App, instance: &str, kind: Kind, deduped: bool) {
         let parsed = parse(&instance, kind).await;
         crate::ui::services::report::report(&weak, move |ui| {
             if land(&instance, kind, seq) {
-                file(&instance, parsed);
+                file_parsed(&instance, parsed);
                 // The summary's counts are the cache's own lengths, so they go
                 // up now that there is something to count; the icons follow on
                 // their own. The panel that is open, if it is this kind's, is
@@ -304,8 +296,7 @@ fn land(instance: &str, kind: Kind, seq: u64) -> bool {
     current == Some(seq)
 }
 
-/// Puts a parse's result into the cache under its kind.
-fn file(instance: &str, parsed: Parsed) {
+fn file_parsed(instance: &str, parsed: Parsed) {
     CACHE.with(|cache| {
         let mut cache = cache.borrow_mut();
         let entry = cache.entry(instance.to_string()).or_default();
@@ -342,7 +333,6 @@ fn file(instance: &str, parsed: Parsed) {
     });
 }
 
-/// Drops one kind of one instance, leaving the other three alone.
 fn forget(instance: &str, kind: Kind) {
     CACHE.with(|cache| {
         if let Some(entry) = cache.borrow_mut().get_mut(instance) {

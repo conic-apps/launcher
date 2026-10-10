@@ -370,8 +370,6 @@ pub(crate) fn setup_save_deletion(ui: &App) {
             }
             ui.global::<DeleteSaveState>().set_deleting(true);
             let instance = controller().borrow().instance_id.clone();
-            // The event loop is reached through a weak handle: a strong `App`
-            // may not cross into the spawned task.
             let weak = ui.as_weak();
             crate::support::runtime::spawn(async move {
                 let result = content::saves::delete_save(&instance, &folder).await;
@@ -437,7 +435,6 @@ pub(crate) fn setup_favorite_toggle(ui: &App) {
     });
 }
 
-/// The search form: the query, the filter chips and the pagination.
 pub(crate) fn setup_search_form(ui: &App) {
     {
         let weak = ui.as_weak();
@@ -551,7 +548,6 @@ pub(crate) fn setup_version_carousel(ui: &App) {
     }
 }
 
-/// The saves' expansion and the screenshot viewer.
 pub(crate) fn setup_saves_and_screenshots(ui: &App) {
     {
         let weak = ui.as_weak();
@@ -608,7 +604,6 @@ pub(crate) fn load_favorites(ui: &App) {
     });
 }
 
-/// The detail panel's Download and Remove buttons.
 pub(crate) fn setup_detail_actions(ui: &App) {
     {
         let weak = ui.as_weak();

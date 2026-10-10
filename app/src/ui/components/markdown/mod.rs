@@ -58,11 +58,8 @@
 //!   [`MdStyle::code_block_wrap`] for the same trade on a `pre`.
 
 #![forbid(unsafe_code)]
-// The renderer keeps the full API it grew as a standalone library; the launcher's
-// content panels only touch part of it, and the tests use more. Now that the
-// module is internal rather than a published crate, the unused accessors and
-// re-exports are expected here instead of a sign of rot, so they are allowed
-// rather than pruned.
+// The engine exposes a fuller API than any one caller uses, so unused accessors
+// and re-exports here are expected rather than a sign of rot.
 #![allow(dead_code, unused_imports)]
 
 pub mod doc;
@@ -181,7 +178,6 @@ impl Renderer {
         }
     }
 
-    /// The style in effect.
     pub fn style(&self) -> &MdStyle {
         &self.style
     }
@@ -217,7 +213,6 @@ impl Renderer {
         true
     }
 
-    /// The images handed over so far.
     pub fn images(&self) -> &ImageStore {
         &self.images
     }

@@ -105,7 +105,6 @@ pub fn select_locale(preferred: Option<&str>) {
     apply_locale(locale);
 }
 
-/// Seeds the Slint `AppConfig` global from the loaded configuration.
 pub fn apply_config(settings: &AppConfig, config: &config::Config) {
     settings.set_language(config.language.clone().unwrap_or_default().into());
     settings.set_auto_update(config.auto_update);

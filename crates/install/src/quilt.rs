@@ -103,8 +103,7 @@ pub async fn install(
     quilt_version: &str,
     minecraft: MinecraftLocation,
 ) -> Result<()> {
-    // Quilt is fabric's twin here and had no log line at all, so an install log
-    // was asymmetric between two loaders that do exactly the same work.
+    // Log like Fabric, so the two loaders' install logs match.
     log::info!("Installing quilt {quilt_version} for {mcversion}");
     let url = format!(
         "https://meta.quiltmc.org/v3/versions/loader/{mcversion}/{quilt_version}/profile/json"

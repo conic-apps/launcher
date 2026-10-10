@@ -120,7 +120,6 @@ pub(crate) fn volume_percent(percent: i32) -> u8 {
     percent.clamp(0, 100) as u8
 }
 
-/// Registers every `MusicState` callback, and the title bar's own.
 pub(crate) fn register_callbacks(ui: &App) {
     let state = ui.global::<MusicState>();
 
@@ -218,7 +217,6 @@ pub(crate) fn register_callbacks(ui: &App) {
         });
     }
 
-    // The title bar's music button.
     let weak = ui.as_weak();
     ui.on_toggle_music(move || {
         if let Some(ui) = weak.upgrade() {

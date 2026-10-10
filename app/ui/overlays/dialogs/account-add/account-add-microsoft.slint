@@ -192,7 +192,6 @@ export component AccountAddMicrosoft inherits VerticalLayout {
     if root.shown == "processing" : SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
-        // A box of a fixed height, with its content centred inside it.
         min-height: 120px;
         vertical-stretch: 0;
 
@@ -218,8 +217,6 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                 }
             }
 
-            // The status caption, below the arc's row by the column's own 8px
-            // `spacing`.
             Text {
                 text: root.progress-text(AccountAddState.ms-progress);
                 font-size: 14px;
@@ -290,9 +287,6 @@ export component AccountAddMicrosoft inherits VerticalLayout {
 
                 code-text := Text {
                     y: 0;
-                    // Centred in the 20ch box. The code used to step aside for a
-                    // checkmark that arrived on copy; that checkmark is gone, so
-                    // the text stays put and only its tooltip reports the copy.
                     x: (parent.width - self.width) / 2;
                     height: parent.height;
                     text: AccountAddState.ms-user-code;
@@ -315,9 +309,9 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                     }
                     // The "Copied!" hint lasts exactly as long as the hover it
                     // was made in, so the next time the pointer arrives the
-                    // tooltip reads "Click to copy" again. The timer that used to
-                    // clear it could not do this: it would flip the text back
-                    // while the pointer was still on the code.
+                    // tooltip reads "Click to copy" again. A timer cannot do
+                    // this: it would flip the text back while the pointer was
+                    // still on the code.
                     changed has-hover => {
                         if !self.has-hover {
                             AccountAddState.ms-copied-code = false;
@@ -342,7 +336,6 @@ export component AccountAddMicrosoft inherits VerticalLayout {
             spacing: 8px;
 
             if !root.wizard-host : Button {
-                // A lone button takes the whole row.
                 horizontal-stretch: 1;
                 text: @tr("Cancel");
                 clicked => { AccountAddState.cancel-microsoft-login(); }
@@ -373,8 +366,6 @@ export component AccountAddMicrosoft inherits VerticalLayout {
             }
         }
 
-        // An 8px top margin: the label, then the link box over the rest of the
-        // row.
         HorizontalLayout {
             padding-top: root.link-margin;
             cross-axis-alignment: center;
@@ -400,8 +391,6 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                     x: 8px;
                     y: 0;
                     height: parent.height;
-                    // The text takes the rest of the row, less its own 8px of
-                    // padding on each side.
                     width: parent.width - 16px;
                     text: AccountAddState.auth-code-login-url;
                     vertical-alignment: center;
@@ -419,9 +408,9 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                     }
                     // The "Copied!" hint lasts exactly as long as the hover it
                     // was made in, so the next time the pointer arrives the
-                    // tooltip reads "Click to copy" again. The timer that used to
-                    // clear it could not do this: it would flip the text back
-                    // while the pointer was still on the link.
+                    // tooltip reads "Click to copy" again. A timer cannot do
+                    // this: it would flip the text back while the pointer was
+                    // still on the link.
                     changed has-hover => {
                         if !self.has-hover {
                             AccountAddState.ms-copied = false;
@@ -438,7 +427,6 @@ export component AccountAddMicrosoft inherits VerticalLayout {
             }
         }
 
-        // Left-aligned like the device code's, with a 16px top margin.
         HorizontalLayout {
             padding-top: max(root.link-margin, 16px);
             spacing: 8px;

@@ -13,7 +13,6 @@ pub(crate) fn start_download(ui: &App, controller: &Rc<Controller>) {
     cancel_download(controller);
     let token = controller.download_gate.issue();
 
-    // The screen's initial state.
     {
         let state = ui.global::<MultiplayerState>();
         state.set_download_phase("prepare".into());
@@ -59,7 +58,6 @@ pub(crate) fn cancel_download(controller: &Rc<Controller>) {
     }
 }
 
-/// Shows the finished bar, then switches to the manager half a second later.
 pub(crate) fn finish_download(ui: &App, ok: bool) {
     let state = ui.global::<MultiplayerState>();
     if !ok {

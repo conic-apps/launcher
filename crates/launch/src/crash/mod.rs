@@ -125,11 +125,8 @@ pub fn classify_exit(
 /// crosses a thread and reaches Slint, which cannot format anything itself.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CrashReport {
-    /// The id of the instance that crashed.
     pub instance_id: String,
-    /// The instance's display name.
     pub instance_name: String,
-    /// How the process ended.
     pub exit_type: ExitType,
     /// The process's exit code, when the platform reported one. A Unix signal
     /// death has none.
@@ -165,9 +162,8 @@ pub fn analyze(
     let latest_log = match std::fs::read_to_string(&latest_log_path) {
         Ok(log) => log,
         Err(error) => {
-            // Not a missing file: a missing `latest.log` is normal for a game that
-            // died before it could write one, which is worth saying — it is the
-            // difference between "no crash report" and "no evidence at all".
+            // A missing `latest.log` is normal for a game that died before it
+            // could write one, but the distinction is worth a line.
             log::debug!(
                 "No game log at {} ({error}); the crash report will rest on the console \
                  output alone",
@@ -177,8 +173,6 @@ pub fn analyze(
         }
     };
 
-    // Prefer the exact path the game printed, then the one in its log, then the
-    // report carved out of either, then, as a last resort, the newest file.
     let named = analyzer::find_crash_report(console_log)
         .or_else(|| analyzer::find_crash_report(&latest_log));
     let extracted = analyzer::extract_crash_report(console_log)
@@ -213,9 +207,8 @@ pub fn analyze(
     } else {
         truncate(&contents, DETAILS_LIMIT)
     };
-    // The one line that says what happened, to an instance, with an exit code —
-    // `running.rs` logs the exit and the app logs the panel, but neither of those
-    // says what was actually diagnosed.
+    // The only line naming what was actually diagnosed for this instance;
+    // `running.rs` and the app log the exit but not the diagnosis.
     log::error!(
         "'{}' ended abnormally: {} ({}){}",
         instance.config.name,
@@ -240,7 +233,6 @@ pub fn analyze(
     }
 }
 
-/// A summary sentence for when the game left no crash report.
 fn fallback_summary(exit_type: ExitType, exit_code: Option<i32>) -> String {
     match exit_code {
         Some(code) => format!("Minecraft exited with code {code} ({})", exit_type.as_str()),
@@ -316,7 +308,6 @@ pub(crate) fn log_tail(root: &Path) -> Vec<String> {
     tail
 }
 
-/// Caps `text` to `limit` bytes without splitting a character.
 fn truncate(text: &str, limit: usize) -> String {
     if text.len() <= limit {
         return text.to_string();

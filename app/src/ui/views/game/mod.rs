@@ -41,7 +41,6 @@ thread_local! {
         const { RefCell::new(None) };
 }
 
-/// The controller, for use on the UI thread.
 pub(crate) fn controller() -> Rc<RefCell<GameController>> {
     CONTROLLER
         .with(|cell| cell.borrow().clone())

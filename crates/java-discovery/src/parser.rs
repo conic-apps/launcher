@@ -26,7 +26,6 @@ pub struct JavaInfoRaw {
     pub vendor: Option<String>,
     /// Raw architecture string, e.g. `amd64`.
     pub arch: Option<String>,
-    /// `java.home` reported by the runtime.
     pub java_home: Option<PathBuf>,
 }
 
@@ -80,7 +79,6 @@ pub fn parse_version_line(line: &str) -> Option<String> {
     Some(rest[start..end].to_owned())
 }
 
-/// Splits a single `key = value` line into a trimmed `(key, value)` pair.
 fn parse_property_line(line: &str) -> Option<(&str, &str)> {
     let (key, value) = line.split_once('=')?;
     let key = key.trim();
@@ -211,8 +209,6 @@ pub fn normalize_vendor(raw: &str) -> JavaVendor {
     }
 }
 
-/// Maps a raw architecture string (from `os.arch` or a release file) to a
-/// normalized [`JavaArch`].
 pub fn normalize_arch(raw: &str) -> JavaArch {
     match raw.trim().to_ascii_lowercase().as_str() {
         "amd64" | "x86_64" | "x64" | "ia64" | "x86-64" => JavaArch::X64,

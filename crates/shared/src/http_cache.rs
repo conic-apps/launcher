@@ -158,9 +158,8 @@ async fn get(url: &str, reload: bool) -> Option<Vec<u8>> {
         && let Some(entry) = &cached
         && entry.is_fresh(now())
     {
-        // The hit side of the axis was entirely absent, so "the icon came from
-        // disk" and "the icon came from the network" left the same trace. That is
-        // the first question about a slow or stale panel.
+        // The one line that tells a disk hit from a network fetch — the first
+        // question about a slow or stale panel.
         debug!(
             "Cache hit for {url}: {} bytes, stored {} second(s) ago",
             entry.bytes.len(),
@@ -368,11 +367,9 @@ fn entry_path(url: &str) -> Option<PathBuf> {
 
 /// Reads one entry, or `None` if there is nothing usable there.
 ///
-/// Every way this can fail used to be a bare `?` or `.ok()?`, so a truncated file
-/// — a crash mid-write, a full disk, a folder copied between machines — read as
-/// "not cached" and was refetched every single time with nothing to say why. The
-/// I/O case is `debug` (a file that vanishes mid-run is ordinary); a file that is
-/// there and malformed is `warn`, because that is the one that repeats forever.
+/// A file that vanishes mid-run is ordinary, so its I/O error is `debug`; a file
+/// that is there and malformed is `warn`, because that is the one that repeats
+/// forever.
 async fn read_entry(path: &Path) -> Option<Entry> {
     let bytes = match tokio::fs::read(path).await {
         Ok(bytes) => bytes,
@@ -437,8 +434,6 @@ async fn write_entry(path: &Path, entry: &Entry) -> std::io::Result<()> {
     note_written(entry.bytes.len() as u64);
     Ok(())
 }
-
-// ── Keeping the directory inside its limit ──────────────────────────────────
 
 /// What this process believes the directory holds.
 ///
@@ -547,8 +542,6 @@ fn note_written(size: u64) {
     }
 }
 
-// ── What may be fetched ─────────────────────────────────────────────────────
-
 /// Whether the launcher may send this URL.
 ///
 /// These URLs are written by whoever published the mod, so this is the line
@@ -607,12 +600,10 @@ async fn is_reachable(url: &str) -> bool {
     }
 }
 
-/// Whether this URL's scheme is one this cache will fetch.
 fn scheme_allows(parsed: &Url) -> bool {
     matches!(parsed.scheme(), "http" | "https")
 }
 
-/// Whether an address is out on the internet rather than on the user's network.
 fn is_public(address: IpAddr) -> bool {
     match address {
         IpAddr::V4(address) => is_public_v4(address),
@@ -777,8 +768,6 @@ mod tests {
         assert!(!entry(None, 1_000).is_fresh(1_000));
     }
 
-    /// The two halves of an entry share a file with no separator of their own,
-    /// so this is what keeps the length prefix honest.
     fn with_temp_dir<T>(name: &str, body: impl FnOnce(&Path) -> T) -> T {
         let dir = std::env::temp_dir().join(format!("conic-{name}-{}", std::process::id()));
         std::fs::create_dir_all(&dir).expect("a temp dir");

@@ -96,7 +96,6 @@ async fn send(url: &Url, request: reqwest::RequestBuilder) -> Result<Value> {
     })
 }
 
-/// A response is considered valid when it carries a non-empty `data` field.
 fn response_is_valid(value: &Value) -> bool {
     match value.get("data") {
         None => false,
@@ -299,7 +298,6 @@ pub fn compute_fingerprint<P: AsRef<Path>>(path: P) -> Result<u32> {
     Ok(murmur2(&normalized, 1))
 }
 
-/// MurmurHash2 (32-bit, little-endian reads).
 fn murmur2(data: &[u8], seed: u32) -> u32 {
     const M: u32 = 0x5bd1e995;
     const R: u32 = 24;

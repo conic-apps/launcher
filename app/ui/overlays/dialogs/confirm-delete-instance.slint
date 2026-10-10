@@ -20,8 +20,6 @@ import { GameTime } from "../../globals/game.slint";
 // an entry still reads these strings while the catalogues can translate them —
 // the treatment the four launch error dialogs already have.
 
-// The panel has 12px of padding; the paragraph and the buttons are separated by
-// the layout's own 16px spacing.
 component ConfirmDeleteBody inherits VerticalLayout {
     in property <length> content-width: 0px;
 
@@ -68,7 +66,6 @@ component ConfirmDeleteBody inherits VerticalLayout {
             horizontal-stretch: 1;
             text: @tr("ConfirmDeleteInstance" => "取消");
             text-color: Theme.text-inverse;
-            // A 4px radius, overriding the controller's own.
             button-radius: 4px;
             button-background: Theme.blue;
             clicked => { DeleteInstanceState.cancel(); }

@@ -124,8 +124,6 @@ export component ContentSavesPanel inherits Rectangle {
 // The close button, the stage and Escape run that outro; a click on the scrim
 // does not.
 export component ContentScreenshotsPanel inherits Rectangle {
-    /// The overlay container's size. Passed in rather than taken from `parent`,
-    /// which is the game view — the container is inset from it.
     in property <length> panel-width: 0px;
     in property <length> panel-height: 0px;
 
@@ -173,7 +171,6 @@ export component ContentScreenshotsPanel inherits Rectangle {
         triggered => { root.phase = "closed"; }
     }
 
-    // The outro plays, and the panel is dismissed when it ends.
     close-timer := Timer {
         interval: 330ms;
         running: root.closing;
@@ -241,8 +238,6 @@ export component ContentScreenshotsPanel inherits Rectangle {
                 background: transparent;
                 opacity: root.main-alpha;
 
-                // A 44px round button with a 22px chevron, the left one
-                // rotated.
                 prev-button := Rectangle {
                     x: 24px;
                     width: 44px;
@@ -363,7 +358,6 @@ export component ContentScreenshotsPanel inherits Rectangle {
             spacing: 10px;
 
             for shot[index] in ContentState.screenshots : Rectangle {
-                // The width follows the image's own ratio at the row's height.
                 width: shot.ratio * parent.height;
                 height: parent.height;
                     border-radius: 6px;
@@ -395,7 +389,6 @@ export component ContentScreenshotsPanel inherits Rectangle {
             }
     }
 
-    // A 36px round button 16px from the top-right.
     close-button := Rectangle {
         x: parent.width - 16px - self.width;
         y: 16px;
@@ -423,8 +416,6 @@ export component ContentScreenshotsPanel inherits Rectangle {
 }
 
 export component ContentModsPanel inherits Rectangle {
-    /// The overlay container's size. Passed in rather than taken from `parent`,
-    /// which is the game view — the container is inset from it.
     in property <length> panel-width: 0px;
     in property <length> panel-height: 0px;
 
@@ -432,19 +423,10 @@ export component ContentModsPanel inherits Rectangle {
     height: panel-height;
     background: transparent;
 
-    // The size the grid has to lay out in, reported from here rather than from
-    // the grid itself: a layout assigns a child's geometry without going
-    // through `changed`, so a `changed width` on the grid never fires and the
-    // cards were laid out at width 0.
-    // `changed` does not fire for the value a component is created with, and a
-    // panel is created at its final size — so the first report is `init` and
-    // the handlers only pick up a later window resize.
     init => { ContentState.grid-resized(root.width, root.height); }
     changed width => { ContentState.grid-resized(root.width, root.height); }
     changed height => { ContentState.grid-resized(root.width, root.height); }
 
-    // A list would otherwise re-mount every time it opens, which puts it back at
-    // the top; these panels stay alive, so the scroll is reset by hand.
     private property <bool> panel-open: ContentState.open-panel == "mods";
     changed panel-open => {
         if root.panel-open {
@@ -470,7 +452,6 @@ export component ContentModsPanel inherits Rectangle {
 
             select(id) => { ContentState.select-card(id); }
             open-path(id) => { ContentState.open-path(id); }
-            // The local delete button is wired to `ContentState.delete-save`.
             delete(id, title) => { ContentState.delete-save(id); }
         }
 
@@ -500,8 +481,6 @@ export component ContentModsPanel inherits Rectangle {
 
         if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0) : remote-not-found := ContentNotFound {
             show: true;
-            // 40px of padding above and below, so the block is the placeholder
-            // plus 80px.
             block-height: remote-not-found.content-height + 80px;
             description: @tr("Try adjusting keywords or filters and search again");
         }
@@ -523,7 +502,6 @@ export component ContentModsPanel inherits Rectangle {
             page-change(page) => { ContentSearch.go-to-page(page); }
         }
 
-        // The CurseForge list's own.
         ContentPagination {
             pages: ContentSearch.pages;
             current-page: ContentSearch.current-page;
@@ -535,8 +513,6 @@ export component ContentModsPanel inherits Rectangle {
 }
 
 export component ContentResourcepacksPanel inherits Rectangle {
-    /// The overlay container's size. Passed in rather than taken from `parent`,
-    /// which is the game view — the container is inset from it.
     in property <length> panel-width: 0px;
     in property <length> panel-height: 0px;
 
@@ -548,8 +524,6 @@ export component ContentResourcepacksPanel inherits Rectangle {
     changed width => { ContentState.grid-resized(root.width, root.height); }
     changed height => { ContentState.grid-resized(root.width, root.height); }
 
-    // A list would otherwise re-mount every time it opens, which puts it back at
-    // the top; these panels stay alive, so the scroll is reset by hand.
     private property <bool> panel-open: ContentState.open-panel == "resourcepacks";
     changed panel-open => {
         if root.panel-open {
@@ -575,7 +549,6 @@ export component ContentResourcepacksPanel inherits Rectangle {
 
             select(id) => { ContentState.select-card(id); }
             open-path(id) => { ContentState.open-path(id); }
-            // The local delete button is wired to `ContentState.delete-save`.
             delete(id, title) => { ContentState.delete-save(id); }
         }
 
@@ -602,8 +575,6 @@ export component ContentResourcepacksPanel inherits Rectangle {
 
         if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0) : remote-not-found := ContentNotFound {
             show: true;
-            // 40px of padding above and below, so the block is the placeholder
-            // plus 80px.
             block-height: remote-not-found.content-height + 80px;
             description: @tr("Try adjusting keywords or filters and search again");
         }
@@ -630,8 +601,6 @@ export component ContentResourcepacksPanel inherits Rectangle {
 }
 
 export component ContentPacksPanel inherits Rectangle {
-    /// The overlay container's size. Passed in rather than taken from `parent`,
-    /// which is the game view — the container is inset from it.
     in property <length> panel-width: 0px;
     in property <length> panel-height: 0px;
 
@@ -639,19 +608,10 @@ export component ContentPacksPanel inherits Rectangle {
     height: panel-height;
     background: transparent;
 
-    // The size the grid has to lay out in, reported from here rather than from
-    // the grid itself: a layout assigns a child's geometry without going
-    // through `changed`, so a `changed width` on the grid never fires and the
-    // cards were laid out at width 0.
-    // `changed` does not fire for the value a component is created with, and a
-    // panel is created at its final size — so the first report is `init` and
-    // the handlers only pick up a later window resize.
     init => { ContentState.grid-resized(root.width, root.height); }
     changed width => { ContentState.grid-resized(root.width, root.height); }
     changed height => { ContentState.grid-resized(root.width, root.height); }
 
-    // A list would otherwise re-mount every time it opens, which puts it back at
-    // the top; these panels stay alive, so the scroll is reset by hand.
     private property <bool> panel-open: ContentState.open-panel == "packs";
     changed panel-open => {
         if root.panel-open {
@@ -684,8 +644,6 @@ export component ContentPacksPanel inherits Rectangle {
 
         if !ContentState.remote-loading && ContentState.remote-cards.length == 0 : remote-not-found := ContentNotFound {
             show: true;
-            // As with the mods and resource-pack panels: 40px of padding is the
-            // block.
             block-height: remote-not-found.content-height + 80px;
             description: @tr("Try adjusting keywords or filters and search again");
         }

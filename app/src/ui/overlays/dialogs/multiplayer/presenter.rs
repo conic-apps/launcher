@@ -13,7 +13,6 @@ use download::progress::{DownloadPhase, DownloadSnapshot};
 use crate::slint_backend::MultiplayerState;
 use crate::support::formatting::bytes;
 
-/// One write to the download bar.
 #[derive(Debug, PartialEq)]
 pub(crate) struct DownloadView {
     /// "prepare" | "downloading".

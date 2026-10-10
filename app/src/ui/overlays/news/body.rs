@@ -33,7 +33,6 @@ thread_local! {
     static BODY: RefCell<Option<Body>> = const { RefCell::new(None) };
 }
 
-/// The engine, its last width, and the models the view draws.
 struct Body {
     renderer: Renderer,
     width: f32,
@@ -80,13 +79,12 @@ pub(crate) fn set_body(ui: &App, html: &str) {
     ui.global::<NewsState>()
         .set_body_mono_family(SharedString::from(mono));
     if measured {
-        push(ui);
+        push_display_list(ui);
     } else {
         clear_models(ui);
     }
 }
 
-/// Lays the document out for a width the view reported.
 pub(crate) fn layout(ui: &App, width: f32) {
     let changed = BODY.with(|slot| {
         let mut slot = slot.borrow_mut();
@@ -103,7 +101,7 @@ pub(crate) fn layout(ui: &App, width: f32) {
         }
     });
     if changed {
-        push(ui);
+        push_display_list(ui);
     }
 }
 
@@ -206,8 +204,7 @@ fn run_items(
     items
 }
 
-/// Pushes the display list into the models the panel draws.
-fn push(ui: &App) {
+fn push_display_list(ui: &App) {
     let state = ui.global::<NewsState>();
     let Some((runs, height)) = body_layout() else {
         clear_models(ui);

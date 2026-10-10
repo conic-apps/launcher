@@ -50,14 +50,12 @@ export component BeatMap inherits Rectangle {
     border-radius: root.fill ? 0 : 8px;
     background: (root.fill || root.transparent) ? Colors.transparent : Theme.mantle;
 
-    // ----- geometry -----
     private property <int> bar-count: clamp(
         floor(root.width / 1px / root.min-bar-width),
         32,
         256,
     );
     private property <length> bar-width: root.width / root.bar-count;
-    // A quarter of a bar's width, floored, at least 1px.
     private property <length> bar-gap: max(1px, floor(root.bar-width * 0.25 / 1px) * 1px);
     /// The floor that keeps a silent bar visible.
     private property <length> min-bar-height: 1px;
@@ -97,10 +95,6 @@ export component BeatMap inherits Rectangle {
             // The live branch's bar height, floored so a silent bar stays
             // visible.
             height: max(root.min-bar-height, level * root.height);
-            // The full-height gradient, drawn for the part of it this bar
-            // covers: from `lavender` at the bar's own foot to wherever the
-            // gradient is at the bar's head, which is what `level` — a fraction
-            // of the container height — is for.
             background: @linear-gradient(
                 0deg,
                 Theme.lavender 0%,
@@ -114,7 +108,6 @@ export component BeatMap inherits Rectangle {
     // ternary with a plain colour — the two do not unify into a brush, and the
     // bars come out invisible.
     if !root.live : idle := Rectangle {
-        // An integer model repeats once per bar.
         for index in root.bar-count : Rectangle {
             x: floor(index * root.bar-width / 1px) * 1px;
             y: root.height - root.idle-height;

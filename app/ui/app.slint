@@ -59,7 +59,6 @@ export component App inherits Window {
     // is handled separately (`native/macos/dock_icon.rs`): winit's window icon
     // path is a no-op there.
     icon: @image-url("assets/images/app-icon.png");
-    // Base typography, whose tokens live in `theme.slint`.
     default-font-family: Theme.font-family;
     default-font-size: Theme.font-size-base;
     default-font-weight: Theme.font-weight-normal;
@@ -133,7 +132,6 @@ export component App inherits Window {
     }
 
     quit-timer := Timer {
-        // Waits out the transition, then as much again before closing.
         interval: 500ms;
         running: root.quitting;
         triggered => { root.close(); }
@@ -302,9 +300,9 @@ export component App inherits Window {
                     close-window => { root.close(); }
                 }
 
-                // Page stack. The account view is an overlay on the game screen
-                // now, so `"accounts"` no longer names a page; the fallback
-                // catches any page value with no screen of its own.
+                // Page stack. The account view is an overlay on the game screen,
+                // not a page; the fallback catches any page value with no screen
+                // of its own.
                 //
                 // Animated at the view, not here: a page that plays its own exit
                 // keeps being mounted while `leaving-page` is set, so its elements

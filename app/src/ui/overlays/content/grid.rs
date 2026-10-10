@@ -30,7 +30,6 @@ pub(crate) fn layout(cards: &mut [ContentCard], grid_width: i32, card_height: i3
     GRID_PAD_TOP + rows * card_height + (rows - 1) * GRID_GAP + GRID_PAD_BOTTOM
 }
 
-/// The model a grid kind draws into.
 pub(crate) fn grid_model(ui: &App, grid: Grid) -> ModelRc<ContentCard> {
     let state = ui.global::<ContentState>();
     match grid {

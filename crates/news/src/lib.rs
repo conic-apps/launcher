@@ -131,7 +131,6 @@ pub struct ChangelogEntry {
     pub content_path: String,
 }
 
-/// The raw shape of one news entry, as it is on the wire.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct RawNewsItem {
@@ -146,7 +145,6 @@ struct RawNewsItem {
     news_type: Vec<String>,
 }
 
-/// The raw shape of one changelog-index entry.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct RawChangelogEntry {
@@ -161,8 +159,7 @@ struct RawChangelogEntry {
     content_path: String,
 }
 
-/// One image reference. The changelog index prints no dimensions, so the field
-/// is optional.
+/// The changelog index prints no dimensions, so the field is optional.
 #[derive(Debug, Deserialize)]
 struct RawImage {
     url: String,
@@ -176,7 +173,6 @@ struct Dimensions {
     height: u32,
 }
 
-/// The feed's own dimensions, or the shape the source always is.
 fn dimensions(image: &RawImage, fallback: (u32, u32)) -> (u32, u32) {
     image
         .dimensions
@@ -197,7 +193,6 @@ struct Feed<T> {
     entries: Vec<T>,
 }
 
-/// The full HTML body of one changelog.
 #[derive(Debug, Deserialize)]
 struct RawChangelogBody {
     body: String,
@@ -238,10 +233,8 @@ fn date_parts(date: &str) -> (u16, u8, u8) {
 /// Fetches `url` and decodes it as JSON, recording what the server said.
 ///
 /// These three requests do not go through `shared::http_cache`, so each one is a
-/// real round trip every time the news overlay opens — and none of them carried a
-/// log line at all, which left the app's two `error!` messages in
-/// `usecases::news` as the only evidence a fetch ever happened. The status code is
-/// what tells a proxy error page apart from Mojang being down.
+/// real round trip every time the news overlay opens; the status code is what
+/// tells a proxy error page apart from Mojang being down.
 async fn fetch_json<T: serde::de::DeserializeOwned>(url: &str) -> Result<T> {
     let response = HTTP_CLIENT.get(url).send().await.map_err(|error| {
         log::warn!("{url} could not be reached: {error}");

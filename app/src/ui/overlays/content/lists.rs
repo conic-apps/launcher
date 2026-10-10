@@ -17,7 +17,7 @@ use super::*;
 /// of every world to show five of them is the kind of work that should follow
 /// the panel, not the selection.
 pub(crate) fn project_saves(ui: &App) {
-    let instance = instance(ui);
+    let instance = current_instance(ui);
     let Some(levels) = cache::saves(&instance) else {
         return;
     };
@@ -43,8 +43,7 @@ pub(crate) fn project_saves(ui: &App) {
     });
 }
 
-/// The instance the overlay is showing, which is the game view's current one.
-fn instance(ui: &App) -> String {
+fn current_instance(ui: &App) -> String {
     ui.global::<GameState>().get_current_id().to_string()
 }
 
@@ -140,7 +139,7 @@ pub(crate) fn translated_tag(kind: &str) -> PendingTag {
 /// The jar-in-jar mods are gone before they got here: [`cache::mods`] filters
 /// them, which is the same filter the summary's count came from.
 pub(crate) fn project_local_mods(ui: &App) {
-    let Some(mods) = cache::mods(&instance(ui)) else {
+    let Some(mods) = cache::mods(&current_instance(ui)) else {
         return;
     };
     let cards: Vec<PendingCard> = mods.iter().map(local_mod_card).collect();
@@ -222,9 +221,8 @@ pub(crate) fn capitalize(key: &str) -> String {
     }
 }
 
-/// The resource-pack grid, from the shared cache.
 pub(crate) fn project_local_resourcepacks(ui: &App) {
-    let Some(packs) = cache::resourcepacks(&instance(ui)) else {
+    let Some(packs) = cache::resourcepacks(&current_instance(ui)) else {
         return;
     };
     let cards: Vec<PendingCard> = packs.iter().map(resourcepack_card).collect();
@@ -273,7 +271,7 @@ pub(crate) fn resourcepack_card(pack: &content::resourcepack::Resourcepack) -> P
 /// the same memo the previews read, so a screenshot that was on the summary
 /// costs nothing here.
 pub(crate) fn project_screenshots(ui: &App) {
-    let Some(paths) = cache::screenshots(&instance(ui)) else {
+    let Some(paths) = cache::screenshots(&current_instance(ui)) else {
         return;
     };
     let weak = ui.as_weak();

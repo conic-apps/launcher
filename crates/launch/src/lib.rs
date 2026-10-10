@@ -80,34 +80,17 @@ pub enum LaunchProgress {
 /// The output port [`launch`] reports through.
 pub type LaunchSink = Sink<LaunchProgress>;
 
-/// Represents a log message associated with a specific instance.
 #[derive(Clone, Serialize)]
 pub struct Log {
-    /// The UUID of the instance this log belongs to.
     #[serde(rename = "instanceName")]
     pub instance_id: Uuid,
 
-    /// The content of the log message.
     pub content: String,
 }
 
-/// Launches a Minecraft instance.
+/// Launches a Minecraft instance, returning the spawned process's PID.
 ///
-/// # Arguments
-/// * `config` - The launcher configuration (account, launch and download settings).
-/// * `instance` - The Minecraft instance to launch.
-/// * `sink` - The output port the progress is reported through.
-///
-/// # Returns
-/// * `Ok(u32)` - The PID of the spawned Minecraft process.
-/// * `Err(Error)` - The failure that stopped the launch.
-///
-/// # Side Effects
-/// * Optionally checks files before launch.
-/// * Spawns the Minecraft process and generates launch script.
-///
-/// `sink` is the port the progress is reported through; the caller aborts the
-/// task to cancel the launch.
+/// The caller aborts the task to cancel a launch in progress.
 pub async fn launch(config: Config, instance: Instance, sink: LaunchSink) -> Result<u32> {
     let reporter = Arc::new(ChangeReporter::new(sink));
     reporter.report(LaunchProgress::Prepare);
@@ -143,11 +126,8 @@ pub async fn launch(config: Config, instance: Instance, sink: LaunchSink) -> Res
     }
 
     info!("Generating startup parameters");
-    // This is where the version id stops being the *requested* one and becomes
-    // the resolved one, after the whole `inheritsFrom` chain has been walked.
-    // Only the requested id was ever logged — the banner further down included
-    // the same one — so the id the game actually runs under was nowhere in the
-    // log.
+    // The id becomes the resolved one here, after the whole `inheritsFrom`
+    // chain has been walked, so log that rather than only the requested id.
     let requested_version_id = instance.get_version_id()?;
     info!(
         "Resolving {requested_version_id} from {}",
@@ -179,8 +159,8 @@ pub async fn launch(config: Config, instance: Instance, sink: LaunchSink) -> Res
     reporter.report(LaunchProgress::GenerateScriptlet);
     let launch_options = LaunchOptions::new(&config, &instance, resolved_java.arch)?;
     if let Account::Yggdrasil(account) = &launch_options.selected_account {
-        // This stage runs on every Yggdrasil launch and the module it calls logs
-        // nothing at all, so "the injector could not be installed" was silent.
+        // The module this calls logs nothing, so a failed injector install would
+        // otherwise be silent.
         log::info!(
             "Ensuring the authlib-injector is current for the Yggdrasil account {}",
             account.identifier
@@ -255,11 +235,9 @@ fn quote_shell_arg(argument: &str) -> String {
 
 /// Builds the `java …` command line for the launch script.
 ///
-/// Every argument is shell-quoted, and an empty one is dropped. The drop
-/// matters: once quoting wraps each argument, an empty `extra_jvm_args` becomes
-/// an explicit empty word, and `java` reads the first non-option word as the
-/// main class — so it used to fail with `Could not find or load main class` and
-/// no name, and a non-zero exit the crash screen would blame on the game.
+/// Every argument is shell-quoted; an empty one is dropped, because once quoting
+/// wraps each argument an empty `extra_jvm_args` becomes an explicit empty word
+/// and `java` reads the next word as the main class.
 fn build_launch_command(java_path: &Path, command_arguments: &[String]) -> String {
     let mut command = match PLATFORM_INFO.os_family {
         OsFamily::Windows => String::new(),
@@ -278,19 +256,8 @@ fn build_launch_command(java_path: &Path, command_arguments: &[String]) -> Strin
     command
 }
 
-/// Spawns the Minecraft process by generating and executing a launch script,
-/// customized per operating system and instance configuration.
-///
-/// # Arguments
-/// * `command_arguments` - A list of parsed arguments.
-/// * `launch_options` - Launch customization options (pre/post-execution hooks, wrappers, etc.).
-/// * `instance` - The instance metadata and configuration.
-///
-/// # Behavior
-/// * Creates a platform-specific shell script/batch file for launching the game.
-/// * Runs the generated script using a subprocess.
-/// * Streams stdout to detect key launch indicators and reports them through
-///   `reporter`.
+/// Writes and runs the platform-specific launch script, streaming the game's
+/// stdout to latch the start markers reported through `reporter`.
 async fn spawn_minecraft_process(
     command_arguments: Vec<String>,
     launch_options: LaunchOptions,
@@ -331,11 +298,9 @@ async fn spawn_minecraft_process(
         commands.push_str(&format!("{} ", launch_options.wrap_command));
     }
     // todo(after java exec): add -Dfile.encoding=encoding.name() and other
-    // The launch line, minus the secret. `command_arguments` carries the
-    // Minecraft access token (see `arguments.rs`), so the *whole* line is
-    // deliberately never logged — only the executable, the main class and how
-    // many arguments follow, which is what a "why did it not start" question
-    // actually needs. `debug!` keeps the detail out of a release log.
+    // The access token rides in `command_arguments` (see `arguments.rs`), so the
+    // whole line is never logged — only the executable, the main class and the
+    // argument count.
     let launch_command = build_launch_command(&java_path, &command_arguments);
     info!(
         "Launching {} with {} argument(s){}",
@@ -373,9 +338,9 @@ async fn spawn_minecraft_process(
         info!("Running chmod +x {}", script_path.display());
         let mut chmod = Command::new("chmod");
         chmod.args(["+x", script_path.to_string_lossy().to_string().as_ref()]);
-        // The status was discarded, so a `chmod` that fails — a read-only mount,
-        // a filesystem without the bit — left a non-executable script and the
-        // only symptom was the `bash` spawn failing a line later.
+        // A failed `chmod` (read-only mount, filesystem without the bit) leaves
+        // a non-executable script whose only symptom is the `bash` spawn
+        // failing.
         let chmod_status = chmod.status()?;
         if !chmod_status.success() {
             log::warn!(
@@ -413,11 +378,8 @@ async fn spawn_minecraft_process(
             watcher_game_up.store(true, Ordering::SeqCst);
         }
         if line.contains("OpenAL initialized") {
-            // `info` like the LWJGL marker above: these three latch `game_up` and
-            // end the 20-second wait, so each one is a launch milestone. They were
-            // only reported to the UI, and the game's own stdout is `debug!` —
-            // so in a release build the log showed nothing between "Spawning" and
-            // whatever came after.
+            // Logged at `info` like the LWJGL marker: it latches `game_up` and
+            // ends the 20-second wait, so it is a launch milestone.
             info!("The game reported {line}");
             watcher_reporter.report(LaunchProgress::LogOpenALLoaded);
             watcher_game_up.store(true, Ordering::SeqCst);
@@ -430,10 +392,6 @@ async fn spawn_minecraft_process(
             watcher_game_up.store(true, Ordering::SeqCst);
         }
     });
-    // The wait was entirely silent: not when it began, not when a marker latched,
-    // and — worst — not when twenty seconds passed with nothing. A game that dies
-    // during startup therefore produced no line at all between "Spawning" and
-    // `running.rs` seeing the process exit.
     info!("Waiting up to 20 seconds for the game to report that it started");
     let start = Instant::now();
     while start.elapsed().as_secs() < 20 {
@@ -452,10 +410,8 @@ async fn spawn_minecraft_process(
              whatever it printed is above and its exit, if any, is below"
         );
     }
-    // The hook used to run unconditionally with its `spawn()` result discarded,
-    // so a misconfigured command failed invisibly — and with the default empty
-    // setting this spawned an empty `cmd /C ` or `sh -c ` on every single launch,
-    // which the log said nothing about either.
+    // Run the hook only when set: the default empty value would otherwise spawn
+    // an empty `cmd /C ` / `sh -c ` on every launch.
     if launch_options.execute_after_launch.trim().is_empty() {
         log::debug!("No after-launch command is configured");
     } else {

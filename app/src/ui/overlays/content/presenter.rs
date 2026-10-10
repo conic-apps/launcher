@@ -13,7 +13,6 @@ use download::progress::DownloadSnapshot;
 use crate::slint_backend::ContentState;
 use crate::support::formatting::bytes;
 
-/// One write to the detail panel's download progress.
 #[derive(Debug, PartialEq)]
 pub(crate) struct ContentDownloadView {
     value: f32,

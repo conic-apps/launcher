@@ -58,7 +58,6 @@ pub struct TrackSource {
     duration: f64,
     /// How far into the track the reader is, in seconds.
     position: f64,
-    /// The reader has no more audio.
     finished: bool,
 }
 
@@ -161,7 +160,6 @@ impl TrackSource {
         self.position
     }
 
-    /// Whether the reader has run out of audio.
     pub fn finished(&self) -> bool {
         self.finished
     }
@@ -377,8 +375,6 @@ mod tests {
         }
     }
 
-    /// Reads a whole track, in whatever stretches `decode_into` yields, and
-    /// returns the samples.
     fn drain(source: &mut TrackSource) -> Vec<i16> {
         let mut out = Vec::new();
         while !source.finished() {

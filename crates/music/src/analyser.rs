@@ -49,7 +49,6 @@ pub struct Analyser {
 }
 
 impl Analyser {
-    /// A new analyser with the given `fftSize`.
     pub fn new(fft_size: usize) -> Self {
         let fft_size = normalize_fft_size(fft_size);
         let mut analyser = Self {

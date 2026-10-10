@@ -79,11 +79,9 @@ export component TooltipOverlay inherits Rectangle {
         triggered => { root.phase = "closed"; }
     }
 
-    // The panel's own size, from the text it holds.
     private property <length> panel-width: label.preferred-width + 2 * root.padding-h;
     private property <length> panel-height: label.preferred-height + 2 * root.padding-v;
 
-    // Which side of the pointer the panel has room for.
     private property <bool> flip-x:
         TooltipState.pointer-x + root.offset-x + root.panel-width > root.width - root.edge-margin;
     private property <bool> flip-y:

@@ -6,13 +6,7 @@ use fastnbt::Value;
 
 use crate::error::*;
 
-/// Modify nbt settings
-///
-/// # Args
-/// * `nbt_value` - nbt value, for more info, see [hematite-nbt crate](https://crates.io/crates/hematite-nbt)
-/// * `target` - You need to use `:` to connect the path. For example, if you want to modify the
-///   value of `seed`, you can to use `Data:world_gen_settings:seed`.
-/// * `value` - The value you want to modify
+/// Modify the value at a colon-separated path, e.g. `Data:world_gen_settings:seed`.
 pub fn modify_nbt(nbt_value: Value, target: &str, value: Value) -> Result<Value> {
     let path: Vec<&str> = target.split(':').collect();
     let mut nbt_value = nbt_value.clone();

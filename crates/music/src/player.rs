@@ -101,9 +101,7 @@ pub struct PlayerState {
     pub duration: f64,
     /// Whether the device is being fed samples.
     pub is_playing: bool,
-    /// The `shuffle` flag.
     pub shuffle: bool,
-    /// The `repeat` flag.
     pub repeat: bool,
     /// The last failure, to show in the UI.
     pub error: Option<String>,
@@ -119,7 +117,6 @@ pub struct PlayerState {
 }
 
 impl PlayerState {
-    /// The selected track, if any.
     pub fn current_track(&self) -> Option<&MusicFile> {
         self.current_index.and_then(|index| self.tracks.get(index))
     }
@@ -337,9 +334,7 @@ impl GraphState {
         })
     }
 
-    /// Records that the position was written, so it is not written again
-    /// immediately.
-    fn persisted(&mut self) {
+    fn mark_persisted(&mut self) {
         self.last_persisted = Some(Instant::now());
     }
 
@@ -354,7 +349,6 @@ impl GraphState {
         (state >> 11) as f64 / (1u64 << 53) as f64
     }
 
-    /// Stops feeding the device.
     fn pause(&mut self) {
         self.playing = false;
     }
@@ -418,7 +412,7 @@ fn take_session(graph: &Graph) -> Option<SavedTrack> {
     let mut state = lock(&graph.state);
     let save = state.pending_session();
     if save.is_some() {
-        state.persisted();
+        state.mark_persisted();
     }
     save
 }
@@ -452,9 +446,8 @@ impl Player {
     /// silent whenever nothing plays, so no lazy creation is needed.
     pub fn new() -> Result<Player> {
         let host = cpal::default_host();
-        // Every failure below used to surface as a bare `Error::Output`, and the
-        // app's own line ("background music is unavailable") names none of the
-        // device, its rate or its format — which is what decides whether a
+        // The app's own line ("background music is unavailable") names neither
+        // the device, its rate nor its format, which is what decides whether a
         // particular audio setup can work at all.
         let device = host.default_output_device().ok_or_else(|| {
             log::error!("no default audio output device was found");
@@ -485,8 +478,8 @@ impl Player {
         let worker = Arc::clone(&graph);
         // Returned as an error rather than panicking: a worker that could not
         // start is a silent background feature, not a reason to take the app down.
-        // The handle is detached, as it was before: the worker ends when its
-        // command channel closes, and it holds the audio graph.
+        // The handle is detached; the worker ends when its command channel closes,
+        // and it holds the audio graph.
         std::thread::Builder::new()
             .name("conic-music".into())
             .spawn(move || worker_loop(worker, receiver))
@@ -502,7 +495,6 @@ impl Player {
         })
     }
 
-    /// The playlist.
     pub fn tracks(&self) -> Arc<Vec<MusicFile>> {
         Arc::clone(&lock(&self.graph.state).tracks)
     }
@@ -524,17 +516,14 @@ impl Player {
         }
     }
 
-    /// Which track is selected, or `None`.
     pub fn current_index(&self) -> Option<usize> {
         lock(&self.graph.state).current_index
     }
 
-    /// How far into the current track, in seconds.
     pub fn current_time(&self) -> f64 {
         lock(&self.graph.state).cursor
     }
 
-    /// Whether the device is being fed samples.
     pub fn is_playing(&self) -> bool {
         lock(&self.graph.state).playing
     }
@@ -622,7 +611,6 @@ impl Player {
         save_position(&self.graph);
     }
 
-    /// Plays the next track.
     pub fn next(&self) {
         let (count, shuffle, index) = {
             let state = lock(&self.graph.state);
@@ -676,19 +664,16 @@ impl Player {
         self.graph.signal.notify_all();
     }
 
-    /// Seeks to `ratio` of the track's duration.
     pub fn seek_ratio(&self, ratio: f64) {
         let duration = lock(&self.graph.state).duration;
         self.seek(ratio * duration);
     }
 
-    /// Toggles shuffle.
     pub fn toggle_shuffle(&self) {
         let mut state = lock(&self.graph.state);
         state.shuffle = !state.shuffle;
     }
 
-    /// Toggles repeat.
     pub fn cycle_repeat(&self) {
         let mut state = lock(&self.graph.state);
         state.repeat = !state.repeat;
@@ -845,7 +830,7 @@ fn worker_loop(graph: Arc<Graph>, commands: Receiver<Command>) {
                     continue;
                 }
                 Fed::Interrupted(command) => {
-                    apply(&graph, &mut source, &mut resampler, command);
+                    apply_command(&graph, &mut source, &mut resampler, command);
                     continue;
                 }
             }
@@ -857,12 +842,11 @@ fn worker_loop(graph: Arc<Graph>, commands: Receiver<Command>) {
             break;
         };
         let command = coalesce(command, &commands);
-        apply(&graph, &mut source, &mut resampler, command);
+        apply_command(&graph, &mut source, &mut resampler, command);
     }
 }
 
-/// Carries out one command.
-fn apply(
+fn apply_command(
     graph: &Graph,
     source: &mut Option<TrackSource>,
     resampler: &mut Resampler,
@@ -1150,7 +1134,6 @@ fn feed(
     }
 }
 
-/// Moves the reader to `seconds` on the worker's behalf.
 fn service_seek(
     graph: &Graph,
     track: &mut TrackSource,
@@ -1182,7 +1165,6 @@ fn service_seek(
     graph.signal.notify_all();
 }
 
-/// The selected track's path, for a log line.
 fn track_path(graph: &Graph) -> String {
     let state = lock(&graph.state);
     state
@@ -1330,7 +1312,6 @@ thread_local! {
     static CONVERSION: RefCell<Vec<f32>> = const { RefCell::new(Vec::new()) };
 }
 
-/// Opens the device stream and its callback.
 fn build_stream(
     device: &cpal::Device,
     config: &cpal::SupportedStreamConfig,

@@ -27,8 +27,6 @@ component SourceButton inherits Rectangle {
         : touch.has-hover ? Theme.surface-0
         : (root.active ? Theme.surface-2 : transparent);
 
-    // Blue for local, green for Modrinth, peach for CurseForge, and otherwise
-    // the body text at 70%.
     private property <color> tint:
         !root.active ? Theme.default-text-color.transparentize(0.3)
         : root.source == "local" ? Theme.blue

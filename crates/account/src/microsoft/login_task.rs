@@ -94,8 +94,6 @@ pub(crate) async fn login_with_auth_code(
     finish_login(access_token, refresh_token, reporter).await
 }
 
-/// Runs the device-code login flow: requests a device code, waits for the user
-/// to authorize it on any device, then completes the authentication chain.
 pub(crate) async fn login_with_device_code(reporter: &LoginReporter) -> Result<MicrosoftAccount> {
     reporter.report(LoginEvent::RequestDeviceCode);
     let response = device_code::request_device_code().await?;
@@ -114,8 +112,8 @@ pub(crate) async fn login_with_device_code(reporter: &LoginReporter) -> Result<M
         tokio::time::sleep(interval).await;
         polls += 1;
         if Instant::now() >= deadline {
-            // The user-visible outcome of the wait, and it used to be the one exit
-            // from this loop with nothing written down at all.
+            // The user-visible outcome of the wait, recorded like the other
+            // terminal ones.
             log::info!(
                 "the device code expired after {polls} poll(s) over {} seconds",
                 response.expires_in
@@ -149,9 +147,8 @@ pub(crate) async fn login_with_device_code(reporter: &LoginReporter) -> Result<M
             "authorization_pending" => {
                 log::debug!("poll {polls}: still waiting for the user (next in {interval:?})")
             }
-            // RFC 8628: back off by 5s, for this and every later poll. This is the
-            // one OAuth state that changes the loop's behaviour, and it was the
-            // only one that happened without a word.
+            // RFC 8628: back off by 5s, for this and every later poll — the one
+            // OAuth state that changes the loop's behaviour.
             "slow_down" => {
                 interval += Duration::from_secs(5);
                 log::debug!(

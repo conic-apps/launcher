@@ -37,7 +37,6 @@
 
 use std::sync::mpsc::{Receiver, Sender, channel};
 
-/// Unused on Linux, where the bus carries the two fields as method arguments.
 mod framing;
 
 #[cfg(target_os = "linux")]

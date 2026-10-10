@@ -39,7 +39,6 @@ export struct MdItem {
     /// The name of the palette slot this item takes its colour from, resolved by
     /// `MarkdownColors.resolve`.
     color: string,
-    /// A `rect` item's corner radius.
     radius: length,
     /// Whether a `rect` item is filled at all. A table cell that has no
     /// background of its own is an outline and nothing else.
@@ -315,7 +314,6 @@ component MdSectionRow inherits Rectangle {
     border-top-right-radius: chunk.head-radius;
     border-bottom-left-radius: chunk.head-radius;
     border-bottom-right-radius: chunk.head-radius;
-    // The three states of a settings row, and its 50ms transition.
     background: touch.pressed ? palette.details-head-active
         : touch.has-hover ? palette.details-head-hover
         : palette.details-head;
@@ -460,8 +458,6 @@ export component MarkdownView inherits Rectangle {
     in-out property <string> hovered-link: "";
     /// A link was clicked. The parameter is its URL.
     callback link-clicked(string);
-
-    // ----- <details> -----
 
     /// Which runs are open, index-aligned with `chunks`. A run that is not a
     /// section has nothing to open, and the value it holds is never read.

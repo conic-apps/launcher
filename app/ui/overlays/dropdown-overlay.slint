@@ -163,8 +163,6 @@ export component DropdownOverlay inherits Rectangle {
 
             for option in Dropdown.options : Rectangle {
                 height: 26px;
-                // The controller radius: 4px in Latte rather than the 6px the
-                // dark flavors use.
                 border-radius: Theme.controllers-border-radius;
                 background: Dropdown.current == option.key ? #ffffff17
                     : option-touch.has-hover ? #ffffff1f

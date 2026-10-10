@@ -29,12 +29,7 @@ pub fn host_java_arch() -> JavaArch {
     }
 }
 
-/// The error for a platform Mojang publishes no runtime folder for.
-///
-/// Three separate platform arms can reach this, and each named nothing — so
-/// "the Mojang runtime was not used" had no way to say that the platform itself
-/// was the reason.
-fn no_runtime_folder() -> Error {
+fn no_runtime_folder_error() -> Error {
     log::warn!(
         "Mojang publishes no launcher-managed runtime for {:?}/{:?}",
         PLATFORM_INFO.os_family,
@@ -52,17 +47,17 @@ pub fn get_installation_directory(java_component: &str) -> Result<PathBuf> {
             OsArch::X64 => "windows_x64",
             OsArch::X86 => "windows_x86",
             OsArch::Aarch64 => "windows_arm64",
-            _ => return Err(no_runtime_folder()),
+            _ => return Err(no_runtime_folder_error()),
         },
         OsFamily::Linux => match PLATFORM_INFO.arch {
             OsArch::X64 => "linux_amd64",
             OsArch::X86 => "linux_i386",
-            _ => return Err(no_runtime_folder()),
+            _ => return Err(no_runtime_folder_error()),
         },
         OsFamily::Macos => match PLATFORM_INFO.arch {
             OsArch::X64 => "macos_x64",
             OsArch::Aarch64 => "macos_arm64",
-            _ => return Err(no_runtime_folder()),
+            _ => return Err(no_runtime_folder_error()),
         },
     };
     log::debug!(

@@ -105,7 +105,6 @@ export component MultiplayerExtension inherits Rectangle {
     height: 100%;
     background: transparent;
 
-    // 600 for the manager, otherwise the component's own width.
     private property <length> dialog-width: MultiplayerState.component == "multiplayerManager"
         ? 600px
         : MultiplayerState.component == "downloadProgress" ? 480px : 580px;
