@@ -52,9 +52,6 @@ pub enum Error {
         shared::UrlExtError,
     ),
 
-    #[error("Chunk length mismatch")]
-    ChunkLengthMismatch,
-
     #[error(transparent)]
     JsonParse(
         #[from]
@@ -77,7 +74,6 @@ impl From<download::Error> for Error {
             download::Error::ChecksumMissmatch(error) => Self::ChecksumMissmatch(error),
             download::Error::Network(error) => Self::Network(error),
             download::Error::UrlParse(error) => Self::UrlParse(error),
-            download::Error::ChunkLengthMismatch => Self::ChunkLengthMismatch,
             download::Error::Aborted(error) => Self::Aborted(error),
         }
     }
