@@ -390,13 +390,17 @@ fn decompression_all<R: Read + io::Seek, S: AsRef<OsStr> + ?Sized>(
     for i in 0..zip_archive.len() {
         let mut zip_file = zip_archive.by_index(i)?;
         let name = zip_file.name().to_string();
+        if zip_file.is_dir() {
+            // Under `to`, not relative to the process working directory: this used
+            // to create every directory entry in the directory the launcher
+            // happened to be started from, and an unwritable one aborted the
+            // whole extraction before a single library was unpacked.
+            std::fs::create_dir_all(to.join(&name))?;
+            continue;
+        }
         let path = to.join(&name);
         let mut entry_content = vec![];
         zip_file.read_to_end(&mut entry_content)?;
-        if zip_file.is_dir() {
-            std::fs::create_dir_all(zip_file.name())?;
-            continue;
-        }
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent)?;
         }

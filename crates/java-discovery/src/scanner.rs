@@ -302,13 +302,12 @@ fn path_separator() -> char {
     }
 }
 
-#[allow(dead_code)]
+#[cfg(not(target_os = "windows"))]
 fn home_dir() -> Option<PathBuf> {
-    #[cfg(target_os = "windows")]
-    let home = env::var("USERPROFILE").ok();
-    #[cfg(not(target_os = "windows"))]
-    let home = env::var("HOME").ok();
-    home.filter(|home| !home.is_empty()).map(PathBuf::from)
+    env::var("HOME")
+        .ok()
+        .filter(|home| !home.is_empty())
+        .map(PathBuf::from)
 }
 
 fn collect_candidates(options: &ScanOptions) -> Vec<PathBuf> {

@@ -51,9 +51,6 @@ pub enum Error {
         reqwest::Error,
     ),
 
-    #[error("Chunk length mismatch")]
-    ChunkLengthMismatch,
-
     #[error("No suitable Java runtime found")]
     NoSuitableJavaRuntime,
 
@@ -120,7 +117,6 @@ impl From<download::Error> for Error {
             download::Error::Io(e) => Self::Io(e),
             download::Error::ChecksumMissmatch(e) => Self::ChecksumMissmatch(e),
             download::Error::Network(e) => Self::Network(e),
-            download::Error::ChunkLengthMismatch => Self::ChunkLengthMismatch,
             download::Error::UrlParse(_) => Self::Other,
             download::Error::Aborted(error) => Self::Aborted(error),
         }
