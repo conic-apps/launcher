@@ -42,8 +42,24 @@ Windows; plus a "test" job that is `cargo test --all --release --verbose --all-t
   renderers.
 - File header convention: `// Conic Launcher` / copyright /
   `// SPDX-License-Identifier: GPL-3.0-only`.
-- Comment density is a house style here: explain _why_, and the alternatives that were rejected.
-  Match it.
+
+## Comments
+
+- A comment carries _why_, never _what_: the intent, the constraint, the rejected alternative, the
+  consequence worth warning about. If you cannot say it without restating the code, the code is what
+  needs fixing — a clearer name or a smaller function beats a comment every time, and the best
+  comment is the one you found a way not to write.
+- An inaccurate or misleading comment is worse than none: it is read as truth and outlives the code
+  it described. When a comment and its code disagree, the code is right — fix or delete the comment.
+- Keep a comment next to the code it describes, about that code, and make the link to it obvious. Do
+  not reach across the system from a local comment, and do not restate the obvious.
+- Put the long rationale in the module's `//!` doc; keep an inline `//` to a line or two. Never
+  narrate change history (the commit and the PR own that), leave commented-out code, sign a comment,
+  or comment an item only because it exists.
+- Document a public crate API; do not give every private helper a header — a short function with a
+  good name says more. A `// TODO` may mark known work, but it is not an excuse to leave code broken.
+- The file header (copyright / SPDX) is the one comment that is not about the code.
+
 
 ## UI conventions
 
