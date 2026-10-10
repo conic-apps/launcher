@@ -142,6 +142,10 @@ jobs:
           CONIC_UPDATE_SIGNING_KEY: ${{ secrets.CONIC_UPDATE_SIGNING_KEY }}
           CONIC_UPDATE_SIGNING_KEY_PASSWORD: ${{ secrets.CONIC_UPDATE_SIGNING_KEY_PASSWORD }}
           CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+          # Read at compile time by `crates/multiplayer/build.rs`, which derives
+          # this build's Conic Nexus key from it and registers it. Unset just
+          # means the key is not registered.
+          BUILD_API_KEY: ${{ secrets.BUILD_API_KEY }}
         run: |
           # `APPIMAGE_EXTRACT_AND_RUN=1` because a runner cannot mount a squashfs
           # image without FUSE. It affects this step only; the artifact still
@@ -244,6 +248,8 @@ jobs:
           CONIC_UPDATE_SIGNING_KEY: ${{ secrets.CONIC_UPDATE_SIGNING_KEY }}
           CONIC_UPDATE_SIGNING_KEY_PASSWORD: ${{ secrets.CONIC_UPDATE_SIGNING_KEY_PASSWORD }}
           CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+          # Read at compile time by `crates/multiplayer/build.rs` (see the Linux job).
+          BUILD_API_KEY: ${{ secrets.BUILD_API_KEY }}
         run: tools/package-macos.sh
 
       - name: Inspect the app
@@ -371,6 +377,8 @@ jobs:
           # Read at compile time by `crates/curseforge/build.rs`; unset just means
           # the official CurseForge API is unauthenticated.
           CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+          # Read at compile time by `crates/multiplayer/build.rs` (see the Linux job).
+          BUILD_API_KEY: ${{ secrets.BUILD_API_KEY }}
           # Signs the portable exe and the MSI for the self-updater.
           CONIC_UPDATE_SIGNING_KEY: ${{ secrets.CONIC_UPDATE_SIGNING_KEY }}
           CONIC_UPDATE_SIGNING_KEY_PASSWORD: ${{ secrets.CONIC_UPDATE_SIGNING_KEY_PASSWORD }}
