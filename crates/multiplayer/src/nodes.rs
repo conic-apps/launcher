@@ -8,6 +8,7 @@
 use std::time::Duration;
 
 use log::warn;
+use once_cell::sync::OnceCell;
 use serde::Deserialize;
 use shared::HTTP_CLIENT;
 
@@ -20,19 +21,38 @@ const NODES_ENDPOINT: &str = "https://api.conicmc.app/easytier/nodes";
 /// its own deadline rather than the shared client's unbounded one.
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 
+/// The node list, fetched at most once for the life of the process. It is the
+/// same for every session, so a later session — a re-opened dialog, a room left
+/// and created again — reuses this rather than asking the server again.
+///
+/// Failures are memoized too: an attempt that came back empty is not retried
+/// until the app restarts, which trades one transient outage's missing nodes for
+/// never hammering the endpoint.
+static PUBLIC_NODES: OnceCell<Vec<String>> = OnceCell::new();
+
 /// Only the field the session needs; the server also sends a name, description
-/// and region.
+/// and region, which serde ignores.
 #[derive(Deserialize)]
 struct Node {
     url: String,
 }
 
-/// The `url` of every public node the server advertises.
+/// The `url` of every public node the server advertises, fetched once and then
+/// served from [`PUBLIC_NODES`].
+pub(crate) async fn fetch_public_nodes() -> Vec<String> {
+    if let Some(nodes) = PUBLIC_NODES.get() {
+        return nodes.clone();
+    }
+    let nodes = request_public_nodes().await;
+    PUBLIC_NODES.get_or_init(|| nodes).clone()
+}
+
+/// One attempt at the server.
 ///
 /// A build without a key, an unreachable server or an unparsable body all yield
 /// an empty list after a warning: the session can still start and connect
 /// peer-to-peer, so none of them is worth failing the caller over.
-pub(crate) async fn fetch_public_nodes() -> Vec<String> {
+async fn request_public_nodes() -> Vec<String> {
     if API_KEY.is_empty() {
         warn!("No Conic Nexus API key is baked in; the public node list is skipped");
         return Vec::new();
