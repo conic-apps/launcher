@@ -7,7 +7,11 @@ import { AppIcon } from "../../components/display/app-icon.slint";
 import { Loading } from "../../components/controls/loading.slint";
 import { WorldMap } from "world-map.slint";
 import { WorldMapState } from "../../globals/worldmap.slint";
-import { CardTag, ContentCard as CardData, ContentText } from "../../globals/content.slint";
+import {
+    CardTag,
+    ContentCard as CardData,
+    ContentText,
+} from "../../globals/content.slint";
 import { GameState, GameTime } from "../../globals/game.slint";
 
 // One card of a content grid, shared by all nine grids — the two local lists,
@@ -75,6 +79,7 @@ component ActionButton inherits Rectangle {
             : Theme.default-text-color.transparentize(0.1);
     }
 }
+
 component TagChip inherits Rectangle {
     in property <CardTag> tag;
 
@@ -85,11 +90,11 @@ component TagChip inherits Rectangle {
         tag.kind == "command-enabled" || tag.kind == "last-played" ? 4px : 0px;
     private property <length> margin-after:
         tag.kind == "version"
-            || tag.kind == "loader-fabric"
-            || tag.kind == "loader-forge"
-            || tag.kind == "loader-neoforge"
-            || tag.kind == "loader-quilt"
-            || tag.kind == "loader-liteloader" ? 4px
+        || tag.kind == "loader-fabric"
+        || tag.kind == "loader-forge"
+        || tag.kind == "loader-neoforge"
+        || tag.kind == "loader-quilt"
+        || tag.kind == "loader-liteloader" ? 4px
         : 0px;
 
     // One line box for the run — the info block's 16px strut — with a 13px
@@ -104,7 +109,7 @@ component TagChip inherits Rectangle {
     // resolves itself, for the same reason.
     private property <string> resolved: root.tag.kind == "last-played"
         ? ContentText.last-played-label()
-            + GameTime.last-played(
+        + GameTime.last-played(
                 root.tag.time-kind,
                 root.tag.time-hours,
                 root.tag.time-month,
@@ -112,8 +117,8 @@ component TagChip inherits Rectangle {
                 root.tag.time-year,
             )
         : root.tag.kind == "game-mode-survival" || root.tag.kind == "game-mode-creative"
-            || root.tag.kind == "game-mode-adventure" || root.tag.kind == "game-mode-spectator"
-            || root.tag.kind == "command-enabled" ? ContentText.save-tag(root.tag.kind)
+        || root.tag.kind == "game-mode-adventure" || root.tag.kind == "game-mode-spectator"
+        || root.tag.kind == "command-enabled" ? ContentText.save-tag(root.tag.kind)
         : root.tag.label + root.tag.text;
 
     pill-box := Rectangle {
@@ -122,7 +127,7 @@ component TagChip inherits Rectangle {
         height: root.pill ? 13px : 16px;
         border-radius: 100px;
         background: tag.kind == "loader-fabric" || tag.kind == "loader-liteloader"
-                || tag.kind == "command-enabled" ? Theme.yellow
+            || tag.kind == "command-enabled" ? Theme.yellow
             : tag.kind == "loader-forge" ? Theme.blue
             : tag.kind == "loader-neoforge" ? Theme.peach
             : tag.kind == "loader-quilt" ? Theme.mauve
@@ -152,6 +157,7 @@ component TagChip inherits Rectangle {
         width: label.width + (root.pill ? 12px : 0px);
     }
 }
+
 export component ContentCard inherits Rectangle {
     in property <CardData> card;
     /// 72px for the content lists, 64px for the saves.
@@ -235,16 +241,16 @@ export component ContentCard inherits Rectangle {
     /// heart, or a local card's folder.
     private property <bool> over-first:
         root.hovered && root.column-shown
-            && hover-area.mouse-x >= root.actions-left
-            && hover-area.mouse-y >= 12px && hover-area.mouse-y <= 26px;
+        && hover-area.mouse-x >= root.actions-left
+        && hover-area.mouse-y >= 12px && hover-area.mouse-y <= 26px;
     private property <bool> over-second:
         root.hovered && root.column-shown
-            && hover-area.mouse-x >= root.actions-left
-            && hover-area.mouse-y >= root.height - 26px && hover-area.mouse-y <= root.height - 12px;
+        && hover-area.mouse-x >= root.actions-left
+        && hover-area.mouse-y >= root.height - 26px && hover-area.mouse-y <= root.height - 12px;
     private property <bool> over-play:
         root.hovered && root.card.shows-play
-            && hover-area.mouse-x >= 20px && hover-area.mouse-x <= 38px
-            && hover-area.mouse-y >= root.play-top && hover-area.mouse-y <= root.play-top + 18px;
+        && hover-area.mouse-x >= 20px && hover-area.mouse-x <= 38px
+        && hover-area.mouse-y >= root.play-top && hover-area.mouse-y <= root.play-top + 18px;
 
     /// How far the loading spinner is still showing, 1 while the icon is on its
     /// way and 0 once it has arrived.
@@ -262,7 +268,7 @@ export component ContentCard inherits Rectangle {
 
     // The hover-revealed action column: two buttons pushed to its ends. Neither
     // takes clicks — the card's own area routes them here by position.
-    if root.column-shown : Rectangle {
+    if root.column-shown: Rectangle {
         x: root.actions-left;
         y: 0;
         width: 14px;
@@ -424,7 +430,7 @@ export component ContentCard inherits Rectangle {
                 // through the middle of the line box, as wide as the text it drew
                 // — `preferred-width` while that fits, the elided block when it
                 // does not — in the text's ink.
-                if root.card.mod-disabled : Rectangle {
+                if root.card.mod-disabled: Rectangle {
                     x: 0;
                     width: min(name.preferred-width, name.width);
                     height: 1px;
@@ -432,7 +438,7 @@ export component ContentCard inherits Rectangle {
                 }
             }
 
-            if root.card.has-subtitle : Text {
+            if root.card.has-subtitle: Text {
                 text: root.card.subtitle;
                 font-size: root.subtitle-style == "folder" ? 10px : 11px;
                 // The authors line is at 90%, and the body ink is already at
@@ -445,7 +451,7 @@ export component ContentCard inherits Rectangle {
                 height: root.subtitle-style == "folder" ? 18px : 15px;
             }
 
-            if root.card.description != "" : Text {
+            if root.card.description != "": Text {
                 text: root.card.description;
                 font-size: 10px;
                 color: Theme.default-text-color.transparentize(0.4);
@@ -464,14 +470,14 @@ export component ContentCard inherits Rectangle {
                 spacing: 0px;
                 cross-axis-alignment: center;
 
-                for tag in root.card.tags : TagChip {
+                for tag in root.card.tags: TagChip {
                     tag: tag;
                 }
             }
         }
     }
 
-    if root.card.shows-play : Rectangle {
+    if root.card.shows-play: Rectangle {
         x: 20px;
         width: 18px;
         height: 18px;
@@ -535,7 +541,7 @@ export component ContentCard inherits Rectangle {
         // One world map exists at a time, and it is torn down when the card is
         // deselected — which is also what drops the tiles, since the cache is
         // keyed by world.
-        if root.card.selected && GameState.has-current : WorldMap {
+        if root.card.selected && GameState.has-current: WorldMap {
             x: 8px;
             y: 8px;
             width: parent.width - 16px;

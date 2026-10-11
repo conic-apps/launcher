@@ -88,7 +88,10 @@ export component AccountAddOffline inherits VerticalLayout {
             alignment: space-between;
             cross-axis-alignment: center;
             opacity: AccountAddState.offline-advanced ? 1.0 : 0.4;
-            animate opacity { duration: 200ms; easing: ease; }
+            animate opacity {
+                duration: 200ms;
+                easing: ease;
+            }
 
             VerticalLayout {
                 spacing: 2px;
@@ -125,7 +128,7 @@ export component AccountAddOffline inherits VerticalLayout {
         padding-top: 12px;
         spacing: 8px;
 
-        if !root.wizard-host : Button {
+        if !root.wizard-host: Button {
             horizontal-stretch: 1;
             text: @tr("Cancel");
             clicked => { AccountAddState.close(); }

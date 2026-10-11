@@ -8,7 +8,10 @@ import { Checkbox } from "../../../components/controls/checkbox.slint";
 import { Input } from "../../../components/controls/input.slint";
 import { Loading } from "../../../components/controls/loading.slint";
 import { ScrollView } from "../../../components/containers/scroll-view.slint";
-import { AccountAddState, YggdrasilProfileItem } from "../../../globals/dialogs.slint";
+import {
+    AccountAddState,
+    YggdrasilProfileItem,
+} from "../../../globals/dialogs.slint";
 import { AvatarMask } from "../../../globals/avatar.slint";
 
 // "Sign in with Yggdrasil" — the second screen of the add-account dialog.
@@ -39,7 +42,7 @@ export component AccountAddYggdrasil inherits VerticalLayout {
     // `AccountAddYggdrasil`'s preferred height came out 40px short, the panel
     // followed it down, and the buttons were clipped away — the same reason the
     // other two screens keep their paragraphs as direct children of the column.
-    if AccountAddState.yggdrasil-view == "form" : Text {
+    if AccountAddState.yggdrasil-view == "form": Text {
         text: @tr("Sign in to a Minecraft account through a third-party Yggdrasil auth server — for skin sites, self-hosted auth servers and other unofficial account systems.");
         font-size: 14px;
         line-height-factor: 1.3;
@@ -47,7 +50,7 @@ export component AccountAddYggdrasil inherits VerticalLayout {
         color: Theme.default-text-color.transparentize(0.1);
     }
 
-    if AccountAddState.yggdrasil-view == "form" : VerticalLayout {
+    if AccountAddState.yggdrasil-view == "form": VerticalLayout {
         alignment: start;
 
         // The 8px gap, plus the description's 8px bottom margin as a top
@@ -70,7 +73,7 @@ export component AccountAddYggdrasil inherits VerticalLayout {
                         color: Theme.default-text-color.transparentize(0.1);
                     }
 
-                    if AccountAddState.yggdrasil-server-name != "" : Text {
+                    if AccountAddState.yggdrasil-server-name != "": Text {
                         text: @tr("Auth service: {}", AccountAddState.yggdrasil-server-name);
                         font-size: 12px;
                         width: 200px;
@@ -129,7 +132,7 @@ export component AccountAddYggdrasil inherits VerticalLayout {
             padding-top: 12px;
             spacing: 8px;
 
-            if !root.wizard-host : Button {
+            if !root.wizard-host: Button {
                 horizontal-stretch: 1;
                 text: @tr("Cancel");
                 clicked => { AccountAddState.close(); }
@@ -146,7 +149,7 @@ export component AccountAddYggdrasil inherits VerticalLayout {
         }
     }
 
-    if AccountAddState.yggdrasil-view == "processing" : Rectangle {
+    if AccountAddState.yggdrasil-view == "processing": Rectangle {
         width: 100%;
         height: 180px;
         background: transparent;
@@ -180,7 +183,7 @@ export component AccountAddYggdrasil inherits VerticalLayout {
         }
     }
 
-    if AccountAddState.yggdrasil-view == "error" : Rectangle {
+    if AccountAddState.yggdrasil-view == "error": Rectangle {
         width: 100%;
         height: 120px;
         background: transparent;
@@ -214,7 +217,7 @@ export component AccountAddYggdrasil inherits VerticalLayout {
         }
     }
 
-    if AccountAddState.yggdrasil-view == "profiles" : VerticalLayout {
+    if AccountAddState.yggdrasil-view == "profiles": VerticalLayout {
         alignment: start;
 
         Text {
@@ -252,7 +255,7 @@ export component AccountAddYggdrasil inherits VerticalLayout {
                     padding-left: 4px;
                     padding-right: 4px;
 
-                    for profile[index] in AccountAddState.yggdrasil-profiles : Rectangle {
+                    for profile[index] in AccountAddState.yggdrasil-profiles: Rectangle {
                         width: 100%;
                         height: 44px;
                         border-radius: 8px;
@@ -262,7 +265,10 @@ export component AccountAddYggdrasil inherits VerticalLayout {
                         border-width: profile.selected ? 1px : 0px;
                         border-color: Theme.latte-lavender;
                         opacity: profile.added ? 0.4 : 1.0;
-                        animate background { duration: 150ms; easing: ease; }
+                        animate background {
+                            duration: 150ms;
+                            easing: ease;
+                        }
 
                         Checkbox {
                             x: 10px;
@@ -280,7 +286,7 @@ export component AccountAddYggdrasil inherits VerticalLayout {
                             height: 28px;
                             background: transparent;
 
-                            if profile.avatar.width > 0 : Image {
+                            if profile.avatar.width > 0: Image {
                                 width: 28px;
                                 height: 28px;
                                 source: AvatarMask.rounded(profile.avatar, 10000px, 28px);

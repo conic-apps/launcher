@@ -76,7 +76,10 @@ export component GameFooterBar inherits Rectangle {
     // group, so they take the same 0.1s / 0.15s beats.
     private property <duration> item-duration: 200ms;
     private property <length> intro-dy: GameIntro.played ? 0px : 56px;
-    animate intro-dy { duration: 600ms; easing: ease-out-quart; }
+    animate intro-dy {
+        duration: 600ms;
+        easing: ease-out-quart;
+    }
 
     // The bar is drawn on top of the instance list, but a bare `Rectangle` does
     // not take pointer events: Slint dispatches to the topmost item first and
@@ -103,7 +106,7 @@ export component GameFooterBar inherits Rectangle {
         // Declared first: it is the layer under every sibling.
         //
         // Its opacity is 0.3, not 0.5.
-        if AppConfig.show-visualizer : BeatMap {
+        if AppConfig.show-visualizer: BeatMap {
             fill: true;
             transparent: true;
             opacity: 0.3;
@@ -118,7 +121,7 @@ export component GameFooterBar inherits Rectangle {
             resized(bar-count) => { MusicState.resized(bar-count); }
         }
 
-        if GameState.has-account : account-layer := Rectangle {
+        if GameState.has-account: account-layer := Rectangle {
             width: parent.width;
             height: parent.height;
             background: transparent;
@@ -141,8 +144,16 @@ export component GameFooterBar inherits Rectangle {
 
                 private property <length> intro-dy: GameIntro.played ? 0px : 10px;
                 private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-                animate intro-dy { duration: root.item-duration; delay: 150ms; easing: ease-out-quart; }
-                animate intro-alpha { duration: root.item-duration; delay: 150ms; easing: ease-out-quart; }
+                animate intro-dy {
+                    duration: root.item-duration;
+                    delay: 150ms;
+                    easing: ease-out-quart;
+                }
+                animate intro-alpha {
+                    duration: root.item-duration;
+                    delay: 150ms;
+                    easing: ease-out-quart;
+                }
             }
 
             connect-button := FooterButton {
@@ -154,12 +165,20 @@ export component GameFooterBar inherits Rectangle {
 
                 private property <length> intro-dy: GameIntro.played ? 0px : 10px;
                 private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-                animate intro-dy { duration: root.item-duration; delay: 200ms; easing: ease-out-quart; }
-                animate intro-alpha { duration: root.item-duration; delay: 200ms; easing: ease-out-quart; }
+                animate intro-dy {
+                    duration: root.item-duration;
+                    delay: 200ms;
+                    easing: ease-out-quart;
+                }
+                animate intro-alpha {
+                    duration: root.item-duration;
+                    delay: 200ms;
+                    easing: ease-out-quart;
+                }
             }
         }
 
-        if !GameState.has-account : unlogged-layer := Rectangle {
+        if !GameState.has-account: unlogged-layer := Rectangle {
             width: parent.width;
             height: parent.height;
             background: transparent;
@@ -179,8 +198,16 @@ export component GameFooterBar inherits Rectangle {
 
                 private property <length> intro-dy: GameIntro.played ? 0px : 10px;
                 private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-                animate intro-dy { duration: root.item-duration; delay: 150ms; easing: ease-out-quart; }
-                animate intro-alpha { duration: root.item-duration; delay: 150ms; easing: ease-out-quart; }
+                animate intro-dy {
+                    duration: root.item-duration;
+                    delay: 150ms;
+                    easing: ease-out-quart;
+                }
+                animate intro-alpha {
+                    duration: root.item-duration;
+                    delay: 150ms;
+                    easing: ease-out-quart;
+                }
 
                 unlogged-text := Text {
                     text: @tr("Not logged in");
@@ -206,8 +233,16 @@ export component GameFooterBar inherits Rectangle {
 
                 private property <length> intro-dy: GameIntro.played ? 0px : 10px;
                 private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-                animate intro-dy { duration: root.item-duration; delay: 200ms; easing: ease-out-quart; }
-                animate intro-alpha { duration: root.item-duration; delay: 200ms; easing: ease-out-quart; }
+                animate intro-dy {
+                    duration: root.item-duration;
+                    delay: 200ms;
+                    easing: ease-out-quart;
+                }
+                animate intro-alpha {
+                    duration: root.item-duration;
+                    delay: 200ms;
+                    easing: ease-out-quart;
+                }
             }
         }
 
@@ -230,14 +265,25 @@ export component GameFooterBar inherits Rectangle {
 
             private property <length> intro-dy: GameIntro.played ? 0px : 10px;
             private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-            animate intro-dy { duration: root.item-duration; delay: 100ms; easing: ease-out-quart; }
-            animate intro-alpha { duration: root.item-duration; delay: 100ms; easing: ease-out-quart; }
+            animate intro-dy {
+                duration: root.item-duration;
+                delay: 100ms;
+                easing: ease-out-quart;
+            }
+            animate intro-alpha {
+                duration: root.item-duration;
+                delay: 100ms;
+                easing: ease-out-quart;
+            }
 
             // Hover grows the head, a press shrinks it; the scale is centred on
             // the box so the circle stays put.
             transform-origin: { x: self.width / 2, y: self.height / 2 };
             transform-scale: avatar-touch.pressed ? 92% : avatar-touch.has-hover ? 104% : 100%;
-            animate transform-scale { duration: 160ms; easing: ease-out-quart; }
+            animate transform-scale {
+                duration: 160ms;
+                easing: ease-out-quart;
+            }
 
             AccountAvatar {
                 width: 100%;
@@ -269,8 +315,16 @@ export component GameFooterBar inherits Rectangle {
 
             private property <length> intro-dy: GameIntro.played ? 0px : 10px;
             private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-            animate intro-dy { duration: root.item-duration; delay: 100ms; easing: ease-out-quart; }
-            animate intro-alpha { duration: root.item-duration; delay: 100ms; easing: ease-out-quart; }
+            animate intro-dy {
+                duration: root.item-duration;
+                delay: 100ms;
+                easing: ease-out-quart;
+            }
+            animate intro-alpha {
+                duration: root.item-duration;
+                delay: 100ms;
+                easing: ease-out-quart;
+            }
         }
 
         new-instance-button := FooterButton {
@@ -284,8 +338,16 @@ export component GameFooterBar inherits Rectangle {
 
             private property <length> intro-dy: GameIntro.played ? 0px : 10px;
             private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-            animate intro-dy { duration: root.item-duration; delay: 150ms; easing: ease-out-quart; }
-            animate intro-alpha { duration: root.item-duration; delay: 150ms; easing: ease-out-quart; }
+            animate intro-dy {
+                duration: root.item-duration;
+                delay: 150ms;
+                easing: ease-out-quart;
+            }
+            animate intro-alpha {
+                duration: root.item-duration;
+                delay: 150ms;
+                easing: ease-out-quart;
+            }
         }
     }
 }

@@ -50,6 +50,7 @@ component SourceButton inherits Rectangle {
         clicked => { root.clicked(); }
     }
 }
+
 export component ContentTitleBar inherits Rectangle {
     in property <string> icon: "";
     in property <length> icon-size: 20px;
@@ -99,7 +100,9 @@ export component ContentTitleBar inherits Rectangle {
                 color: Theme.default-text-color.transparentize(0.1);
             }
 
-            Rectangle { horizontal-stretch: 1; }
+            Rectangle {
+                horizontal-stretch: 1;
+            }
 
             switcher := HorizontalLayout {
                 // The buttons' own 32px, and their width is what they measure —
@@ -109,7 +112,7 @@ export component ContentTitleBar inherits Rectangle {
                 vertical-stretch: 0;
                 spacing: 4px;
 
-                for source in root.sources : SourceButton {
+                for source in root.sources: SourceButton {
                     source: source;
                     active: source == root.active-source;
                     clicked => { root.source-selected(source); }

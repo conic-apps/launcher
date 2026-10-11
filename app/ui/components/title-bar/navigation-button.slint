@@ -19,7 +19,10 @@ export component NavigationButton inherits Rectangle {
     background: touch.has-hover ? Theme.surface-2.transparentize(0.3)
         : touch.pressed ? Theme.overlay-0.transparentize(0.3)
         : transparent;
-    animate background { duration: 120ms; easing: Easing.ease; }
+    animate background {
+        duration: 120ms;
+        easing: Easing.ease;
+    }
 
     accessible-role: button;
     accessible-checked: root.selected;
@@ -45,7 +48,10 @@ export component NavigationButton inherits Rectangle {
         background: Theme.text;
         opacity: root.selected ? 1.0 : 0.0;
         y: root.height;
-        animate width, opacity { duration: 200ms; easing: Easing.ease; }
+        animate width, opacity {
+            duration: 200ms;
+            easing: Easing.ease;
+        }
     }
 
     touch := TouchArea {

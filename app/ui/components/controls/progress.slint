@@ -41,18 +41,21 @@ export component Progress inherits Rectangle {
         background: Theme.surface-2;
     }
 
-    if root.loading : Rectangle {
+    if root.loading: Rectangle {
         width: root.width * 0.5;
         height: 3px;
         x: root.sweep-x;
         background: #f0f0f0;
     }
 
-    if !root.loading : Rectangle {
+    if !root.loading: Rectangle {
         width: root.max > 0.0 ? min(root.value / root.max, 1.0) * root.width : 0px;
         height: 3px;
         x: 0px;
         background: #f0f0f0;
-        animate width { duration: 300ms; easing: ease; }
+        animate width {
+            duration: 300ms;
+            easing: ease;
+        }
     }
 }

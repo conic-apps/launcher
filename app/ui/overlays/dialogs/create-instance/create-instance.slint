@@ -10,7 +10,9 @@ import { Switch } from "../../../components/controls/switch.slint";
 import { SettingGroup } from "../../../components/settings/setting-group.slint";
 import { SettingItem } from "../../../components/settings/setting-item.slint";
 import { AppIcon } from "../../../components/display/app-icon.slint";
-import { ZoomTransition } from "../../../components/containers/zoom-transition.slint";
+import {
+    ZoomTransition,
+} from "../../../components/containers/zoom-transition.slint";
 import { FocusManager } from "../../../globals/focus.slint";
 import { Dropdown } from "../../../globals/dropdown.slint";
 import { Dialogs, CreateInstanceState } from "../../../globals/dialogs.slint";
@@ -73,7 +75,7 @@ component SettingsStep inherits ZoomTransition {
         // load reports a zero width, which is the same test. Rust loads the file,
         // because Slint can only read a runtime path through Rust.
         if CreateInstanceState.background-path != ""
-            && CreateInstanceState.background-image.width > 0 : Rectangle {
+            && CreateInstanceState.background-image.width > 0: Rectangle {
             x: 116px;
             y: 1px;
             width: parent.width - 116px - 1px;
@@ -88,14 +90,11 @@ component SettingsStep inherits ZoomTransition {
             }
 
             Rectangle {
-                background: @linear-gradient(
-                    90deg,
-                    Theme.dialog-background.mix(Theme.surface-0, 0.4) 0%,
-                    transparent 100%);
+                background: @linear-gradient(90deg, Theme.dialog-background.mix(Theme.surface-0, 0.4) 0%, transparent 100%);
             }
         }
 
-        if !CreateInstanceState.name-editing : name-row := Rectangle {
+        if !CreateInstanceState.name-editing: name-row := Rectangle {
             x: 32px;
             y: 9px;
             width: parent.width - 32px - 17px;
@@ -139,7 +138,7 @@ component SettingsStep inherits ZoomTransition {
             }
         }
 
-        if CreateInstanceState.name-editing : name-input := TextInput {
+        if CreateInstanceState.name-editing: name-input := TextInput {
             x: 32px;
             y: 9px;
             width: parent.width - 32px - 17px;
@@ -171,7 +170,7 @@ component SettingsStep inherits ZoomTransition {
         // The default name while the field is empty. Slint's `TextInput` has no
         // placeholder of its own, so it is drawn over the field like `Input`
         // does.
-        if CreateInstanceState.name-editing && CreateInstanceState.custom-name == "" : Text {
+        if CreateInstanceState.name-editing && CreateInstanceState.custom-name == "": Text {
             x: 32px;
             y: 9px;
             width: parent.width - 32px - 17px;
@@ -209,7 +208,7 @@ component SettingsStep inherits ZoomTransition {
                 }
             }
 
-            if CreateInstanceState.minecraft-version != "" : HorizontalLayout {
+            if CreateInstanceState.minecraft-version != "": HorizontalLayout {
                 spacing: 0px;
                 alignment: start;
                 cross-axis-alignment: center;
@@ -247,7 +246,7 @@ component SettingsStep inherits ZoomTransition {
 
             // The chevron is replaced by a red "Remove image" button once a file
             // is picked.
-            if CreateInstanceState.background-path != "" : Button {
+            if CreateInstanceState.background-path != "": Button {
                 text: @tr("CreateInstance" => "Remove image");
                 text-color: Theme.red;
                 clicked => { CreateInstanceState.background-path = ""; }
@@ -306,10 +305,10 @@ component SettingsStep inherits ZoomTransition {
             icon: "extension-puzzle";
             description: CreateInstanceState.minecraft-version != ""
                 ? (CreateInstanceState.mod-loader-version != ""
-                    ? @tr(
+                ? @tr(
                         "CreateInstance" => "Selected {}",
                         CreateInstanceState.mod-loader-type + " " + CreateInstanceState.mod-loader-version)
-                    : @tr("CreateInstance" => "Click to select a mod loader version"))
+                : @tr("CreateInstance" => "Click to select a mod loader version"))
                 : @tr("CreateInstance" => "Select a Minecraft version first");
             navigable: true;
             item-disabled: CreateInstanceState.minecraft-version == ""
@@ -358,7 +357,7 @@ component SettingsStep inherits ZoomTransition {
             button-enabled: !CreateInstanceState.creating
                 && CreateInstanceState.minecraft-version != ""
                 && (CreateInstanceState.mod-loader-type == "None"
-                    || CreateInstanceState.mod-loader-version != "");
+                || CreateInstanceState.mod-loader-version != "");
             clicked => { CreateInstanceState.create(); }
         }
     }
@@ -449,7 +448,6 @@ export component CreateInstance inherits Rectangle {
             if root.step == "minecraft-choose" {
                 CreateInstanceState.load-minecraft-versions();
             }
-
             if root.shown == "" {
                 // The first screen of this open just appears; mounting is not
                 // animated.
@@ -556,17 +554,17 @@ export component CreateInstance inherits Rectangle {
                     // keeps the element alive (and its animation running) while it
                     // plays its leave, and what makes the arriving screen a fresh
                     // element that starts at its enter rest.
-                    if root.shown == "settings" : SettingsStep {
+                    if root.shown == "settings": SettingsStep {
                         phase: root.leaving ? "leave" : root.arrive-phase;
                         direction: root.direction;
                     }
-                    if root.shown == "minecraft-choose" : MinecraftChoose {
+                    if root.shown == "minecraft-choose": MinecraftChoose {
                         phase: root.leaving ? "leave" : root.arrive-phase;
                         direction: root.direction;
                         // The chooser is the dialog's inner area less the title.
                         screen-height: flick.height - root.version-screen-height;
                     }
-                    if root.shown == "mod-loader-choose" : ModLoaderChoose {
+                    if root.shown == "mod-loader-choose": ModLoaderChoose {
                         phase: root.leaving ? "leave" : root.arrive-phase;
                         direction: root.direction;
                         // The screen fills what the title leaves of the dialog's

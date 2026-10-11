@@ -59,6 +59,7 @@ export component WindowBackground inherits Rectangle {
             image-fit: fill;
             visible: Background.world-shown || Background.software-only;
         }
+
         Image {
             source: Background.world-image;
             width: 100%;
@@ -74,6 +75,7 @@ export component WindowBackground inherits Rectangle {
             image-fit: cover;
             opacity: root.custom-a-alpha;
         }
+
         Image {
             source: Background.custom-b;
             width: 100%;

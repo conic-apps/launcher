@@ -69,6 +69,7 @@ component ArrowButton inherits Rectangle {
         clicked => { root.clicked(); }
     }
 }
+
 export component ContentPagination inherits Rectangle {
     in property <[PageButton]> pages: [];
     in property <int> current-page: 1;
@@ -105,7 +106,7 @@ export component ContentPagination inherits Rectangle {
             clicked => { root.page-change(root.current-page - 1); }
         }
 
-        for page in root.pages : Rectangle {
+        for page in root.pages: Rectangle {
             // 30px is what every slot comes to in practice, since a page button
             // has no horizontal padding and its number is a few characters wide.
             // It has to be given rather than measured: both of this wrapper's
@@ -115,7 +116,7 @@ export component ContentPagination inherits Rectangle {
             height: 30px;
             background: transparent;
 
-            if page.page < 0 : Text {
+            if page.page < 0: Text {
                 text: page.text;
                 font-size: 12px;
                 color: Theme.subtext-0;
@@ -125,7 +126,7 @@ export component ContentPagination inherits Rectangle {
                 height: 30px;
             }
 
-            if page.page >= 0 : PageNumber {
+            if page.page >= 0: PageNumber {
                 label: page.text;
                 active: page.page == root.current-page;
                 clicked => { root.page-change(page.page); }

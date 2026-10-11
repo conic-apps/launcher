@@ -234,7 +234,7 @@ component MdImage inherits Rectangle {
     // it. `text-decoration` does not reach a replaced element, so there is no
     // rule to draw over the picture — but the press is the same press, and the
     // hand says so.
-    if root.picture.link-url != "" : TouchArea {
+    if root.picture.link-url != "": TouchArea {
         mouse-cursor: pointer;
         clicked => { root.link-clicked(root.picture.link-url); }
     }
@@ -324,7 +324,7 @@ component MdSectionRow inherits Rectangle {
     // fallback are the same picture. A path rather than a glyph either way: the
     // engine has no icon font, and `Comfortaa` has none of the triangles a
     // disclosure wants, where a missing glyph is a box.
-    if root.icon.viewbox > 0 : Path {
+    if root.icon.viewbox > 0: Path {
         x: chunk.marker-x - root.x;
         y: chunk.marker-y - chunk.top - root.y;
         width: chunk.marker-size;
@@ -345,10 +345,13 @@ component MdSectionRow inherits Rectangle {
         // of them, or the two states are two different pictures and the turn lies.
         transform-rotation: root.open ? 90deg : 0deg;
         transform-origin: { x: self.width / 2, y: self.height / 2 };
-        animate transform-rotation { duration: 200ms; easing: ease-in-out; }
+        animate transform-rotation {
+            duration: 200ms;
+            easing: ease-in-out;
+        }
     }
 
-    if root.icon.viewbox <= 0 : Path {
+    if root.icon.viewbox <= 0: Path {
         x: chunk.marker-x - root.x;
         y: chunk.marker-y - chunk.top - root.y;
         width: chunk.marker-size;
@@ -356,7 +359,10 @@ component MdSectionRow inherits Rectangle {
         fill: palette.details-marker;
         transform-rotation: root.open ? 90deg : 0deg;
         transform-origin: { x: self.width / 2, y: self.height / 2 };
-        animate transform-rotation { duration: 200ms; easing: ease-in-out; }
+        animate transform-rotation {
+            duration: 200ms;
+            easing: ease-in-out;
+        }
         commands: "M " + (self.width / 1px * 0.36) + " " + (self.height / 1px * 0.22)
             + " L " + (self.width / 1px * 0.66) + " " + (self.height / 1px * 0.5)
             + " L " + (self.width / 1px * 0.36) + " " + (self.height / 1px * 0.78)
@@ -560,7 +566,7 @@ export component MarkdownView inherits Rectangle {
             // against what it is showing, and nothing else here can overflow.
             clip: true;
 
-            if self.is-section : MdSectionRow {
+            if self.is-section: MdSectionRow {
                 chunk: chunk;
                 palette: root.palette;
                 icon: root.marker-icon;
@@ -582,7 +588,7 @@ export component MarkdownView inherits Rectangle {
             // is the engine's: a chip's background is emitted before the run of text
             // it sits behind, and drawing every rectangle after every piece of text
             // would put the capsule over its own code.
-            for item in chunk.items : Rectangle {
+            for item in chunk.items: Rectangle {
                 visible: !root.cull || in-window(item.y);
                 // No box of its own, so it neither draws nor clips: the items place
                 // themselves, and the culling is the one thing they share.
@@ -592,21 +598,21 @@ export component MarkdownView inherits Rectangle {
                 height: 0;
                 background: transparent;
 
-                if item.kind == "text" : MdText {
+                if item.kind == "text": MdText {
                     item: item;
                     text-color: MarkdownColors.resolve(root.palette, item.color);
                     family: root.family;
                     mono-family: root.mono-family;
                 }
 
-                if item.kind == "rect" : MdRect {
+                if item.kind == "rect": MdRect {
                     item: item;
                     fill: MarkdownColors.resolve(root.palette, item.color);
                     outline: MarkdownColors.resolve(root.palette, item.border-color);
                 }
             }
 
-            for picture in chunk.images : MdImage {
+            for picture in chunk.images: MdImage {
                 visible: !root.cull || in-window(picture.y);
                 picture: picture;
                 hovered-id: root.hovered-link;
@@ -618,7 +624,7 @@ export component MarkdownView inherits Rectangle {
             // in. An item with a URL is a link — there is no other kind of item
             // that carries one. A run's links are under the *next* run's items, and
             // the runs do not overlap, so a link is never under its own text.
-            for item in chunk.items : MdLink {
+            for item in chunk.items: MdLink {
                 // Culled like the other two loops. Every table cell and chip in
                 // the document is a `rect`, so without this an off-screen one is
                 // still painted and still hit-testable, and an off-screen link

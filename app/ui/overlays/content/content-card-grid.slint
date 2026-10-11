@@ -2,7 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { ContentCard as CardData, ContentState } from "../../globals/content.slint";
+import {
+    ContentCard as CardData,
+    ContentState,
+} from "../../globals/content.slint";
 import { ContentCard } from "content-card.slint";
 
 // The card grid, shared by all nine lists.
@@ -49,7 +52,7 @@ export component ContentCardGrid inherits Rectangle {
         height: root.grid-height;
         background: transparent;
 
-        for card in root.cards : ContentCard {
+        for card in root.cards: ContentCard {
             card: card;
             icon-size: root.icon-size;
             subtitle-style: root.subtitle-style;
@@ -61,5 +64,4 @@ export component ContentCardGrid inherits Rectangle {
             play => { root.play(card.id); }
         }
     }
-
 }

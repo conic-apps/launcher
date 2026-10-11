@@ -91,13 +91,7 @@ export global GameTime {
         return @tr("GameTime" => "{}/{}/{}", month, day, year);
     }
 
-    public pure function last-played(
-        kind: string,
-        hours: int,
-        month: int,
-        day: int,
-        year: int,
-    ) -> string {
+    public pure function last-played(kind: string, hours: int, month: int, day: int, year: int, ) -> string {
         if kind == "just-now" {
             return @tr("GameTime" => "Just now");
         }

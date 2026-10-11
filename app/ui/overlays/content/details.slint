@@ -8,7 +8,9 @@ import { Loading } from "../../components/controls/loading.slint";
 import { Progress } from "../../components/controls/progress.slint";
 import { ContentState, ContentText } from "../../globals/content.slint";
 import { ScrollView } from "../../components/containers/scroll-view.slint";
-import { ScrollViewHorizontal } from "../../components/containers/scroll-view-horizontal.slint";
+import {
+    ScrollViewHorizontal,
+} from "../../components/containers/scroll-view-horizontal.slint";
 import { ContentOverlay } from "content-overlay.slint";
 import { ContentTitleBar } from "content-title-bar.slint";
 import { MarkdownBody } from "markdown-body.slint";
@@ -31,7 +33,7 @@ component MetadataEntry inherits Rectangle {
     height: 20px;
     background: transparent;
 
-    if root.divider : Rectangle {
+    if root.divider: Rectangle {
         x: 0;
         width: 1px;
         height: 16px;
@@ -59,10 +61,11 @@ component MetadataEntry inherits Rectangle {
         }
     }
 
-    if root.link : TouchArea {
+    if root.link: TouchArea {
         clicked => { root.clicked(); }
     }
 }
+
 component DetailButton inherits Rectangle {
     in property <string> kind: "download";
     in property <string> label: "";
@@ -81,8 +84,8 @@ component DetailButton inherits Rectangle {
 
     private property <color> ink:
         root.kind == "remove"
-            ? (touch.has-hover ? Theme.red : white)
-            : root.kind == "heart" && root.favorited ? Theme.red : white;
+        ? (touch.has-hover ? Theme.red : white)
+        : root.kind == "heart" && root.favorited ? Theme.red : white;
 
     HorizontalLayout {
         // The row fills the button and the glyph and the label are centred in it
@@ -101,7 +104,7 @@ component DetailButton inherits Rectangle {
         // button instead of centred on the label.
         cross-axis-alignment: center;
 
-        if root.kind == "heart" : AppIcon {
+        if root.kind == "heart": AppIcon {
             // `AppIcon`'s default 20px: the glyph inside the view box is smaller
             // than that, which is what makes 16px look too small.
             name: root.favorited ? "heart" : "heart-outline";
@@ -109,20 +112,20 @@ component DetailButton inherits Rectangle {
             icon-color: root.ink;
         }
 
-        if root.label != "" : Text {
+        if root.label != "": Text {
             text: root.label;
             font-size: 14px;
             color: root.ink;
             vertical-alignment: center;
         }
 
-        if root.kind == "download" : AppIcon {
+        if root.kind == "download": AppIcon {
             name: "download";
             size: 20px;
             icon-color: root.ink;
         }
 
-        if root.kind == "remove" : AppIcon {
+        if root.kind == "remove": AppIcon {
             name: "trash";
             size: 20px;
             icon-color: root.ink;
@@ -161,7 +164,7 @@ component DetailBody inherits Rectangle {
             // 40px of padding above and below the spinner: 112px, full panel
             // width. The list panels instead use `ContentLoading`, 144px tall
             // with a 64px mantle square.
-            if ContentState.detail-loading : Rectangle {
+            if ContentState.detail-loading: Rectangle {
                 width: 100%;
                 height: 112px;
                 background: transparent;
@@ -175,7 +178,7 @@ component DetailBody inherits Rectangle {
                 }
             }
 
-            if !ContentState.detail-loading : Rectangle {
+            if !ContentState.detail-loading: Rectangle {
                 width: 100%;
                 height: self.preferred-height;
                 background: transparent;
@@ -214,7 +217,7 @@ component DetailBody inherits Rectangle {
                             spacing: 8px;
                             alignment: center;
 
-                            if ContentState.detail-title != "" : Text {
+                            if ContentState.detail-title != "": Text {
                                 text: ContentState.detail-title;
                                 font-size: 24px;
                                 font-weight: 600;
@@ -229,7 +232,7 @@ component DetailBody inherits Rectangle {
                                 spacing: 12px;
                                 cross-axis-alignment: center;
 
-                                if ContentState.detail-source != "" : MetadataEntry {
+                                if ContentState.detail-source != "": MetadataEntry {
                                     icon: ContentState.detail-source-is-github ? "github" : "code-slash-outline";
                                     text: ContentState.detail-source-label;
                                     link: true;
@@ -245,7 +248,7 @@ component DetailBody inherits Rectangle {
                                     divider: ContentState.detail-source != "";
                                 }
 
-                                if ContentState.detail-has-followers : MetadataEntry {
+                                if ContentState.detail-has-followers: MetadataEntry {
                                     icon: "heart-outline";
                                     text: ContentState.detail-followers;
                                     divider: true;
@@ -254,7 +257,7 @@ component DetailBody inherits Rectangle {
 
                             // A wrapping block with no set height, unlike the
                             // card's, which is one elided line.
-                            if ContentState.detail-description != "" : Text {
+                            if ContentState.detail-description != "": Text {
                                 text: ContentState.detail-description;
                                 font-size: 14px;
                                 color: Theme.default-text-color.transparentize(0.1);
@@ -281,7 +284,7 @@ component DetailBody inherits Rectangle {
                         // installed → remove, otherwise → download. Only a mod
                         // panel has the installed state at all; a pack or
                         // resource-pack panel draws the plain download button.
-                        if ContentState.detail-can-remove && ContentState.detail-checking-installed : Rectangle {
+                        if ContentState.detail-can-remove && ContentState.detail-checking-installed: Rectangle {
                             width: 120px;
                             height: 36px;
                             border-radius: 6px;
@@ -298,7 +301,7 @@ component DetailBody inherits Rectangle {
 
                         if ContentState.detail-can-remove
                             && !ContentState.detail-checking-installed
-                            && ContentState.detail-installed : DetailButton {
+                            && ContentState.detail-installed: DetailButton {
                             kind: "remove";
                             label: @tr("Remove");
                             width: 120px;
@@ -307,8 +310,8 @@ component DetailBody inherits Rectangle {
                         }
 
                         if (!ContentState.detail-can-remove
-                                || !ContentState.detail-checking-installed)
-                            && !ContentState.detail-installed : DetailButton {
+                            || !ContentState.detail-checking-installed)
+                            && !ContentState.detail-installed: DetailButton {
                             kind: "download";
                             label: @tr("Download");
                             width: 120px;
@@ -316,7 +319,7 @@ component DetailBody inherits Rectangle {
                             clicked => { ContentState.download(); }
                         }
 
-                        if ContentState.detail-operating && ContentState.detail-progress-max > 0 : VerticalLayout {
+                        if ContentState.detail-operating && ContentState.detail-progress-max > 0: VerticalLayout {
                             width: 160px;
                             height: 36px;
                             alignment: center;
@@ -328,6 +331,7 @@ component DetailBody inherits Rectangle {
                                 color: Theme.subtext-1;
                                 horizontal-alignment: center;
                             }
+
                             Progress {
                                 width: 100%;
                                 loading: false;
@@ -336,7 +340,7 @@ component DetailBody inherits Rectangle {
                             }
                         }
 
-                        if ContentState.detail-installed-version != "" : Text {
+                        if ContentState.detail-installed-version != "": Text {
                             text: @tr("Installed: {}", ContentState.detail-installed-version);
                             font-size: 13px;
                             font-italic: true;
@@ -350,7 +354,7 @@ component DetailBody inherits Rectangle {
 
                     // An empty body still draws the surface0 box when
                     // `ContentState.detail-body-always` is set.
-                    if ContentState.detail-body != "" || ContentState.detail-body-always : markdown-body := MarkdownBody {
+                    if ContentState.detail-body != "" || ContentState.detail-body-always: markdown-body := MarkdownBody {
                         // The scroller's offset and height, for the body to cull
                         // against. The view is a grandchild of the scroller and
                         // cannot reach it, so both are passed down.
@@ -368,7 +372,7 @@ component DetailBody inherits Rectangle {
                             + markdown-body.y;
                     }
 
-                    if ContentState.detail-gallery.length > 0 : Rectangle {
+                    if ContentState.detail-gallery.length > 0: Rectangle {
                         width: 100%;
                         height: 252px;
                         background: Theme.surface-0;
@@ -390,7 +394,7 @@ component DetailBody inherits Rectangle {
                                 spacing: 12px;
                                 cross-axis-alignment: center;
 
-                                for shot in ContentState.detail-gallery : Rectangle {
+                                for shot in ContentState.detail-gallery: Rectangle {
                                     width: shot.ratio * 204px;
                                     height: 204px;
                                     border-radius: 8px;
@@ -412,6 +416,7 @@ component DetailBody inherits Rectangle {
         }
     }
 }
+
 export component DetailPanels inherits Rectangle {
     width: 100%;
     height: 100%;

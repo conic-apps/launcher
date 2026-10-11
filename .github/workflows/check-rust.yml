@@ -60,6 +60,31 @@ jobs:
       - name: Run clippy
         run: cargo clippy --manifest-path ./Cargo.toml --all-targets -- -D warnings
 
+  slint-format:
+    # `.slint` formatting does not depend on the platform, so one runner is enough.
+    # `slint-lsp` is pinned to the `slint` version in Cargo.lock: a Slint bump can
+    # change the formatter's output and must be made deliberately.
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install slint-lsp
+        uses: taiki-e/install-action@v2
+        with:
+          tool: slint-lsp@1.18.1
+
+      - name: Run slint-lsp format check
+        shell: bash
+        run: |
+          status=0
+          while IFS= read -r file; do
+            if ! slint-lsp format "$file" | diff -q - "$file" > /dev/null; then
+              echo "::error file=$file::$file is not formatted; run 'slint-lsp format -i \"$file\"'"
+              status=1
+            fi
+          done < <(git ls-files '*.slint')
+          exit "$status"
+
   test:
     strategy:
       matrix:

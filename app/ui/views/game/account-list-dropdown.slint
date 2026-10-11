@@ -55,7 +55,10 @@ export component AccountListDropdown inherits Rectangle {
 
     private property <bool> is-open: Dropdown.open && Dropdown.owner == root.dropdown-id;
     private property <float> chevron-flip: root.is-open ? 1.0 : 0.0;
-    animate chevron-flip { duration: 200ms; easing: ease-in-out; }
+    animate chevron-flip {
+        duration: 200ms;
+        easing: ease-in-out;
+    }
 
     // The panel's 8px padding around rows of 26px with 4px between them:
     // `8 + 26n + 4(n-1) + 8`, a 16px constant.

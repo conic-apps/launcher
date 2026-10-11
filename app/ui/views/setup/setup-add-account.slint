@@ -4,7 +4,9 @@
 
 import { Theme } from "../../theme.slint";
 import { AccountAvatar } from "../../components/display/account-avatar.slint";
-import { AccountAdd } from "../../overlays/dialogs/account-add/account-add.slint";
+import {
+    AccountAdd,
+} from "../../overlays/dialogs/account-add/account-add.slint";
 import { GameState } from "../../globals/game.slint";
 import { WizardTitle, WizardMessage } from "wizard-text.slint";
 
@@ -22,7 +24,7 @@ export component SetupAddAccount inherits VerticalLayout {
     // the card.
     cross-axis-alignment: center;
 
-    if !GameState.has-account : AccountAdd {
+    if !GameState.has-account: AccountAdd {
         content-width: root.width;
         // The wizard's own padding is the dialog's 8px, and the wizard's
         // close/next buttons replace the hidden "Cancel" ones — see
@@ -30,18 +32,18 @@ export component SetupAddAccount inherits VerticalLayout {
         wizard-host: true;
     }
 
-    if GameState.has-account : WizardTitle {
+    if GameState.has-account: WizardTitle {
         title: @tr("SetupAddAccount" => "Account added!");
     }
 
-    if GameState.has-account : WizardMessage {
+    if GameState.has-account: WizardMessage {
         width: 100%;
         message: @tr("SetupAddAccount" => "The following profile has been set as default. The launcher will use this profile to log in to the game when no profile is assigned to an instance");
     }
 
     // The card uses the raw surface0, not the setting-item background, which
     // Latte remaps onto its mantle.
-    if GameState.has-account : Rectangle {
+    if GameState.has-account: Rectangle {
         width: 320px;
         height: card-rows.preferred-height + 48px;
         background: Theme.surface-0;
@@ -120,7 +122,7 @@ export component SetupAddAccount inherits VerticalLayout {
 
     // A 24px spacer after the card, which a layout has no margin for. It is a
     // sibling `Rectangle` rather than part of the card.
-    if GameState.has-account : Rectangle {
+    if GameState.has-account: Rectangle {
         width: 0px;
         height: 24px;
         background: transparent;

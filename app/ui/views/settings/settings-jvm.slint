@@ -4,7 +4,9 @@
 
 import { SettingGroup } from "../../components/settings/setting-group.slint";
 import { SettingItem } from "../../components/settings/setting-item.slint";
-import { SettingCollapse } from "../../components/settings/setting-collapse.slint";
+import {
+    SettingCollapse,
+} from "../../components/settings/setting-collapse.slint";
 import { Switch } from "../../components/controls/switch.slint";
 import { Loading } from "../../components/controls/loading.slint";
 import { AppConfig, JavaRuntime } from "../../globals/settings.slint";
@@ -20,19 +22,19 @@ component JavaRuntimeList inherits VerticalLayout {
     spacing: 1px;
     alignment: start;
 
-    if root.scan-error != "" : SettingItem {
+    if root.scan-error != "": SettingItem {
         group-last: root.group-last;
         title: @tr("Scan failed");
         description: root.scan-error;
     }
 
-    if root.scan-error == "" && root.runtimes.length == 0 : SettingItem {
+    if root.scan-error == "" && root.runtimes.length == 0: SettingItem {
         group-last: root.group-last;
         title: @tr("No installed Java runtimes detected");
         description: @tr("After enabling \"Prefer Mojang-provided Java runtime\", Conic Launcher will automatically download the required Java from Mojang servers");
     }
 
-    for runtime[index] in root.runtimes : SettingItem {
+    for runtime[index] in root.runtimes: SettingItem {
         group-last: root.group-last && index == root.runtimes.length - 1;
         title: "Java " + runtime.major;
         tags: [runtime.vendor, runtime.version, runtime.arch];
@@ -83,12 +85,16 @@ export component SettingsJvm inherits VerticalLayout {
         title: @tr("Manage installed Java runtimes");
         description: @tr("Disabling a Java installation prevents the launcher from using it to launch the game");
 
-        if AppConfig.java-scanning : SettingItem {
+        if AppConfig.java-scanning: SettingItem {
             group-last: true;
             title: @tr("Scanning for installed Java runtimes");
-            Loading { size: 16px; stroke-width: 8; gap: 8; }
+            Loading {
+                size: 16px;
+                stroke-width: 8;
+                gap: 8;
+            }
         }
-        if !AppConfig.java-scanning : JavaRuntimeList {
+        if !AppConfig.java-scanning: JavaRuntimeList {
             group-last: true;
             runtimes: AppConfig.java-runtimes;
             scan-error: AppConfig.java-scan-error;

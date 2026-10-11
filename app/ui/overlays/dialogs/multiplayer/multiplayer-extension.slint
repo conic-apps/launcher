@@ -3,7 +3,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Dialog } from "../dialog.slint";
-import { SlideTransition } from "../../../components/containers/slide-transition.slint";
+import {
+    SlideTransition,
+} from "../../../components/containers/slide-transition.slint";
 import { MultiplayerState } from "../../../globals/multiplayer.slint";
 import { MultiplayerDownloadDescription } from "download-description.slint";
 import { MultiplayerDownloadProgress } from "download-progress.slint";
@@ -76,17 +78,17 @@ component MultiplayerConnect inherits VerticalLayout {
         }
     }
 
-    if root.shown == "downloadDescription" : SlideTransition {
+    if root.shown == "downloadDescription": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: "left";
         MultiplayerDownloadDescription { }
     }
-    if root.shown == "downloadProgress" : SlideTransition {
+    if root.shown == "downloadProgress": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: "left";
         MultiplayerDownloadProgress { }
     }
-    if root.shown == "multiplayerManager" : SlideTransition {
+    if root.shown == "multiplayerManager": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: "left";
         MultiplayerManager { }

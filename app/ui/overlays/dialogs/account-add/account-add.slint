@@ -3,7 +3,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../../../theme.slint";
-import { SlideTransition } from "../../../components/containers/slide-transition.slint";
+import {
+    SlideTransition,
+} from "../../../components/containers/slide-transition.slint";
 import { AccountAddState } from "../../../globals/dialogs.slint";
 import { AccountAddMicrosoft } from "account-add-microsoft.slint";
 import { AccountAddOffline } from "account-add-offline.slint";
@@ -128,21 +130,27 @@ export component AccountAdd inherits VerticalLayout {
         }
     }
 
-    if root.shown == "microsoft" : SlideTransition {
+    if root.shown == "microsoft": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
-        AccountAddMicrosoft { wizard-host: root.wizard-host; }
+        AccountAddMicrosoft {
+            wizard-host: root.wizard-host;
+        }
     }
 
-    if root.shown == "yggdrasil" : SlideTransition {
+    if root.shown == "yggdrasil": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
-        AccountAddYggdrasil { wizard-host: root.wizard-host; }
+        AccountAddYggdrasil {
+            wizard-host: root.wizard-host;
+        }
     }
 
-    if root.shown == "offline" : SlideTransition {
+    if root.shown == "offline": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
-        AccountAddOffline { wizard-host: root.wizard-host; }
+        AccountAddOffline {
+            wizard-host: root.wizard-host;
+        }
     }
 }

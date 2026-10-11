@@ -145,7 +145,7 @@ export component InstanceSettings inherits Rectangle {
                                 @tr("InstanceSettings" => "Images"));
                         }
 
-                        if InstanceSettingsState.has-background : Button {
+                        if InstanceSettingsState.has-background: Button {
                             text: @tr("InstanceSettings" => "Remove image");
                             text-color: Theme.red;
                             clicked => { InstanceSettingsState.remove-background(); }

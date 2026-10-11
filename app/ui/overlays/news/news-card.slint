@@ -36,10 +36,13 @@ component CardMedia inherits Rectangle {
         // thumbnail is a square, and neither should letterbox.
         image-fit: cover;
         opacity: root.loading ? 0.0 : 1.0;
-        animate opacity { duration: 200ms; easing: ease-out; }
+        animate opacity {
+            duration: 200ms;
+            easing: ease-out;
+        }
     }
 
-    if root.loading : Loading {
+    if root.loading: Loading {
         size: 24px;
         stroke-width: 4;
         gap: 8;
@@ -61,7 +64,10 @@ export component NewsBannerCard inherits Rectangle {
         : Theme.surface-0.transparentize(0.6);
     border-radius: 8px;
     clip: true;
-    animate background { duration: 160ms; easing: ease-out; }
+    animate background {
+        duration: 160ms;
+        easing: ease-out;
+    }
 
     /// The banner's fixed height. `layout::NEWS_MEDIA_HEIGHT` in Rust is the
     /// same 200, and the card's `height` is this plus the copy block.
@@ -175,7 +181,10 @@ export component NewsRowCard inherits Rectangle {
         : Theme.surface-0.transparentize(0.6);
     border-radius: 8px;
     clip: true;
-    animate background { duration: 160ms; easing: ease-out; }
+    animate background {
+        duration: 160ms;
+        easing: ease-out;
+    }
 
     // The image is as wide as it is tall times its ratio — a square here — and
     // fills the card's height.
@@ -278,12 +287,12 @@ export component NewsCardView inherits Rectangle {
     height: root.card.height;
     background: transparent;
 
-    if root.card.kind == "changelog" : NewsRowCard {
+    if root.card.kind == "changelog": NewsRowCard {
         card: root.card;
         clicked => { root.clicked(); }
     }
 
-    if root.card.kind != "changelog" : NewsBannerCard {
+    if root.card.kind != "changelog": NewsBannerCard {
         card: root.card;
         clicked => { root.clicked(); }
     }

@@ -17,6 +17,7 @@ First of all, read ARCHITECTURE.md to get an overview of the project.
 
 ```bash
 cargo fmt --all -- --check
+slint-lsp format -i $(git ls-files '*.slint')   # no check mode; CI diffs the result
 cargo check
 cargo clippy --all-targets --release -- -D warnings   # warnings fail CI
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --document-private-items
@@ -26,7 +27,8 @@ cargo test
 Matching `check-rust.yml`, which runs `fmt` on Linux; `check` + `clippy`
 (`--all-targets --release -- -D warnings`) and `doc`
 (`RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --document-private-items`) on Linux, macOS **and**
-Windows; plus a "test" job that is `cargo test --all --release --verbose --all-targets`.
+Windows; plus a "test" job that is `cargo test --all --release --verbose --all-targets`, and a
+`slint-format` job that checks `.slint` files with `slint-lsp format` on Linux.
 
 ## Rust conventions
 

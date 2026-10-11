@@ -42,8 +42,14 @@ export component SettingReveal inherits VerticalLayout {
         clip: true;
         background: transparent;
 
-        animate height { duration: 200ms; easing: cubic-bezier(0.215, 0.61, 0.355, 1); }
-        animate opacity { duration: 200ms; easing: cubic-bezier(0.215, 0.61, 0.355, 1); }
+        animate height {
+            duration: 200ms;
+            easing: cubic-bezier(0.215, 0.61, 0.355, 1);
+        }
+        animate opacity {
+            duration: 200ms;
+            easing: cubic-bezier(0.215, 0.61, 0.355, 1);
+        }
 
         content := Rectangle {
             width: 100%;

@@ -70,8 +70,7 @@ export component Input inherits Rectangle {
     }
 
     // Hover tracker (declared before the field so the field stays clickable).
-    input-touch := TouchArea {
-    }
+    input-touch := TouchArea { }
 
     text-input := TextInput {
         x: 8px;
@@ -94,7 +93,7 @@ export component Input inherits Rectangle {
         edited => { root.edited(); }
     }
 
-    if root.value == "" && root.placeholder != "" : Text {
+    if root.value == "" && root.placeholder != "": Text {
         text: root.placeholder;
         font-size: 13px;
         font-weight: Theme.font-weight-normal;
@@ -102,7 +101,7 @@ export component Input inherits Rectangle {
         x: 8px;
     }
 
-    if root.number-only : Rectangle {
+    if root.number-only: Rectangle {
         x: parent.width - root.spinner-width;
         y: 1px;
         width: root.spinner-width;

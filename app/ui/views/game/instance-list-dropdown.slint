@@ -30,7 +30,10 @@ export component InstanceListDropdown inherits Rectangle {
 
     private property <bool> is-open: Dropdown.open && Dropdown.owner == root.dropdown-id;
     private property <float> chevron-flip: root.is-open ? 1.0 : 0.0;
-    animate chevron-flip { duration: 200ms; easing: ease-in-out; }
+    animate chevron-flip {
+        duration: 200ms;
+        easing: ease-in-out;
+    }
 
     private property <int> serial: Dropdown.choose-serial;
     changed serial => {
@@ -73,17 +76,17 @@ export component InstanceListDropdown inherits Rectangle {
 
             HorizontalLayout {
                 padding-top: 6px;
-            padding-bottom: 6px;
-            padding-left: 12px;
-            padding-right: 12px;
-            cross-axis-alignment: center;
+                padding-bottom: 6px;
+                padding-left: 12px;
+                padding-right: 12px;
+                cross-axis-alignment: center;
 
-            label-text := Text {
-                text: root.label;
-                font-size: 13px;
-                font-weight: Theme.font-weight-normal;
-                color: Theme.default-text-color.transparentize(0.1);
-            }
+                label-text := Text {
+                    text: root.label;
+                    font-size: 13px;
+                    font-weight: Theme.font-weight-normal;
+                    color: Theme.default-text-color.transparentize(0.1);
+                }
             }
         }
 
@@ -96,29 +99,29 @@ export component InstanceListDropdown inherits Rectangle {
             background: transparent;
 
             HorizontalLayout {
-            width: 100%;
-            height: 100%;
-            padding-left: 12px;
-            padding-right: 12px;
-            cross-axis-alignment: center;
+                width: 100%;
+                height: 100%;
+                padding-left: 12px;
+                padding-right: 12px;
+                cross-axis-alignment: center;
 
-            Text {
-                text: root.selected;
-                font-size: 13px;
-                font-weight: Theme.font-weight-normal;
-                color: Theme.default-text-color.transparentize(0.1);
-                horizontal-stretch: 1;
-                overflow: elide;
-                wrap: no-wrap;
-            }
+                Text {
+                    text: root.selected;
+                    font-size: 13px;
+                    font-weight: Theme.font-weight-normal;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    horizontal-stretch: 1;
+                    overflow: elide;
+                    wrap: no-wrap;
+                }
 
-            AppIcon {
-                name: "chevron-down";
-                horizontal-stretch: 0;
-                size: 14px;
-                icon-color: Theme.default-text-color.transparentize(0.1);
-                transform-scale-y: (1.0 - 2.0 * root.chevron-flip) * 100%;
-                opacity: 1.0 - 0.3 * (1.0 - abs(1.0 - 2.0 * root.chevron-flip));
+                AppIcon {
+                    name: "chevron-down";
+                    horizontal-stretch: 0;
+                    size: 14px;
+                    icon-color: Theme.default-text-color.transparentize(0.1);
+                    transform-scale-y: (1.0 - 2.0 * root.chevron-flip) * 100%;
+                    opacity: 1.0 - 0.3 * (1.0 - abs(1.0 - 2.0 * root.chevron-flip));
                 }
             }
         }
@@ -139,7 +142,7 @@ export component InstanceListDropdown inherits Rectangle {
             FocusManager.clear();
             if (root.is-open) {
                 Dropdown.open = false;
-                } else {
+            } else {
                 Dropdown.options = root.options;
                 Dropdown.accounts = [];
                 Dropdown.account-mode = false;

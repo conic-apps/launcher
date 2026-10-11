@@ -182,12 +182,12 @@ export component SettingItem inherits Rectangle {
             spacing: 8px;
             cross-axis-alignment: center;
 
-            if root.icon != "" || root.custom-icon.width > 0 : icon-box := Rectangle {
+            if root.icon != "" || root.custom-icon.width > 0: icon-box := Rectangle {
                 width: 40px;
                 height: 28px;
                 horizontal-stretch: 0;
 
-                if root.custom-icon.width > 0 : Rectangle {
+                if root.custom-icon.width > 0: Rectangle {
                     width: 28px;
                     height: 28px;
                     border-radius: root.custom-icon-rounded ? 10000px : 0px;
@@ -199,7 +199,7 @@ export component SettingItem inherits Rectangle {
                         source: root.custom-icon;
                     }
                 }
-                if root.custom-icon.width <= 0 : AppIcon {
+                if root.custom-icon.width <= 0: AppIcon {
                     name: root.icon;
                     size: 26px;
                     no-fill: root.icon-outline;
@@ -211,7 +211,7 @@ export component SettingItem inherits Rectangle {
                 alignment: center;
                 cross-axis-alignment: start;
 
-                if root.title != "" : HorizontalLayout {
+                if root.title != "": HorizontalLayout {
                     spacing: 4px;
                     cross-axis-alignment: center;
                     alignment: start;
@@ -223,7 +223,7 @@ export component SettingItem inherits Rectangle {
                         color: Theme.default-text-color.transparentize(0.1);
                     }
 
-                    if root.title-suffix != "" : title-suffix-box := HorizontalLayout {
+                    if root.title-suffix != "": title-suffix-box := HorizontalLayout {
                         // The suffix: 14px rather than the title's 13, 80%
                         // opaque, and 8px of margin on its right — which
                         // separates it from the reset button and the chevron. A
@@ -241,7 +241,7 @@ export component SettingItem inherits Rectangle {
                         }
                     }
 
-                    for tag[index] in root.tags : Rectangle {
+                    for tag[index] in root.tags: Rectangle {
                         height: 17px;
                         width: tag-label.preferred-width + 14px;
                         border-radius: 100px;
@@ -257,7 +257,7 @@ export component SettingItem inherits Rectangle {
                         }
                     }
 
-                    if root.resetable : reset-button := Rectangle {
+                    if root.resetable: reset-button := Rectangle {
                         width: 20px;
                         height: 20px;
                         border-radius: 3px;
@@ -285,7 +285,10 @@ export component SettingItem inherits Rectangle {
                         opacity: root.loading ? 1.0 : 0.0;
                         visible: root.loading || self.opacity > 0.001;
                         transform-scale: 80%;
-                        animate opacity { duration: 100ms; easing: ease; }
+                        animate opacity {
+                            duration: 100ms;
+                            easing: ease;
+                        }
 
                         Loading {
                             size: 15px;
@@ -299,7 +302,7 @@ export component SettingItem inherits Rectangle {
                 // The description at its natural height: as many lines as it
                 // takes. Correct wherever the row's height is not measured across
                 // a width it is not given — see `description-lines`.
-                if root.description != "" && root.description-lines <= 0 : Text {
+                if root.description != "" && root.description-lines <= 0: Text {
                     text: root.description;
                     font-size: 12px;
                     font-weight: Theme.font-weight-normal;
@@ -312,7 +315,7 @@ export component SettingItem inherits Rectangle {
                 // A description pinned to `description-lines` lines. The box is
                 // what pins the row (see `description-lines`); the text is
                 // elided inside it, and the hover opens the full string.
-                if root.description != "" && root.description-lines > 0 : pinned-box := Rectangle {
+                if root.description != "" && root.description-lines > 0: pinned-box := Rectangle {
                     // `width: 100%` is load-bearing, not cosmetic. The `if` makes
                     // this box a *repeated* element, and a repeated element gets no
                     // synthesized layout info of its own — `gen_layout_info_prop`
@@ -419,14 +422,14 @@ export component SettingItem inherits Rectangle {
             horizontal-stretch: 0;
             cross-axis-alignment: center;
 
-            if root.navigable : AppIcon {
+            if root.navigable: AppIcon {
                 name: "chevron-forward";
                 size: 17px;
                 icon-color: Theme.default-text-color.transparentize(0.1);
                 no-fill: root.icon-outline;
             }
 
-            if root.navigable : Rectangle {
+            if root.navigable: Rectangle {
                 width: 4px;
                 background: transparent;
             }
@@ -435,7 +438,7 @@ export component SettingItem inherits Rectangle {
         }
     }
 
-    if root.item-disabled : TouchArea {
+    if root.item-disabled: TouchArea {
         width: root.width;
         height: root.height;
     }

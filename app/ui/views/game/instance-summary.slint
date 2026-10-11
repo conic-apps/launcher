@@ -31,6 +31,7 @@ component MetaColumn inherits Rectangle {
             font-weight: Theme.font-weight-normal;
             color: Theme.default-text-color.with-alpha(0.8);
         }
+
         Text {
             text: root.value;
             font-size: 15px;
@@ -71,8 +72,8 @@ component ContentRow inherits Rectangle {
     height: 36px;
     border-radius: 8px;
     background: row-touch.pressed ? Theme.surface-1
-    : row-touch.has-hover ? Theme.surface-0
-    : Theme.surface-0.with-alpha(0.7);
+        : row-touch.has-hover ? Theme.surface-0
+        : Theme.surface-0.with-alpha(0.7);
     opacity: root.disabled ? 0.6 : 1.0;
     animate background { duration: 100ms; }
 
@@ -93,6 +94,7 @@ component ContentRow inherits Rectangle {
                 name: root.icon;
                 size: 20px;
             }
+
             Text {
                 text: root.type-label;
                 font-size: 14px;
@@ -112,7 +114,7 @@ component ContentRow inherits Rectangle {
             HorizontalLayout {
                 spacing: 1px;
                 cross-axis-alignment: center;
-                for icon in root.icons : Rectangle {
+                for icon in root.icons: Rectangle {
                     width: 20px;
                     height: 20px;
                     border-radius: 10000px;
@@ -132,11 +134,11 @@ component ContentRow inherits Rectangle {
                 }
             }
 
-            if root.loading : Loading {
+            if root.loading: Loading {
                 size: 16px;
                 stroke-width: 6;
             }
-            if !root.loading : Text {
+            if !root.loading: Text {
                 text: "\{root.count} \{root.unit}";
                 font-size: 14px;
                 font-weight: Theme.font-weight-normal;
@@ -174,11 +176,14 @@ export component InstanceSummary inherits Rectangle {
     // starting 0.03s after the first batch started.
     private property <duration> intro-stagger: 30ms;
     private property <[DropdownOption]> launch-options: [
-    { key: "repair", label: @tr("Repair game and launch"), icon: "build" },
+        { key: "repair", label: @tr("Repair game and launch"), icon: "build" },
     ];
     private property <bool> launch-menu-is-open: Dropdown.open && Dropdown.owner == "launch-menu";
     private property <float> launch-chevron-flip: root.launch-menu-is-open ? 1.0 : 0.0;
-    animate launch-chevron-flip { duration: 200ms; easing: ease-in-out; }
+    animate launch-chevron-flip {
+        duration: 200ms;
+        easing: ease-in-out;
+    }
     out property <bool> launch-menu-opened: root.launch-menu-is-open;
     private property <int> dropdown-serial: Dropdown.choose-serial;
     changed dropdown-serial => {
@@ -212,8 +217,14 @@ export component InstanceSummary inherits Rectangle {
                 private property <length> intro-dx: GameIntro.played ? 0px : -50px;
                 private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
                 // First beat: no delay.
-                animate intro-dx { duration: 330ms; easing: ease-out-quart; }
-                animate intro-alpha { duration: 330ms; easing: ease-out-quart; }
+                animate intro-dx {
+                    duration: 330ms;
+                    easing: ease-out-quart;
+                }
+                animate intro-alpha {
+                    duration: 330ms;
+                    easing: ease-out-quart;
+                }
 
                 title1 := Text {
                     text: GameState.has-current ? GameState.current-name : @tr("no instance selected!");
@@ -236,8 +247,16 @@ export component InstanceSummary inherits Rectangle {
 
                 private property <length> intro-dx: GameIntro.played ? 0px : -50px;
                 private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-                animate intro-dx { duration: 330ms; delay: 1 * root.intro-stagger; easing: ease-out-quart; }
-                animate intro-alpha { duration: 330ms; delay: 1 * root.intro-stagger; easing: ease-out-quart; }
+                animate intro-dx {
+                    duration: 330ms;
+                    delay: 1 * root.intro-stagger;
+                    easing: ease-out-quart;
+                }
+                animate intro-alpha {
+                    duration: 330ms;
+                    delay: 1 * root.intro-stagger;
+                    easing: ease-out-quart;
+                }
 
                 // `vertical-stretch: 0` because the panel's height comes from
                 // this layout: a child that fills would ask the parent for its
@@ -252,30 +271,31 @@ export component InstanceSummary inherits Rectangle {
                         value: GameState.has-current ? GameState.current-minecraft : "--";
                     }
 
-                    if GameState.current-has-loader : MetaSeparator { }
-                    if GameState.current-has-loader : MetaColumn {
+                    if GameState.current-has-loader: MetaSeparator { }
+                    if GameState.current-has-loader: MetaColumn {
                         label: "\{GameState.current-loader} \{@tr("version")}";
                         value: GameState.current-loader-version;
                     }
 
                     MetaSeparator { }
+
                     MetaColumn {
                         label: @tr("Last played date");
                         value: GameState.has-current
-                        ? GameTime.last-played(
+                            ? GameTime.last-played(
                         GameState.current-last-played-kind,
                         GameState.current-last-played-hours,
                         GameState.current-last-played-month,
                         GameState.current-last-played-day,
                         GameState.current-last-played-year,
                         )
-                        : "--";
+                            : "--";
                     }
 
-                    if GameState.current-has-playtime : MetaSeparator { }
+                    if GameState.current-has-playtime: MetaSeparator { }
                     // The time icon carries 2px of right padding and the
                     // `MetaColumn` beside it 4px, so the gap is 6px.
-                    if GameState.current-has-playtime : time-icon := HorizontalLayout {
+                    if GameState.current-has-playtime: time-icon := HorizontalLayout {
                         cross-axis-alignment: center;
                         padding-right: 2px;
 
@@ -284,7 +304,7 @@ export component InstanceSummary inherits Rectangle {
                             size: 22px;
                         }
                     }
-                    if GameState.current-has-playtime : MetaColumn {
+                    if GameState.current-has-playtime: MetaColumn {
                         label: @tr("Play time");
                         value: GameTime.play-time(GameState.current-playtime-kind, GameState.current-playtime-value);
                     }
@@ -304,8 +324,16 @@ export component InstanceSummary inherits Rectangle {
 
                 private property <length> intro-dx: GameIntro.played ? 0px : -50px;
                 private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-                animate intro-dx { duration: 330ms; delay: 2 * root.intro-stagger; easing: ease-out-quart; }
-                animate intro-alpha { duration: 330ms; delay: 2 * root.intro-stagger; easing: ease-out-quart; }
+                animate intro-dx {
+                    duration: 330ms;
+                    delay: 2 * root.intro-stagger;
+                    easing: ease-out-quart;
+                }
+                animate intro-alpha {
+                    duration: 330ms;
+                    delay: 2 * root.intro-stagger;
+                    easing: ease-out-quart;
+                }
 
                 // The actions sit 16px after the launch buttons. Centring puts the
                 // 32px pills 5px below the top of the 42px launch button, where
@@ -338,7 +366,12 @@ export component InstanceSummary inherits Rectangle {
                                 spacing: 4px;
                                 cross-axis-alignment: center;
 
-                                AppIcon { name: "play"; size: 20px; icon-color: #ffffff; }
+                                AppIcon {
+                                    name: "play";
+                                    size: 20px;
+                                    icon-color: #ffffff;
+                                }
+
                                 Text {
                                     text: @tr("Launch");
                                     font-size: 15px;
@@ -379,7 +412,7 @@ export component InstanceSummary inherits Rectangle {
                                     FocusManager.clear();
                                     if (root.launch-menu-is-open) {
                                         Dropdown.open = false;
-                                        } else {
+                                    } else {
                                         Dropdown.options = root.launch-options;
                                         Dropdown.accounts = [];
                                         Dropdown.account-mode = false;
@@ -387,7 +420,7 @@ export component InstanceSummary inherits Rectangle {
                                         Dropdown.owner = "launch-menu";
                                         Dropdown.anchor-x = launch-buttons.absolute-position.x;
                                         Dropdown.anchor-y = launch-buttons.absolute-position.y
-                                        + launch-buttons.height + 4px;
+                                            + launch-buttons.height + 4px;
                                         Dropdown.anchor-width = launch-buttons.width;
                                         Dropdown.expand-upwards = false;
                                         Dropdown.open = true;
@@ -413,8 +446,8 @@ export component InstanceSummary inherits Rectangle {
                                 height: 32px;
                                 border-radius: 100px;
                                 background: folder-touch.pressed ? Theme.surface-0
-                                : folder-touch.has-hover ? Theme.surface-1
-                                : transparent;
+                                    : folder-touch.has-hover ? Theme.surface-1
+                                    : transparent;
 
                                 AppIcon {
                                     name: "folder";
@@ -434,8 +467,8 @@ export component InstanceSummary inherits Rectangle {
                                 height: 32px;
                                 border-radius: 100px;
                                 background: star-touch.pressed ? Theme.surface-0
-                                : star-touch.has-hover ? Theme.surface-1
-                                : transparent;
+                                    : star-touch.has-hover ? Theme.surface-1
+                                    : transparent;
 
                                 AppIcon {
                                     name: GameState.current-starred ? "star" : "star-outline";
@@ -455,8 +488,8 @@ export component InstanceSummary inherits Rectangle {
                                 height: 32px;
                                 border-radius: 100px;
                                 background: settings-touch.pressed ? Theme.surface-0
-                                : settings-touch.has-hover ? Theme.surface-1
-                                : transparent;
+                                    : settings-touch.has-hover ? Theme.surface-1
+                                    : transparent;
 
                                 AppIcon {
                                     name: "settings";
@@ -492,8 +525,16 @@ export component InstanceSummary inherits Rectangle {
 
                 private property <length> intro-dx: GameIntro.played ? 0px : -50px;
                 private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-                animate intro-dx { duration: 330ms; delay: 1 * root.intro-stagger; easing: ease-out-quart; }
-                animate intro-alpha { duration: 330ms; delay: 1 * root.intro-stagger; easing: ease-out-quart; }
+                animate intro-dx {
+                    duration: 330ms;
+                    delay: 1 * root.intro-stagger;
+                    easing: ease-out-quart;
+                }
+                animate intro-alpha {
+                    duration: 330ms;
+                    delay: 1 * root.intro-stagger;
+                    easing: ease-out-quart;
+                }
 
                 // A 4px padding and gap around four 400px rows. The slide is on
                 // the box above, so each row here is just a row.
@@ -513,7 +554,6 @@ export component InstanceSummary inherits Rectangle {
                         disabled: !GameState.has-current;
                         unit: GameState.count-unit;
                         clicked => { GameState.open-content("saves"); }
-
                     }
 
                     mods-row := ContentRow {
@@ -526,7 +566,6 @@ export component InstanceSummary inherits Rectangle {
                         disabled: !GameState.has-current || !GameState.current-has-loader;
                         unit: GameState.count-unit;
                         clicked => { GameState.open-content("mods"); }
-
                     }
 
                     resourcepacks-row := ContentRow {
@@ -539,7 +578,6 @@ export component InstanceSummary inherits Rectangle {
                         disabled: !GameState.has-current;
                         unit: GameState.count-unit;
                         clicked => { GameState.open-content("resourcepacks"); }
-
                     }
 
                     screenshots-row := ContentRow {
@@ -552,7 +590,6 @@ export component InstanceSummary inherits Rectangle {
                         disabled: !GameState.has-current || GameState.content-screenshots == 0;
                         unit: GameState.count-unit;
                         clicked => { GameState.open-content("screenshots"); }
-
                     }
                 }
             }

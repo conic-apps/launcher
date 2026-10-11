@@ -4,7 +4,11 @@
 
 import { Theme } from "../../theme.slint";
 import { AppIcon } from "../../components/display/app-icon.slint";
-import { ContentCard, ContentState, ContentSearch } from "../../globals/content.slint";
+import {
+    ContentCard,
+    ContentState,
+    ContentSearch,
+} from "../../globals/content.slint";
 import { ScrollView } from "../../components/containers/scroll-view.slint";
 import { ContentTitleBar } from "content-title-bar.slint";
 import { ContentCardGrid } from "content-card-grid.slint";
@@ -81,9 +85,9 @@ export component ContentSavesPanel inherits Rectangle {
             title-gap: 16px;
         }
 
-        if ContentState.saves-loading : ContentLoading { }
+        if ContentState.saves-loading: ContentLoading { }
 
-        if !ContentState.saves-loading && ContentState.saves.length > 0 : ContentCardGrid {
+        if !ContentState.saves-loading && ContentState.saves.length > 0: ContentCardGrid {
             cards: ContentState.saves;
             icon-size: 64px;
             subtitle-style: "folder";
@@ -224,113 +228,112 @@ export component ContentScreenshotsPanel inherits Rectangle {
         height: parent.height - root.strip-height;
         background: transparent;
 
-            if ContentState.screenshots.length == 0 : Text {
-                text: ContentState.screenshots-loading
-                    ? @tr("Loading...")
-                    : @tr("No screenshots");
-                font-size: 14px;
-                color: Theme.overlay-2;
+        if ContentState.screenshots.length == 0: Text {
+            text: ContentState.screenshots-loading
+                ? @tr("Loading...")
+                : @tr("No screenshots");
+            font-size: 14px;
+            color: Theme.overlay-2;
+        }
+
+        if ContentState.screenshots.length > 0: Rectangle {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            opacity: root.main-alpha;
+
+            prev-button := Rectangle {
+                x: 24px;
+                width: 44px;
+                height: 44px;
+                border-radius: 22px;
+                border-width: 1px;
+                border-color: Theme.surface-1;
+                background: prev-touch.pressed ? Theme.surface-2
+                    : prev-touch.has-hover ? Theme.surface-1
+                    : Theme.surface-0.with-alpha(0.85);
+                opacity: ContentState.screenshot-index <= 0 ? 0.35 : 1.0;
+                transform-scale: root.main-scale;
+
+                AppIcon {
+                    name: "chevron-forward";
+                    size: 22px;
+                    icon-color: Theme.default-text-color.transparentize(0.1);
+                    transform-rotation: 180deg;
+                    transform-origin: { x: self.width / 2, y: self.height / 2 };
+                }
+
+                prev-touch := TouchArea {
+                    enabled: ContentState.screenshot-index > 0;
+                    clicked => { ContentState.screenshot-prev(); }
+                }
             }
 
-            if ContentState.screenshots.length > 0 : Rectangle {
-                width: 100%;
-                height: 100%;
-                background: transparent;
-                opacity: root.main-alpha;
+            next-button := Rectangle {
+                x: parent.width - 24px - self.width;
+                width: 44px;
+                height: 44px;
+                border-radius: 22px;
+                border-width: 1px;
+                border-color: Theme.surface-1;
+                background: next-touch.pressed ? Theme.surface-2
+                    : next-touch.has-hover ? Theme.surface-1
+                    : Theme.surface-0.with-alpha(0.85);
+                opacity: ContentState.screenshot-index >= ContentState.screenshots.length - 1
+                    ? 0.35
+                    : 1.0;
+                transform-scale: root.main-scale;
 
-                prev-button := Rectangle {
-                    x: 24px;
-                    width: 44px;
-                    height: 44px;
-                    border-radius: 22px;
-                    border-width: 1px;
-                    border-color: Theme.surface-1;
-                    background: prev-touch.pressed ? Theme.surface-2
-                        : prev-touch.has-hover ? Theme.surface-1
-                        : Theme.surface-0.with-alpha(0.85);
-                    opacity: ContentState.screenshot-index <= 0 ? 0.35 : 1.0;
-                    transform-scale: root.main-scale;
-
-                    AppIcon {
-                        name: "chevron-forward";
-                        size: 22px;
-                        icon-color: Theme.default-text-color.transparentize(0.1);
-                        transform-rotation: 180deg;
-                        transform-origin: { x: self.width / 2, y: self.height / 2 };
-                    }
-
-                    prev-touch := TouchArea {
-                        enabled: ContentState.screenshot-index > 0;
-                        clicked => { ContentState.screenshot-prev(); }
-                    }
+                AppIcon {
+                    name: "chevron-forward";
+                    size: 22px;
+                    icon-color: Theme.default-text-color.transparentize(0.1);
                 }
 
-                next-button := Rectangle {
-                    x: parent.width - 24px - self.width;
-                    width: 44px;
-                    height: 44px;
-                    border-radius: 22px;
-                    border-width: 1px;
-                    border-color: Theme.surface-1;
-                    background: next-touch.pressed ? Theme.surface-2
-                        : next-touch.has-hover ? Theme.surface-1
-                        : Theme.surface-0.with-alpha(0.85);
-                    opacity: ContentState.screenshot-index >= ContentState.screenshots.length - 1
-                        ? 0.35
-                        : 1.0;
-                    transform-scale: root.main-scale;
-
-                    AppIcon {
-                        name: "chevron-forward";
-                        size: 22px;
-                        icon-color: Theme.default-text-color.transparentize(0.1);
-                    }
-
-                    next-touch := TouchArea {
-                        enabled: ContentState.screenshot-index < ContentState.screenshots.length - 1;
-                        clicked => { ContentState.screenshot-next(); }
-                    }
+                next-touch := TouchArea {
+                    enabled: ContentState.screenshot-index < ContentState.screenshots.length - 1;
+                    clicked => { ContentState.screenshot-next(); }
                 }
+            }
 
-                // The image is given the padded box and `contain`; the touch
+            // The image is given the padded box and `contain`; the touch
                 // area under it closes the viewer, while the image swallows its
                 // own clicks.
                 stage-touch := TouchArea {
-                    clicked => { root.closing = true; }
-                }
+                clicked => { root.closing = true; }
+            }
 
+            image-swallow := TouchArea {
+                x: 96px;
+                y: 32px;
+                width: max(0px, parent.width - 192px);
+                height: max(0px, parent.height - 64px);
+            }
 
-                image-swallow := TouchArea {
-                    x: 96px;
-                    y: 32px;
-                    width: max(0px, parent.width - 192px);
-                    height: max(0px, parent.height - 64px);
-                }
-
-                // A box of its own so the shadow follows the image's alpha:
+            // A box of its own so the shadow follows the image's alpha:
                 // `drop-shadow-*` is a Rectangle's property.
                 shadow := Rectangle {
-                    x: 96px;
-                    y: 32px;
-                    width: max(0px, parent.width - 192px);
-                    height: max(0px, parent.height - 64px);
-                    background: transparent;
-                    transform-scale: root.main-scale;
-                    drop-shadow-color: #00000066;
-                    drop-shadow-blur: 32px;
-                    drop-shadow-offset-y: 8px;
+                x: 96px;
+                y: 32px;
+                width: max(0px, parent.width - 192px);
+                height: max(0px, parent.height - 64px);
+                background: transparent;
+                transform-scale: root.main-scale;
+                drop-shadow-color: #00000066;
+                drop-shadow-blur: 32px;
+                drop-shadow-offset-y: 8px;
 
-                    Image {
-                        width: 100%;
-                        height: 100%;
-                        source: ContentState.current-screenshot;
-                        image-fit: contain;
-                    }
+                Image {
+                    width: 100%;
+                    height: 100%;
+                    source: ContentState.current-screenshot;
+                    image-fit: contain;
                 }
             }
+        }
     }
 
-    if ContentState.screenshots.length > 0 : Rectangle {
+    if ContentState.screenshots.length > 0: Rectangle {
         y: parent.height - self.height + root.strip-y;
         height: root.strip-height;
         width: 100%;
@@ -357,36 +360,36 @@ export component ContentScreenshotsPanel inherits Rectangle {
             padding-right: 96px;
             spacing: 10px;
 
-            for shot[index] in ContentState.screenshots : Rectangle {
+            for shot[index] in ContentState.screenshots: Rectangle {
                 width: shot.ratio * parent.height;
                 height: parent.height;
-                    border-radius: 6px;
-                    border-width: 2px;
-                    border-color: index == ContentState.screenshot-index
-                        ? Theme.blue
-                        : transparent;
-                    opacity: index == ContentState.screenshot-index
-                        ? 1.0
-                        : (touch.has-hover ? 1.0 : 0.6);
-                    transform-scale: root.thumb-scale;
-                    clip: true;
-                    animate opacity {
-                        duration: 150ms;
-                        easing: ease-out;
-                    }
+                border-radius: 6px;
+                border-width: 2px;
+                border-color: index == ContentState.screenshot-index
+                    ? Theme.blue
+                    : transparent;
+                opacity: index == ContentState.screenshot-index
+                    ? 1.0
+                    : (touch.has-hover ? 1.0 : 0.6);
+                transform-scale: root.thumb-scale;
+                clip: true;
+                animate opacity {
+                    duration: 150ms;
+                    easing: ease-out;
+                }
 
-                    Image {
-                        width: parent.width;
-                        height: parent.height;
-                        source: shot.image;
-                        image-fit: cover;
-                    }
+                Image {
+                    width: parent.width;
+                    height: parent.height;
+                    source: shot.image;
+                    image-fit: cover;
+                }
 
-                    touch := TouchArea {
-                        clicked => { ContentState.set-screenshot(index); }
-                    }
+                touch := TouchArea {
+                    clicked => { ContentState.set-screenshot(index); }
                 }
             }
+        }
     }
 
     close-button := Rectangle {
@@ -443,9 +446,9 @@ export component ContentModsPanel inherits Rectangle {
             source-selected(source) => { ContentState.set-source(source); }
         }
 
-        if ContentState.source == "local" && ContentState.local-mods-loading : ContentLoading { }
+        if ContentState.source == "local" && ContentState.local-mods-loading: ContentLoading { }
 
-        if (ContentState.source == "local" && !ContentState.local-mods-loading && ContentState.local-mods.length > 0) : ContentCardGrid {
+        if (ContentState.source == "local" && !ContentState.local-mods-loading && ContentState.local-mods.length > 0): ContentCardGrid {
             cards: ContentState.local-mods;
             icon-size: 72px;
             grid-height: ContentState.local-mods-grid-height;
@@ -455,7 +458,7 @@ export component ContentModsPanel inherits Rectangle {
             delete(id, title) => { ContentState.delete-save(id); }
         }
 
-        if (ContentState.source == "local" && !ContentState.local-mods-loading && ContentState.local-mods.length == 0) : ContentNotFound {
+        if (ContentState.source == "local" && !ContentState.local-mods-loading && ContentState.local-mods.length == 0): ContentNotFound {
             show: true;
             // The block the placeholder is centred in is the whole panel — title
             // bar included. This element is a sibling *after* the
@@ -465,11 +468,11 @@ export component ContentModsPanel inherits Rectangle {
             description: @tr("Consider downloading some mods from the internet");
         }
 
-        if ContentState.source != "local" : ContentSearchPanel { }
+        if ContentState.source != "local": ContentSearchPanel { }
 
-        if ContentState.source != "local" && ContentState.remote-loading : ContentLoading { }
+        if ContentState.source != "local" && ContentState.remote-loading: ContentLoading { }
 
-        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length > 0) : ContentCardGrid {
+        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length > 0): ContentCardGrid {
             cards: ContentState.remote-cards;
             icon-size: 72px;
             grid-height: ContentState.remote-grid-height;
@@ -479,7 +482,7 @@ export component ContentModsPanel inherits Rectangle {
             toggle-favorite(id) => { ContentState.toggle-favorite(id); }
         }
 
-        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0) : remote-not-found := ContentNotFound {
+        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0): remote-not-found := ContentNotFound {
             show: true;
             block-height: remote-not-found.content-height + 80px;
             description: @tr("Try adjusting keywords or filters and search again");
@@ -540,9 +543,9 @@ export component ContentResourcepacksPanel inherits Rectangle {
             source-selected(source) => { ContentState.set-source(source); }
         }
 
-        if ContentState.source == "local" && ContentState.local-resourcepacks-loading : ContentLoading { }
+        if ContentState.source == "local" && ContentState.local-resourcepacks-loading: ContentLoading { }
 
-        if (ContentState.source == "local" && !ContentState.local-resourcepacks-loading && ContentState.local-resourcepacks.length > 0) : ContentCardGrid {
+        if (ContentState.source == "local" && !ContentState.local-resourcepacks-loading && ContentState.local-resourcepacks.length > 0): ContentCardGrid {
             cards: ContentState.local-resourcepacks;
             icon-size: 72px;
             grid-height: ContentState.local-resourcepacks-grid-height;
@@ -552,18 +555,18 @@ export component ContentResourcepacksPanel inherits Rectangle {
             delete(id, title) => { ContentState.delete-save(id); }
         }
 
-        if (ContentState.source == "local" && !ContentState.local-resourcepacks-loading && ContentState.local-resourcepacks.length == 0) : ContentNotFound {
+        if (ContentState.source == "local" && !ContentState.local-resourcepacks-loading && ContentState.local-resourcepacks.length == 0): ContentNotFound {
             show: true;
             // As with the local mods above: the whole panel less its title bar.
             block-height: ContentState.panel-height - 52px;
             description: @tr("Consider downloading some resource packs from the internet");
         }
 
-        if ContentState.source != "local" : ContentSearchPanel { }
+        if ContentState.source != "local": ContentSearchPanel { }
 
-        if ContentState.source != "local" && ContentState.remote-loading : ContentLoading { }
+        if ContentState.source != "local" && ContentState.remote-loading: ContentLoading { }
 
-        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length > 0) : ContentCardGrid {
+        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length > 0): ContentCardGrid {
             cards: ContentState.remote-cards;
             icon-size: 72px;
             grid-height: ContentState.remote-grid-height;
@@ -573,7 +576,7 @@ export component ContentResourcepacksPanel inherits Rectangle {
             toggle-favorite(id) => { ContentState.toggle-favorite(id); }
         }
 
-        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0) : remote-not-found := ContentNotFound {
+        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0): remote-not-found := ContentNotFound {
             show: true;
             block-height: remote-not-found.content-height + 80px;
             description: @tr("Try adjusting keywords or filters and search again");
@@ -630,9 +633,9 @@ export component ContentPacksPanel inherits Rectangle {
 
         ContentSearchPanel { }
 
-        if ContentState.remote-loading : ContentLoading { }
+        if ContentState.remote-loading: ContentLoading { }
 
-        if !ContentState.remote-loading && ContentState.remote-cards.length > 0 : ContentCardGrid {
+        if !ContentState.remote-loading && ContentState.remote-cards.length > 0: ContentCardGrid {
             cards: ContentState.remote-cards;
             icon-size: 72px;
             grid-height: ContentState.remote-grid-height;
@@ -642,7 +645,7 @@ export component ContentPacksPanel inherits Rectangle {
             toggle-favorite(id) => { ContentState.toggle-favorite(id); }
         }
 
-        if !ContentState.remote-loading && ContentState.remote-cards.length == 0 : remote-not-found := ContentNotFound {
+        if !ContentState.remote-loading && ContentState.remote-cards.length == 0: remote-not-found := ContentNotFound {
             show: true;
             block-height: remote-not-found.content-height + 80px;
             description: @tr("Try adjusting keywords or filters and search again");

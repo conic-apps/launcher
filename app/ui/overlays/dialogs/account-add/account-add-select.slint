@@ -24,7 +24,10 @@ component ServiceButton inherits Rectangle {
         : button-touch.pressed ? Theme.surface-1
         : button-touch.has-hover ? Theme.surface-0
         : transparent;
-    animate background { duration: 100ms; easing: ease; }
+    animate background {
+        duration: 100ms;
+        easing: ease;
+    }
 
     content := HorizontalLayout {
         width: parent.width;

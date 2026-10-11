@@ -7,7 +7,11 @@ import { AppIcon } from "../components/display/app-icon.slint";
 import { Loading } from "../components/controls/loading.slint";
 import { ScrollView } from "../components/containers/scroll-view.slint";
 import { ContentText } from "../globals/content.slint";
-import { CommandPaletteState, CommandText, PaletteItem } from "../globals/command-palette.slint";
+import {
+    CommandPaletteState,
+    CommandText,
+    PaletteItem,
+} from "../globals/command-palette.slint";
 
 // A `kbd`: `font-family: inherit; font-size: 11px; padding: 1px 5px;
 // border-radius: 4px` on surface0. Its own height is 13px, and it is the
@@ -90,7 +94,7 @@ component PaletteRow inherits Rectangle {
 
             // Two mutually exclusive branches: Slint has no `else if` in the
             // element form.
-            if root.item.has-icon-image : Rectangle {
+            if root.item.has-icon-image: Rectangle {
                 x: (parent.width - self.width) / 2;
                 y: (parent.height - self.height) / 2;
                 width: 18px;
@@ -105,7 +109,7 @@ component PaletteRow inherits Rectangle {
                     image-fit: cover;
                 }
             }
-            if !root.item.has-icon-image && root.item.icon != "" : AppIcon {
+            if !root.item.has-icon-image && root.item.icon != "": AppIcon {
                 x: (parent.width - self.width) / 2;
                 y: (parent.height - self.height) / 2;
                 name: root.item.icon;
@@ -160,7 +164,7 @@ component PaletteRow inherits Rectangle {
                 // The author keeps its whole name: with no `overflow: elide` its
                 // minimum width is the whole string, so the title is what gives way
                 // when the line is too narrow.
-                if root.item.author != "" : author-text := Text {
+                if root.item.author != "": author-text := Text {
                     horizontal-stretch: 0;
                     height: 13px;
                     text: CommandText.author(root.item.author);
@@ -180,7 +184,7 @@ component PaletteRow inherits Rectangle {
                 }
             }
 
-            if root.item.loaders.length > 0 : Rectangle {
+            if root.item.loaders.length > 0: Rectangle {
                 x: 0px;
                 y: 16px;
                 width: 100%;
@@ -193,7 +197,7 @@ component PaletteRow inherits Rectangle {
                     spacing: 4px;
                     cross-axis-alignment: center;
 
-                    for loader in root.item.loaders : loader-tag := Rectangle {
+                    for loader in root.item.loaders: loader-tag := Rectangle {
                         height: 14px;
                         width: loader-text.width + 10px;
                         border-radius: 4px;
@@ -212,7 +216,7 @@ component PaletteRow inherits Rectangle {
             }
         }
 
-        if root.item.subtitle-kind != "" || root.item.subtitle != "" : subtitle-text := Text {
+        if root.item.subtitle-kind != "" || root.item.subtitle != "": subtitle-text := Text {
             horizontal-stretch: 0;
             height: 12px;
             // A project's category is a label and is resolved from its key; an
@@ -228,7 +232,7 @@ component PaletteRow inherits Rectangle {
             vertical-alignment: center;
         }
 
-        if root.item.has-children : AppIcon {
+        if root.item.has-children: AppIcon {
             name: "chevron-forward";
             size: 14px;
             icon-color: Theme.overlay-1;
@@ -436,7 +440,7 @@ export component CommandPaletteOverlay inherits Rectangle {
                         icon-color: Theme.default-text-color.transparentize(0.2);
                     }
 
-                    if CommandPaletteState.query == "" : Text {
+                    if CommandPaletteState.query == "": Text {
                         x: 42px;
                         y: 12px;
                         width: parent.width - 42px - 16px;
@@ -471,6 +475,7 @@ export component CommandPaletteOverlay inherits Rectangle {
                         edited => { CommandPaletteState.query-changed(); }
                     }
                 }
+
                 results := Rectangle {
                     x: 0px;
                     y: 41px;
@@ -538,7 +543,7 @@ export component CommandPaletteOverlay inherits Rectangle {
                         // the loop is a flat stack of `label-height + row-height` boxes —
                         // The heading belongs to the first row of a section and to
                         // that row alone; `label-height` is 0 for every other one.
-                        for item[index] in CommandPaletteState.items : row-slot := Rectangle {
+                        for item[index] in CommandPaletteState.items: row-slot := Rectangle {
                             width: 100%;
                             height: item.label-height + item.row-height;
                             background: transparent;
@@ -548,7 +553,7 @@ export component CommandPaletteOverlay inherits Rectangle {
                             // — because 4px of margin sits under the heading, so its
                             // grey text reads as separate from the row below it. The
                             // line itself is unchanged; only the space under it is.
-                            if item.label-height > 0 : section-label := Text {
+                            if item.label-height > 0: section-label := Text {
                                 x: 10px;
                                 y: 6px;
                                 width: parent.width - 20px;
@@ -575,18 +580,18 @@ export component CommandPaletteOverlay inherits Rectangle {
                             }
                         }
 
-                        if CommandPaletteState.items.length == 0 && root.empty-kind != "none" : Rectangle {
+                        if CommandPaletteState.items.length == 0 && root.empty-kind != "none": Rectangle {
                             width: 100%;
                             height: root.empty-height;
                             background: transparent;
 
-                            if root.empty-kind == "searching" : Loading {
+                            if root.empty-kind == "searching": Loading {
                                 x: (parent.width - self.width) / 2;
                                 y: (parent.height - self.height) / 2;
                                 size: 24px;
                                 stroke-width: 4;
                             }
-                            if root.empty-kind != "searching" : empty-text := Text {
+                            if root.empty-kind != "searching": empty-text := Text {
                                 x: 16px;
                                 y: (parent.height - self.height) / 2;
                                 width: parent.width - 32px;
@@ -631,8 +636,7 @@ export component CommandPaletteOverlay inherits Rectangle {
                             horizontal-stretch: 1;
                             text: CommandText.breadcrumb(
                                 CommandPaletteState.mode,
-                                CommandPaletteState.source
-                            );
+                                CommandPaletteState.source);
                             font-size: 12px;
                             font-weight: Theme.font-weight-normal;
                             color: Theme.subtext-0;
@@ -653,8 +657,13 @@ export component CommandPaletteOverlay inherits Rectangle {
                                 spacing: 4px;
                                 alignment: start;
 
-                                KeyCap { text: "↑"; }
-                                KeyCap { text: "↓"; }
+                                KeyCap {
+                                    text: "↑";
+                                }
+
+                                KeyCap {
+                                    text: "↓";
+                                }
                             }
 
                             // Back in a sub-mode, Close at the root — one hint
@@ -665,12 +674,15 @@ export component CommandPaletteOverlay inherits Rectangle {
                             // width is its own glyph's, which is not a number to
                             // write down, and using the row's height for it put the
                             // label inside the cap.
-                            if CommandPaletteState.mode != "root" : back-hint := HorizontalLayout {
+                            if CommandPaletteState.mode != "root": back-hint := HorizontalLayout {
                                 vertical-stretch: 0;
                                 spacing: 4px;
                                 alignment: start;
 
-                                KeyCap { text: "⌫"; }
+                                KeyCap {
+                                    text: "⌫";
+                                }
+
                                 back-text := Text {
                                     text: CommandText.back-hint();
                                     font-size: 12px;
@@ -679,12 +691,15 @@ export component CommandPaletteOverlay inherits Rectangle {
                                     vertical-alignment: center;
                                 }
                             }
-                            if CommandPaletteState.mode == "root" : close-hint := HorizontalLayout {
+                            if CommandPaletteState.mode == "root": close-hint := HorizontalLayout {
                                 vertical-stretch: 0;
                                 spacing: 4px;
                                 alignment: start;
 
-                                KeyCap { text: "esc"; }
+                                KeyCap {
+                                    text: "esc";
+                                }
+
                                 close-text := Text {
                                     text: CommandText.close-hint();
                                     font-size: 12px;
@@ -696,20 +711,20 @@ export component CommandPaletteOverlay inherits Rectangle {
 
                             // The selected row's own action, and the only hint in
                             // the default text colour rather than subtext0.
-                            if CommandPaletteState.selected-action-kind != "" : primary := HorizontalLayout {
+                            if CommandPaletteState.selected-action-kind != "": primary := HorizontalLayout {
                                 vertical-stretch: 0;
                                 spacing: 4px;
                                 alignment: start;
 
                                 action-text := Text {
                                     text: CommandText.action(
-                                        CommandPaletteState.selected-action-kind
-                                    );
+                                        CommandPaletteState.selected-action-kind);
                                     font-size: 12px;
                                     font-weight: Theme.font-weight-normal;
                                     color: Theme.default-text-color;
                                     vertical-alignment: center;
                                 }
+
                                 AppIcon {
                                     name: "corner-down-left";
                                     size: 14px;
@@ -753,6 +768,7 @@ export component CommandPaletteOverlay inherits Rectangle {
             CommandPaletteState.run-search();
         }
     }
+
     changed debounce-key => {
         // `Timer.restart()` only restarts a timer that has already run, and
         // `start()` is only `running = true` — so a timer that has not run yet is

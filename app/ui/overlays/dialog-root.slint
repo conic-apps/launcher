@@ -5,7 +5,9 @@
 import { AccountAddDialog } from "dialogs/account-add/account-add-dialog.slint";
 import { CreateInstance } from "dialogs/create-instance/create-instance.slint";
 import { LaunchErrorDialogs } from "dialogs/launch-errors.slint";
-import { MultiplayerExtension } from "dialogs/multiplayer/multiplayer-extension.slint";
+import {
+    MultiplayerExtension,
+} from "dialogs/multiplayer/multiplayer-extension.slint";
 import { ConfirmDeleteInstance } from "dialogs/confirm-delete-instance.slint";
 import { ConfirmDeleteSave } from "dialogs/confirm-delete-save.slint";
 import { ConfirmDeleteAccount } from "dialogs/confirm-delete-account.slint";
@@ -39,13 +41,17 @@ export component DialogRoot inherits Rectangle {
     // case that matters, since a launch is what raises one. The last instance is
     // the top one.
     LaunchErrorDialogs { }
+
     MultiplayerExtension { }
+
     AccountAddDialog { }
     // The saves grid's trash button and the title bar's close button, last: a
     // delete or a quit is the thing the user reached the app for, so it is asked
     // over whatever else is open.
     ConfirmDeleteSave { }
+
     ConfirmDeleteAccount { }
+
     ConfirmQuitApp {
         confirm => { root.confirm-quit(); }
     }

@@ -59,28 +59,124 @@ component InstanceListCard inherits Rectangle {
             ? Theme.lavender.with-alpha(0.85)
             : Theme.surface-1.with-alpha(0.85);
 
-        MoveTo { x: 8; y: 0; }
-        LineTo { x: 472; y: 0; }
-        ArcTo { radius-x: 8; radius-y: 8; x: 480; y: 8; sweep: true; }
-        LineTo { x: 480; y: 48; }
-        ArcTo { radius-x: 8; radius-y: 8; x: 472; y: 56; sweep: true; }
-        LineTo { x: 8; y: 56; }
-        ArcTo { radius-x: 8; radius-y: 8; x: 0; y: 48; sweep: true; }
-        LineTo { x: 0; y: 8; }
-        ArcTo { radius-x: 8; radius-y: 8; x: 8; y: 0; sweep: true; }
+        MoveTo {
+            x: 8;
+            y: 0;
+        }
+
+        LineTo {
+            x: 472;
+            y: 0;
+        }
+
+        ArcTo {
+            radius-x: 8;
+            radius-y: 8;
+            x: 480;
+            y: 8;
+            sweep: true;
+        }
+
+        LineTo {
+            x: 480;
+            y: 48;
+        }
+
+        ArcTo {
+            radius-x: 8;
+            radius-y: 8;
+            x: 472;
+            y: 56;
+            sweep: true;
+        }
+
+        LineTo {
+            x: 8;
+            y: 56;
+        }
+
+        ArcTo {
+            radius-x: 8;
+            radius-y: 8;
+            x: 0;
+            y: 48;
+            sweep: true;
+        }
+
+        LineTo {
+            x: 0;
+            y: 8;
+        }
+
+        ArcTo {
+            radius-x: 8;
+            radius-y: 8;
+            x: 8;
+            y: 0;
+            sweep: true;
+        }
+
         Close { }
 
         // The content card, counter-clockwise, so the nonzero fill rule leaves
         // it as a hole.
-        MoveTo { x: 22; y: 1; }
-        ArcTo { radius-x: 6; radius-y: 6; x: 16; y: 7; sweep: false; }
-        LineTo { x: 16; y: 49; }
-        ArcTo { radius-x: 6; radius-y: 6; x: 22; y: 55; sweep: false; }
-        LineTo { x: 471; y: 55; }
-        ArcTo { radius-x: 6; radius-y: 6; x: 477; y: 49; sweep: false; }
-        LineTo { x: 477; y: 7; }
-        ArcTo { radius-x: 6; radius-y: 6; x: 471; y: 1; sweep: false; }
-        LineTo { x: 22; y: 1; }
+        MoveTo {
+            x: 22;
+            y: 1;
+        }
+
+        ArcTo {
+            radius-x: 6;
+            radius-y: 6;
+            x: 16;
+            y: 7;
+            sweep: false;
+        }
+
+        LineTo {
+            x: 16;
+            y: 49;
+        }
+
+        ArcTo {
+            radius-x: 6;
+            radius-y: 6;
+            x: 22;
+            y: 55;
+            sweep: false;
+        }
+
+        LineTo {
+            x: 471;
+            y: 55;
+        }
+
+        ArcTo {
+            radius-x: 6;
+            radius-y: 6;
+            x: 477;
+            y: 49;
+            sweep: false;
+        }
+
+        LineTo {
+            x: 477;
+            y: 7;
+        }
+
+        ArcTo {
+            radius-x: 6;
+            radius-y: 6;
+            x: 471;
+            y: 1;
+            sweep: false;
+        }
+
+        LineTo {
+            x: 22;
+            y: 1;
+        }
+
         Close { }
     }
 
@@ -104,7 +200,7 @@ component InstanceListCard inherits Rectangle {
         // clear, and its left edge is already faded to transparent in the pixels
         // (`load_background`) so it dissolves into the card instead of ending in
         // a flat colour band.
-        if root.item.has-background && root.item.background.width > 0 : Image {
+        if root.item.has-background && root.item.background.width > 0: Image {
             x: 100px;
             y: 0;
             width: parent.width - 100px;

@@ -96,8 +96,14 @@ component SystemWindowControl inherits Rectangle {
     // only leaving takes the full hover duration.
     private property <float> hover-level: root.hovered == root.control.index ? 1 : 0;
     private property <float> press-level: root.pressed == root.control.index ? 1 : 0;
-    animate hover-level { duration: 120ms; easing: ease-out; }
-    animate press-level { duration: 60ms; easing: ease-out; }
+    animate hover-level {
+        duration: 120ms;
+        easing: ease-out;
+    }
+    animate press-level {
+        duration: 60ms;
+        easing: ease-out;
+    }
     private property <float> level: root.hover-level + root.press-level;
 
     // The fill is two layers whose opacities carry the whole ramp, saturated
@@ -109,6 +115,7 @@ component SystemWindowControl inherits Rectangle {
         background: root.control.hover-fill;
         opacity: clamp(root.level, 0, 1);
     }
+
     Rectangle {
         background: root.control.press-fill;
         opacity: clamp(root.level - 1, 0, 1);
@@ -130,6 +137,7 @@ component SystemWindowControl inherits Rectangle {
         // filling it is exact rather than a rescale.
         image-fit: fill;
     }
+
     Image {
         source: root.control.plate-glyph;
         width: 100%;
@@ -198,13 +206,13 @@ export component TitleBar inherits Rectangle {
     // right edge and as tall as the bar. Outside `WindowMoveArea`: they are
     // non-client area, so the system hit tests and clicks them, and the bar's own
     // drag area must not sit on top of them.
-    if root.windows : Rectangle {
+    if root.windows: Rectangle {
         width: root.window-controls-inset;
         height: 100%;
         x: root.width - self.width;
         y: 0px;
 
-        for control in root.window-controls : SystemWindowControl {
+        for control in root.window-controls: SystemWindowControl {
             x: root.window-controls-inset / 3 * control.index;
             y: 0px;
             control: control;
@@ -242,6 +250,7 @@ export component TitleBar inherits Rectangle {
                     accessible-label: @tr("Settings");
                     clicked => { root.open-settings(); }
                 }
+
                 NavigationButton {
                     icon-commands: Icons.stroke-commands("house");
                     icon-stroke-width: root.stroked-icon-width;
@@ -252,7 +261,7 @@ export component TitleBar inherits Rectangle {
             }
         }
 
-        if root.linux : Rectangle {
+        if root.linux: Rectangle {
             width: 78px;
             height: 28px;
             x: root.width - self.width;
@@ -271,10 +280,12 @@ export component TitleBar inherits Rectangle {
                     icon-commands: root.minimize-icon;
                     clicked => { root.minimize-window(); }
                 }
+
                 LinuxWindowControlButton {
                     icon-commands: root.maximize-icon;
                     clicked => { root.maximize-or-fullscreen(); }
                 }
+
                 LinuxWindowControlButton {
                     icon-commands: root.close-icon;
                     clicked => { root.close-window(); }
@@ -298,7 +309,7 @@ export component TitleBar inherits Rectangle {
                 activated => { root.open-search(); }
             }
 
-            if root.search-hotkey != "" : hotkey-chip := Rectangle {
+            if root.search-hotkey != "": hotkey-chip := Rectangle {
                 width: hotkey-text.width + 12px;
                 height: 17px;
                 border-radius: 4px;
@@ -338,7 +349,7 @@ export component TitleBar inherits Rectangle {
                     clicked => { root.open-news(); }
                 }
 
-                if root.music-enabled : TitleBarActionButton {
+                if root.music-enabled: TitleBarActionButton {
                     icon-commands: Icons.stroke-commands("musical-notes");
                     icon-stroke-width: root.stroked-icon-width;
                     accessible-label: @tr("Music");

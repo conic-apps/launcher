@@ -29,9 +29,12 @@ export component Checkbox inherits Rectangle {
             : Theme.overlay-0;
         background: root.checked ? Theme.latte-lavender : transparent;
         opacity: root.checkbox-enabled ? 1.0 : 0.5;
-        animate background, border-color { duration: 150ms; easing: ease; }
+        animate background, border-color {
+            duration: 150ms;
+            easing: ease;
+        }
 
-        if root.checked : glyph := Rectangle {
+        if root.checked: glyph := Rectangle {
             width: 5px;
             height: 9px;
             y: (parent.height - self.height) / 2 - 1px;

@@ -22,8 +22,13 @@ export component SetupPalette inherits VerticalLayout {
     spacing: 0px;
     alignment: start;
 
-    WizardTitle { title: @tr("SetupPalette" => "Choose a color scheme"); }
-    WizardMessage { message: @tr("SetupPalette" => "Conic Launcher supports multiple color schemes. Pick one that suits your style."); }
+    WizardTitle {
+        title: @tr("SetupPalette" => "Choose a color scheme");
+    }
+
+    WizardMessage {
+        message: @tr("SetupPalette" => "Conic Launcher supports multiple color schemes. Pick one that suits your style.");
+    }
 
     VerticalLayout {
         width: 100%;
@@ -41,7 +46,7 @@ export component SetupPalette inherits VerticalLayout {
                 title: @tr("SetupPalette" => "Follow system dark mode");
                 description: @tr("SetupPalette" => "Uses Latte when the system is set to light mode, otherwise uses Mocha");
                 icon: "moon";
-            icon-outline: true;
+                icon-outline: true;
 
                 Switch {
                     checked <=> AppConfig.palette-follow-system;
