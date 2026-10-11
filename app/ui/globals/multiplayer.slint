@@ -100,8 +100,8 @@ export global MultiplayerState {
     out property <string> download-phase-text: root.download-phase == "finished"
         ? @tr("Multiplayer" => "Done!")
         : root.download-phase == "downloading"
-            ? @tr("Multiplayer" => "Downloading the Conic Nexus extension")
-            : @tr("Multiplayer" => "Preparing to download the Conic Nexus extension");
+        ? @tr("Multiplayer" => "Downloading the Conic Nexus extension")
+        : @tr("Multiplayer" => "Preparing to download the Conic Nexus extension");
 
     /// The byte counter is only drawn once both values are known.
     out property <bool> show-download-bytes: root.download-value > 0 && root.download-max > 0;

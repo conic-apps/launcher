@@ -98,15 +98,15 @@ export component TooltipOverlay inherits Rectangle {
     panel := Rectangle {
         x: clamp(
             root.flip-x
-                ? TooltipState.pointer-x - root.offset-x - root.panel-width
-                : TooltipState.pointer-x + root.offset-x,
+            ? TooltipState.pointer-x - root.offset-x - root.panel-width
+            : TooltipState.pointer-x + root.offset-x,
             root.edge-margin,
             max(root.edge-margin, root.width - root.panel-width - root.edge-margin),
         );
         y: clamp(
             root.flip-y
-                ? TooltipState.pointer-y - root.offset-y - root.panel-height
-                : TooltipState.pointer-y + root.offset-y,
+            ? TooltipState.pointer-y - root.offset-y - root.panel-height
+            : TooltipState.pointer-y + root.offset-y,
             root.edge-margin,
             max(root.edge-margin, root.height - root.panel-height - root.edge-margin),
         );

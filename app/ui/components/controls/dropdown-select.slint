@@ -36,7 +36,10 @@ export component DropdownSelect inherits Rectangle {
 
     private property <bool> is-open: Dropdown.open && Dropdown.owner == root.dropdown-id;
     private property <float> chevron-flip: root.is-open ? 1.0 : 0.0;
-    animate chevron-flip { duration: 200ms; easing: ease-in-out; }
+    animate chevron-flip {
+        duration: 200ms;
+        easing: ease-in-out;
+    }
 
     private property <int> serial: Dropdown.choose-serial;
     changed serial => {

@@ -17,7 +17,10 @@ export component TitleBarActionButton inherits Rectangle {
     background: touch.has-hover ? Theme.surface-2.transparentize(0.3)
         : touch.pressed ? Theme.overlay-0.transparentize(0.3)
         : transparent;
-    animate background { duration: 120ms; easing: Easing.ease; }
+    animate background {
+        duration: 120ms;
+        easing: Easing.ease;
+    }
 
     accessible-role: button;
     accessible-action-default => { root.clicked(); }

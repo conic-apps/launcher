@@ -17,7 +17,9 @@ export component SetupStorage inherits VerticalLayout {
     spacing: 16px;
     alignment: start;
 
-    WizardTitle { title: @tr("Data storage"); }
+    WizardTitle {
+        title: @tr("Data storage");
+    }
 
     WizardMessage {
         message: @tr("Choose where Conic Launcher keeps its data. You can change this later in Settings.");

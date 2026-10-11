@@ -92,7 +92,7 @@ export component NewsListPanel inherits Rectangle {
                 height: parent.height;
                 background: transparent;
 
-                for card in NewsState.cards : NewsCardView {
+                for card in NewsState.cards: NewsCardView {
                     card: card;
                     y: card.y;
                     visible: card.in-view;
@@ -101,7 +101,7 @@ export component NewsListPanel inherits Rectangle {
             }
         }
 
-        if !NewsState.loading && NewsState.cards.length == 0 : not-found := ContentNotFound {
+        if !NewsState.loading && NewsState.cards.length == 0: not-found := ContentNotFound {
             show: true;
             // The placeholder sits below the search panel rather than over the
             // whole panel, so its block is its own content plus a padding.
@@ -115,7 +115,7 @@ export component NewsListPanel inherits Rectangle {
     // and the overlay's own scrim — the strip beside the narrower container — is
     // left uncovered, so a click there still closes the panel. The spinner is
     // centred in the panel and shrinks into the dim as it fades.
-    if root.loading-fade > 0.001 : Rectangle {
+    if root.loading-fade > 0.001: Rectangle {
         width: 100%;
         height: 100%;
         // Black rather than a palette surface: the panel is `base`, which is

@@ -100,7 +100,7 @@ component NewsFilterRow inherits Rectangle {
             flex-wrap: wrap;
             spacing: 6px;
 
-            for chip in root.chips : NewsChipView {
+            for chip in root.chips: NewsChipView {
                 chip: chip;
                 row-key: root.row-key;
                 measured(width) => { NewsSearch.chip-measured(root.row-key, chip.value, width); }
@@ -156,7 +156,7 @@ export component NewsSearchPanel inherits Rectangle {
                         accepted => { NewsSearch.search(); }
                     }
 
-                    if NewsSearch.query == "" : Text {
+                    if NewsSearch.query == "": Text {
                         text: NewsText.search-placeholder();
                         font-size: 13px;
                         color: Theme.subtext-0;

@@ -199,7 +199,10 @@ export component LaunchView inherits Rectangle {
             height: 52px;
             background: transparent;
         }
-        Rectangle { height: 16px; }
+
+        Rectangle {
+            height: 16px;
+        }
 
         // The instance name. The slot keeps the layout box; the offset lives on
         // the text.
@@ -216,7 +219,10 @@ export component LaunchView inherits Rectangle {
                 vertical-alignment: center;
             }
         }
-        Rectangle { height: 16px; }
+
+        Rectangle {
+            height: 16px;
+        }
 
         info-slot := Rectangle {
             width: info-layout.preferred-width;
@@ -235,7 +241,8 @@ export component LaunchView inherits Rectangle {
                     color: Theme.default-text-color.transparentize(0.1);
                     vertical-alignment: center;
                 }
-                if LaunchState.has-loader : Text {
+
+                if LaunchState.has-loader: Text {
                     height: 16px;
                     text: LaunchState.loader-type + " " + LaunchState.loader-version;
                     font-size: 16px;
@@ -244,7 +251,10 @@ export component LaunchView inherits Rectangle {
                 }
             }
         }
-        Rectangle { height: 16px; }
+
+        Rectangle {
+            height: 16px;
+        }
 
         // The panel animates between two heights: 58px, or 50px with the 2px
         // error border.
@@ -261,7 +271,10 @@ export component LaunchView inherits Rectangle {
                 border-width: LaunchState.error ? 2px : 0px;
                 border-color: Theme.red;
                 clip: true;
-                animate height { duration: 300ms; easing: ease; }
+                animate height {
+                    duration: 300ms;
+                    easing: ease;
+                }
 
                 VerticalLayout {
                     width: 100%;
@@ -287,8 +300,11 @@ export component LaunchView inherits Rectangle {
                         // error state, so the translation stays in the UI.
                         text: LaunchState.description();
                     }
-                    if !LaunchState.error : Rectangle { height: 10px; }
-                    if !LaunchState.error : Progress {
+
+                    if !LaunchState.error: Rectangle {
+                        height: 10px;
+                    }
+                    if !LaunchState.error: Progress {
                         width: 100%;
                         loading: LaunchState.progress-loading;
                         value: LaunchState.progress-value;
@@ -297,7 +313,10 @@ export component LaunchView inherits Rectangle {
                 }
             }
         }
-        Rectangle { height: 40px; }
+
+        Rectangle {
+            height: 40px;
+        }
 
         login-slot := Rectangle {
             width: login-grid.preferred-width;
@@ -324,6 +343,7 @@ export component LaunchView inherits Rectangle {
                     color: Theme.default-text-color.transparentize(0.1);
                     text: @tr("LaunchView" => "Auth service");
                 }
+
                 Text {
                     row: 0;
                     col: 1;
@@ -333,6 +353,7 @@ export component LaunchView inherits Rectangle {
                     color: Theme.default-text-color.transparentize(0.1);
                     text: LaunchState.account-kind;
                 }
+
                 Text {
                     row: 1;
                     col: 0;
@@ -344,6 +365,7 @@ export component LaunchView inherits Rectangle {
                     color: Theme.default-text-color.transparentize(0.1);
                     text: @tr("LaunchView" => "Profile name");
                 }
+
                 Text {
                     row: 1;
                     col: 1;
@@ -355,7 +377,10 @@ export component LaunchView inherits Rectangle {
                 }
             }
         }
-        Rectangle { height: 36px; }
+
+        Rectangle {
+            height: 36px;
+        }
 
         back-slot := Rectangle {
             width: back-button.width;
@@ -373,7 +398,10 @@ export component LaunchView inherits Rectangle {
                     : Theme.surface-0;
                 transform-scale: back-touch.pressed ? 98% : 100%;
                 opacity: LaunchState.back-disabled ? 0.5 : 1.0;
-                animate background, transform-scale { duration: 200ms; easing: ease; }
+                animate background, transform-scale {
+                    duration: 200ms;
+                    easing: ease;
+                }
 
                 Text {
                     text: @tr("LaunchView" => "Cancel launch");
@@ -381,7 +409,10 @@ export component LaunchView inherits Rectangle {
                     color: back-touch.has-hover && !LaunchState.back-disabled
                         ? Theme.text-inverse
                         : Theme.red;
-                    animate color { duration: 200ms; easing: ease; }
+                    animate color {
+                        duration: 200ms;
+                        easing: ease;
+                    }
                 }
 
                 back-touch := TouchArea {

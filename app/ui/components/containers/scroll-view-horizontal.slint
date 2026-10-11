@@ -268,7 +268,7 @@ export component ScrollViewHorizontal inherits Rectangle {
         }
         root.jump-to(
             clamp((mouse-x - root.drag-anchor) / (scrollbar.width - thumb.width), 0, 1)
-                * root.max-scroll,
+            * root.max-scroll,
         );
     }
 }

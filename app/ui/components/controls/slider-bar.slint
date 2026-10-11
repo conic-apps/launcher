@@ -169,7 +169,10 @@ export component SliderBar inherits Rectangle {
         transform-origin: { x: self.width / 2, y: self.height / 2 };
         transform-scale-x: root.dragging ? 0.9 : thumb-touch.has-hover ? 1.1 : 1.0;
         transform-scale-y: root.dragging ? 0.9 : thumb-touch.has-hover ? 1.1 : 1.0;
-        animate transform-scale-x, transform-scale-y { duration: 200ms; easing: ease; }
+        animate transform-scale-x, transform-scale-y {
+            duration: 200ms;
+            easing: ease;
+        }
     }
 
     // The value, under the cursor: the generic pointer tooltip

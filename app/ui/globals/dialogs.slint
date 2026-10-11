@@ -229,11 +229,11 @@ export global CreateInstanceState {
     /// The name offered when the user did not type one. Rust reads it when it
     /// creates the instance.
     out property <string> default-name: (minecraft-version != ""
-            ? minecraft-version
-            : @tr("CreateInstance" => "Unnamed instance"))
+        ? minecraft-version
+        : @tr("CreateInstance" => "Unnamed instance"))
         + (mod-loader-type.to-lowercase() == "none"
-            ? ""
-            : "-" + mod-loader-type.to-lowercase() + mod-loader-version);
+        ? ""
+        : "-" + mod-loader-type.to-lowercase() + mod-loader-version);
 
     /// Any list still loading.
     out property <bool> mod-loader-loading: fabric-loading || quilt-loading || forge-loading

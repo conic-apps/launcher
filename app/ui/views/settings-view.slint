@@ -37,7 +37,10 @@ component NavItem inherits Rectangle {
         border-radius: 9999px;
         background: Theme.mauve;
         opacity: root.active ? 1.0 : 0.0;
-        animate height, opacity { duration: 100ms; easing: ease; }
+        animate height, opacity {
+            duration: 100ms;
+            easing: ease;
+        }
     }
 
     HorizontalLayout {
@@ -102,7 +105,10 @@ export component SettingsView inherits Rectangle {
     // already-present tint. `transparentize(1.0)` is the fully transparent end,
     // the same colour at alpha 0.
     background: Theme.base.transparentize(root.motion == "shown" ? 0.4 : 1.0);
-    animate background { duration: 250ms; easing: cubic-bezier(0, 0.65, 0.26, 1); }
+    animate background {
+        duration: 250ms;
+        easing: cubic-bezier(0, 0.65, 0.26, 1);
+    }
 
     private property <length> intro-offset: 40px;
 
@@ -118,7 +124,10 @@ export component SettingsView inherits Rectangle {
     HorizontalLayout {
         y: root.motion == "enter" ? root.intro-offset : 0px;
         opacity: root.motion == "shown" ? 1.0 : 0.0;
-        animate opacity, y { duration: 250ms; easing: cubic-bezier(0, 0.65, 0.26, 1); }
+        animate opacity, y {
+            duration: 250ms;
+            easing: cubic-bezier(0, 0.65, 0.26, 1);
+        }
 
         Rectangle {
             width: 224px;
@@ -132,14 +141,61 @@ export component SettingsView inherits Rectangle {
                 spacing: 4px;
                 alignment: start;
 
-                NavItem { icon: "house"; label: @tr("General"); active: root.active-index == 0; selected => { root.scroll-to(0); } }
-                NavItem { icon: "gamepad"; label: @tr("Launch"); active: root.active-index == 1; selected => { root.scroll-to(1); } }
-                NavItem { icon: "java"; label: @tr("Java"); active: root.active-index == 2; selected => { root.scroll-to(2); } }
-                NavItem { icon: "palette"; label: @tr("Appearance"); active: root.active-index == 3; selected => { root.scroll-to(3); } }
-                NavItem { icon: "musical-notes"; label: @tr("Audio"); active: root.active-index == 4; selected => { root.scroll-to(4); } }
-                NavItem { icon: "globe"; label: @tr("Download"); active: root.active-index == 5; selected => { root.scroll-to(5); } }
-                NavItem { icon: "accessibility"; label: @tr("Accessibility"); active: root.active-index == 6; selected => { root.scroll-to(6); } }
-                NavItem { icon: "about"; label: @tr("About"); active: root.active-index == 7; selected => { root.scroll-to(7); } }
+                NavItem {
+                    icon: "house";
+                    label: @tr("General");
+                    active: root.active-index == 0;
+                    selected => { root.scroll-to(0); }
+                }
+
+                NavItem {
+                    icon: "gamepad";
+                    label: @tr("Launch");
+                    active: root.active-index == 1;
+                    selected => { root.scroll-to(1); }
+                }
+
+                NavItem {
+                    icon: "java";
+                    label: @tr("Java");
+                    active: root.active-index == 2;
+                    selected => { root.scroll-to(2); }
+                }
+
+                NavItem {
+                    icon: "palette";
+                    label: @tr("Appearance");
+                    active: root.active-index == 3;
+                    selected => { root.scroll-to(3); }
+                }
+
+                NavItem {
+                    icon: "musical-notes";
+                    label: @tr("Audio");
+                    active: root.active-index == 4;
+                    selected => { root.scroll-to(4); }
+                }
+
+                NavItem {
+                    icon: "globe";
+                    label: @tr("Download");
+                    active: root.active-index == 5;
+                    selected => { root.scroll-to(5); }
+                }
+
+                NavItem {
+                    icon: "accessibility";
+                    label: @tr("Accessibility");
+                    active: root.active-index == 6;
+                    selected => { root.scroll-to(6); }
+                }
+
+                NavItem {
+                    icon: "about";
+                    label: @tr("About");
+                    active: root.active-index == 7;
+                    selected => { root.scroll-to(7); }
+                }
             }
         }
 
@@ -160,14 +216,45 @@ export component SettingsView inherits Rectangle {
                     spacing: 24px;
                     alignment: start;
 
-                    s0 := SettingsSection { title: @tr("General"); SettingsGeneral { } }
-                    s1 := SettingsSection { title: @tr("Launch"); SettingsGame { } }
-                    s2 := SettingsSection { title: @tr("Java"); SettingsJvm { } }
-                    s3 := SettingsSection { title: @tr("Appearance"); SettingsAppearance { } }
-                    s4 := SettingsSection { title: @tr("Audio"); SettingsAudio { } }
-                    s5 := SettingsSection { title: @tr("Download"); SettingsDownload { } }
-                    s6 := SettingsSection { title: @tr("Accessibility"); SettingsAccessibility { } }
-                    s7 := SettingsSection { title: @tr("About"); SettingsAbout { } }
+                    s0 := SettingsSection {
+                        title: @tr("General");
+                        SettingsGeneral { }
+                    }
+
+                    s1 := SettingsSection {
+                        title: @tr("Launch");
+                        SettingsGame { }
+                    }
+
+                    s2 := SettingsSection {
+                        title: @tr("Java");
+                        SettingsJvm { }
+                    }
+
+                    s3 := SettingsSection {
+                        title: @tr("Appearance");
+                        SettingsAppearance { }
+                    }
+
+                    s4 := SettingsSection {
+                        title: @tr("Audio");
+                        SettingsAudio { }
+                    }
+
+                    s5 := SettingsSection {
+                        title: @tr("Download");
+                        SettingsDownload { }
+                    }
+
+                    s6 := SettingsSection {
+                        title: @tr("Accessibility");
+                        SettingsAccessibility { }
+                    }
+
+                    s7 := SettingsSection {
+                        title: @tr("About");
+                        SettingsAbout { }
+                    }
                 }
             }
         }

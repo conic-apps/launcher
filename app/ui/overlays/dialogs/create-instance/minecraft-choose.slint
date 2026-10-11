@@ -3,7 +3,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../../../theme.slint";
-import { ZoomTransition } from "../../../components/containers/zoom-transition.slint";
+import {
+    ZoomTransition,
+} from "../../../components/containers/zoom-transition.slint";
 import { ListItem } from "../../../components/controls/list-item.slint";
 import { Select } from "../../../components/controls/select.slint";
 import { Button } from "../../../components/controls/button.slint";
@@ -108,7 +110,7 @@ export component MinecraftChoose inherits ZoomTransition {
                 width: 100%;
                 height: root.row-height * CreateInstanceState.minecraft-versions.length;
 
-                for version[index] in CreateInstanceState.minecraft-versions : ListItem {
+                for version[index] in CreateInstanceState.minecraft-versions: ListItem {
                     visible: root.row-height * index < root.window-bottom
                         && root.row-height * (index + 1) > root.window-top;
                     y: root.row-height * index;
@@ -130,7 +132,7 @@ export component MinecraftChoose inherits ZoomTransition {
             }
         }
 
-        if CreateInstanceState.minecraft-loading : Rectangle {
+        if CreateInstanceState.minecraft-loading: Rectangle {
             width: 100%;
             height: 100%;
             background: #0000004b;

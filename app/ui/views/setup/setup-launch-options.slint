@@ -13,7 +13,9 @@ export component SetupLaunchOptions inherits VerticalLayout {
     spacing: 0px;
     alignment: start;
 
-    WizardTitle { title: @tr("SetupLaunchOptions" => "Game launch options"); }
+    WizardTitle {
+        title: @tr("SetupLaunchOptions" => "Game launch options");
+    }
 
     WizardMessage {
         message: @tr("SetupLaunchOptions" => "Here are some basic launch options. You can change more options later in Settings and instance-specific settings.");

@@ -23,7 +23,10 @@ export component GameView inherits Rectangle {
     // per-element `GameIntro` stagger, so this leaves `opacity` alone except on
     // "leave" — an "enter" here would double the intro.
     opacity: PageMotion.phase("game") == "leave" ? 0.0 : 1.0;
-    animate opacity { duration: 200ms; easing: ease-out-quad; }
+    animate opacity {
+        duration: 200ms;
+        easing: ease-out-quad;
+    }
 
     // The screen is recreated on every navigation to it (the page stack uses a
     // conditional), so the intro replays on every visit.

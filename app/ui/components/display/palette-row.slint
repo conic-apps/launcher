@@ -32,7 +32,7 @@ component PaletteSwatch inherits Rectangle {
     // draws inside its own.
     private property <float> dim: root.swatch-disabled ? 0.6 : 1.0;
 
-    if root.selected : Rectangle {
+    if root.selected: Rectangle {
         x: -4px;
         y: -4px;
         width: parent.width + 8px;
@@ -111,6 +111,7 @@ export component PaletteRow inherits Rectangle {
                 AppConfig.changed();
             }
         }
+
         PaletteSwatch {
             preview: @image-url("../../assets/images/palette-frappe.png");
             label: "Frappé";
@@ -122,6 +123,7 @@ export component PaletteRow inherits Rectangle {
                 AppConfig.changed();
             }
         }
+
         PaletteSwatch {
             preview: @image-url("../../assets/images/palette-macchiato.png");
             label: "Macchiato";
@@ -133,6 +135,7 @@ export component PaletteRow inherits Rectangle {
                 AppConfig.changed();
             }
         }
+
         PaletteSwatch {
             preview: @image-url("../../assets/images/palette-mocha.png");
             label: "Mocha";

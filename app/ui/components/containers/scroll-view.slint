@@ -314,7 +314,7 @@ export component ScrollView inherits Rectangle {
         }
         root.jump-to(
             clamp((mouse-y - root.drag-anchor) / (scrollbar.height - thumb.height), 0, 1)
-                * root.max-scroll,
+            * root.max-scroll,
         );
     }
 }

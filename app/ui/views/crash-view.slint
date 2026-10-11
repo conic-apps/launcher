@@ -54,7 +54,7 @@ export component CrashView inherits Rectangle {
             color: Theme.default-text-color.transparentize(0.1);
         }
 
-        if CrashState.exit-code != "" : Text {
+        if CrashState.exit-code != "": Text {
             height: 16px;
             text: CrashState.exit-code;
             font-size: 12px;
@@ -62,14 +62,14 @@ export component CrashView inherits Rectangle {
             vertical-alignment: center;
         }
 
-        if CrashState.reasons != "" : Text {
+        if CrashState.reasons != "": Text {
             text: CrashState.reasons;
             font-size: 12px;
             wrap: word-wrap;
             color: Theme.peach;
         }
 
-        if CrashState.keywords != "" : Text {
+        if CrashState.keywords != "": Text {
             text: @tr("CrashView" => "Possible mods:") + " " + CrashState.keywords;
             font-size: 12px;
             wrap: word-wrap;
@@ -89,7 +89,7 @@ export component CrashView inherits Rectangle {
             }
         }
 
-        if CrashState.report-path != "" : Text {
+        if CrashState.report-path != "": Text {
             // Auto height: a long path may wrap, but usually does not.
             text: CrashState.report-path;
             font-size: 11px;

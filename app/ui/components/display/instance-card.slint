@@ -76,26 +76,122 @@ export component InstanceCard inherits Rectangle {
         height: 100%;
         fill: Theme.lavender.with-alpha(0.8);
 
-        MoveTo { x: 8; y: 0; }
-        LineTo { x: root.width / 1px - 8; y: 0; }
-        ArcTo { radius-x: 8; radius-y: 8; x: root.width / 1px; y: 8; sweep: true; }
-        LineTo { x: root.width / 1px; y: 52; }
-        ArcTo { radius-x: 8; radius-y: 8; x: root.width / 1px - 8; y: 60; sweep: true; }
-        LineTo { x: 8; y: 60; }
-        ArcTo { radius-x: 8; radius-y: 8; x: 0; y: 52; sweep: true; }
-        LineTo { x: 0; y: 8; }
-        ArcTo { radius-x: 8; radius-y: 8; x: 8; y: 0; sweep: true; }
+        MoveTo {
+            x: 8;
+            y: 0;
+        }
+
+        LineTo {
+            x: root.width / 1px - 8;
+            y: 0;
+        }
+
+        ArcTo {
+            radius-x: 8;
+            radius-y: 8;
+            x: root.width / 1px;
+            y: 8;
+            sweep: true;
+        }
+
+        LineTo {
+            x: root.width / 1px;
+            y: 52;
+        }
+
+        ArcTo {
+            radius-x: 8;
+            radius-y: 8;
+            x: root.width / 1px - 8;
+            y: 60;
+            sweep: true;
+        }
+
+        LineTo {
+            x: 8;
+            y: 60;
+        }
+
+        ArcTo {
+            radius-x: 8;
+            radius-y: 8;
+            x: 0;
+            y: 52;
+            sweep: true;
+        }
+
+        LineTo {
+            x: 0;
+            y: 8;
+        }
+
+        ArcTo {
+            radius-x: 8;
+            radius-y: 8;
+            x: 8;
+            y: 0;
+            sweep: true;
+        }
+
         Close { }
 
-        MoveTo { x: 22; y: 1; }
-        ArcTo { radius-x: 6; radius-y: 6; x: 16; y: 7; sweep: false; }
-        LineTo { x: 16; y: 53; }
-        ArcTo { radius-x: 6; radius-y: 6; x: 22; y: 59; sweep: false; }
-        LineTo { x: root.width / 1px - 7; y: 59; }
-        ArcTo { radius-x: 6; radius-y: 6; x: root.width / 1px - 1; y: 53; sweep: false; }
-        LineTo { x: root.width / 1px - 1; y: 7; }
-        ArcTo { radius-x: 6; radius-y: 6; x: root.width / 1px - 7; y: 1; sweep: false; }
-        LineTo { x: 22; y: 1; }
+        MoveTo {
+            x: 22;
+            y: 1;
+        }
+
+        ArcTo {
+            radius-x: 6;
+            radius-y: 6;
+            x: 16;
+            y: 7;
+            sweep: false;
+        }
+
+        LineTo {
+            x: 16;
+            y: 53;
+        }
+
+        ArcTo {
+            radius-x: 6;
+            radius-y: 6;
+            x: 22;
+            y: 59;
+            sweep: false;
+        }
+
+        LineTo {
+            x: root.width / 1px - 7;
+            y: 59;
+        }
+
+        ArcTo {
+            radius-x: 6;
+            radius-y: 6;
+            x: root.width / 1px - 1;
+            y: 53;
+            sweep: false;
+        }
+
+        LineTo {
+            x: root.width / 1px - 1;
+            y: 7;
+        }
+
+        ArcTo {
+            radius-x: 6;
+            radius-y: 6;
+            x: root.width / 1px - 7;
+            y: 1;
+            sweep: false;
+        }
+
+        LineTo {
+            x: 22;
+            y: 1;
+        }
+
         Close { }
     }
 
@@ -112,7 +208,7 @@ export component InstanceCard inherits Rectangle {
         // cover-fit, and flush with its right edge. Its left edge is already
         // faded to transparent in the pixels (`load_background`), so no overlay
         // is drawn: an overlay could only replace the picture with a flat colour.
-        if root.has-background && root.card-background.width > 0 : Image {
+        if root.has-background && root.card-background.width > 0: Image {
             x: 100px;
             y: 0;
             width: parent.width - 100px;
@@ -122,7 +218,7 @@ export component InstanceCard inherits Rectangle {
         }
     }
 
-    if !root.name-editing : name-row := Rectangle {
+    if !root.name-editing: name-row := Rectangle {
         x: 32px;
         y: 9px;
         width: parent.width - 49px;
@@ -145,7 +241,7 @@ export component InstanceCard inherits Rectangle {
             overflow: elide;
         }
 
-        if root.name-editable : edit-icon := AppIcon {
+        if root.name-editable: edit-icon := AppIcon {
             name: "create-outline";
             size: 16px;
             x: name-text.width + 4px;
@@ -165,7 +261,7 @@ export component InstanceCard inherits Rectangle {
     }
 
     // The name field is focused as soon as it appears and left on blur.
-    if root.name-editable && root.name-editing : name-input := TextInput {
+    if root.name-editable && root.name-editing: name-input := TextInput {
         x: 32px;
         y: 9px;
         width: parent.width - 49px;
@@ -218,7 +314,7 @@ export component InstanceCard inherits Rectangle {
 
         // The settings view hides this when the runtime names no version; the
         // delete dialog always shows it.
-        if root.version-always || root.minecraft-version != "" : HorizontalLayout {
+        if root.version-always || root.minecraft-version != "": HorizontalLayout {
             spacing: 0px;
             alignment: start;
             cross-axis-alignment: center;
@@ -238,7 +334,7 @@ export component InstanceCard inherits Rectangle {
             }
         }
 
-        if root.playtime != "" : HorizontalLayout {
+        if root.playtime != "": HorizontalLayout {
             spacing: 0px;
             alignment: start;
             cross-axis-alignment: center;

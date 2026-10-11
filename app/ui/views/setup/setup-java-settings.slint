@@ -30,13 +30,15 @@ export component SetupJavaSettings inherits VerticalLayout {
         }
     }
 
-    WizardTitle { title: @tr("SetupJavaSettings" => "Java settings"); }
+    WizardTitle {
+        title: @tr("SetupJavaSettings" => "Java settings");
+    }
 
-    if SetupWizardState.jvm-auto-install-supported : WizardMessage {
+    if SetupWizardState.jvm-auto-install-supported: WizardMessage {
         message: @tr("SetupJavaSettings" => "Conic Launcher can greatly simplify Java environment configuration. Enable \"Auto-install Java runtime\" to avoid manual installation!");
     }
 
-    if !SetupWizardState.jvm-auto-install-supported : WizardWarning {
+    if !SetupWizardState.jvm-auto-install-supported: WizardWarning {
         message: @tr("SetupJavaSettings" => "Note: Auto-installation of Java may not be available on the current platform. It is recommended to install Java manually and disable \"Auto-install Java runtime\"");
     }
 

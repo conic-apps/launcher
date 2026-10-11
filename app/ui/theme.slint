@@ -198,10 +198,10 @@ export global Theme {
     // there, which is what `transitions-enabled` below is for.
     in property <string> active-palette:
         AppConfig.palette-follow-system
-            ? (Palette.color-scheme == ColorScheme.dark ? "Mocha"
-                : Palette.color-scheme == ColorScheme.light ? "Latte"
-                : AppConfig.palette)
-            : AppConfig.palette;
+        ? (Palette.color-scheme == ColorScheme.dark ? "Mocha"
+        : Palette.color-scheme == ColorScheme.light ? "Latte"
+        : AppConfig.palette)
+        : AppConfig.palette;
     in property <bool> high-contrast: AppConfig.high-contrast;
 
     in-out property <color> base;
@@ -394,7 +394,7 @@ export component ThemeProvider inherits Rectangle {
 
     in-out property <color> default-text-color:
         root.hc && (Theme.active-palette == "Mocha" || Theme.active-palette == "Macchiato")
-            ? #ffffff : ctp.text;
+        ? #ffffff : ctp.text;
     in-out property <color> text-inverse:
         Theme.active-palette == "Latte" ? Catppuccin.mocha.text : Catppuccin.latte.text;
 
@@ -426,8 +426,8 @@ export component ThemeProvider inherits Rectangle {
     // corrected.
     in-out property <color> setting-group-border:
         root.hc
-            ? (Theme.active-palette == "Mocha" ? Catppuccin.latte.overlay2 : ctp.overlay2)
-            : (root.dark ? transparent : ctp.crust);
+        ? (Theme.active-palette == "Mocha" ? Catppuccin.latte.overlay2 : ctp.overlay2)
+        : (root.dark ? transparent : ctp.crust);
     in-out property <color> setting-group-danger-border: ctp.red;
 
     in-out property <color> toggle-switch-background: root.dark ? ctp.surface1 : ctp.crust;
@@ -447,28 +447,12 @@ export component ThemeProvider inherits Rectangle {
     in-out property <color> dialog-background: root.dark ? ctp.base : ctp.crust;
     in-out property <color> dialog-border:
         root.dark
-            ? (root.hc && Theme.active-palette != "Frappe" ? ctp.overlay2 : #383b41)
-            : ctp.crust;
+        ? (root.hc && Theme.active-palette != "Frappe" ? ctp.overlay2 : #383b41)
+        : ctp.crust;
     in-out property <length> dialog-border-radius: 10px;
 
     // The changes that are allowed to fade (see `Theme.transitions-enabled`).
-    animate base, mantle, crust,
-        surface-0, surface-1, surface-2,
-        overlay-0, overlay-1, overlay-2,
-        text, subtext-0, subtext-1,
-        rosewater, flamingo, pink, mauve, maroon, red, peach, yellow, green,
-        teal, sky, sapphire, blue, lavender,
-        default-text-color, text-inverse,
-        titlebar-background, titlebar-search-background,
-        controllers-background, controllers-background-hover, controllers-background-focus,
-        controllers-border, controllers-outline-focus,
-        setting-item-background, setting-item-background-hover, setting-item-background-active,
-        setting-group-border, setting-group-danger-border,
-        toggle-switch-background, toggle-switch-outline, toggle-switch-button,
-        toggle-switch-active,
-        card-background, card-border,
-        dialog-background, dialog-border
-    {
+    animate base, mantle, crust, surface-0, surface-1, surface-2, overlay-0, overlay-1, overlay-2, text, subtext-0, subtext-1, rosewater, flamingo, pink, mauve, maroon, red, peach, yellow, green, teal, sky, sapphire, blue, lavender, default-text-color, text-inverse, titlebar-background, titlebar-search-background, controllers-background, controllers-background-hover, controllers-background-focus, controllers-border, controllers-outline-focus, setting-item-background, setting-item-background-hover, setting-item-background-active, setting-group-border, setting-group-danger-border, toggle-switch-background, toggle-switch-outline, toggle-switch-button, toggle-switch-active, card-background, card-border, dialog-background, dialog-border {
         duration: Theme.transitions-enabled ? Theme.transitions-duration : 0ms;
         easing: ease;
     }

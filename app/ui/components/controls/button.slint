@@ -58,15 +58,18 @@ export component Button inherits Rectangle {
     background: root.button-background != transparent ? root.button-background
         : button-touch.pressed ? Theme.surface-2
         : button-touch.has-hover ? (root.hover-background != transparent
-            ? root.hover-background
-            : Theme.surface-2.transparentize(0.15))
+        ? root.hover-background
+        : Theme.surface-2.transparentize(0.15))
         : Theme.controllers-background;
     // The press scale. A `button-background` pins the fill above and so leaves
     // the press with no colour feedback of its own — this is what the accented
     // buttons have left.
     transform-scale: button-touch.pressed ? 97% : button-touch.has-hover ? 102% : 100%;
     opacity: root.button-enabled ? 1.0 : 0.5;
-    animate background, transform-scale { duration: 150ms; easing: ease; }
+    animate background, transform-scale {
+        duration: 150ms;
+        easing: ease;
+    }
 
     button-label := Text {
         text: root.text;

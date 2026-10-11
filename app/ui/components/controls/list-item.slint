@@ -36,7 +36,10 @@ export component ListItem inherits Rectangle {
         background: touch.pressed ? Theme.surface-2
             : touch.has-hover ? Theme.surface-1
             : Theme.surface-0;
-        animate background { duration: 100ms; easing: cubic-bezier(0, 0.43, 0.25, 1); }
+        animate background {
+            duration: 100ms;
+            easing: cubic-bezier(0, 0.43, 0.25, 1);
+        }
 
         HorizontalLayout {
             padding-left: 12px;
@@ -100,7 +103,7 @@ export component ListItem inherits Rectangle {
                         overflow: elide;
                     }
 
-                    if root.description != "" : Text {
+                    if root.description != "": Text {
                         text: root.description;
                         width: 100%;
                         font-size: 12px;
@@ -112,7 +115,7 @@ export component ListItem inherits Rectangle {
                 }
             }
 
-            for button in root.buttons : Rectangle {
+            for button in root.buttons: Rectangle {
                 width: 16px + 12px;
                 height: 100%;
                 background: transparent;

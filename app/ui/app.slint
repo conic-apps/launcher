@@ -34,17 +34,52 @@ export { LaunchState } from "globals/launch.slint";
 export { CrashState } from "globals/crash.slint";
 export { ScrollInput, ScrollSource } from "globals/scroll.slint";
 export { AvatarMask } from "globals/avatar.slint";
-export { Dialogs, CreateInstanceState, MinecraftVersionItem, AccountAddState, YggdrasilProfileItem, DeleteInstanceState, DeleteSaveState, DeleteAccountState } from "globals/dialogs.slint";
+export {
+    Dialogs,
+    CreateInstanceState,
+    MinecraftVersionItem,
+    AccountAddState,
+    YggdrasilProfileItem,
+    DeleteInstanceState,
+    DeleteSaveState,
+    DeleteAccountState,
+} from "globals/dialogs.slint";
 export { WindowDrag } from "globals/window-drag.slint";
-export { MultiplayerState, MultiplayerPlayer, MultiplayerPeer } from "globals/multiplayer.slint";
+export {
+    MultiplayerState,
+    MultiplayerPlayer,
+    MultiplayerPeer,
+} from "globals/multiplayer.slint";
 export { WindowControl } from "components/title-bar.slint";
 export { Background } from "globals/background.slint";
-export { ContentState, ContentSearch, ContentCard, CardTag, FilterChip, FilterRow, PageButton } from "globals/content.slint";
+export {
+    ContentState,
+    ContentSearch,
+    ContentCard,
+    CardTag,
+    FilterChip,
+    FilterRow,
+    PageButton,
+} from "globals/content.slint";
 export { MusicState, MusicTrack } from "globals/music.slint";
-export { NewsState, NewsSearch, NewsCard, NewsChip, NewsText } from "globals/news.slint";
-export { CommandPaletteState, PaletteItem } from "globals/command-palette.slint";
+export {
+    NewsState,
+    NewsSearch,
+    NewsCard,
+    NewsChip,
+    NewsText,
+} from "globals/news.slint";
+export {
+    CommandPaletteState,
+    PaletteItem,
+} from "globals/command-palette.slint";
 export { InstanceSettingsState } from "globals/instance-settings.slint";
-export { AccountViewState, AccountDay, AccountMonthLabel, AccountActivity } from "globals/account-view.slint";
+export {
+    AccountViewState,
+    AccountDay,
+    AccountMonthLabel,
+    AccountActivity,
+} from "globals/account-view.slint";
 export { SetupWizardState } from "globals/setup.slint";
 export { WorldMapState, WorldSource, WorldTile } from "globals/worldmap.slint";
 export { TooltipState } from "globals/tooltip.slint";
@@ -313,12 +348,12 @@ export component App inherits Window {
                     vertical-stretch: 1;
                     clip: true;
 
-                    if Navigation.current-page == "settings" || Navigation.leaving-page == "settings" : SettingsView { }
-                    if Navigation.current-page == "game" || Navigation.leaving-page == "game" : GameView { }
-                    if Navigation.current-page == "launch" : LaunchView { }
-                    if Navigation.current-page == "crash" : CrashView { }
-                    if Navigation.current-page == "setup" || Navigation.leaving-page == "setup" : SetupView { }
-                    if Navigation.current-page != "settings" && Navigation.current-page != "game" && Navigation.current-page != "launch" && Navigation.current-page != "crash" && Navigation.current-page != "setup" : TodoPlaceholder { }
+                    if Navigation.current-page == "settings" || Navigation.leaving-page == "settings": SettingsView { }
+                    if Navigation.current-page == "game" || Navigation.leaving-page == "game": GameView { }
+                    if Navigation.current-page == "launch": LaunchView { }
+                    if Navigation.current-page == "crash": CrashView { }
+                    if Navigation.current-page == "setup" || Navigation.leaving-page == "setup": SetupView { }
+                    if Navigation.current-page != "settings" && Navigation.current-page != "game" && Navigation.current-page != "launch" && Navigation.current-page != "crash" && Navigation.current-page != "setup": TodoPlaceholder { }
                 }
             }
 

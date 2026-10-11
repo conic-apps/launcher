@@ -33,7 +33,10 @@ component ImportButton inherits Rectangle {
         height: 100%;
         border-radius: 8px;
         background: touch.pressed ? #ffffff6f : touch.has-hover ? #ffffff2f : #ffffff00;
-        animate background { duration: 100ms; easing: ease; }
+        animate background {
+            duration: 100ms;
+            easing: ease;
+        }
     }
 
     Text {
@@ -60,9 +63,13 @@ export component SetupImportInstances inherits VerticalLayout {
     spacing: 0px;
     alignment: start;
 
-    WizardTitle { title: @tr("SetupImportInstances" => "Import instances"); }
+    WizardTitle {
+        title: @tr("SetupImportInstances" => "Import instances");
+    }
 
-    WizardMessage { message: @tr("SetupImportInstances" => "Import previously played instances from other launchers to get started quickly"); }
+    WizardMessage {
+        message: @tr("SetupImportInstances" => "Import previously played instances from other launchers to get started quickly");
+    }
 
     // The row is centred, with its 12px margins split into the two spacers
     // around it, since a layout has none.
@@ -87,7 +94,9 @@ export component SetupImportInstances inherits VerticalLayout {
         background: transparent;
     }
 
-    WizardMessage { message: @tr("SetupImportInstances" => "If you're new to Minecraft, you can also create a blank instance with the latest version right away"); }
+    WizardMessage {
+        message: @tr("SetupImportInstances" => "If you're new to Minecraft, you can also create a blank instance with the latest version right away");
+    }
 
     Rectangle {
         width: 100%;

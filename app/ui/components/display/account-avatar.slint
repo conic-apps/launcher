@@ -53,7 +53,7 @@ export component AccountAvatar inherits Rectangle {
         border-width: root.ring-width;
         border-color: root.ring-color;
 
-        if root.skin.width > 0 : Image {
+        if root.skin.width > 0: Image {
             x: 4px;
             y: 4px;
             width: root.width - 8px;
@@ -63,7 +63,7 @@ export component AccountAvatar inherits Rectangle {
             image-rendering: pixelated;
         }
 
-        if root.skin.width <= 0 : Rectangle {
+        if root.skin.width <= 0: Rectangle {
             x: 4px;
             y: 4px;
             width: root.width - 8px;

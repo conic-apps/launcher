@@ -6,7 +6,9 @@ import { Theme } from "../../../theme.slint";
 import { Button } from "../../../components/controls/button.slint";
 import { Loading } from "../../../components/controls/loading.slint";
 import { TooltipArea } from "../../../components/controls/tooltip-area.slint";
-import { SlideTransition } from "../../../components/containers/slide-transition.slint";
+import {
+    SlideTransition,
+} from "../../../components/containers/slide-transition.slint";
 import { Dialogs, AccountAddState } from "../../../globals/dialogs.slint";
 
 // "Sign in with Microsoft" — the first screen of the add-account dialog.
@@ -51,7 +53,7 @@ export component AccountAddMicrosoft inherits VerticalLayout {
     // Everything after the first screen slides in from the right, and the first
     // screen slides back in from the left.
     private property <string> direction: (root.view == "processing" || root.view == "error"
-            || root.view == "device-code") ? "left" : "right";
+        || root.view == "device-code") ? "left" : "right";
 
     init => {
         // The state the screen opens in is simply mounted.
@@ -178,7 +180,7 @@ export component AccountAddMicrosoft inherits VerticalLayout {
         return @tr("{} min {} sec", floor(seconds / 60), mod(seconds, 60));
     }
 
-    if root.shown == "error" : SlideTransition {
+    if root.shown == "error": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
 
@@ -189,7 +191,7 @@ export component AccountAddMicrosoft inherits VerticalLayout {
         }
     }
 
-    if root.shown == "processing" : SlideTransition {
+    if root.shown == "processing": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
         min-height: 120px;
@@ -227,7 +229,7 @@ export component AccountAddMicrosoft inherits VerticalLayout {
         }
     }
 
-    if root.shown == "device-code" : SlideTransition {
+    if root.shown == "device-code": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
 
@@ -283,7 +285,10 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                 background: code-touch.pressed ? Theme.surface-1
                     : code-touch.has-hover ? Theme.surface-0
                     : transparent;
-                animate background { duration: 100ms; easing: ease; }
+                animate background {
+                    duration: 100ms;
+                    easing: ease;
+                }
 
                 code-text := Text {
                     y: 0;
@@ -335,7 +340,7 @@ export component AccountAddMicrosoft inherits VerticalLayout {
             padding-top: max(root.link-margin, 16px);
             spacing: 8px;
 
-            if !root.wizard-host : Button {
+            if !root.wizard-host: Button {
                 horizontal-stretch: 1;
                 text: @tr("Cancel");
                 clicked => { AccountAddState.cancel-microsoft-login(); }
@@ -343,7 +348,7 @@ export component AccountAddMicrosoft inherits VerticalLayout {
         }
     }
 
-    if root.shown == "auth-code" : SlideTransition {
+    if root.shown == "auth-code": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
 
@@ -385,7 +390,10 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                     : Theme.controllers-background;
                 border-width: 1px;
                 border-color: Theme.controllers-border;
-                animate background { duration: 100ms; easing: ease; }
+                animate background {
+                    duration: 100ms;
+                    easing: ease;
+                }
 
                 Text {
                     x: 8px;
@@ -431,7 +439,7 @@ export component AccountAddMicrosoft inherits VerticalLayout {
             padding-top: max(root.link-margin, 16px);
             spacing: 8px;
 
-            if !root.wizard-host : Button {
+            if !root.wizard-host: Button {
                 horizontal-stretch: 1;
                 text: @tr("Cancel");
                 clicked => { AccountAddState.cancel-microsoft-login(); }

@@ -33,7 +33,7 @@ export component NewsDetailPanel inherits Rectangle {
                 title: NewsState.detail-title;
             }
 
-            if NewsState.detail-loading : Rectangle {
+            if NewsState.detail-loading: Rectangle {
                 width: 100%;
                 height: 112px;
                 background: transparent;
@@ -46,7 +46,7 @@ export component NewsDetailPanel inherits Rectangle {
                 }
             }
 
-            if !NewsState.detail-loading : Rectangle {
+            if !NewsState.detail-loading: Rectangle {
                 width: 100%;
                 height: self.preferred-height;
                 background: transparent;

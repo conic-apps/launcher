@@ -118,12 +118,10 @@ export component WorldMap inherits Rectangle {
     /// fill the model with.
     private property <int> tile-x0: floor(-root.offset-x / root.block-size);
     private property <int> tile-x1: floor(
-        (root.width - root.offset-x) / root.block-size
-    );
+        (root.width - root.offset-x) / root.block-size);
     private property <int> tile-z0: floor(-root.offset-y / root.block-size);
     private property <int> tile-z1: floor(
-        (root.height - root.offset-y) / root.block-size
-    );
+        (root.height - root.offset-y) / root.block-size);
 
     /// The world a tile request is about. Every change re-opens the world, and
     /// the render options are part of the identity.
@@ -156,8 +154,7 @@ export component WorldMap inherits Rectangle {
             root.tile-x0,
             root.tile-x1,
             root.tile-z0,
-            root.tile-z1
-        );
+            root.tile-z1);
     }
 
     /// The world this map is showing, as the tuple Rust keys its caches by.
@@ -227,8 +224,7 @@ export component WorldMap inherits Rectangle {
         root.scale = clamp(
             min(root.width, root.height) / root.initial-view-blocks / 1px,
             root.min-scale,
-            root.max-scale
-        );
+            root.max-scale);
         root.target-zoom = root.scale;
         root.offset-x = root.width / 2 - root.center-x * 1px * root.scale;
         root.offset-y = root.height / 2 - root.center-z * 1px * root.scale;
@@ -282,7 +278,7 @@ export component WorldMap inherits Rectangle {
     // What runs when is the difference — these are bindings, so a pan or a zoom
     // frame re-evaluates four numbers per tile and Slint redraws. Nothing is
     // recomputed in Rust per frame.
-    for tile in WorldMapState.tiles : Image {
+    for tile in WorldMapState.tiles: Image {
         x: tile.tx * root.block-size + root.offset-x;
         y: tile.tz * root.block-size + root.offset-y;
         width: root.block-size;
@@ -305,7 +301,7 @@ export component WorldMap inherits Rectangle {
 
     // The status overlay is full-size and centred. The spinner and the error
     // glyph + message share one element with two contents.
-    if WorldMapState.loading || WorldMapState.error != "" : Rectangle {
+    if WorldMapState.loading || WorldMapState.error != "": Rectangle {
         x: 0;
         y: 0;
         width: parent.width;
@@ -320,19 +316,19 @@ export component WorldMap inherits Rectangle {
             alignment: center;
             spacing: 8px;
 
-            if WorldMapState.loading : Loading {
+            if WorldMapState.loading: Loading {
                 size: 22px;
                 stroke-width: 5;
                 icon-color: Theme.subtext-0;
             }
 
-            if WorldMapState.error != "" : AppIcon {
+            if WorldMapState.error != "": AppIcon {
                 name: "xmark";
                 size: 16px;
                 icon-color: Theme.red;
             }
 
-            if WorldMapState.error != "" : Text {
+            if WorldMapState.error != "": Text {
                 text: WorldMapState.error;
                 color: Theme.red;
                 font-size: 12px;
@@ -345,17 +341,17 @@ export component WorldMap inherits Rectangle {
     // with a 1px surface border, 6px radius, and one of six corners 8px in. It
     // is non-interactive by declaration order: it is written after the area that
     // reads the pointer, so it never takes an event.
-    if root.show-cursor-coords && map-area.has-hover : Rectangle {
+    if root.show-cursor-coords && map-area.has-hover: Rectangle {
         x: root.cursor-coordinates-position == "top-left" || root.cursor-coordinates-position == "bottom-left"
             ? 8px
             : root.cursor-coordinates-position == "top-right" || root.cursor-coordinates-position == "bottom-right"
-                ? parent.width - self.width - 8px
-                : (parent.width - self.width) / 2;
+            ? parent.width - self.width - 8px
+            : (parent.width - self.width) / 2;
         y: root.cursor-coordinates-position == "top-left" || root.cursor-coordinates-position == "top-center"
-                || root.cursor-coordinates-position == "top-right" ? 8px
+            || root.cursor-coordinates-position == "top-right" ? 8px
             : root.cursor-coordinates-position == "bottom-left" || root.cursor-coordinates-position == "bottom-center"
-                || root.cursor-coordinates-position == "bottom-right"
-                ? parent.height - self.height - 8px
+            || root.cursor-coordinates-position == "bottom-right"
+            ? parent.height - self.height - 8px
             : (parent.height - self.height) / 2;
         width: coords-text.width + 20px;
         height: coords-text.height + 8px;
@@ -420,9 +416,8 @@ export component WorldMap inherits Rectangle {
                     map-area.mouse-x,
                     map-area.mouse-y,
                     clamp(event.modifiers.control || event.modifiers.meta
-                        ? exp(-(event.delta-y / 1px) * 0.01)
-                        : exp(-(event.delta-y / 1px) * 0.0016), 0.2, 5)
-                );
+                    ? exp(-(event.delta-y / 1px) * 0.01)
+                    : exp(-(event.delta-y / 1px) * 0.0016), 0.2, 5));
             } else {
                 // Two fingers, or the momentum macOS keeps sending after they
                 // lift: the deltas *are* the motion, so the view follows them

@@ -7,9 +7,16 @@ import { AppIcon } from "../../../components/display/app-icon.slint";
 import { Button } from "../../../components/controls/button.slint";
 import { Input } from "../../../components/controls/input.slint";
 import { Progress } from "../../../components/controls/progress.slint";
-import { SlideTransition } from "../../../components/containers/slide-transition.slint";
-import { ZoomTransition } from "../../../components/containers/zoom-transition.slint";
-import { MultiplayerState, MultiplayerPlayer } from "../../../globals/multiplayer.slint";
+import {
+    SlideTransition,
+} from "../../../components/containers/slide-transition.slint";
+import {
+    ZoomTransition,
+} from "../../../components/containers/zoom-transition.slint";
+import {
+    MultiplayerState,
+    MultiplayerPlayer,
+} from "../../../globals/multiplayer.slint";
 
 // One member row of the group's player list.
 component PlayerRow inherits VerticalLayout {
@@ -32,7 +39,7 @@ component PlayerRow inherits VerticalLayout {
         }
 
         // Only the host carries the tag.
-        if root.player.kind == "HOST" : tag := Rectangle {
+        if root.player.kind == "HOST": tag := Rectangle {
             width: tag-text.preferred-width + 8px;
             height: 15px;
             border-radius: 4px;
@@ -82,7 +89,10 @@ component WaitAction inherits Rectangle {
         : action-touch.has-hover ? Theme.surface-2.with-alpha(0.85)
         : Theme.surface-0;
     transform-scale: action-touch.pressed ? 98% : action-touch.has-hover ? 101% : 100%;
-    animate background, transform-scale { duration: 150ms; easing: ease; }
+    animate background, transform-scale {
+        duration: 150ms;
+        easing: ease;
+    }
 
     HorizontalLayout {
         padding-top: 12px;
@@ -191,7 +201,7 @@ component ScanProgress inherits Rectangle {
                     color: Theme.default-text-color.transparentize(0.1);
                 }
 
-                if root.show-countdown : Text {
+                if root.show-countdown: Text {
                     text: root.remaining + "s";
                     font-size: 14px;
                     line-height-factor: 1;
@@ -199,9 +209,16 @@ component ScanProgress inherits Rectangle {
                 }
             }
 
-            Rectangle { height: 10px; background: transparent; }
+            Rectangle {
+                height: 10px;
+                background: transparent;
+            }
 
-            Progress { loading: true; value: 0; max: 1; }
+            Progress {
+                loading: true;
+                value: 0;
+                max: 1;
+            }
         }
 
         Button {
@@ -220,7 +237,10 @@ component WaitingScreen inherits VerticalLayout {
         note: @tr("Multiplayer" => "How well multiplayer works depends on your network environment and the other participants'. If it fails, try improving your NAT type, or connect to a network with IPv6 to make it more likely to succeed.");
     }
 
-    Rectangle { height: 16px; background: transparent; }
+    Rectangle {
+        height: 16px;
+        background: transparent;
+    }
 
     actions := Rectangle {
         width: 100%;
@@ -293,7 +313,10 @@ component HostScanScreen inherits VerticalLayout {
         }
     }
 
-    Rectangle { height: 16px; background: transparent; }
+    Rectangle {
+        height: 16px;
+        background: transparent;
+    }
 
     ScanProgress {
         status: @tr("Multiplayer" => "Scanning for LAN worlds...");
@@ -394,7 +417,7 @@ component HostReadyScreen inherits VerticalLayout {
                         phase: root.copy-leaving ? "leave" : root.copy-phase;
                         direction: MultiplayerState.code-copied ? "out" : "in";
 
-                        if root.copy-shown : Rectangle {
+                        if root.copy-shown: Rectangle {
                             width: 100%;
                             height: 16px;
                             background: transparent;
@@ -407,7 +430,7 @@ component HostReadyScreen inherits VerticalLayout {
                             }
                         }
 
-                        if !root.copy-shown : Rectangle {
+                        if !root.copy-shown: Rectangle {
                             width: 100%;
                             height: 16px;
                             background: transparent;
@@ -447,12 +470,12 @@ component HostReadyScreen inherits VerticalLayout {
             VerticalLayout {
                 padding-top: 12px;
                 padding-bottom: 12px;
-        padding-left: 16px;
-        padding-right: 16px;
+                padding-left: 16px;
+                padding-right: 16px;
                 spacing: 8px;
                 alignment: start;
 
-                for player in MultiplayerState.players : PlayerRow {
+                for player in MultiplayerState.players: PlayerRow {
                     player: player;
                 }
 
@@ -462,7 +485,7 @@ component HostReadyScreen inherits VerticalLayout {
                 // so it is a padding here — where the message is the list's only
                 // child and the gap has nothing to sit between, and where a
                 // `Text` cannot carry the padding itself.
-                if MultiplayerState.players.length == 0 : VerticalLayout {
+                if MultiplayerState.players.length == 0: VerticalLayout {
                     padding-top: 8px;
 
                     Text {
@@ -501,7 +524,10 @@ component GuestCodeInputScreen inherits VerticalLayout {
                 color: Theme.default-text-color.transparentize(0.1);
             }
 
-            Rectangle { height: 16px; background: transparent; }
+            Rectangle {
+                height: 16px;
+                background: transparent;
+            }
 
             // The field comes before the button, under the default `stretch` —
             // the field takes the free space and the button lands at the end.
@@ -552,8 +578,8 @@ component GuestReadyScreen inherits VerticalLayout {
         VerticalLayout {
             padding-top: 12px;
             padding-bottom: 12px;
-        padding-left: 16px;
-        padding-right: 16px;
+            padding-left: 16px;
+            padding-right: 16px;
             spacing: 8px;
             alignment: space-between;
 
@@ -562,7 +588,7 @@ component GuestReadyScreen inherits VerticalLayout {
                 alignment: start;
                 spacing: 12px;
 
-                for player in MultiplayerState.players : PlayerRow {
+                for player in MultiplayerState.players: PlayerRow {
                     player: player;
                 }
             }
@@ -581,7 +607,7 @@ component ExceptionScreen inherits VerticalLayout {
     spacing: 0px;
     alignment: start;
 
-    if MultiplayerState.has-fault : Rectangle {
+    if MultiplayerState.has-fault: Rectangle {
         background: Theme.red.with-alpha(0.15);
         border-width: 1px;
         border-color: Theme.red;
@@ -590,8 +616,8 @@ component ExceptionScreen inherits VerticalLayout {
         HorizontalLayout {
             padding-top: 8px;
             padding-bottom: 8px;
-        padding-left: 16px;
-        padding-right: 16px;
+            padding-left: 16px;
+            padding-right: 16px;
             spacing: 8px;
             cross-axis-alignment: center;
 
@@ -611,7 +637,7 @@ component ExceptionScreen inherits VerticalLayout {
         }
     }
 
-    if !MultiplayerState.has-fault : Rectangle {
+    if !MultiplayerState.has-fault: Rectangle {
         background: Theme.red.with-alpha(0.15);
         border-width: 1px;
         border-color: Theme.red;
@@ -620,8 +646,8 @@ component ExceptionScreen inherits VerticalLayout {
         HorizontalLayout {
             padding-top: 8px;
             padding-bottom: 8px;
-        padding-left: 16px;
-        padding-right: 16px;
+            padding-left: 16px;
+            padding-right: 16px;
             spacing: 8px;
             cross-axis-alignment: center;
 
@@ -677,7 +703,6 @@ export component MultiplayerManager inherits VerticalLayout {
             MultiplayerState.scan-remaining = 60;
         }
     }
-
 
     changed screen => {
         if root.shown == "" {
@@ -749,7 +774,7 @@ export component MultiplayerManager inherits VerticalLayout {
         }
 
         // Shown only while the local peer is known.
-        if MultiplayerState.show-nat : Text {
+        if MultiplayerState.show-nat: Text {
             text: @tr("Multiplayer" => "Your network environment: {}", MultiplayerState.local-nat-label);
             font-size: 14px;
             line-height-factor: 1;
@@ -759,43 +784,46 @@ export component MultiplayerManager inherits VerticalLayout {
         }
     }
 
-    if root.shown == "waiting" : SlideTransition {
+    if root.shown == "waiting": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: MultiplayerState.screen-direction;
         WaitingScreen { }
     }
-    if root.shown == "hostScan" : SlideTransition {
+    if root.shown == "hostScan": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: MultiplayerState.screen-direction;
         HostScanScreen { }
     }
-    if root.shown == "hostReady" : SlideTransition {
+    if root.shown == "hostReady": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: MultiplayerState.screen-direction;
         HostReadyScreen { }
     }
-    if root.shown == "guestCodeInput" : SlideTransition {
+    if root.shown == "guestCodeInput": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: MultiplayerState.screen-direction;
         GuestCodeInputScreen { }
     }
-    if root.shown == "guestJoining" : SlideTransition {
+    if root.shown == "guestJoining": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: MultiplayerState.screen-direction;
         GuestJoiningScreen { }
     }
-    if root.shown == "guestReady" : SlideTransition {
+    if root.shown == "guestReady": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: MultiplayerState.screen-direction;
         GuestReadyScreen { }
     }
-    if root.shown == "exception" : SlideTransition {
+    if root.shown == "exception": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: MultiplayerState.screen-direction;
         ExceptionScreen { }
     }
 
-    Rectangle { height: 16px; background: transparent; }
+    Rectangle {
+        height: 16px;
+        background: transparent;
+    }
 
     buttons := Rectangle {
         width: 100%;
@@ -805,7 +833,7 @@ export component MultiplayerManager inherits VerticalLayout {
         HorizontalLayout {
             spacing: 12px;
 
-            if root.screen == "guestCodeInput" : Button {
+            if root.screen == "guestCodeInput": Button {
                 horizontal-stretch: 1;
                 text: @tr("Multiplayer" => "Back");
                 clicked => {
@@ -815,7 +843,7 @@ export component MultiplayerManager inherits VerticalLayout {
                 }
             }
 
-            if root.screen != "guestCodeInput" : Button {
+            if root.screen != "guestCodeInput": Button {
                 horizontal-stretch: 1;
                 text: MultiplayerState.bottom-label;
                 clicked => {

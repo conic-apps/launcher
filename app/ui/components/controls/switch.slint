@@ -38,7 +38,10 @@ export component Switch inherits Rectangle {
         background: root.checked ? Theme.toggle-switch-active
             : touch.has-hover ? #ffffff14
             : Theme.toggle-switch-background;
-        animate background { duration: 300ms; easing: cubic-bezier(0, 0.6, 0.32, 0.99); }
+        animate background {
+            duration: 300ms;
+            easing: cubic-bezier(0, 0.6, 0.32, 0.99);
+        }
 
         // The thumb is 10.5px and scales to 1.1 while hovered and 0.85 while
         // active, over 0.3s. It is kept as a scale rather than a width/height

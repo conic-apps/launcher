@@ -2,7 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { ZoomTransition } from "../../../components/containers/zoom-transition.slint";
+import {
+    ZoomTransition,
+} from "../../../components/containers/zoom-transition.slint";
 import { ListItem } from "../../../components/controls/list-item.slint";
 import { ScrollView } from "../../../components/containers/scroll-view.slint";
 import { CreateInstanceState } from "../../../globals/dialogs.slint";
@@ -101,7 +103,7 @@ export component ModLoaderChoose inherits ZoomTransition {
                 width: 100%;
                 height: root.row-height * root.versions.length;
 
-                for version[index] in root.versions : ListItem {
+                for version[index] in root.versions: ListItem {
                     visible: root.row-height * index < root.window-bottom
                         && root.row-height * (index + 1) > root.window-top;
                     y: root.row-height * index;

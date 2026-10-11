@@ -69,7 +69,7 @@ export component SettingsAppearance inherits VerticalLayout {
             navigable: AppConfig.background-image == "";
             clicked => { AppConfig.pick-background-image(); }
 
-            if AppConfig.background-image != "" : Button {
+            if AppConfig.background-image != "": Button {
                 text: @tr("Remove image");
                 text-color: Theme.red;
                 clicked => { AppConfig.remove-background-image(); }

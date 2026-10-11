@@ -59,11 +59,16 @@ clean docs:
 
 ```bash
 cargo fmt --all -- --check
+slint-lsp format -i $(git ls-files '*.slint')   # no check mode; CI diffs the result
 cargo check
 cargo clippy --all-targets --release -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --document-private-items
 cargo test
 ```
+
+`.slint` files are formatted with `slint-lsp` (`cargo binstall slint-lsp`), pinned to the `slint`
+version in `Cargo.lock`; CI fails on any diff. Keep it in step with `slint`: bumping `slint` without
+bumping `slint-lsp` can reformat the tree.
 
 Every `.rs`, `.slint`, `.py` and `.sh` file needs its SPDX header — `hawkeye check` verifies them
 and `hawkeye format` writes the missing ones. A new dependency must pass the licence allowlist in

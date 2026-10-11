@@ -24,21 +24,21 @@ export component InstancesListToolBar inherits Rectangle {
     // to sit above the scrolling rows.
 
     private property <[DropdownOption]> sort-options: [
-    { key: "name", label: @tr("Name"), icon: "" },
-    { key: "version", label: @tr("Version"), icon: "" },
-    { key: "playtime", label: @tr("Play time"), icon: "" },
-    { key: "lastplay", label: @tr("Last played"), icon: "" },
+        { key: "name", label: @tr("Name"), icon: "" },
+        { key: "version", label: @tr("Version"), icon: "" },
+        { key: "playtime", label: @tr("Play time"), icon: "" },
+        { key: "lastplay", label: @tr("Last played"), icon: "" },
     ];
     private property <[DropdownOption]> group-options: [
-    { key: "none", label: @tr("Ungrouped"), icon: "" },
-    { key: "loader", label: @tr("Mod loader"), icon: "" },
+        { key: "none", label: @tr("Ungrouped"), icon: "" },
+        { key: "loader", label: @tr("Mod loader"), icon: "" },
     ];
 
     private property <string> sort-label:
     GameState.sort-mode == "name" ? @tr("Name")
-    : GameState.sort-mode == "version" ? @tr("Version")
-    : GameState.sort-mode == "lastplay" ? @tr("Last played")
-    : @tr("Play time");
+        : GameState.sort-mode == "version" ? @tr("Version")
+        : GameState.sort-mode == "lastplay" ? @tr("Last played")
+        : @tr("Play time");
     private property <string> group-label:
     GameState.group-mode == "loader" ? @tr("Mod loader") : @tr("Ungrouped");
 
@@ -49,8 +49,16 @@ export component InstancesListToolBar inherits Rectangle {
     private property <length> intro-dx: GameIntro.played ? 0px : 100px;
     private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
 
-    animate intro-dx { duration: 500ms; delay: 50ms; easing: ease-out-quart; }
-    animate intro-alpha { duration: 500ms; delay: 50ms; easing: ease-out-quart; }
+    animate intro-dx {
+        duration: 500ms;
+        delay: 50ms;
+        easing: ease-out-quart;
+    }
+    animate intro-alpha {
+        duration: 500ms;
+        delay: 50ms;
+        easing: ease-out-quart;
+    }
 
     // The whole panel is one element: the intro animates it as a unit, so the
     // translucent background slides in together with the controls rather than
@@ -120,8 +128,8 @@ export component InstancesListToolBar inherits Rectangle {
                 search-button := Rectangle {
                     width: 40px;
                     background: search-touch.pressed ? Theme.surface-2
-                    : search-touch.has-hover ? Theme.surface-2.transparentize(0.2)
-                    : Theme.surface-1;
+                        : search-touch.has-hover ? Theme.surface-2.transparentize(0.2)
+                        : Theme.surface-1;
                     border-top-right-radius: 8px;
                     border-bottom-right-radius: 8px;
 

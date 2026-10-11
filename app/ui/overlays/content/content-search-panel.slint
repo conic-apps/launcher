@@ -4,7 +4,13 @@
 
 import { Theme } from "../../theme.slint";
 import { AppIcon } from "../../components/display/app-icon.slint";
-import { ContentSearch, ContentState, ContentText, FilterChip, FilterRow } from "../../globals/content.slint";
+import {
+    ContentSearch,
+    ContentState,
+    ContentText,
+    FilterChip,
+    FilterRow,
+} from "../../globals/content.slint";
 component ChipPager inherits Rectangle {
     in property <bool> flipped: false;
     in property <bool> disabled: false;
@@ -31,6 +37,7 @@ component ChipPager inherits Rectangle {
         clicked => { root.clicked(); }
     }
 }
+
 component FilterChipView inherits Rectangle {
     in property <FilterChip> chip;
     /// The chip's own width, which the version carousel needs: a repeated
@@ -44,7 +51,7 @@ component FilterChipView inherits Rectangle {
     width: label.preferred-width + 16px;
     border-radius: 999px;
     background: !root.chip.selected ? (touch.pressed ? Theme.surface-2
-            : touch.has-hover ? Theme.surface-1 : transparent)
+        : touch.has-hover ? Theme.surface-1 : transparent)
         : root.chip.accent == "fabric" ? Theme.yellow
         : root.chip.accent == "forge" ? Theme.blue
         : root.chip.accent == "neoforge" ? Theme.peach
@@ -81,6 +88,7 @@ component FilterChipView inherits Rectangle {
     init => { root.measured(root.width); }
     changed width => { root.measured(root.width); }
 }
+
 component VersionCarousel inherits Rectangle {
     in property <[FilterChip]> chips: [];
 
@@ -126,7 +134,7 @@ component VersionCarousel inherits Rectangle {
                 spacing: 6px;
                 cross-axis-alignment: center;
 
-                for chip in root.chips : FilterChipView {
+                for chip in root.chips: FilterChipView {
                     chip: chip;
                     measured(width) => { ContentSearch.chip-measured(chip.value, width); }
                 }
@@ -139,7 +147,6 @@ component VersionCarousel inherits Rectangle {
                 }
             }
         }
-
 
         ChipPager {
             disabled: root.page >= max(0, ContentSearch.version-page-count - 1);
@@ -197,7 +204,7 @@ component FilterRowView inherits Rectangle {
             height: 20px;
         }
 
-        if root.is-version-row : VersionCarousel {
+        if root.is-version-row: VersionCarousel {
             horizontal-stretch: 1;
             // The row's own chips are empty: the carousel draws the whole track,
             // which is not a page's worth and therefore not what a `FilterRow`
@@ -205,12 +212,12 @@ component FilterRowView inherits Rectangle {
             chips: ContentSearch.version-chips;
         }
 
-        if !root.is-version-row : FlexboxLayout {
+        if !root.is-version-row: FlexboxLayout {
             horizontal-stretch: 1;
             flex-wrap: wrap;
             spacing: 6px;
 
-            for chip in root.row-data.chips : FilterChipView {
+            for chip in root.row-data.chips: FilterChipView {
                 chip: chip;
                 // The row's height is computed in Rust from these (Slint cannot
                 // measure a wrapping `FlexboxLayout` at the width it is given).
@@ -218,8 +225,8 @@ component FilterRowView inherits Rectangle {
             }
         }
     }
-
 }
+
 export component ContentSearchPanel inherits Rectangle {
     width: 100%;
     // A Slint layout has no margin, so the box is the content plus the bottom
@@ -273,7 +280,7 @@ export component ContentSearchPanel inherits Rectangle {
                         accepted => { ContentSearch.search(); }
                     }
 
-                    if ContentSearch.query == "" : Text {
+                    if ContentSearch.query == "": Text {
                         text: ContentText.search-placeholder(ContentState.remote-kind);
                         font-size: 13px;
                         color: Theme.subtext-0;
@@ -313,14 +320,14 @@ export component ContentSearchPanel inherits Rectangle {
                 }
             }
 
-        VerticalLayout {
-            spacing: 8px;
+            VerticalLayout {
+                spacing: 8px;
 
-            for filter-row[index] in ContentSearch.filters : FilterRowView {
-                row-data: filter-row;
-                is-version-row: index == ContentSearch.version-row;
+                for filter-row[index] in ContentSearch.filters: FilterRowView {
+                    row-data: filter-row;
+                    is-version-row: index == ContentSearch.version-row;
+                }
             }
-        }
         }
     }
 }

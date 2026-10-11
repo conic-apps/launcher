@@ -26,8 +26,8 @@ export global MusicState {
     /// rather than pushed from Rust so the two cannot disagree.
     out property <string> current-name: MusicState.current-index >= 0
         && MusicState.current-index < MusicState.tracks.length
-            ? MusicState.tracks[MusicState.current-index].name
-            : "";
+        ? MusicState.tracks[MusicState.current-index].name
+        : "";
 
     in-out property <bool> is-playing: false;
     in-out property <bool> shuffle: false;

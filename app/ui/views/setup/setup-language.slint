@@ -95,12 +95,18 @@ export component SetupLanguage inherits VerticalLayout {
     spacing: 0px;
     alignment: start;
 
-    WizardTitle { title: @tr("SetupLanguage" => "Welcome"); }
+    WizardTitle {
+        title: @tr("SetupLanguage" => "Welcome");
+    }
 
-    WizardMessage { message: @tr("SetupLanguage" => "Welcome to the first-run setup wizard!"); }
+    WizardMessage {
+        message: @tr("SetupLanguage" => "Welcome to the first-run setup wizard!");
+    }
+
     WizardMessage {
         message: @tr("SetupLanguage" => "Conic Launcher is highly customizable, but the complex settings might be overwhelming.");
     }
+
     WizardMessage {
         message: @tr("SetupLanguage" => "This wizard will quickly walk you through some important settings so you can start playing right away.");
     }
@@ -123,7 +129,7 @@ export component SetupLanguage inherits VerticalLayout {
         // carry it on its own.
         height: 16px + self.rows * 42px + (self.rows - 1) * 8px;
 
-        for code[index] in root.codes : LanguageButton {
+        for code[index] in root.codes: LanguageButton {
             x: mod(index, grid.columns) * (grid.track-width + 8px);
             y: 16px + floor(index / grid.columns) * 50px;
             track-width: grid.track-width;

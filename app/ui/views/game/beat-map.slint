@@ -43,7 +43,7 @@ export component BeatMap inherits Rectangle {
     // the state block is for the height alone, and the radius is a second thing
     // it would otherwise have carried.
     states [
-        block when !root.fill : {
+        block when !root.fill: {
             height: 48px;
         }
     ]
@@ -78,7 +78,7 @@ export component BeatMap inherits Rectangle {
     // for it once per frame, and a window with an animation in flight is one
     // Slint keeps painting. The item is zero-sized, so nothing on screen depends
     // on the value (the same trick as `window-background.slint`'s).
-    if root.visible && root.live : Rectangle {
+    if root.visible && root.live: Rectangle {
         x: (animation-tick() / 1s) * 1px;
         width: 0;
         height: 0;
@@ -87,19 +87,15 @@ export component BeatMap inherits Rectangle {
     // The live branch: one bar per level. `levels` is empty whenever `live` is
     // false, so the guard is belt and braces — but the idle branch below is
     // gated on `!live`, and the two should agree about which one owns the bars.
-    if root.live : live-bars := Rectangle {
-        for level[index] in root.levels : Rectangle {
+    if root.live: live-bars := Rectangle {
+        for level[index] in root.levels: Rectangle {
             x: floor(index * root.bar-width / 1px) * 1px;
             y: root.height - self.height;
             width: root.bar-width - root.bar-gap;
             // The live branch's bar height, floored so a silent bar stays
             // visible.
             height: max(root.min-bar-height, level * root.height);
-            background: @linear-gradient(
-                0deg,
-                Theme.lavender 0%,
-                Theme.lavender.mix(Theme.blue, level) 100%,
-            );
+            background: @linear-gradient(0deg, Theme.lavender 0%, Theme.lavender.mix(Theme.blue, level) 100%,);
         }
     }
 
@@ -107,8 +103,8 @@ export component BeatMap inherits Rectangle {
     // bottom. It is its own loop because a gradient cannot share a `background`
     // ternary with a plain colour — the two do not unify into a brush, and the
     // bars come out invisible.
-    if !root.live : idle := Rectangle {
-        for index in root.bar-count : Rectangle {
+    if !root.live: idle := Rectangle {
+        for index in root.bar-count: Rectangle {
             x: floor(index * root.bar-width / 1px) * 1px;
             y: root.height - root.idle-height;
             width: root.bar-width - root.bar-gap;
