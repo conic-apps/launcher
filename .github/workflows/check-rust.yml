@@ -61,12 +61,13 @@ jobs:
         run: cargo clippy --manifest-path ./Cargo.toml --all-targets -- -D warnings
 
   slint-format:
-    # `.slint` formatting does not depend on the platform, so one runner is enough.
-    # `slint-lsp` is pinned to the `slint` version in Cargo.lock: a Slint bump can
-    # change the formatter's output and must be made deliberately.
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v7
+
+      - name: Install dependencies
+        run: |
+          sudo apt install libinput10
 
       - name: Install slint-lsp
         uses: taiki-e/install-action@v2
