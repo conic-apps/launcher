@@ -229,10 +229,15 @@ impl TrackSource {
             if self.channels == 0 || self.sample_rate == 0 || frames == 0 {
                 continue;
             }
+            // `capacity` and `copy_interleaved_ref`'s own assertion both count
+            // samples, not frames, so the frame count has to be scaled by the
+            // channel count. Vorbis packets vary in size, and a buffer sized
+            // from a small packet is not big enough for a later large one.
+            let samples = frames * spec.channels.count();
             if self
                 .buffer
                 .as_ref()
-                .is_none_or(|buffer| buffer.capacity() < frames)
+                .is_none_or(|buffer| buffer.capacity() < samples)
             {
                 self.buffer = Some(SampleBuffer::new(frames as u64, spec));
             }
