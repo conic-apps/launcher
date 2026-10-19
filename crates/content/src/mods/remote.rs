@@ -4,17 +4,21 @@
 
 //! Online mod metadata lookup with a persistent on-disk cache.
 //!
-//! Four JSON files live under [`storage::LOCATIONS`]'s cache directory, plus a
-//! directory of icons beside them:
+//! The JSON caches live under [`storage::LOCATIONS`]'s cache directory, plus the
+//! per-instance file indexes and a directory of icons beside them:
 //!
 //! - `modrinth.json` and `curseforge.json` cache the result of each platform's
 //!   file-feature lookup, keyed by the file's SHA-512 checksum. Entries expire
 //!   after `REMOTE_CACHE_TTL_SECS` and only carry list-display fields.
 //! - `local.json` caches the local parse result so parsing is skipped on the
 //!   next run. It never expires.
-//! - `identity.json` maps each file's SHA-512 checksum to the project/mod ids
-//!   it is known on either platform. It never expires and only stores the
-//!   platform ids, not the lookup details.
+//! - `identity.json` maps each file's SHA-512 checksum to the project/mod and
+//!   version/file ids it is known on either platform. It never expires and does
+//!   not carry the lookup details. A failed lookup never clears an id written by
+//!   an earlier successful one: the content did not change, so the old answer is
+//!   still the one that belongs to that checksum.
+//! - `files/<instance>.json` records the stat and checksum of each file in that
+//!   instance's mods folder, so an unchanged jar is not read again.
 //! - `local-icons/<sha512>.png` is one file's own icon, named after the same
 //!   checksum. The icon used to sit in `local.json` as a `data:` URL, which made
 //!   it the bulk of that file — and nearly all of it was thrown away, because
@@ -30,8 +34,8 @@
 //!   (faster), then CurseForge — cache first, then a fresh query.
 //! - Otherwise both platforms are queried at the same time. The first response
 //!   wins for the frontend result, but both responses are fully processed and
-//!   written to the caches. A platform that failed or has no data for the file
-//!   records `null` for its id in the identity entry.
+//!   written to the caches. A platform that fails or has no data for the file
+//!   leaves its identity untouched; the next parse retries it.
 //!
 //! Online info takes priority over the local parse result; local data
 //! supplements whatever the platform does not provide. Icons found online are
@@ -58,12 +62,11 @@
 //! 2. Nothing but disk I/O and serde runs under the lock. No `.await` there
 //!    reaches back into this module; every platform query happens before the
 //!    saves.
-//! 3. The synchronous hashing of a folder (`sha512_file`) runs outside the
-//!    lock, before anything is saved.
+//! 3. The synchronous scan that hashes a folder runs outside the lock, before
+//!    anything is saved.
 
 use std::{
     collections::HashMap,
-    io::Read,
     path::{Path, PathBuf},
     sync::OnceLock,
     time::{SystemTime, UNIX_EPOCH},
@@ -73,11 +76,10 @@ use futures::{FutureExt, select};
 use log::warn;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use serde_json::Value;
-use sha2::{Digest, Sha512};
 
 use crate::error::Result;
 use crate::mods::{
-    ModLoader, ResolvedAuthorInfo, ResolvedMod, decode_icon_data_url, encode_icon,
+    ModLoader, ResolvedAuthorInfo, ResolvedMod, decode_icon_data_url, encode_icon, index,
     is_disabled_file, parse_mod,
 };
 
@@ -103,21 +105,6 @@ pub struct RemoteModInfo {
     pub game_versions: Vec<String>,
 }
 
-pub(crate) fn sha512_file<P: AsRef<Path>>(path: P) -> std::io::Result<String> {
-    let file = std::fs::File::open(path)?;
-    let mut reader = std::io::BufReader::new(file);
-    let mut hasher = Sha512::new();
-    let mut buffer = [0u8; 64 * 1024];
-    loop {
-        let read = reader.read(&mut buffer)?;
-        if read == 0 {
-            break;
-        }
-        hasher.update(&buffer[..read]);
-    }
-    Ok(format!("{:x}", hasher.finalize()))
-}
-
 const REMOTE_CACHE_TTL_SECS: u64 = 24 * 60 * 60;
 
 const MODRINTH_CACHE: &str = "modrinth.json";
@@ -138,18 +125,67 @@ struct LocalCacheEntry {
     mods: Vec<ResolvedMod>,
 }
 
-/// The platform ids a file is known on. A missing or failed lookup is `None`.
+/// The ids one platform knows a file by. The version/file id is the identity of
+/// the exact bytes, not just of the project, which is what lets a later version
+/// switch tell two installed versions apart.
+#[derive(Debug, Clone)]
+struct PlatformIdentity {
+    project_id: String,
+    version_id: Option<String>,
+}
+
+/// The platform ids a file is known on. A missing field means either that the
+/// platform has no match or that the lookup has not succeeded yet; the two are
+/// deliberately indistinguishable here because a failure must not erase what an
+/// earlier success wrote.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 struct IdentityEntry {
     #[serde(default)]
     modrinth: Option<String>,
     #[serde(default)]
+    modrinth_version: Option<String>,
+    #[serde(default)]
     curseforge: Option<String>,
+    #[serde(default)]
+    curseforge_file: Option<String>,
+}
+
+impl IdentityEntry {
+    fn remember(&mut self, platform: RemoteModPlatform, update: &PlatformIdentity) {
+        match platform {
+            RemoteModPlatform::Modrinth => {
+                self.modrinth = Some(update.project_id.clone());
+                if update.version_id.is_some() {
+                    self.modrinth_version = update.version_id.clone();
+                }
+            }
+            RemoteModPlatform::CurseForge => {
+                self.curseforge = Some(update.project_id.clone());
+                if update.version_id.is_some() {
+                    self.curseforge_file = update.version_id.clone();
+                }
+            }
+        }
+    }
+
+    fn project_and_version(&self, platform: RemoteModPlatform) -> Option<(&str, Option<&str>)> {
+        match platform {
+            RemoteModPlatform::Modrinth => self
+                .modrinth
+                .as_deref()
+                .map(|project| (project, self.modrinth_version.as_deref())),
+            RemoteModPlatform::CurseForge => self
+                .curseforge
+                .as_deref()
+                .map(|project| (project, self.curseforge_file.as_deref())),
+        }
+    }
 }
 
 type RemoteCache = HashMap<String, RemoteCacheEntry>;
 type LocalCache = HashMap<String, LocalCacheEntry>;
 type IdentityCache = HashMap<String, IdentityEntry>;
+type IdentityUpdates = HashMap<String, Option<PlatformIdentity>>;
 
 /// Serializes the read-merge-write of the shared cache files so concurrent
 /// parse requests (e.g. the frontend switching instances mid-parse) never
@@ -241,30 +277,43 @@ async fn save_identity_cache(cache: &IdentityCache) {
     save_cache(IDENTITY_CACHE, cache).await;
 }
 
-/// Merge the per-platform lookup outcomes (hash → `Some(id)` on success,
-/// `None` on failure) into the identity cache field-wise and write it back.
-/// `None` only overwrites the platform it belongs to, so two concurrent parses
-/// discovering the same file on different platforms do not lose each other's id.
+/// Merge the per-platform lookup outcomes into the identity cache and write it
+/// back. Only successes are applied: a failed or empty lookup leaves whatever
+/// an earlier run learned about that checksum, because the content it describes
+/// has not changed.
 ///
-/// The merge is field-wise rather than entry-wise because of that, which is why
-/// it does not go through `merge_and_save` like the other three caches: there
-/// the entry *is* the value, and here only one of its two fields is.
-async fn merge_and_save_identity(
-    modrinth: HashMap<String, Option<String>>,
-    curseforge: HashMap<String, Option<String>>,
-) {
-    if modrinth.is_empty() && curseforge.is_empty() {
+/// The merge is field-wise rather than entry-wise because two concurrent parses
+/// can discover the same file on different platforms, which is why it does not
+/// go through `merge_and_save` like the other caches: there the entry *is* the
+/// value, and here only some of its fields are.
+async fn merge_and_save_identity(modrinth: IdentityUpdates, curseforge: IdentityUpdates) {
+    let has_update =
+        modrinth.values().any(Option::is_some) || curseforge.values().any(Option::is_some);
+    if !has_update {
         return;
     }
     let _guard = cache_write_lock().await;
     let mut cache = load_identity_cache().await;
-    for (hash, id) in modrinth {
-        cache.entry(hash).or_default().modrinth = id;
+    let mut changed = false;
+    for (hash, update) in modrinth {
+        if let Some(update) = update {
+            let entry = cache.entry(hash).or_default();
+            let before = (entry.modrinth.clone(), entry.modrinth_version.clone());
+            entry.remember(RemoteModPlatform::Modrinth, &update);
+            changed |= entry.modrinth != before.0 || entry.modrinth_version != before.1;
+        }
     }
-    for (hash, id) in curseforge {
-        cache.entry(hash).or_default().curseforge = id;
+    for (hash, update) in curseforge {
+        if let Some(update) = update {
+            let entry = cache.entry(hash).or_default();
+            let before = (entry.curseforge.clone(), entry.curseforge_file.clone());
+            entry.remember(RemoteModPlatform::CurseForge, &update);
+            changed |= entry.curseforge != before.0 || entry.curseforge_file != before.1;
+        }
     }
-    save_identity_cache(&cache).await;
+    if changed {
+        save_identity_cache(&cache).await;
+    }
 }
 
 fn cache_is_fresh(entry: &RemoteCacheEntry, timestamp: u64) -> bool {
@@ -272,21 +321,36 @@ fn cache_is_fresh(entry: &RemoteCacheEntry, timestamp: u64) -> bool {
 }
 
 pub async fn parse_folder_with_remote<S: AsRef<Path> + ?Sized>(folder: &S) -> Vec<ResolvedMod> {
-    let folder = folder.as_ref();
-    let files: Vec<PathBuf> = folder
-        .read_dir()
-        .map(|entries| {
-            entries
-                .flatten()
-                .map(|entry| entry.path())
-                .filter(|path| path.is_file())
-                .collect()
-        })
-        .unwrap_or_default();
+    parse_folder_indexed(folder.as_ref(), None).await
+}
 
+/// The indexed half of [`parse_folder_with_remote`]. An instance id turns the
+/// stat/checksum index on; the public folder-taking entry point has no instance
+/// to key it by, so it hashes the files it is given.
+async fn parse_folder_indexed(folder: &Path, instance_id: Option<&str>) -> Vec<ResolvedMod> {
     if let Err(error) = tokio::fs::create_dir_all(cache_dir()).await {
         warn!("Failed to create mod cache directory: {error}");
         return Vec::new();
+    }
+
+    let previous = match instance_id {
+        Some(instance_id) => index::load(instance_id).await,
+        None => index::FileIndex::new(),
+    };
+    let previous_snapshot = previous.clone();
+    let scan_folder = folder.to_path_buf();
+    let (file_index, files) =
+        match tokio::task::spawn_blocking(move || index::scan(&scan_folder, &previous)).await {
+            Ok(scanned) => scanned,
+            Err(error) => {
+                warn!("Scanning {:?} did not run: {error}", folder);
+                (index::FileIndex::new(), Vec::new())
+            }
+        };
+    if let Some(instance_id) = instance_id
+        && file_index != previous_snapshot
+    {
+        index::save(instance_id, &file_index).await;
     }
 
     let local_cache = load_cache::<LocalCacheEntry>(LOCAL_CACHE).await;
@@ -301,14 +365,7 @@ pub async fn parse_folder_with_remote<S: AsRef<Path> + ?Sized>(folder: &S) -> Ve
     // rewrite every entry to write the few that are new.
     let mut new_local_entries: LocalCache = HashMap::new();
 
-    for path in files {
-        let hash = match sha512_file(&path) {
-            Ok(hash) => hash,
-            Err(error) => {
-                warn!("Failed to hash {:?}: {error}", path);
-                continue;
-            }
-        };
+    for index::ScannedFile { path, sha512: hash } in files {
         let cached = local_cache.get(&hash).cloned();
         let mut parsed = match cached {
             Some(entry) => entry.mods,
@@ -375,25 +432,35 @@ pub async fn parse_folder_with_remote<S: AsRef<Path> + ?Sized>(folder: &S) -> Ve
     }
 
     let mut remote_by_hash: HashMap<String, RemoteModInfo> = HashMap::new();
-    let mut modrinth_identity: HashMap<String, Option<String>> = HashMap::new();
-    let mut curseforge_identity: HashMap<String, Option<String>> = HashMap::new();
+    let mut modrinth_identity: IdentityUpdates = HashMap::new();
+    let mut curseforge_identity: IdentityUpdates = HashMap::new();
     let mut modrinth_dirty = false;
     let mut curseforge_dirty = false;
 
     // Group A: both platform ids known. Each platform's cache is consulted
     // first; whatever is still missing is queried from Modrinth, then
-    // CurseForge.
+    // CurseForge. The cache also supplies the version id when the entry predates
+    // the identity field.
     let mut needs_modrinth: Vec<String> = Vec::new();
     for hash in &group_a {
-        if let Some(entry) = modrinth_cache.get(hash)
-            && cache_is_fresh(entry, timestamp)
-        {
-            remote_by_hash.insert(hash.clone(), entry.info.clone());
-        } else if let Some(entry) = curseforge_cache.get(hash)
-            && cache_is_fresh(entry, timestamp)
-        {
-            remote_by_hash.insert(hash.clone(), entry.info.clone());
-        } else {
+        let mut found = false;
+        if let Some(entry) = modrinth_cache.get(hash) {
+            // The ids describe the bytes, so an expired display entry still
+            // carries a usable identity.
+            modrinth_identity.insert(hash.clone(), Some(platform_identity(&entry.info)));
+            if cache_is_fresh(entry, timestamp) {
+                remote_by_hash.insert(hash.clone(), entry.info.clone());
+                found = true;
+            }
+        }
+        if let Some(entry) = curseforge_cache.get(hash) {
+            curseforge_identity.insert(hash.clone(), Some(platform_identity(&entry.info)));
+            if cache_is_fresh(entry, timestamp) && !found {
+                remote_by_hash.insert(hash.clone(), entry.info.clone());
+                found = true;
+            }
+        }
+        if !found {
             needs_modrinth.push(hash.clone());
         }
     }
@@ -406,11 +473,12 @@ pub async fn parse_folder_with_remote<S: AsRef<Path> + ?Sized>(folder: &S) -> Ve
         needs_modrinth.len()
     );
     if !needs_modrinth.is_empty() {
-        let (info, _) = query_modrinth_batch(&needs_modrinth, &mut modrinth_cache).await;
+        let (info, identity) = query_modrinth_batch(&needs_modrinth, &mut modrinth_cache).await;
         log::debug!("Modrinth answered with {} of them", info.len());
         for (hash, remote) in info {
             remote_by_hash.entry(hash).or_insert(remote);
         }
+        modrinth_identity.extend(identity);
         modrinth_dirty = true;
     }
     let needs_curseforge: Vec<String> = group_a
@@ -419,11 +487,12 @@ pub async fn parse_folder_with_remote<S: AsRef<Path> + ?Sized>(folder: &S) -> Ve
         .cloned()
         .collect();
     if !needs_curseforge.is_empty() {
-        let (info, _) =
+        let (info, identity) =
             query_curseforge_batch(&needs_curseforge, &files_by_hash, &mut curseforge_cache).await;
         for (hash, remote) in info {
             remote_by_hash.entry(hash).or_insert(remote);
         }
+        curseforge_identity.extend(identity);
         curseforge_dirty = true;
     }
 
@@ -436,25 +505,31 @@ pub async fn parse_folder_with_remote<S: AsRef<Path> + ?Sized>(folder: &S) -> Ve
         let mut needs_modrinth_b: Vec<String> = Vec::new();
         let mut needs_curseforge_b: Vec<String> = Vec::new();
         for hash in &group_b {
-            if let Some(entry) = modrinth_cache.get(hash)
-                && cache_is_fresh(entry, timestamp)
-            {
-                remote_by_hash
-                    .entry(hash.clone())
-                    .or_insert(entry.info.clone());
-                modrinth_identity.insert(hash.clone(), Some(entry.info.project_id.clone()));
-            } else {
-                needs_modrinth_b.push(hash.clone());
+            match modrinth_cache.get(hash) {
+                Some(entry) => {
+                    modrinth_identity.insert(hash.clone(), Some(platform_identity(&entry.info)));
+                    if cache_is_fresh(entry, timestamp) {
+                        remote_by_hash
+                            .entry(hash.clone())
+                            .or_insert(entry.info.clone());
+                    } else {
+                        needs_modrinth_b.push(hash.clone());
+                    }
+                }
+                None => needs_modrinth_b.push(hash.clone()),
             }
-            if let Some(entry) = curseforge_cache.get(hash)
-                && cache_is_fresh(entry, timestamp)
-            {
-                remote_by_hash
-                    .entry(hash.clone())
-                    .or_insert(entry.info.clone());
-                curseforge_identity.insert(hash.clone(), Some(entry.info.project_id.clone()));
-            } else {
-                needs_curseforge_b.push(hash.clone());
+            match curseforge_cache.get(hash) {
+                Some(entry) => {
+                    curseforge_identity.insert(hash.clone(), Some(platform_identity(&entry.info)));
+                    if cache_is_fresh(entry, timestamp) {
+                        remote_by_hash
+                            .entry(hash.clone())
+                            .or_insert(entry.info.clone());
+                    } else {
+                        needs_curseforge_b.push(hash.clone());
+                    }
+                }
+                None => needs_curseforge_b.push(hash.clone()),
             }
         }
 
@@ -587,12 +662,8 @@ async fn read_icon_file(hash: &str) -> Option<String> {
 async fn query_modrinth_batch(
     hashes: &[String],
     cache: &mut RemoteCache,
-) -> (
-    HashMap<String, RemoteModInfo>,
-    HashMap<String, Option<String>>,
-) {
-    let mut identity: HashMap<String, Option<String>> =
-        hashes.iter().map(|hash| (hash.clone(), None)).collect();
+) -> (HashMap<String, RemoteModInfo>, IdentityUpdates) {
+    let mut identity: IdentityUpdates = hashes.iter().map(|hash| (hash.clone(), None)).collect();
     if hashes.is_empty() {
         return (HashMap::new(), identity);
     }
@@ -734,9 +805,16 @@ async fn query_modrinth_batch(
             },
         );
         info_by_hash.insert(hash.clone(), info.clone());
-        identity.insert(hash.clone(), Some(project_id.to_string()));
+        identity.insert(hash.clone(), Some(platform_identity(&info)));
     }
     (info_by_hash, identity)
+}
+
+fn platform_identity(info: &RemoteModInfo) -> PlatformIdentity {
+    PlatformIdentity {
+        project_id: info.project_id.clone(),
+        version_id: info.version_id.clone(),
+    }
 }
 
 /// Query CurseForge for a batch of fingerprints and store the fresh results
@@ -748,12 +826,8 @@ async fn query_curseforge_batch(
     hashes: &[String],
     files_by_hash: &HashMap<String, PathBuf>,
     cache: &mut RemoteCache,
-) -> (
-    HashMap<String, RemoteModInfo>,
-    HashMap<String, Option<String>>,
-) {
-    let mut identity: HashMap<String, Option<String>> =
-        hashes.iter().map(|hash| (hash.clone(), None)).collect();
+) -> (HashMap<String, RemoteModInfo>, IdentityUpdates) {
+    let mut identity: IdentityUpdates = hashes.iter().map(|hash| (hash.clone(), None)).collect();
     if hashes.is_empty() {
         return (HashMap::new(), identity);
     }
@@ -887,51 +961,9 @@ async fn query_curseforge_batch(
             },
         );
         info_by_hash.insert(hash.clone(), info.clone());
-        identity.insert(hash.clone(), Some(mod_id.to_string()));
+        identity.insert(hash.clone(), Some(platform_identity(&info)));
     }
     (info_by_hash, identity)
-}
-
-/// Resolve one file's metadata from a single platform only, checking that
-/// platform's cache first and querying it when the cache is missing or stale.
-/// Returns the remote info (if any) and the identity update for the platform.
-async fn resolve_platform_single(
-    hash: &str,
-    platform: RemoteModPlatform,
-    modrinth_cache: &mut RemoteCache,
-    curseforge_cache: &mut RemoteCache,
-    files_by_hash: &HashMap<String, PathBuf>,
-) -> (Option<RemoteModInfo>, HashMap<String, Option<String>>) {
-    let timestamp = now();
-    match platform {
-        RemoteModPlatform::Modrinth => {
-            if let Some(entry) = modrinth_cache.get(hash)
-                && cache_is_fresh(entry, timestamp)
-            {
-                let mut identity = HashMap::new();
-                identity.insert(hash.to_string(), Some(entry.info.project_id.clone()));
-                (Some(entry.info.clone()), identity)
-            } else {
-                let (info, identity) =
-                    query_modrinth_batch(&[hash.to_string()], modrinth_cache).await;
-                (info.into_iter().next().map(|(_, info)| info), identity)
-            }
-        }
-        RemoteModPlatform::CurseForge => {
-            if let Some(entry) = curseforge_cache.get(hash)
-                && cache_is_fresh(entry, timestamp)
-            {
-                let mut identity = HashMap::new();
-                identity.insert(hash.to_string(), Some(entry.info.project_id.clone()));
-                (Some(entry.info.clone()), identity)
-            } else {
-                let (info, identity) =
-                    query_curseforge_batch(&[hash.to_string()], files_by_hash, curseforge_cache)
-                        .await;
-                (info.into_iter().next().map(|(_, info)| info), identity)
-            }
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -945,9 +977,10 @@ pub struct ModInstalledInfo {
 /// Check whether a mod identified by its id on a platform is installed in an
 /// instance's mods folder.
 ///
-/// The identity cache maps file hashes to platform ids, so a matching hash can
-/// be found without querying any API. The matching files are then parsed and
-/// resolved from the requested platform only (its cache, then a fresh query).
+/// The file index supplies each path's checksum without reading jars that have
+/// not changed, and the identity cache maps that checksum to the platform ids.
+/// No platform API is queried here: a checksum that identity does not know is
+/// simply not evidence of this project.
 pub async fn check_mod_installed(
     instance_id: &str,
     platform: RemoteModPlatform,
@@ -959,17 +992,14 @@ pub async fn check_mod_installed(
     };
 
     let identity_cache = load_identity_cache().await;
-    let mut candidate_hashes: Vec<String> = Vec::new();
-    for (hash, entry) in &identity_cache {
-        let stored = match platform {
-            RemoteModPlatform::Modrinth => entry.modrinth.as_deref(),
-            RemoteModPlatform::CurseForge => entry.curseforge.as_deref(),
-        };
-        if stored == Some(project_id) {
-            candidate_hashes.push(hash.clone());
-        }
-    }
-    if candidate_hashes.is_empty() {
+    // Nothing in the folder can match a project identity has never seen, so the
+    // common "not installed" case does not need to walk the folder at all.
+    let has_candidate = identity_cache.values().any(|entry| {
+        entry
+            .project_and_version(platform)
+            .is_some_and(|(project, _)| project == project_id)
+    });
+    if !has_candidate {
         return empty;
     }
 
@@ -977,91 +1007,124 @@ pub async fn check_mod_installed(
         .instances
         .get_instance_root(instance_id)
         .join("mods");
-    let files: Vec<PathBuf> = mods_folder
-        .read_dir()
-        .map(|entries| {
-            entries
-                .flatten()
-                .map(|entry| entry.path())
-                .filter(|path| path.is_file())
-                .collect()
-        })
-        .unwrap_or_default();
-
-    let mut matched: Vec<PathBuf> = Vec::new();
-    for path in files {
-        let Ok(hash) = sha512_file(&path) else {
-            continue;
+    let previous = index::load(instance_id).await;
+    let previous_snapshot = previous.clone();
+    let scan_folder = mods_folder.clone();
+    let (file_index, files) =
+        match tokio::task::spawn_blocking(move || index::scan(&scan_folder, &previous)).await {
+            Ok(scanned) => scanned,
+            Err(error) => {
+                warn!("Scanning {:?} did not run: {error}", mods_folder);
+                return empty;
+            }
         };
-        if candidate_hashes.iter().any(|candidate| candidate == &hash) {
-            matched.push(path);
-        }
+    if file_index != previous_snapshot {
+        index::save(instance_id, &file_index).await;
     }
-    if matched.is_empty() {
+    if files.is_empty() {
         return empty;
     }
 
-    let mut modrinth_cache = load_cache::<RemoteCacheEntry>(MODRINTH_CACHE).await;
-    let mut curseforge_cache = load_cache::<RemoteCacheEntry>(CURSEFORGE_CACHE).await;
-    let mut modrinth_identity: HashMap<String, Option<String>> = HashMap::new();
-    let mut curseforge_identity: HashMap<String, Option<String>> = HashMap::new();
-    let mut files_by_hash: HashMap<String, PathBuf> = HashMap::new();
-    for path in &matched {
-        if let Ok(hash) = sha512_file(path) {
-            files_by_hash.insert(hash, path.clone());
-        }
-    }
+    let local_cache = load_cache::<LocalCacheEntry>(LOCAL_CACHE).await;
+    let modrinth_cache = load_cache::<RemoteCacheEntry>(MODRINTH_CACHE).await;
+    let curseforge_cache = load_cache::<RemoteCacheEntry>(CURSEFORGE_CACHE).await;
 
     let mut result_mods = Vec::new();
-    let mut modrinth_dirty = false;
-    let mut curseforge_dirty = false;
-    for (hash, path) in &files_by_hash {
-        let mut parsed = match parse_mod(path) {
-            Ok(mods) => mods,
-            Err(crate::error::Error::NotAModFile) => continue,
-            Err(error) => {
-                warn!("Failed to parse mod {:?}: {error}", path);
-                continue;
-            }
+    for index::ScannedFile { path, sha512: hash } in files {
+        let Some(identity) = identity_cache.get(&hash) else {
+            continue;
         };
-        let (info, identity) = resolve_platform_single(
-            hash,
-            platform,
-            &mut modrinth_cache,
-            &mut curseforge_cache,
-            &files_by_hash,
-        )
-        .await;
-        match platform {
-            RemoteModPlatform::Modrinth => {
-                modrinth_identity.extend(identity);
-                modrinth_dirty = true;
-            }
-            RemoteModPlatform::CurseForge => {
-                curseforge_identity.extend(identity);
-                curseforge_dirty = true;
-            }
+        let Some((stored_project, version_id)) = identity.project_and_version(platform) else {
+            continue;
+        };
+        if stored_project != project_id {
+            continue;
         }
-        if let Some(info) = info {
-            for mod_info in &mut parsed {
-                merge_remote(mod_info, &info);
+
+        let mut parsed = match local_cache.get(&hash) {
+            Some(entry) if !entry.mods.is_empty() => entry.mods.clone(),
+            _ => match parse_mod(&path) {
+                Ok(mods) if !mods.is_empty() => mods,
+                Ok(_) => vec![ResolvedMod::unrecognized(&path)],
+                Err(crate::error::Error::NotAModFile) => vec![ResolvedMod::unrecognized(&path)],
+                Err(error) => {
+                    warn!("Failed to parse mod {:?}: {error}", path);
+                    vec![ResolvedMod::unrecognized(&path)]
+                }
+            },
+        };
+
+        let cached_remote = match platform {
+            RemoteModPlatform::Modrinth => modrinth_cache.get(&hash),
+            RemoteModPlatform::CurseForge => curseforge_cache.get(&hash),
+        }
+        .map(|entry| &entry.info);
+        let disabled = is_disabled_file(&path);
+        for mod_info in &mut parsed {
+            mod_info.path = path.clone();
+            mod_info.disabled = disabled;
+            if let Some(remote) = cached_remote {
+                merge_remote(mod_info, remote);
+            }
+            // The identity is the durable answer; a cache entry may be older
+            // than the version id this install recorded. Keep the cached version
+            // id when the identity predates the field.
+            mod_info.source = Some(platform);
+            mod_info.source_id = Some(stored_project.to_string());
+            if let Some(version_id) = version_id {
+                mod_info.version_id = Some(version_id.to_string());
             }
         }
         result_mods.extend(parsed);
     }
 
-    if modrinth_dirty {
-        merge_and_save(MODRINTH_CACHE, &modrinth_cache).await;
-    }
-    if curseforge_dirty {
-        merge_and_save(CURSEFORGE_CACHE, &curseforge_cache).await;
-    }
-    merge_and_save_identity(modrinth_identity, curseforge_identity).await;
-
     ModInstalledInfo {
-        installed: true,
+        installed: !result_mods.is_empty(),
         mods: result_mods,
     }
+}
+
+/// Records the identity of a file the launcher just installed.
+///
+/// Waiting for the next folder scan would leave the detail panel unable to tell
+/// the version it just downloaded, and would make an offline second launch
+/// forget it. The checksum is the same one the index will use, so the work is
+/// not repeated when the scan sees the new file.
+pub async fn record_installed(
+    instance_id: &str,
+    platform: RemoteModPlatform,
+    project_id: &str,
+    version_id: Option<&str>,
+    path: &Path,
+) {
+    let path_buf = path.to_path_buf();
+    let sha512 = match tokio::task::spawn_blocking(move || index::sha512_file(&path_buf)).await {
+        Ok(Ok(sha512)) => sha512,
+        Ok(Err(error)) => {
+            warn!("Failed to hash the installed mod: {error}");
+            return;
+        }
+        Err(error) => {
+            warn!("Hashing the installed mod did not run: {error}");
+            return;
+        }
+    };
+    index::remember(instance_id, path, &sha512).await;
+    let update = PlatformIdentity {
+        project_id: project_id.to_string(),
+        version_id: version_id.map(str::to_string),
+    };
+    let mut modrinth = IdentityUpdates::new();
+    let mut curseforge = IdentityUpdates::new();
+    match platform {
+        RemoteModPlatform::Modrinth => {
+            modrinth.insert(sha512, Some(update));
+        }
+        RemoteModPlatform::CurseForge => {
+            curseforge.insert(sha512, Some(update));
+        }
+    }
+    merge_and_save_identity(modrinth, curseforge).await;
 }
 
 /// Merge online info into a locally-parsed mod. Online fields win; local data
@@ -1118,7 +1181,7 @@ pub async fn parse_mods(instance_id: &str) -> Vec<ResolvedMod> {
         .instances
         .get_instance_root(instance_id)
         .join("mods");
-    parse_folder_with_remote(&mods_folder).await
+    parse_folder_indexed(&mods_folder, Some(instance_id)).await
 }
 
 pub async fn check_installed(
@@ -1153,4 +1216,59 @@ pub fn remove_mod_files(instance_id: &str, files: Vec<String>) -> Result<()> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn identity_keeps_project_and_version_per_platform() {
+        let mut identity = IdentityEntry::default();
+        identity.remember(
+            RemoteModPlatform::Modrinth,
+            &PlatformIdentity {
+                project_id: "modrinth-project".into(),
+                version_id: Some("modrinth-version".into()),
+            },
+        );
+        identity.remember(
+            RemoteModPlatform::CurseForge,
+            &PlatformIdentity {
+                project_id: "123".into(),
+                version_id: Some("456".into()),
+            },
+        );
+        assert_eq!(
+            identity.project_and_version(RemoteModPlatform::Modrinth),
+            Some(("modrinth-project", Some("modrinth-version")))
+        );
+        assert_eq!(
+            identity.project_and_version(RemoteModPlatform::CurseForge),
+            Some(("123", Some("456")))
+        );
+    }
+
+    #[test]
+    fn a_versionless_success_keeps_the_known_version() {
+        let mut identity = IdentityEntry::default();
+        identity.remember(
+            RemoteModPlatform::Modrinth,
+            &PlatformIdentity {
+                project_id: "project".into(),
+                version_id: Some("version".into()),
+            },
+        );
+        identity.remember(
+            RemoteModPlatform::Modrinth,
+            &PlatformIdentity {
+                project_id: "project".into(),
+                version_id: None,
+            },
+        );
+        assert_eq!(
+            identity.project_and_version(RemoteModPlatform::Modrinth),
+            Some(("project", Some("version")))
+        );
+    }
 }

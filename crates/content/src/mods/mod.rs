@@ -39,6 +39,7 @@ use crate::error::{Error, Result};
 
 pub mod fabric;
 pub mod forge;
+mod index;
 pub mod liteloader;
 pub mod quilt;
 pub mod remote;
@@ -246,7 +247,7 @@ pub(crate) fn strip_bom(s: &str) -> &str {
 }
 
 /// Sanitize mod metadata JSON before parsing. Some mods embed raw newlines in
-/// strings (invalid JSON), so like xmcl we remove every line break first.
+/// strings (invalid JSON), so we remove every line break first.
 pub(crate) fn sanitize_json(s: &str) -> String {
     strip_bom(s).replace(['\n', '\r'], "")
 }
