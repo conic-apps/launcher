@@ -174,6 +174,10 @@ sekcji 7 GPLv3:
 - [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) autorstwa
   bangbang93 — Bootstrapping instalacji Forge
 - [MCIM](https://mod.mcimirror.top) — Przetłumaczone opisy CurseForge i cache lustrzany
+- [HMCL](https://github.com/HMCL-dev/HMCL) — Przepływ obsługi awarii i zasady ustalania ich
+  przyczyn
+- [XMCL](https://github.com/Voxelum/x-minecraft-launcher) — Odniesienie do przepływu analizy
+  lokalnych modów
 - Wszyscy gracze, którzy zgłaszali sugestie i informacje zwrotne
 
 ## Zastrzeżenie

@@ -148,6 +148,8 @@ cargo build --release  # 建構正式版本
   [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) —
   Forge 安裝引導
 - [MCIM](https://mod.mcimirror.top) — CurseForge 翻譯摘要與鏡像快取
+- [HMCL](https://github.com/HMCL-dev/HMCL) — 崩潰處理流程與崩潰原因判定規則
+- [XMCL](https://github.com/Voxelum/x-minecraft-launcher) — 本地 Mod 解析流程參考
 - 所有為專案提出建議與回饋的玩家
 
 ## 免責聲明
