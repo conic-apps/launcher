@@ -147,6 +147,8 @@ cargo build --release  # 构建生产版本
 - [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) by
   bangbang93 — Forge 安装引导
 - [MCIM](https://mod.mcimirror.top) — CurseForge 中文摘要翻译与镜像缓存
+- [HMCL](https://github.com/HMCL-dev/HMCL) — 崩溃处理流程与崩溃原因判定规则
+- [XMCL](https://github.com/Voxelum/x-minecraft-launcher) — 本地 Mod 解析流程参考
 - 所有为项目提出建议与反馈的玩家
 
 ## 免责声明

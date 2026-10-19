@@ -174,6 +174,10 @@ Abschnitt 7 verteilt:
 - [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) von
   bangbang93 — Forge-Installations-Bootstrapping
 - [MCIM](https://mod.mcimirror.top) — CurseForge-Übersetzungen und Mirror-Caching
+- [HMCL](https://github.com/HMCL-dev/HMCL) — Ablauf der Absturzbehandlung und Regeln zur
+  Bestimmung der Absturzursache
+- [XMCL](https://github.com/Voxelum/x-minecraft-launcher) — Referenz für den Ablauf der Analyse
+  lokaler Mods
 - Alle Spieler, die Vorschläge und Feedback gegeben haben
 
 ## Haftungsausschluss
