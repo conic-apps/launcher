@@ -154,6 +154,8 @@ cargo build --release  # 本番ビルド
   [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) —
   Forge インストールブートストラップ
 - [MCIM](https://mod.mcimirror.top) — CurseForge 翻訳概要とミラーキャッシング
+- [HMCL](https://github.com/HMCL-dev/HMCL) — クラッシュ処理フローとクラッシュ原因の判定ルール
+- [XMCL](https://github.com/Voxelum/x-minecraft-launcher) — ローカル Mod 解析フローの参考
 - 提案やフィードバックをしていただいたすべてのプレイヤーの皆さん
 
 ## 免責事項

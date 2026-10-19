@@ -168,6 +168,10 @@ This project is distributed under [GPL-3.0](./LICENSE) with additional terms und
 - [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) by
   bangbang93 — Forge install bootstrapping
 - [MCIM](https://mod.mcimirror.top) — CurseForge translated summaries and mirror caching
+- [HMCL](https://github.com/HMCL-dev/HMCL) — Crash handling flow and crash cause determination
+  rules
+- [XMCL](https://github.com/Voxelum/x-minecraft-launcher) — Reference for the local mod parsing
+  flow
 - All players who have provided suggestions and feedback
 
 ## Disclaimer

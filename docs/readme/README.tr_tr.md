@@ -170,6 +170,8 @@ Bu proje [GPL-3.0](../../LICENSE) altında, GPLv3 Bölüm 7'deki ek koşullarla 
   [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) — Forge
   kurulum önyükleyici
 - [MCIM](https://mod.mcimirror.top) — CurseForge çeviri özetleri ve ayna önbellekleme
+- [HMCL](https://github.com/HMCL-dev/HMCL) — Çökme işleme akışı ve çökme nedeni belirleme kuralları
+- [XMCL](https://github.com/Voxelum/x-minecraft-launcher) — Yerel mod ayrıştırma akışı referansı
 - Öneri ve geri bildirim sağlayan tüm oyuncular
 
 ## Sorumluluk reddi

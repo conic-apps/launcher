@@ -175,6 +175,10 @@ del GPLv3:
 - [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) por
   bangbang93 — Arranque de instalación de Forge
 - [MCIM](https://mod.mcimirror.top) — Resúmenes traducidos de CurseForge y caché de espejo
+- [HMCL](https://github.com/HMCL-dev/HMCL) — Flujo de gestión de fallos y reglas para determinar
+  sus causas
+- [XMCL](https://github.com/Voxelum/x-minecraft-launcher) — Referencia para el flujo de análisis de
+  mods locales
 - Todos los jugadores que han dado sugerencias y retroalimentación
 
 ## Aviso legal
