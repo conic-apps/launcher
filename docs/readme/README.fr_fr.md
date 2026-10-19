@@ -180,6 +180,10 @@ section 7 du GPLv3 :
 - [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) par
   bangbang93 — Amorçage de l'installation Forge
 - [MCIM](https://mod.mcimirror.top) — Résumés traduits CurseForge et cache miroir
+- [HMCL](https://github.com/HMCL-dev/HMCL) — Flux de gestion des plantages et règles de
+  détermination de leurs causes
+- [XMCL](https://github.com/Voxelum/x-minecraft-launcher) — Référence pour le flux d'analyse des
+  mods locaux
 - Tous les joueurs qui ont fourni des suggestions et des retours
 
 ## Avertissement

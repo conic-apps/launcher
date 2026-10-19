@@ -160,6 +160,8 @@ cargo build --release  # 프로덕션 빌드
   [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) — Forge
   설치 부트스트래핑
 - [MCIM](https://mod.mcimirror.top) — CurseForge 번역 요약 및 미러 캐싱
+- [HMCL](https://github.com/HMCL-dev/HMCL) — 크래시 처리 흐름 및 크래시 원인 판정 규칙
+- [XMCL](https://github.com/Voxelum/x-minecraft-launcher) — 로컬 모드 분석 흐름 참고
 - 제안과 피드백을 제공해 준 모든 플레이어 여러분
 
 ## 면책 조항
