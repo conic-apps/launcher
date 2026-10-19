@@ -122,7 +122,7 @@ impl ForgeModMcmodInfo {
 
 /// Parse the content of an `mcmod.info` / `neimod.info` / `cccmod.info` file.
 ///
-/// The content may be one of three shapes (xmcl / HMCL compatible):
+/// The content may be one of three shapes:
 /// - a JSON array of mods
 /// - a `{ "modList": [...] }` wrapper
 /// - a single mod object `{ "modid": ... }`
@@ -281,7 +281,7 @@ impl ForgeModTOMLMod {
 }
 
 /// Resolve the `${file.jarVersion}` placeholder against the `Implementation-Version`
-/// attribute of the manifest, like xmcl and HMCL do.
+/// attribute of the manifest.
 fn resolve_jar_version(version: Option<String>, jar_version: Option<&str>) -> Option<String> {
     match version {
         Some(v) if v == "${file.jarVersion}" => jar_version.map(|s| s.to_string()).or(Some(v)),
@@ -445,7 +445,7 @@ pub fn manifest_metadata<R: Read + Seek>(
     metadata
 }
 
-/// Like xmcl, only a non-empty value overrides the manifest metadata.
+/// Only a non-empty value overrides the manifest metadata.
 fn non_empty(value: Option<&Value>) -> Option<&str> {
     value.and_then(Value::as_str).filter(|s| !s.is_empty())
 }

@@ -42,7 +42,7 @@ pub(crate) async fn install(
             .join(detail.kind.folder())
     };
 
-    let task = match detail.platform {
+    let (task, version_id) = match detail.platform {
         Platform::Modrinth => {
             modrinth_install_task(detail, minecraft.as_deref(), loader.as_deref(), &target_dir)
                 .await?
@@ -75,6 +75,20 @@ pub(crate) async fn install(
     .await
     .map_err(|error| error.to_string())?;
 
+    // The download knows the exact version it chose. Recording it now means the
+    // detail panel can name it before the next folder scan, and an offline
+    // launch can still tell which version is installed.
+    if detail.kind == RemoteKind::Mods {
+        content::mods::remote::record_installed(
+            instance_id,
+            detail.platform.api(),
+            &detail.id,
+            version_id.as_deref(),
+            &task.file,
+        )
+        .await;
+    }
+
     // The new file is on disk but nothing has read it yet. Whoever asked for the
     // install invalidates the cache's entry for this kind — which both this
     // panel and the summary's count are drawn from — so the one re-read that
@@ -88,7 +102,7 @@ pub(crate) async fn modrinth_install_task(
     minecraft: Option<&str>,
     loader: Option<&str>,
     target_dir: &std::path::Path,
-) -> Result<download::DownloadTask, String> {
+) -> Result<(download::DownloadTask, Option<String>), String> {
     let params = modrinth::ListProjectVersionsParams {
         loaders: (detail.kind.has_loaders() && loader.is_some())
             .then(|| serde_json::to_string(&[loader.unwrap_or_default()]).unwrap_or_default()),
@@ -113,20 +127,27 @@ pub(crate) async fn modrinth_install_task(
                 .or_else(|| files.first())
         })
         .ok_or("no downloadable file")?;
-    Ok(make_task(
-        file.get("url")
-            .and_then(Value::as_str)
-            .ok_or("no download url")?,
-        &target_dir.join(
-            file.get("filename")
+    let version_id = version
+        .get("id")
+        .and_then(Value::as_str)
+        .map(str::to_string);
+    Ok((
+        make_task(
+            file.get("url")
                 .and_then(Value::as_str)
-                .ok_or("no file name")?,
+                .ok_or("no download url")?,
+            &target_dir.join(
+                file.get("filename")
+                    .and_then(Value::as_str)
+                    .ok_or("no file name")?,
+            ),
+            file.get("size").and_then(Value::as_u64),
+            file.pointer("/hashes/sha512")
+                .and_then(Value::as_str)
+                .map(str::to_string),
+            download::DownloadTaskType::ModrinthMod,
         ),
-        file.get("size").and_then(Value::as_u64),
-        file.pointer("/hashes/sha512")
-            .and_then(Value::as_str)
-            .map(str::to_string),
-        download::DownloadTaskType::ModrinthMod,
+        version_id,
     ))
 }
 
@@ -136,7 +157,7 @@ pub(crate) async fn curseforge_install_task(
     minecraft: Option<&str>,
     loader: Option<&str>,
     target_dir: &std::path::Path,
-) -> Result<download::DownloadTask, String> {
+) -> Result<(download::DownloadTask, Option<String>), String> {
     let mod_id: i64 = detail
         .id
         .parse()
@@ -187,16 +208,19 @@ pub(crate) async fn curseforge_install_task(
         })
         .and_then(|hash| hash.get("value").and_then(Value::as_str))
         .map(str::to_string);
-    Ok(make_task(
-        &url,
-        &target_dir.join(
-            file.get("fileName")
-                .and_then(Value::as_str)
-                .ok_or("no file name")?,
+    Ok((
+        make_task(
+            &url,
+            &target_dir.join(
+                file.get("fileName")
+                    .and_then(Value::as_str)
+                    .ok_or("no file name")?,
+            ),
+            file.get("fileLength").and_then(Value::as_u64),
+            sha1,
+            download::DownloadTaskType::CurseforgeMod,
         ),
-        file.get("fileLength").and_then(Value::as_u64),
-        sha1,
-        download::DownloadTaskType::CurseforgeMod,
+        Some(file_id.to_string()),
     ))
 }
 
