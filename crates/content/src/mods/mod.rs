@@ -29,7 +29,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::mods::remote::RemoteModPlatform;
+use crate::kind::RemotePlatform;
 use base64::Engine;
 use base64::engine::general_purpose;
 use serde_json::Value;
@@ -39,10 +39,8 @@ use crate::error::{Error, Result};
 
 pub mod fabric;
 pub mod forge;
-mod index;
 pub mod liteloader;
 pub mod quilt;
-pub mod remote;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -97,9 +95,7 @@ pub struct ResolvedMod {
     /// and the online lookup replaces it for nearly every mod that either
     /// platform knows — persisting it made `local.json` mostly icon. The bytes
     /// live in a file of their own keyed by the jar's checksum instead; see
-    /// [`remote`]. `default` keeps a cache written before that readable, so the
-    /// icons such a cache still carries are converted on the next parse instead
-    /// of being lost.
+    /// `crate::remote::mods`.
     #[serde(skip_serializing, default)]
     pub icon: Option<String>,
     pub loader: ModLoader,
@@ -113,7 +109,7 @@ pub struct ResolvedMod {
     /// still deserialize.
     #[serde(default)]
     pub embedded: bool,
-    pub source: Option<RemoteModPlatform>,
+    pub source: Option<RemotePlatform>,
     pub source_id: Option<String>,
     pub version_id: Option<String>,
 }

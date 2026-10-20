@@ -40,7 +40,7 @@ pub(crate) fn open_detail(ui: &App, platform: Platform, id: String) {
             platform,
             kind: state.kind,
             id: id.clone(),
-            installed_mods: Vec::new(),
+            installed_files: Vec::new(),
         });
         (state.detail_seq, state.kind)
     };
@@ -48,9 +48,10 @@ pub(crate) fn open_detail(ui: &App, platform: Platform, id: String) {
     ui_state.set_open_detail(SharedString::from(platform.key()));
     ui_state.set_detail_id(SharedString::from(id.as_str()));
     ui_state.set_detail_loading(true);
-    // Only a mod panel has an installed state; a pack or resource-pack one only
-    // ever draws the download button.
-    ui_state.set_detail_can_remove(kind == RemoteKind::Mods);
+    // Mods and resource packs are instance content and can be removed; a
+    // modpack is installed to the launcher and only ever draws a download
+    // button.
+    ui_state.set_detail_can_remove(kind == RemoteKind::Mods || kind == RemoteKind::ResourcePacks);
     // The Modrinth panels render the body's box unconditionally, the CurseForge
     // ones only when there is a description — an empty body still draws an empty
     // surface0 box on the first, and nothing on the second.

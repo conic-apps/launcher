@@ -755,17 +755,17 @@ pub(crate) fn refresh_installed(ui: &App) {
     let Some(detail) = controller().borrow().detail.clone() else {
         return;
     };
-    if detail.kind != RemoteKind::Mods {
+    let Some(kind) = detail.kind.content_kind() else {
         return;
-    }
+    };
     ui.global::<ContentState>()
         .set_detail_checking_installed(true);
     let weak = ui.as_weak();
     let instance = controller().borrow().instance_id.clone();
     crate::support::runtime::spawn(async move {
+        let scope = content::remote::ContentScope::new(instance, kind);
         let info =
-            content::mods::remote::check_installed(&instance, detail.platform.api(), &detail.id)
-                .await;
+            content::remote::check_installed(&scope, detail.platform.api(), &detail.id).await;
         crate::ui::services::report::report(&weak, move |ui| {
             {
                 let state = controller();
@@ -773,16 +773,16 @@ pub(crate) fn refresh_installed(ui: &App) {
                 if let Some(open) = state.detail.as_mut()
                     && open.id == detail.id
                 {
-                    open.installed_mods = info.mods.clone();
+                    open.installed_files = info.files.clone();
                 }
             }
             let ui_state = ui.global::<ContentState>();
             ui_state.set_detail_checking_installed(false);
             ui_state.set_detail_installed(info.installed);
             ui_state.set_detail_installed_version(SharedString::from(
-                info.mods
+                info.files
                     .first()
-                    .and_then(|mod_info| mod_info.version.clone())
+                    .and_then(|file| file.version.clone())
                     .unwrap_or_default(),
             ));
         });

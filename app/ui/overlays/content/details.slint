@@ -281,9 +281,9 @@ component DetailBody inherits Rectangle {
                         }
 
                         // Three buttons swap in and out: checking → a spinner,
-                        // installed → remove, otherwise → download. Only a mod
-                        // panel has the installed state at all; a pack or
-                        // resource-pack panel draws the plain download button.
+                        // installed → remove, otherwise → download. Mod and
+                        // resource-pack panels have the installed state; a pack
+                        // draws the plain download button.
                         if ContentState.detail-can-remove && ContentState.detail-checking-installed: Rectangle {
                             width: 120px;
                             height: 36px;
