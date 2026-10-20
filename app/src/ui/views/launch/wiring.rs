@@ -17,15 +17,13 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         let weak = ui.as_weak();
         state.on_start(move || {
             let Some(ui) = weak.upgrade() else { return };
-            let current_id = ui.global::<GameState>().get_current_id().to_string();
-            let Some(token) = controller.borrow_mut().begin(current_id.clone()) else {
-                return;
-            };
-            crate::ui::services::notifications::start_task(&ui, "launch");
+            controller.borrow_mut().cancel();
+            let token = controller.borrow_mut().begin();
 
             // Everything the flow needs that is not on disk is gathered on the
             // UI thread, because `GameState`/`LaunchState` and the config are
             // not reachable from the runtime.
+            let current_id = ui.global::<GameState>().get_current_id().to_string();
             let config_snapshot = SHARED_CONFIG.with(|slot| {
                 slot.borrow()
                     .as_ref()
@@ -63,7 +61,6 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         state.on_cancel(move || {
             let had_task = controller.borrow_mut().cancel();
             if let Some(ui) = weak.upgrade() {
-                crate::ui::services::notifications::cancel_task(&ui);
                 ui.global::<Navigation>().invoke_back();
                 if had_task {
                     ui.global::<GameState>().invoke_refresh();
@@ -73,8 +70,16 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     }
 
     {
-        // The launch task deliberately outlives the launch page. Navigation
-        // only changes where progress is displayed; cancellation is explicit
-        // through the launch page's cancel action.
+        let controller = Rc::clone(&controller);
+        let weak = ui.as_weak();
+        ui.global::<Navigation>().on_page_changed(move |page| {
+            if page.as_str() != "launch" && controller.borrow_mut().cancel() {
+                // The instance list is reloaded, so `.install.lock` written by
+                // a fresh install shows up on the game screen.
+                if let Some(ui) = weak.upgrade() {
+                    ui.global::<GameState>().invoke_refresh();
+                }
+            }
+        });
     }
 }

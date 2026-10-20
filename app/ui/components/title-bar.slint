@@ -335,12 +335,13 @@ export component TitleBar inherits Rectangle {
         // far right on the platforms that have them there; macOS traffic lights
         // remain on the left.
         //
-        // One container rather than two absolutely-placed buttons, so the news
-        // button keeps its place to the left of the music one whether music is
-        // enabled or not: the container's own width shrinks by the music button
-        // and its 8px gap when the setting is off.
+        // One container rather than three absolutely-placed buttons, so the news
+        // button keeps its place when the bell or music button is absent: the
+        // container's own width shrinks by each optional button and its 8px gap.
         Rectangle {
-            width: 28px + 8px + 28px + (root.music-enabled ? 8px + 28px : 0px);
+            width: 28px
+                + (NotificationState.count > 0 ? 8px + 28px : 0px)
+                + (root.music-enabled ? 8px + 28px : 0px);
             height: 28px;
             x: root.width - self.width - root.controls-inset;
 
@@ -355,8 +356,7 @@ export component TitleBar inherits Rectangle {
                     clicked => { root.open-news(); }
                 }
 
-                TitleBarActionButton {
-                    visible: NotificationState.count > 0;
+                if NotificationState.count > 0: TitleBarActionButton {
                     icon-commands: Icons.stroke-commands("bell");
                     icon-viewbox: Icons.viewbox("bell");
                     icon-stroke-width: root.stroked-icon-width;

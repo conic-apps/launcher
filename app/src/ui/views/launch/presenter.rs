@@ -17,7 +17,7 @@ use install::{InstallProgress, ModLoaderProgress};
 use launch::LaunchProgress;
 
 /// One write to the progress screen, computed off the UI thread.
-#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 pub(crate) struct LaunchView {
     kind: &'static str,
     name: String,
@@ -28,33 +28,6 @@ pub(crate) struct LaunchView {
     value: f32,
     max: f32,
     back_disabled: bool,
-}
-
-impl LaunchView {
-    pub(crate) fn kind(&self) -> &'static str {
-        self.kind
-    }
-    pub(crate) fn name(&self) -> &str {
-        &self.name
-    }
-    pub(crate) fn current(&self) -> &str {
-        &self.current
-    }
-    pub(crate) fn total(&self) -> &str {
-        &self.total
-    }
-    pub(crate) fn message(&self) -> &str {
-        &self.message
-    }
-    pub(crate) fn loading(&self) -> bool {
-        self.loading
-    }
-    pub(crate) fn value(&self) -> f32 {
-        self.value
-    }
-    pub(crate) fn max(&self) -> f32 {
-        self.max
-    }
 }
 
 impl LaunchView {

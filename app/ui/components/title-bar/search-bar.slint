@@ -22,7 +22,10 @@ export component SearchBar inherits Rectangle {
     // background on Latte. See `Theme.titlebar-search-background`.
     background: Theme.titlebar-search-background;
     clip: true;
-    animate width { duration: 220ms; easing: Easing.ease; }
+    animate width {
+        duration: 220ms;
+        easing: Easing.ease;
+    }
 
     accessible-role: button;
     accessible-label: root.placeholder;

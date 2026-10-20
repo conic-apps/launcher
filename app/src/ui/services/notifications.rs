@@ -4,15 +4,15 @@
 
 //! The cross-surface notification centre.
 //!
-//! Notifications are kept in Slint models owned by this service so a task can
-//! keep reporting after the user navigates away from the page that started it.
-//! All functions are called on the event-loop thread.
+//! Notifications are kept in Slint models owned by this service so a producer
+//! can keep reporting after the user navigates away from the page that started
+//! it. All functions are called on the event-loop thread.
 
 use std::rc::Rc;
 
-use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel};
+use slint::{ComponentHandle, Model, ModelRc, VecModel};
 
-use crate::slint_backend::{App, NotificationItem, NotificationState, NotificationTask};
+use crate::slint_backend::{App, NotificationItem, NotificationState};
 
 thread_local! {
     static CONTROLLER: Rc<NotificationController> = Rc::new(NotificationController::new());
@@ -20,14 +20,12 @@ thread_local! {
 
 struct NotificationController {
     notifications: Rc<VecModel<NotificationItem>>,
-    tasks: Rc<VecModel<NotificationTask>>,
 }
 
 impl NotificationController {
     fn new() -> Self {
         Self {
             notifications: Rc::new(VecModel::default()),
-            tasks: Rc::new(VecModel::default()),
         }
     }
 }
@@ -36,7 +34,6 @@ pub(crate) fn setup(ui: &App) {
     CONTROLLER.with(|controller| {
         let state = ui.global::<NotificationState>();
         state.set_notifications(ModelRc::from(Rc::clone(&controller.notifications)));
-        state.set_tasks(ModelRc::from(Rc::clone(&controller.tasks)));
         update_count(&state, controller);
     });
 
@@ -62,14 +59,6 @@ pub(crate) fn setup(ui: &App) {
         }
     });
     let weak = ui.as_weak();
-    state.on_open_task(move || {
-        if let Some(ui) = weak.upgrade() {
-            ui.global::<NotificationState>().set_visible(false);
-            ui.global::<crate::slint_backend::Navigation>()
-                .invoke_navigate("launch".into());
-        }
-    });
-    let weak = ui.as_weak();
     state.on_clear(move || {
         if let Some(ui) = weak.upgrade() {
             clear(&ui);
@@ -82,76 +71,36 @@ pub(crate) fn toggle(ui: &App) {
     state.set_visible(!state.get_visible());
 }
 
-pub(crate) fn start_task(ui: &App, id: &str) {
-    CONTROLLER.with(|controller| {
-        controller.tasks.set_vec(Vec::new());
-        controller.tasks.push(NotificationTask {
-            id: id.into(),
-            title: SharedString::default(),
-            kind: "preparing".into(),
-            name: SharedString::default(),
-            current: SharedString::default(),
-            total: SharedString::default(),
-            message: SharedString::default(),
-            value: 0.0,
-            max: 0.0,
-            loading: true,
+/// Temporary UI fixture: fills the centre with one of each row style shortly
+/// after startup, so the panel can be inspected without a real producer.
+#[cfg(debug_assertions)]
+pub(crate) fn schedule_demo(ui: &App) {
+    log::debug!(target: "notifications", "scheduling demo notifications");
+    let weak = ui.as_weak();
+    crate::support::runtime::spawn(async move {
+        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+        crate::ui::services::report::report(&weak, |ui| {
+            log::debug!(target: "notifications", "sending demo notifications");
+            push(&ui, "update-ready", "0.1.0-alpha.5", "download");
+            push(
+                &ui,
+                "task-finished",
+                "Demo task finished",
+                "checkmark-outline",
+            );
+            push(
+                &ui,
+                "task-error",
+                "Demo task failed: the download could not be completed.",
+                "warning",
+            );
+            push(&ui, "task-cancelled", "", "ban");
         });
-        log::debug!(target: "notifications", "started task {id}");
-        update_count(&ui.global::<NotificationState>(), controller);
     });
 }
 
-pub(crate) fn cancel_task(ui: &App) {
-    CONTROLLER.with(|controller| {
-        controller.tasks.set_vec(Vec::new());
-        add_notification(
-            controller,
-            NotificationItem {
-                kind: "task-cancelled".into(),
-                detail: SharedString::default(),
-                icon: "bell".into(),
-            },
-        );
-        update_count(&ui.global::<NotificationState>(), controller);
-    });
-}
-
-pub(crate) fn update_task(ui: &App, view: &crate::ui::views::launch::LaunchView) {
-    CONTROLLER.with(|controller| {
-        let Some(mut task) = controller.tasks.row_data(0) else {
-            return;
-        };
-        task.kind = view.kind().into();
-        task.name = view.name().into();
-        task.current = view.current().into();
-        task.total = view.total().into();
-        task.message = view.message().into();
-        task.loading = view.loading();
-        task.value = view.value();
-        task.max = view.max();
-        controller.tasks.set_row_data(0, task);
-        update_count(&ui.global::<NotificationState>(), controller);
-    });
-}
-
-pub(crate) fn finish_task(ui: &App, kind: &str, message: &str) {
-    CONTROLLER.with(|controller| {
-        if controller.tasks.row_count() > 0 {
-            controller.tasks.remove(0);
-        }
-        add_notification(
-            controller,
-            NotificationItem {
-                kind: kind.into(),
-                detail: message.into(),
-                icon: "bell".into(),
-            },
-        );
-        update_count(&ui.global::<NotificationState>(), controller);
-    });
-}
-
+// No producer reports yet; the centre is mounted ahead of its first source.
+#[allow(dead_code)]
 pub(crate) fn push(ui: &App, kind: &str, detail: &str, icon: &str) {
     CONTROLLER.with(|controller| {
         add_notification(
@@ -177,11 +126,9 @@ fn clear(ui: &App) {
 }
 
 fn update_count(state: &NotificationState, controller: &NotificationController) {
-    let notification_count = controller.notifications.row_count() as i32;
-    let task_count = controller.tasks.row_count() as i32;
-    state.set_notification_count(notification_count);
-    state.set_task_count(task_count);
-    state.set_count(notification_count + task_count);
+    let count = controller.notifications.row_count() as i32;
+    state.set_notification_count(count);
+    state.set_count(count);
 }
 
 fn add_notification(controller: &NotificationController, item: NotificationItem) {

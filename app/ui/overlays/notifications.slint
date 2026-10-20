@@ -5,7 +5,11 @@
 import { Theme } from "../theme.slint";
 import { AppIcon } from "../components/display/app-icon.slint";
 import { ScrollView } from "../components/containers/scroll-view.slint";
-import { NotificationItem, NotificationState, NotificationTask, NotificationText } from "../globals/notifications.slint";
+import {
+    NotificationItem,
+    NotificationState,
+    NotificationText,
+} from "../globals/notifications.slint";
 
 component NotificationRow inherits Rectangle {
     in property <NotificationItem> item;
@@ -20,6 +24,7 @@ component NotificationRow inherits Rectangle {
         x: 12px;
         y: 18px;
     }
+
     VerticalLayout {
         x: 42px;
         y: 8px;
@@ -32,66 +37,12 @@ component NotificationRow inherits Rectangle {
             font-size: 13px;
             overflow: elide;
         }
+
         Text {
             text: NotificationText.notification-message(root.item);
             color: Theme.subtext-0;
             font-size: 11px;
             overflow: elide;
-        }
-    }
-}
-
-component NotificationTaskRow inherits Rectangle {
-    in property <NotificationTask> task;
-    height: 64px;
-    border-radius: 8px;
-    background: Theme.surface-0.transparentize(0.18);
-    TouchArea {
-        clicked => { NotificationState.open-task(); }
-    }
-
-    VerticalLayout {
-        x: 12px;
-        y: 8px;
-        width: root.width - 24px;
-        height: root.height - 16px;
-        spacing: 4px;
-        HorizontalLayout {
-            height: 16px;
-            Text {
-                text: NotificationText.task-title(root.task);
-                color: Theme.text;
-                font-size: 13px;
-                overflow: elide;
-                horizontal-alignment: center;
-            }
-            Text {
-                text: root.task.loading ? @tr("NotificationOverlay" => "In progress") : "";
-                color: Theme.subtext-0;
-                font-size: 11px;
-                horizontal-alignment: right;
-            }
-        }
-        Text {
-            text: NotificationText.task-description(root.task);
-            color: Theme.subtext-0;
-            font-size: 11px;
-            overflow: elide;
-            horizontal-alignment: center;
-        }
-        Rectangle {
-            height: 4px;
-            border-radius: 2px;
-            background: Theme.surface-2;
-            clip: true;
-            Rectangle {
-                x: 0px;
-                width: root.task.max > 0
-                    ? max(0px, min(root.width, root.width * root.task.value / root.task.max))
-                    : 0px;
-                height: 100%;
-                background: Theme.mauve;
-            }
         }
     }
 }
@@ -113,7 +64,10 @@ export component NotificationOverlay inherits Rectangle {
         ? root.width - root.panel-width
         : root.width;
     private property <bool> leaving: root.phase == "leaving";
-    animate scrim-alpha { duration: 150ms; easing: ease-out-quad; }
+    animate scrim-alpha {
+        duration: 150ms;
+        easing: ease-out-quad;
+    }
     animate panel-x {
         duration: root.leaving ? 180ms : 220ms;
         easing: root.leaving ? cubic-bezier(0.47, 0, 1, 0.75) : cubic-bezier(0, 0.47, 0.25, 1);
@@ -137,6 +91,7 @@ export component NotificationOverlay inherits Rectangle {
         running: root.phase == "starting";
         triggered => { root.phase = "shown"; }
     }
+
     leave-timer := Timer {
         interval: 180ms;
         running: root.phase == "leaving";
@@ -158,6 +113,7 @@ export component NotificationOverlay inherits Rectangle {
         border-color: Theme.overlay-0.transparentize(0.35);
 
         TouchArea { }
+
         VerticalLayout {
             padding: 16px;
             height: root.height - 48px;
@@ -170,6 +126,7 @@ export component NotificationOverlay inherits Rectangle {
                     font-size: 17px;
                     font-weight: Theme.font-weight-bold;
                 }
+
                 Text {
                     text: "" + NotificationState.count;
                     color: Theme.subtext-0;
@@ -177,6 +134,7 @@ export component NotificationOverlay inherits Rectangle {
                     horizontal-alignment: right;
                 }
             }
+
             ScrollView {
                 vertical-stretch: 1;
                 scrollbar-top: 0px;
@@ -191,6 +149,7 @@ export component NotificationOverlay inherits Rectangle {
                             font-size: 13px;
                             font-weight: Theme.font-weight-bold;
                         }
+
                         Text {
                             text: "" + NotificationState.notification-count;
                             color: Theme.subtext-0;
@@ -199,25 +158,7 @@ export component NotificationOverlay inherits Rectangle {
                             horizontal-alignment: right;
                         }
                     }
-                    HorizontalLayout {
-                        height: 24px;
-                        Text {
-                            text: @tr("NotificationOverlay" => "Active tasks");
-                            color: Theme.mauve;
-                            font-size: 13px;
-                            font-weight: Theme.font-weight-bold;
-                        }
-                        Text {
-                            text: "" + NotificationState.task-count;
-                            color: Theme.subtext-0;
-                            font-size: 13px;
-                            font-weight: Theme.font-weight-bold;
-                            horizontal-alignment: right;
-                        }
-                    }
-                    for task in NotificationState.tasks: NotificationTaskRow {
-                        task: task;
-                    }
+
                     for item in NotificationState.notifications: NotificationRow {
                         item: item;
                     }

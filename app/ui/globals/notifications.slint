@@ -9,32 +9,15 @@ export struct NotificationItem {
     icon: string,
 }
 
-/// A task that remains visible while work is running in the background.
-export struct NotificationTask {
-    id: string,
-    title: string,
-    kind: string,
-    name: string,
-    current: string,
-    total: string,
-    message: string,
-    value: float,
-    max: float,
-    loading: bool,
-}
-
 export global NotificationState {
     in-out property <bool> visible: false;
     in-out property <[NotificationItem]> notifications: [];
-    in-out property <[NotificationTask]> tasks: [];
     in-out property <int> count: 0;
     in-out property <int> notification-count: 0;
-    in-out property <int> task-count: 0;
 
     callback close();
     callback mark-read();
     callback clear();
-    callback open-task();
 }
 
 export global NotificationText {
@@ -65,29 +48,5 @@ export global NotificationText {
             return @tr("NotificationText" => "The task finished");
         }
         return item.detail;
-    }
-
-    public pure function task-description(task: NotificationTask) -> string {
-        if task.kind == "download-files" {
-            return @tr("NotificationText" => "Downloading game files {} / {}", task.current, task.total);
-        }
-        if task.kind == "download-java" {
-            return @tr("NotificationText" => "Downloading Java {} / {}", task.current, task.total);
-        }
-        if task.kind == "download-installer-progress" {
-            return @tr("NotificationText" => "Downloading {} installer {} / {}", task.name, task.current, task.total);
-        }
-        if task.kind == "download-deps-progress" {
-            return @tr("NotificationText" => "Downloading dependencies {} / {}", task.current, task.total);
-        }
-        if task.kind == "error" {
-            return @tr("NotificationText" => "Task failed: {}", task.message);
-        }
-        return @tr("NotificationText" => "Working");
-    }
-
-    public pure function task-title(task: NotificationTask) -> string {
-        if task.title != "" { return task.title; }
-        return @tr("NotificationText" => "Minecraft");
     }
 }

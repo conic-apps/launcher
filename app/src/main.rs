@@ -162,6 +162,8 @@ fn main() {
     // fetches the feeds itself the first time it does.
     ui::overlays::news::setup(&ui);
     ui::services::notifications::setup(&ui);
+    #[cfg(debug_assertions)]
+    ui::services::notifications::schedule_demo(&ui);
     {
         let weak_ui = ui.as_weak();
         ui.global::<Navigation>().on_page_changed(move |_| {
@@ -185,7 +187,7 @@ fn main() {
         ui.global::<AppConfig>()
             .set_update_self_updating(usecases::update::is_self_updating());
         if shared.borrow().auto_update && usecases::update::is_self_updating() {
-            spawn_update(&ui, &shared);
+            spawn_update(&shared);
         }
     }
 
@@ -339,16 +341,9 @@ fn run_exit_work() {
 ///
 /// It is silent: the use case logs what it does, and the staged bundle is
 /// applied as the process exits. Nothing here touches the interface.
-fn spawn_update(ui: &App, shared: &Rc<RefCell<config::Config>>) {
+fn spawn_update(shared: &Rc<RefCell<config::Config>>) {
     let channel = shared.borrow().update_channel.clone();
-    let weak = ui.as_weak();
-    crate::support::runtime::spawn(async move {
-        if let Some(version) = usecases::update::run(channel).await {
-            crate::ui::services::report::report(&weak, move |ui| {
-                crate::ui::services::notifications::push(&ui, "update-ready", &version, "bell");
-            });
-        }
-    });
+    crate::support::runtime::spawn(usecases::update::run(channel));
 }
 
 /// Removes the per-run scratch directory [`storage::LOCATIONS`] creates.

@@ -327,6 +327,7 @@ export component CommandPaletteOverlay inherits Rectangle {
         running: root.closing;
         triggered => { root.closing = false; }
     }
+
     private property <length> animated-width: root.shown
         ? max(600px, root.width - 500px)
         : max(320px, root.width - 500px);
@@ -348,8 +349,14 @@ export component CommandPaletteOverlay inherits Rectangle {
         border-width: 1px;
         border-color: Theme.surface-1.with-alpha(0.9);
         border-radius: 12px;
-        animate width { duration: 280ms; easing: cubic-bezier(0.22, 0.75, 0.2, 1); }
-        animate height { duration: 280ms; easing: cubic-bezier(0.22, 0.75, 0.2, 1); }
+        animate width {
+            duration: 280ms;
+            easing: cubic-bezier(0.22, 0.75, 0.2, 1);
+        }
+        animate height {
+            duration: 280ms;
+            easing: cubic-bezier(0.22, 0.75, 0.2, 1);
+        }
 
         // A Slint border is drawn inside the box and does not inset the children,
         // so the content box starts 1px in, which keeps the hairline visible.

@@ -37,10 +37,10 @@ pub(crate) fn channel(configured: &config::UpdateChannel) -> Channel {
     }
 }
 
-pub(crate) async fn run(configured_channel: config::UpdateChannel) -> Option<String> {
+pub(crate) async fn run(configured_channel: config::UpdateChannel) {
     let Some(kind) = install_form().kind() else {
         log::info!("update check skipped: this install is managed by a package manager");
-        return None;
+        return;
     };
 
     log::info!(
@@ -53,26 +53,20 @@ pub(crate) async fn run(configured_channel: config::UpdateChannel) -> Option<Str
         Ok(Some(info)) => info,
         Ok(None) => {
             log::info!("no update available (running {})", shared::app_version());
-            return None;
+            return;
         }
         Err(error) => {
             log::warn!("update check failed: {error}");
-            return None;
+            return;
         }
     };
 
     log::info!("update {} is available; downloading", info.version);
     match update::download_and_stage(&info, kind, shared::silent()).await {
-        Ok(staged) => {
-            log::info!(
-                "update {} downloaded and staged; it will be applied as the launcher exits",
-                staged.version
-            );
-            Some(staged.version.to_string())
-        }
-        Err(error) => {
-            log::warn!("update download failed: {error}");
-            None
-        }
+        Ok(staged) => log::info!(
+            "update {} downloaded and staged; it will be applied as the launcher exits",
+            staged.version
+        ),
+        Err(error) => log::warn!("update download failed: {error}"),
     }
 }
