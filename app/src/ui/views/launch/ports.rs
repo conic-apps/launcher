@@ -26,6 +26,7 @@ pub(crate) fn update_sink(weak: Weak<App>, token: Token, loader: String) -> Sink
         LaunchUpdate::Install(progress) => {
             let view = presenter::install_view(&progress, &loader);
             deliver(&weak, &token, move |ui| {
+                crate::ui::services::notifications::update_task(&ui, &view);
                 presenter::apply_view(&ui.global::<LaunchState>(), view);
             });
         }
@@ -43,6 +44,7 @@ pub(crate) fn update_sink(weak: Weak<App>, token: Token, loader: String) -> Sink
             }
             if let Some(view) = presenter::launch_view(&progress) {
                 deliver(&weak, &token, move |ui| {
+                    crate::ui::services::notifications::update_task(&ui, &view);
                     presenter::apply_view(&ui.global::<LaunchState>(), view);
                 });
             }
@@ -58,6 +60,7 @@ pub(crate) fn update_sink(weak: Weak<App>, token: Token, loader: String) -> Sink
             quit_app,
             pause_music,
         } => deliver(&weak, &token, move |ui| {
+            launch_controller().borrow_mut().finish();
             if pause_music {
                 crate::ui::overlays::music_player::pause();
             }
@@ -76,6 +79,7 @@ pub(crate) fn update_sink(weak: Weak<App>, token: Token, loader: String) -> Sink
 
 fn show_dialog(weak: &Weak<App>, token: &Token, dialog: LaunchDialog) {
     deliver(weak, token, move |ui| {
+        launch_controller().borrow_mut().finish();
         let dialogs = ui.global::<Dialogs>();
         match dialog {
             LaunchDialog::NoAccount => dialogs.set_no_account_error_visible(true),
@@ -90,6 +94,8 @@ fn show_dialog(weak: &Weak<App>, token: &Token, dialog: LaunchDialog) {
 
 fn set_error(weak: &Weak<App>, token: &Token, message: String) {
     deliver(weak, token, move |ui| {
+        launch_controller().borrow_mut().finish();
+        crate::ui::services::notifications::finish_task(&ui, "task-error", &message);
         let state = ui.global::<LaunchState>();
         state.set_error(true);
         state.set_progress_kind("error".into());

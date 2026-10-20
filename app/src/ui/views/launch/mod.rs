@@ -28,6 +28,7 @@ mod view;
 mod wiring;
 
 pub(crate) use ports::*;
+pub(crate) use presenter::LaunchView;
 pub(crate) use view::*;
 pub(crate) use wiring::*;
 
@@ -63,6 +64,7 @@ pub(crate) fn launch_controller() -> Rc<RefCell<LaunchController>> {
 pub(crate) struct LaunchController {
     task: Option<tokio::task::JoinHandle<()>>,
     gate: Gate,
+    active_instance: Option<String>,
 }
 
 impl LaunchController {
@@ -70,11 +72,24 @@ impl LaunchController {
         Self {
             task: None,
             gate: Gate::new(),
+            active_instance: None,
         }
     }
 
-    fn begin(&mut self) -> Token {
-        self.gate.issue()
+    fn begin(&mut self, instance_id: String) -> Option<Token> {
+        if self.active_instance.as_deref() == Some(instance_id.as_str()) {
+            return None;
+        }
+        if self.task.is_some() {
+            self.cancel();
+        }
+        self.active_instance = Some(instance_id);
+        Some(self.gate.issue())
+    }
+
+    fn finish(&mut self) {
+        self.task = None;
+        self.active_instance = None;
     }
 
     /// Cancels the running flow. Returns whether one was running, which tells
@@ -85,6 +100,7 @@ impl LaunchController {
         if let Some(task) = self.task.take() {
             task.abort();
         }
+        self.active_instance = None;
         had_task
     }
 }

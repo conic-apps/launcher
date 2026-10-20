@@ -21,7 +21,7 @@ use std::{cell::RefCell, rc::Rc};
 use log::info;
 use slint::{ComponentHandle, Timer, Weak};
 
-use slint_backend::{App, AppConfig};
+use slint_backend::{App, AppConfig, Navigation, NewsState, NotificationState};
 use window::WindowService;
 
 /// Claims the single-instance role, waiting out a relaunch.
@@ -161,6 +161,16 @@ fn main() {
     // The news browser: the title bar's newspaper button opens it, and it
     // fetches the feeds itself the first time it does.
     ui::overlays::news::setup(&ui);
+    ui::services::notifications::setup(&ui);
+    {
+        let weak_ui = ui.as_weak();
+        ui.global::<Navigation>().on_page_changed(move |_| {
+            if let Some(ui) = weak_ui.upgrade() {
+                ui.global::<NewsState>().set_visible(false);
+                ui.global::<NotificationState>().set_visible(false);
+            }
+        });
+    }
     // The command palette, on the same whole-session layer as the news browser;
     // it opens from the title bar's search field and the `Ctrl`/`⌘` + `/`
     // shortcut, both bound in the view.
@@ -175,7 +185,7 @@ fn main() {
         ui.global::<AppConfig>()
             .set_update_self_updating(usecases::update::is_self_updating());
         if shared.borrow().auto_update && usecases::update::is_self_updating() {
-            spawn_update(&shared);
+            spawn_update(&ui, &shared);
         }
     }
 
@@ -329,9 +339,16 @@ fn run_exit_work() {
 ///
 /// It is silent: the use case logs what it does, and the staged bundle is
 /// applied as the process exits. Nothing here touches the interface.
-fn spawn_update(shared: &Rc<RefCell<config::Config>>) {
+fn spawn_update(ui: &App, shared: &Rc<RefCell<config::Config>>) {
     let channel = shared.borrow().update_channel.clone();
-    crate::support::runtime::spawn(usecases::update::run(channel));
+    let weak = ui.as_weak();
+    crate::support::runtime::spawn(async move {
+        if let Some(version) = usecases::update::run(channel).await {
+            crate::ui::services::report::report(&weak, move |ui| {
+                crate::ui::services::notifications::push(&ui, "update-ready", &version, "bell");
+            });
+        }
+    });
 }
 
 /// Removes the per-run scratch directory [`storage::LOCATIONS`] creates.

@@ -15,6 +15,9 @@ import { DialogRoot } from "overlays/dialog-root.slint";
 import { CommandPaletteOverlay } from "overlays/command-palette.slint";
 import { MusicPlayerOverlay } from "overlays/music-player.slint";
 import { NewsRoot } from "overlays/news/news-root.slint";
+import { NotificationOverlay } from "overlays/notifications.slint";
+import { NotificationState } from "globals/notifications.slint";
+import { NewsState } from "globals/news.slint";
 import { WindowDrag } from "globals/window-drag.slint";
 import { WindowBackground } from "components/display/window-background.slint";
 import { SettingsView } from "views/settings-view.slint";
@@ -83,6 +86,7 @@ export {
 export { SetupWizardState } from "globals/setup.slint";
 export { WorldMapState, WorldSource, WorldTile } from "globals/worldmap.slint";
 export { TooltipState } from "globals/tooltip.slint";
+export { NotificationState, NotificationItem, NotificationTask } from "globals/notifications.slint";
 
 // Application root window. macOS keeps the native traffic lights, Linux draws
 // the window controls itself, and Windows draws the platform's own over the
@@ -219,6 +223,7 @@ export component App inherits Window {
 
     callback toggle-music();
     callback open-news();
+    callback open-notifications();
     callback maximize-or-fullscreen();
     callback minimize-window();
     callback close-window();
@@ -325,7 +330,17 @@ export component App inherits Window {
                     open-home => { Navigation.navigate("game"); }
                     open-settings => { Navigation.navigate("settings"); }
                     open-search => { CommandPaletteState.open(); }
-                    open-news => { root.open-news(); }
+                    open-news => {
+                        NotificationState.visible = false;
+                        root.open-news();
+                    }
+                    open-notifications => {
+                        if NotificationState.count > 0 {
+                            NewsState.visible = false;
+                            NewsState.detail-visible = false;
+                            NotificationState.visible = !NotificationState.visible;
+                        }
+                    }
                     toggle-music => { root.toggle-music(); }
                     maximize-or-fullscreen => { root.maximize-or-fullscreen(); }
                     minimize-window => { root.minimize-window(); }
@@ -390,6 +405,12 @@ export component App inherits Window {
             NewsRoot {
                 y: root.title-bar-height;
                 height: root.height - root.title-bar-height;
+            }
+
+            NotificationOverlay {
+                y: root.title-bar-height;
+                height: root.height - root.title-bar-height;
+                z: 1100;
             }
 
             // The command palette, mounted between the music player and the dialog

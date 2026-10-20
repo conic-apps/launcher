@@ -1,0 +1,93 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+/// A completed notification shown by the notification centre.
+export struct NotificationItem {
+    kind: string,
+    detail: string,
+    icon: string,
+}
+
+/// A task that remains visible while work is running in the background.
+export struct NotificationTask {
+    id: string,
+    title: string,
+    kind: string,
+    name: string,
+    current: string,
+    total: string,
+    message: string,
+    value: float,
+    max: float,
+    loading: bool,
+}
+
+export global NotificationState {
+    in-out property <bool> visible: false;
+    in-out property <[NotificationItem]> notifications: [];
+    in-out property <[NotificationTask]> tasks: [];
+    in-out property <int> count: 0;
+    in-out property <int> notification-count: 0;
+    in-out property <int> task-count: 0;
+
+    callback close();
+    callback mark-read();
+    callback clear();
+    callback open-task();
+}
+
+export global NotificationText {
+    public pure function notification-title(item: NotificationItem) -> string {
+        if item.kind == "update-ready" {
+            return @tr("NotificationText" => "Launcher update ready");
+        }
+        if item.kind == "task-error" {
+            return @tr("NotificationText" => "Task failed");
+        }
+        if item.kind == "task-cancelled" {
+            return @tr("NotificationText" => "Task cancelled");
+        }
+        return @tr("NotificationText" => "Minecraft task finished");
+    }
+
+    public pure function notification-message(item: NotificationItem) -> string {
+        if item.kind == "update-ready" {
+            return @tr("NotificationText" => "Version {} will be applied when the launcher exits", item.detail);
+        }
+        if item.kind == "task-error" {
+            return @tr("NotificationText" => "{}", item.detail);
+        }
+        if item.kind == "task-cancelled" {
+            return @tr("NotificationText" => "The task was cancelled");
+        }
+        if item.kind == "task-finished" {
+            return @tr("NotificationText" => "The task finished");
+        }
+        return item.detail;
+    }
+
+    public pure function task-description(task: NotificationTask) -> string {
+        if task.kind == "download-files" {
+            return @tr("NotificationText" => "Downloading game files {} / {}", task.current, task.total);
+        }
+        if task.kind == "download-java" {
+            return @tr("NotificationText" => "Downloading Java {} / {}", task.current, task.total);
+        }
+        if task.kind == "download-installer-progress" {
+            return @tr("NotificationText" => "Downloading {} installer {} / {}", task.name, task.current, task.total);
+        }
+        if task.kind == "download-deps-progress" {
+            return @tr("NotificationText" => "Downloading dependencies {} / {}", task.current, task.total);
+        }
+        if task.kind == "error" {
+            return @tr("NotificationText" => "Task failed: {}", task.message);
+        }
+        return @tr("NotificationText" => "Working");
+    }
+
+    public pure function task-title(task: NotificationTask) -> string {
+        if task.title != "" { return task.title; }
+        return @tr("NotificationText" => "Minecraft");
+    }
+}

@@ -10,6 +10,7 @@ import { Icons } from "../../icons.slint";
 // other icon. The hotkey chip lives in the title bar container, not here.
 export component SearchBar inherits Rectangle {
     in property <string> placeholder;
+    in property <bool> active: false;
     callback activated;
 
     height: 26px;
@@ -21,6 +22,7 @@ export component SearchBar inherits Rectangle {
     // background on Latte. See `Theme.titlebar-search-background`.
     background: Theme.titlebar-search-background;
     clip: true;
+    animate width { duration: 220ms; easing: Easing.ease; }
 
     accessible-role: button;
     accessible-label: root.placeholder;
@@ -41,6 +43,7 @@ export component SearchBar inherits Rectangle {
         font-size: 13px;
         color: Theme.default-text-color.transparentize(0.2);
         x: 36px;
+        visible: !root.active;
     }
 
     touch := TouchArea {

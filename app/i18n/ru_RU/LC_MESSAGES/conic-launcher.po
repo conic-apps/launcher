@@ -3177,3 +3177,112 @@ msgstr "Закрыть"
 msgctxt "CrashView"
 msgid "Possible mods:"
 msgstr "Возможные моды:"
+#: ui
+msgctxt "TitleBar"
+msgid "Notifications"
+msgstr "Уведомления"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Notifications"
+msgstr "Уведомления"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Active tasks"
+msgstr "Активные задачи"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "History"
+msgstr "История"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Clear all"
+msgstr "Очистить всё"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "No notifications"
+msgstr "Нет уведомлений"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "In progress"
+msgstr "Выполняется"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Launcher update ready"
+msgstr "Обновление лаунчера готово"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed"
+msgstr "Задача не выполнена"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task cancelled"
+msgstr "Задача отменена"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft task finished"
+msgstr "Задача Minecraft завершена"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Version {} will be applied when the launcher exits"
+msgstr "Версия {} будет применена после выхода из лаунчера"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{}"
+msgstr "{}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task was cancelled"
+msgstr "Задача была отменена"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task finished"
+msgstr "Задача завершена"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading game files {} / {}"
+msgstr "Загрузка файлов игры {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading Java {} / {}"
+msgstr "Загрузка Java {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading {} installer {} / {}"
+msgstr "Загрузка установщика {} {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading dependencies {} / {}"
+msgstr "Загрузка зависимостей {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed: {}"
+msgstr "Задача не выполнена: {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Working"
+msgstr "Выполняется"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft"
+msgstr "Minecraft"

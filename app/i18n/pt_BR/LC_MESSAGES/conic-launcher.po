@@ -3177,3 +3177,112 @@ msgstr "Fechar"
 msgctxt "CrashView"
 msgid "Possible mods:"
 msgstr "Mods possíveis:"
+#: ui
+msgctxt "TitleBar"
+msgid "Notifications"
+msgstr "Notificações"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Notifications"
+msgstr "Notificações"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Active tasks"
+msgstr "Tarefas ativas"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "History"
+msgstr "Histórico"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Clear all"
+msgstr "Limpar tudo"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "No notifications"
+msgstr "Nenhuma notificação"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "In progress"
+msgstr "Em andamento"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Launcher update ready"
+msgstr "Atualização do launcher pronta"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed"
+msgstr "Tarefa falhou"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task cancelled"
+msgstr "Tarefa cancelada"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft task finished"
+msgstr "Tarefa do Minecraft concluída"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Version {} will be applied when the launcher exits"
+msgstr "A versão {} será aplicada quando o launcher for fechado"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{}"
+msgstr "{}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task was cancelled"
+msgstr "A tarefa foi cancelada"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task finished"
+msgstr "A tarefa foi concluída"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading game files {} / {}"
+msgstr "Baixando arquivos do jogo {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading Java {} / {}"
+msgstr "Baixando Java {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading {} installer {} / {}"
+msgstr "Baixando instalador de {} {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading dependencies {} / {}"
+msgstr "Baixando dependências {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed: {}"
+msgstr "Tarefa falhou: {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Working"
+msgstr "Processando"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft"
+msgstr "Minecraft"

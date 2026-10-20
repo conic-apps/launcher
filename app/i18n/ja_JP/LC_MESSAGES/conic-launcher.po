@@ -3177,3 +3177,112 @@ msgstr "閉じる"
 msgctxt "CrashView"
 msgid "Possible mods:"
 msgstr "原因の可能性があるMOD："
+#: ui
+msgctxt "TitleBar"
+msgid "Notifications"
+msgstr "通知"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Notifications"
+msgstr "通知"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Active tasks"
+msgstr "進行中のタスク"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "History"
+msgstr "履歴"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Clear all"
+msgstr "すべて消去"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "No notifications"
+msgstr "通知はありません"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "In progress"
+msgstr "進行中"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Launcher update ready"
+msgstr "ランチャーの更新準備完了"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed"
+msgstr "タスクに失敗しました"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task cancelled"
+msgstr "タスクをキャンセルしました"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft task finished"
+msgstr "Minecraft のタスクが完了しました"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Version {} will be applied when the launcher exits"
+msgstr "バージョン {} はランチャー終了時に適用されます"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{}"
+msgstr "{}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task was cancelled"
+msgstr "タスクはキャンセルされました"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task finished"
+msgstr "タスクが完了しました"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading game files {} / {}"
+msgstr "ゲームファイルをダウンロード中 {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading Java {} / {}"
+msgstr "Java をダウンロード中 {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading {} installer {} / {}"
+msgstr "{} インストーラーをダウンロード中 {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading dependencies {} / {}"
+msgstr "依存関係をダウンロード中 {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed: {}"
+msgstr "タスクに失敗しました: {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Working"
+msgstr "処理中"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft"
+msgstr "Minecraft"
