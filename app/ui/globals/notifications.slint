@@ -12,7 +12,6 @@ export struct NotificationItem {
 export global NotificationState {
     in-out property <bool> visible: false;
     in-out property <[NotificationItem]> notifications: [];
-    in-out property <int> count: 0;
     in-out property <int> notification-count: 0;
 
     callback close();

@@ -54,12 +54,15 @@ export component NotificationOverlay inherits Rectangle {
     width: 100%;
     height: 100%;
     visible: root.phase != "closed";
+    // The panel's drop shadow paints outside its box; clip it so the top blur
+    // cannot cross into the title bar above this overlay.
+    clip: true;
     background: #000000.with-alpha(0.35 * root.scrim-alpha);
 
     private property <string> phase: "closed";
     private property <bool> open: NotificationState.visible;
     private property <float> scrim-alpha: root.phase == "shown" ? 1.0 : 0.0;
-    private property <length> panel-width: min(460px, root.width * 0.45);
+    private property <length> panel-width: 300px;
     // Only the slide offset animates; the window-relative term stays outside it,
     // so a resize moves the panel with the right edge instead of easing after it.
     private property <length> panel-offset: root.phase == "shown" ? 0px : root.panel-width;
@@ -108,59 +111,72 @@ export component NotificationOverlay inherits Rectangle {
         width: root.panel-width;
         height: root.height;
         background: Theme.base;
-        border-width: 1px;
-        border-color: Theme.overlay-0.transparentize(0.35);
+        drop-shadow-color: #00000059;
+        drop-shadow-blur: 24px;
+        drop-shadow-offset-x: -6px;
 
         TouchArea { }
 
-        VerticalLayout {
-            padding: 16px;
-            height: root.height - 48px;
-            spacing: 10px;
-            HorizontalLayout {
-                height: 24px;
-                Text {
-                    text: @tr("NotificationOverlay" => "Notifications");
-                    color: Theme.text;
-                    font-size: 17px;
-                    font-weight: Theme.font-weight-bold;
-                }
-
-                Text {
-                    text: "" + NotificationState.count;
-                    color: Theme.subtext-0;
-                    font-size: 13px;
-                    horizontal-alignment: right;
-                }
-            }
-
-            ScrollView {
-                vertical-stretch: 1;
-                scrollbar-top: 0px;
-                scrollbar-bottom: 0px;
-                VerticalLayout {
+        ScrollView {
+            scrollbar-top: 8px;
+            scrollbar-bottom: 8px;
+            VerticalLayout {
+                padding-top: 16px;
+                padding-right: 24px;
+                padding-bottom: 16px;
+                padding-left: 24px;
+                spacing: 8px;
+                HorizontalLayout {
+                    height: 24px;
                     spacing: 8px;
-                    HorizontalLayout {
-                        height: 24px;
-                        Text {
-                            text: @tr("NotificationOverlay" => "Notifications");
-                            color: Theme.mauve;
-                            font-size: 13px;
-                            font-weight: Theme.font-weight-bold;
-                        }
+                    Text {
+                        text: @tr("NotificationOverlay" => "Notifications");
+                        color: Theme.text;
+                        font-size: 13px;
+                        font-weight: Theme.font-weight-bold;
+                        vertical-alignment: center;
+                    }
 
-                        Text {
-                            text: "" + NotificationState.notification-count;
-                            color: Theme.subtext-0;
-                            font-size: 13px;
-                            font-weight: Theme.font-weight-bold;
+                    Text {
+                        text: "" + NotificationState.notification-count;
+                        color: Theme.mauve;
+                        font-size: 13px;
+                        font-weight: Theme.font-weight-bold;
+                        vertical-alignment: center;
+                    }
+
+                    Rectangle {
+                        horizontal-stretch: 1;
+                    }
+
+                    clear-all := Rectangle {
+                        width: clear-all-label.preferred-width;
+                        height: parent.height;
+                        background: transparent;
+
+                        clear-all-label := Text {
+                            text: @tr("NotificationOverlay" => "Clear all");
+                            color: clear-all-touch.has-hover ? Theme.yellow : Theme.text;
+                            font-size: 12px;
+                            font-weight: Theme.font-weight-normal;
+                            width: parent.width;
+                            height: parent.height;
+                            vertical-alignment: center;
                             horizontal-alignment: right;
+                            animate color {
+                                duration: 120ms;
+                                easing: ease;
+                            }
+                        }
+
+                        clear-all-touch := TouchArea {
+                            clicked => { NotificationState.clear(); }
                         }
                     }
+                }
 
-                    for item in NotificationState.notifications: NotificationRow {
-                        item: item;
-                    }
+                for item in NotificationState.notifications: NotificationRow {
+                    item: item;
                 }
             }
         }

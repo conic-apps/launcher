@@ -88,6 +88,33 @@ pub(crate) fn schedule_demo(ui: &App) {
                 "warning",
             );
             push(&ui, "task-cancelled", "", "ban");
+            push(&ui, "update-ready", "0.1.0-alpha.4", "download");
+            push(
+                &ui,
+                "task-finished",
+                "Demo task finished",
+                "checkmark-outline",
+            );
+            push(
+                &ui,
+                "task-error",
+                "Demo task failed: another download could not be completed.",
+                "warning",
+            );
+            push(&ui, "task-cancelled", "", "ban");
+            push(
+                &ui,
+                "task-finished",
+                "Demo task finished",
+                "checkmark-outline",
+            );
+            push(&ui, "update-ready", "0.1.0-alpha.3", "download");
+            push(
+                &ui,
+                "task-error",
+                "Demo task failed: the instance could not be launched.",
+                "warning",
+            );
         });
     });
 }
@@ -118,7 +145,6 @@ fn clear(ui: &App) {
 fn update_count(state: &NotificationState, controller: &NotificationController) {
     let count = controller.notifications.row_count() as i32;
     state.set_notification_count(count);
-    state.set_count(count);
 }
 
 fn add_notification(controller: &NotificationController, item: NotificationItem) {

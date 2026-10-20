@@ -314,41 +314,12 @@ export component App inherits Window {
                 width: root.width;
                 height: root.height;
 
-                TitleBar {
-                    macos: root.macos;
-                    linux: root.linux;
-                    windows: root.windows;
-                    fullscreen: root.window-fullscreen;
+                // Reserves the bar's row; the bar itself is mounted above the
+                // overlay layers below.
+                Rectangle {
+                    width: 100%;
                     height: root.title-bar-height;
-                    window-controls-inset: root.window-controls-inset;
-                    window-controls: root.window-controls;
-                    window-control-hovered: root.window-control-hovered;
-                    window-control-pressed: root.window-control-pressed;
-                    search-placeholder: root.search-placeholder;
-                    search-hotkey: root.search-hotkey;
-                    current-page: Navigation.current-page;
-                    music-enabled: AppConfig.music-enabled;
-
-                    // Navigation is global: the title bar drives it directly.
-                    open-home => { Navigation.navigate("game"); }
-                    open-settings => { Navigation.navigate("settings"); }
-                    open-search => { CommandPaletteState.open(); }
-                    open-news => {
-                        NotificationState.visible = false;
-                        root.open-news();
-                    }
-                    open-notifications => {
-                        NewsState.visible = false;
-                        NewsState.detail-visible = false;
-                        NotificationState.visible = !NotificationState.visible;
-                    }
-                    toggle-music => { root.toggle-music(); }
-                    maximize-or-fullscreen => { root.maximize-or-fullscreen(); }
-                    minimize-window => { root.minimize-window(); }
-                    // `App.close()` runs the window's close-requested callback,
-                    // where the launch-page confirm lives. `⌘W` above and the
-                    // macOS `⌘Q` (`native/macos/quit.rs`) do the same.
-                    close-window => { root.close(); }
+                    background: transparent;
                 }
 
                 // Page stack. The account view is an overlay on the game screen,
@@ -412,6 +383,50 @@ export component App inherits Window {
                 y: root.title-bar-height;
                 height: root.height - root.title-bar-height;
                 z: 1100;
+            }
+
+            // Mounted outside the page layout so the bar stays above the
+            // notification, news and music layers (z: 1100 and below), while
+            // still sitting under the command palette and dialogs.
+            TitleBar {
+                x: 0;
+                y: 0;
+                width: 100%;
+                height: root.title-bar-height;
+                z: 1200;
+                macos: root.macos;
+                linux: root.linux;
+                windows: root.windows;
+                fullscreen: root.window-fullscreen;
+                window-controls-inset: root.window-controls-inset;
+                window-controls: root.window-controls;
+                window-control-hovered: root.window-control-hovered;
+                window-control-pressed: root.window-control-pressed;
+                search-placeholder: root.search-placeholder;
+                search-hotkey: root.search-hotkey;
+                current-page: Navigation.current-page;
+                music-enabled: AppConfig.music-enabled;
+
+                // Navigation is global: the title bar drives it directly.
+                open-home => { Navigation.navigate("game"); }
+                open-settings => { Navigation.navigate("settings"); }
+                open-search => { CommandPaletteState.open(); }
+                open-news => {
+                    NotificationState.visible = false;
+                    root.open-news();
+                }
+                open-notifications => {
+                    NewsState.visible = false;
+                    NewsState.detail-visible = false;
+                    NotificationState.visible = !NotificationState.visible;
+                }
+                toggle-music => { root.toggle-music(); }
+                maximize-or-fullscreen => { root.maximize-or-fullscreen(); }
+                minimize-window => { root.minimize-window(); }
+                // `App.close()` runs the window's close-requested callback,
+                // where the launch-page confirm lives. `⌘W` above and the
+                // macOS `⌘Q` (`native/macos/quit.rs`) do the same.
+                close-window => { root.close(); }
             }
 
             // The command palette, mounted between the music player and the dialog
