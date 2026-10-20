@@ -294,8 +294,8 @@ export global ContentState {
     in-out property <bool> detail-body-always: false;
     in-out property <[GalleryShot]> detail-gallery: [];
     in-out property <bool> detail-favorited: false;
-    /// The heart + download/remove row is the mod detail panels'; the pack and
-    /// resource-pack ones have no remove, and only the mods are "installed".
+    /// The heart + download/remove row belongs to the mod and resource-pack
+    /// detail panels; a pack has no remove and is never "installed".
     in-out property <bool> detail-has-install: true;
     in-out property <bool> detail-installed: false;
     in-out property <string> detail-installed-version: "";
@@ -307,9 +307,9 @@ export global ContentState {
     in-out property <float> detail-progress: 0;
     in-out property <float> detail-progress-max: 0;
     in-out property <string> detail-progress-text: "";
-    /// Whether this detail panel has an installed state at all. The mod panels
-    /// offer a remove button; the pack and resource-pack ones only ever draw a
-    /// download button.
+    /// Whether this detail panel has an installed state at all. Mod and
+    /// resource-pack panels offer a remove button; a pack only draws a download
+    /// button.
     in-out property <bool> detail-can-remove: true;
 
     in-out property <[GalleryShot]> screenshots: [];

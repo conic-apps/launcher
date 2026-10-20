@@ -2,22 +2,23 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Per-instance file fingerprints for the mods folder.
+//! Per-instance file fingerprints for one content folder.
 //!
-//! A SHA-512 is the content identity everything else in [`super::remote`] is
-//! keyed by, but calculating it means reading the whole jar. This index records
-//! the stat of each file beside the checksum it produced, so an unchanged file
-//! is answered from the index instead of being read again. A changed file, or
-//! one that is not in the index at all, is hashed once.
+//! A SHA-512 is the content identity the remote cache and `identity.json` are
+//! keyed by, but calculating it means reading the whole archive. This index
+//! records the stat of each file beside the checksum it produced, so an
+//! unchanged file is answered from the index instead of being read again. A
+//! changed file, or one that is not in the index at all, is hashed once.
 //!
 //! Paths are the primary key because that is what the directory scan has. An
 //! inode is kept beside it so a renamed file can keep its checksum without being
 //! read again; on platforms where the standard library does not expose one, the
 //! size and modification time still do the common case.
 //!
-//! The file is per instance because deleting an instance should drop the paths
-//! that described it. The checksums themselves are content-addressed and live
-//! in `identity.json`, where a jar shared by two instances is stored once.
+//! The file is per instance and kind because deleting an instance should drop
+//! the paths that described it. The checksums themselves are content-addressed
+//! and live in `cache/remote/identity.json`, where an archive shared by two
+//! instances or two content kinds is stored once.
 
 use std::{
     collections::HashMap,
@@ -31,6 +32,8 @@ use std::{
 use log::warn;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha512};
+
+use crate::kind::{ContentKind, ContentScope};
 
 #[cfg(unix)]
 use std::os::unix::fs::MetadataExt;
@@ -68,6 +71,16 @@ pub(crate) struct ScannedFile {
     pub(crate) sha512: String,
 }
 
+/// What a folder scan found. Only `indexed` takes part in the path index and the
+/// installed-content check; the other two are still listed by a kind that can
+/// parse them (a directory resource pack, for example).
+pub(crate) struct Scan {
+    pub(crate) index: FileIndex,
+    pub(crate) indexed: Vec<ScannedFile>,
+    pub(crate) directories: Vec<PathBuf>,
+    pub(crate) other_files: Vec<PathBuf>,
+}
+
 /// Serializes writes to the per-instance indexes. Reads need no lock: the save
 /// is a rename over the old file, so a reader sees either whole version.
 static INDEX_WRITE_LOCK: OnceLock<tokio::sync::Mutex<()>> = OnceLock::new();
@@ -79,23 +92,28 @@ async fn index_write_lock() -> tokio::sync::MutexGuard<'static, ()> {
         .await
 }
 
-fn index_path(instance_id: &str) -> PathBuf {
-    storage::LOCATIONS
+fn index_path(scope: &ContentScope) -> PathBuf {
+    let cache = storage::LOCATIONS
         .launcher
         .cache
-        .join("mods")
-        .join("files")
-        .join(format!("{instance_id}.json"))
+        .join(scope.kind.folder())
+        .join("files");
+    match scope.kind {
+        ContentKind::DataPacks => cache
+            .join(scope.world.as_deref().unwrap_or_default())
+            .join(format!("{}.json", scope.instance_id)),
+        _ => cache.join(format!("{}.json", scope.instance_id)),
+    }
 }
 
-pub(crate) async fn load(instance_id: &str) -> FileIndex {
-    let path = index_path(instance_id);
+pub(crate) async fn load(scope: &ContentScope) -> FileIndex {
+    let path = index_path(scope);
     match tokio::fs::read(&path).await {
         Ok(bytes) => match serde_json::from_slice(&bytes) {
             Ok(index) => index,
             Err(error) => {
                 warn!(
-                    "{} could not be read as a mod index ({error}); it will be rebuilt",
+                    "{} could not be read as a content index ({error}); it will be rebuilt",
                     path.display()
                 );
                 FileIndex::new()
@@ -109,17 +127,21 @@ pub(crate) async fn load(instance_id: &str) -> FileIndex {
     }
 }
 
-pub(crate) async fn save(instance_id: &str, index: &FileIndex) {
+pub(crate) async fn save(scope: &ContentScope, index: &FileIndex) {
     let _guard = index_write_lock().await;
-    write_unlocked(instance_id, index).await;
+    write_unlocked(scope, index).await;
 }
 
-async fn write_unlocked(instance_id: &str, index: &FileIndex) {
+async fn write_unlocked(scope: &ContentScope, index: &FileIndex) {
     let Ok(bytes) = serde_json::to_vec(index) else {
-        warn!("Failed to serialize the mod index of {instance_id}");
+        warn!(
+            "Failed to serialize the {} index of {}",
+            scope.kind.folder(),
+            scope.instance_id
+        );
         return;
     };
-    let path = index_path(instance_id);
+    let path = index_path(scope);
     let Some(parent) = path.parent() else {
         return;
     };
@@ -139,25 +161,30 @@ async fn write_unlocked(instance_id: &str, index: &FileIndex) {
 
 /// Adds one file to the index immediately after the launcher writes it, so the
 /// check that follows the install does not have to hash it a second time.
-pub(crate) async fn remember(instance_id: &str, path: &Path, sha512: &str) {
+pub(crate) async fn remember(scope: &ContentScope, path: &Path, sha512: &str) {
+    if !scope.kind.indexes_file(path) {
+        return;
+    }
     let metadata = match std::fs::metadata(path) {
         Ok(metadata) => metadata,
         Err(error) => {
-            warn!("Could not stat the installed mod {:?}: {error}", path);
+            warn!("Could not stat the installed content {:?}: {error}", path);
             return;
         }
     };
     if !metadata.is_file() {
         return;
     }
-    let Some(name) = path.file_name() else {
-        return;
-    };
-    let name = name.to_string_lossy().into_owned();
+    let folder = scope.folder();
+    let key = path
+        .strip_prefix(&folder)
+        .unwrap_or(path)
+        .to_string_lossy()
+        .into_owned();
     let _guard = index_write_lock().await;
-    let mut index = load(instance_id).await;
+    let mut index = load(scope).await;
     index.insert(
-        name,
+        key,
         FileSnapshot {
             len: metadata.len(),
             mtime_ns: mtime_ns(&metadata),
@@ -165,7 +192,7 @@ pub(crate) async fn remember(instance_id: &str, path: &Path, sha512: &str) {
             sha512: sha512.to_string(),
         },
     );
-    write_unlocked(instance_id, &index).await;
+    write_unlocked(scope, &index).await;
 }
 
 /// Resolves every file directly inside `folder`, reusing the checksum of an
@@ -173,8 +200,8 @@ pub(crate) async fn remember(instance_id: &str, path: &Path, sha512: &str) {
 ///
 /// The returned index contains only files the scan saw, so entries for files
 /// that have gone disappear with them. `previous` may be empty; the first scan
-/// of an instance hashes everything.
-pub(crate) fn scan(folder: &Path, previous: &FileIndex) -> (FileIndex, Vec<ScannedFile>) {
+/// of an instance hashes everything the kind indexes.
+pub(crate) fn scan(scope: &ContentScope, folder: &Path, previous: &FileIndex) -> Scan {
     let mut by_ino: HashMap<u64, &FileSnapshot> = HashMap::new();
     for snapshot in previous.values() {
         if let Some(ino) = snapshot.ino {
@@ -185,11 +212,21 @@ pub(crate) fn scan(folder: &Path, previous: &FileIndex) -> (FileIndex, Vec<Scann
     let entries = match folder.read_dir() {
         Ok(entries) => entries,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-            return (FileIndex::new(), Vec::new());
+            return Scan {
+                index: FileIndex::new(),
+                indexed: Vec::new(),
+                directories: Vec::new(),
+                other_files: Vec::new(),
+            };
         }
         Err(error) => {
             warn!("Could not read {:?}: {error}", folder);
-            return (FileIndex::new(), Vec::new());
+            return Scan {
+                index: FileIndex::new(),
+                indexed: Vec::new(),
+                directories: Vec::new(),
+                other_files: Vec::new(),
+            };
         }
     };
 
@@ -199,7 +236,9 @@ pub(crate) fn scan(folder: &Path, previous: &FileIndex) -> (FileIndex, Vec<Scann
     paths.sort();
 
     let mut next = FileIndex::new();
-    let mut files = Vec::new();
+    let mut indexed = Vec::new();
+    let mut directories = Vec::new();
+    let mut other_files = Vec::new();
     for path in paths {
         let metadata = match std::fs::metadata(&path) {
             Ok(metadata) => metadata,
@@ -208,19 +247,29 @@ pub(crate) fn scan(folder: &Path, previous: &FileIndex) -> (FileIndex, Vec<Scann
                 continue;
             }
         };
+        if metadata.is_dir() {
+            directories.push(path);
+            continue;
+        }
         if !metadata.is_file() {
             continue;
         }
-        let Some(name) = path.file_name() else {
+        if !scope.kind.indexes_file(&path) {
+            other_files.push(path);
             continue;
-        };
-        let name = name.to_string_lossy().into_owned();
+        }
+
+        let key = path
+            .strip_prefix(folder)
+            .unwrap_or(&path)
+            .to_string_lossy()
+            .into_owned();
         let len = metadata.len();
         let mtime_ns = mtime_ns(&metadata);
         let ino = ino(&metadata);
 
         let reused = previous
-            .get(&name)
+            .get(&key)
             .filter(|snapshot| snapshot.matches(len, mtime_ns, ino))
             .map(|snapshot| snapshot.sha512.clone())
             .or_else(|| {
@@ -242,7 +291,7 @@ pub(crate) fn scan(folder: &Path, previous: &FileIndex) -> (FileIndex, Vec<Scann
         };
 
         next.insert(
-            name,
+            key,
             FileSnapshot {
                 len,
                 mtime_ns,
@@ -250,9 +299,14 @@ pub(crate) fn scan(folder: &Path, previous: &FileIndex) -> (FileIndex, Vec<Scann
                 sha512: sha512.clone(),
             },
         );
-        files.push(ScannedFile { path, sha512 });
+        indexed.push(ScannedFile { path, sha512 });
     }
-    (next, files)
+    Scan {
+        index: next,
+        indexed,
+        directories,
+        other_files,
+    }
 }
 
 fn mtime_ns(metadata: &Metadata) -> u64 {
@@ -314,17 +368,28 @@ mod tests {
         file.write_all(bytes).expect("write the test file");
     }
 
+    fn mods_scope() -> ContentScope {
+        ContentScope::new("test", ContentKind::Mods)
+    }
+
+    fn resourcepacks_scope() -> ContentScope {
+        ContentScope::new("test", ContentKind::ResourcePacks)
+    }
+
     #[test]
     fn unchanged_files_keep_their_checksum() {
         let dir = test_dir("unchanged");
         let path = dir.join("mod.jar");
         write_file(&path, b"not really a jar");
-        let (index, first) = scan(&dir, &FileIndex::new());
+        let (index, first) = {
+            let scan = scan(&mods_scope(), &dir, &FileIndex::new());
+            (scan.index, scan.indexed)
+        };
         assert_eq!(first.len(), 1);
 
-        let (_, second) = scan(&dir, &index);
-        assert_eq!(second.len(), 1);
-        assert_eq!(second[0].sha512, first[0].sha512);
+        let scan = scan(&mods_scope(), &dir, &index);
+        assert_eq!(scan.indexed.len(), 1);
+        assert_eq!(scan.indexed[0].sha512, first[0].sha512);
         std::fs::remove_dir_all(&dir).ok();
     }
 
@@ -333,10 +398,13 @@ mod tests {
         let dir = test_dir("changed");
         let path = dir.join("mod.jar");
         write_file(&path, b"first");
-        let (index, first) = scan(&dir, &FileIndex::new());
+        let (index, first) = {
+            let scan = scan(&mods_scope(), &dir, &FileIndex::new());
+            (scan.index, scan.indexed)
+        };
         write_file(&path, b"second");
-        let (_, second) = scan(&dir, &index);
-        assert_ne!(second[0].sha512, first[0].sha512);
+        let scan = scan(&mods_scope(), &dir, &index);
+        assert_ne!(scan.indexed[0].sha512, first[0].sha512);
         std::fs::remove_dir_all(&dir).ok();
     }
 
@@ -348,13 +416,16 @@ mod tests {
         let dir = test_dir("unreadable");
         let path = dir.join("mod.jar");
         write_file(&path, b"not really a jar");
-        let (index, first) = scan(&dir, &FileIndex::new());
+        let (index, first) = {
+            let scan = scan(&mods_scope(), &dir, &FileIndex::new());
+            (scan.index, scan.indexed)
+        };
 
         std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o000))
             .expect("make the test file unreadable");
-        let (_, second) = scan(&dir, &index);
-        assert_eq!(second.len(), 1);
-        assert_eq!(second[0].sha512, first[0].sha512);
+        let scan = scan(&mods_scope(), &dir, &index);
+        assert_eq!(scan.indexed.len(), 1);
+        assert_eq!(scan.indexed[0].sha512, first[0].sha512);
 
         std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).ok();
         std::fs::remove_dir_all(&dir).ok();
@@ -379,9 +450,28 @@ mod tests {
         );
 
         std::fs::rename(&path, dir.join("new.jar")).expect("rename the test file");
-        let (_, scanned) = scan(&dir, &index);
-        assert_eq!(scanned.len(), 1);
-        assert_eq!(scanned[0].sha512, "stored-checksum");
+        let scan = scan(&mods_scope(), &dir, &index);
+        assert_eq!(scan.indexed.len(), 1);
+        assert_eq!(scan.indexed[0].sha512, "stored-checksum");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn resource_packs_index_zips_and_leave_directories_direct() {
+        let dir = test_dir("resourcepacks");
+        write_file(&dir.join("pack.zip"), b"zip");
+        write_file(&dir.join("notes.txt"), b"text");
+        std::fs::create_dir_all(dir.join("folder-pack")).expect("create the directory pack");
+
+        let scan = scan(&resourcepacks_scope(), &dir, &FileIndex::new());
+        assert_eq!(scan.indexed.len(), 1);
+        assert_eq!(
+            scan.indexed[0].path.file_name().expect("a file name"),
+            "pack.zip"
+        );
+        assert_eq!(scan.directories.len(), 1);
+        assert_eq!(scan.other_files.len(), 1);
+        assert_eq!(scan.index.len(), 1);
         std::fs::remove_dir_all(&dir).ok();
     }
 

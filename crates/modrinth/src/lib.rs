@@ -16,7 +16,7 @@
 //!     sequence through `serde_urlencoded`'s pair serializer, which rejects a
 //!     bare string, so the request never carries a query string and the call
 //!     always fails. `get_projects`, which takes the same ids as one JSON
-//!     parameter, works and is what `crates/content/src/mods/remote.rs` uses.
+//!     parameter, works and is what `crates/content/src/remote/mod.rs` uses.
 //!   * The two request structs' fields are `pub` so the app can build them
 //!     directly.
 

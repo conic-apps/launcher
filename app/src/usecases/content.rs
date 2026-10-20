@@ -12,8 +12,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use content::mods::ResolvedMod;
-use content::mods::remote::RemoteModPlatform;
+use content::remote::{ContentKind, InstalledFile, RemotePlatform};
 
 use crate::usecases::generation::Gate;
 
@@ -66,6 +65,16 @@ impl RemoteKind {
         }
     }
 
+    /// The content kind this remote list installs. A modpack is not instance
+    /// content, so it has no shared installed-content scope.
+    pub(crate) fn content_kind(self) -> Option<ContentKind> {
+        match self {
+            Self::Mods => Some(ContentKind::Mods),
+            Self::ResourcePacks => Some(ContentKind::ResourcePacks),
+            Self::Packs => None,
+        }
+    }
+
     pub(crate) fn from_key(key: &str) -> Self {
         match key {
             "resourcepacks" => Self::ResourcePacks,
@@ -89,10 +98,10 @@ impl Platform {
         }
     }
 
-    pub(crate) fn api(self) -> RemoteModPlatform {
+    pub(crate) fn api(self) -> RemotePlatform {
         match self {
-            Self::Modrinth => RemoteModPlatform::Modrinth,
-            Self::CurseForge => RemoteModPlatform::CurseForge,
+            Self::Modrinth => RemotePlatform::Modrinth,
+            Self::CurseForge => RemotePlatform::CurseForge,
         }
     }
 }
@@ -227,8 +236,9 @@ pub(crate) struct OpenDetail {
     pub(crate) platform: Platform,
     pub(crate) kind: RemoteKind,
     pub(crate) id: String,
-    /// The installed mods the project resolved to, for the remove button.
-    pub(crate) installed_mods: Vec<ResolvedMod>,
+    /// The installed files the project resolved to, for the remove button and
+    /// the installed version label.
+    pub(crate) installed_files: Vec<InstalledFile>,
 }
 
 /// `<platform>:<kind>:<id>` — the favourites key.

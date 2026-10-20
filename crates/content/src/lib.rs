@@ -6,11 +6,14 @@
 //!
 //! Each module is a self-contained reader of one content kind:
 //!
-//!   * `mods/` reads the mods folder and resolves each jar's metadata, offline
-//!     from the archive itself and online through Modrinth and CurseForge;
+//!   * `remote/` resolves installed archives on Modrinth and CurseForge and
+//!     owns the shared identity/version cache; its `mods` and `resourcepacks`
+//!     children add the local parse cache for each kind;
+//!   * `mods/` parses a jar offline, including its jar-in-jar entries;
+//!   * `resourcepack.rs` parses a pack zip or directory;
 //!   * `saves/` reads `level.dat` out of each world and serves a world's icon
 //!     and path;
-//!   * `resourcepack.rs` and `screenshots.rs` list the other two content kinds;
+//!   * `screenshots.rs` lists the last content kind;
 //!   * `favorites.rs` is the shared favorites file.
 //!
 //! Two design notes, both deliberate:
@@ -19,7 +22,7 @@
 //!     `render_map` hands the RGBA buffer straight back and the caller wraps it
 //!     in a `SharedPixelBuffer`, so no encode, base64 or decode is involved.
 //!   * The entry points take borrowed names (`&str`, `impl AsRef<Path>`) rather
-//!     than owned strings; the favorites helpers and `remove_mod_files` are the
+//!     than owned strings; the favorites helpers and `remove_content_files` are the
 //!     exceptions, taking owned `String`s.
 //!
 //! There is deliberately no cheap "how many mods does this instance have" scan
@@ -36,7 +39,10 @@ use storage::LOCATIONS;
 
 pub mod error;
 pub mod favorites;
+mod index;
+pub mod kind;
 pub mod mods;
+pub mod remote;
 pub mod resourcepack;
 pub mod saves;
 pub mod screenshots;

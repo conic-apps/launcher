@@ -385,29 +385,15 @@ async fn parse(instance: &str, kind: Kind) -> Parsed {
         // letting them through would make the summary count a mod the panel
         // cannot open.
         Kind::Mods => Parsed::Mods(
-            content::mods::remote::parse_mods(instance)
+            content::remote::mods::parse_mods(instance)
                 .await
                 .into_iter()
                 .filter(|mod_info| !mod_info.embedded)
                 .collect(),
         ),
-        // Reading a pack means opening a zip, so it is blocking work.
+        // The local parse and the platform lookup share the resource-pack cache.
         Kind::ResourcePacks => Parsed::ResourcePacks(
-            crate::support::runtime::spawn_blocking({
-                let instance = instance.to_string();
-                move || content::resourcepack::get_instance_resourcepacks(&instance)
-            })
-            .await
-            .map(|result| {
-                result.unwrap_or_else(|error| {
-                    log::warn!("The resource packs of {instance} could not be read: {error}");
-                    Vec::new()
-                })
-            })
-            .unwrap_or_else(|error| {
-                log::warn!("Reading the resource packs of {instance} did not run: {error}");
-                Vec::new()
-            }),
+            content::remote::resourcepacks::parse_resourcepacks(instance).await,
         ),
         Kind::Screenshots => Parsed::Screenshots(
             content::screenshots::list_screenshots(instance)

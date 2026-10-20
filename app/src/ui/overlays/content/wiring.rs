@@ -650,18 +650,17 @@ pub(crate) fn setup_detail_actions(ui: &App) {
             };
             ui.global::<ContentState>().set_detail_operating(true);
             let files: Vec<String> = detail
-                .installed_mods
+                .installed_files
                 .iter()
-                .map(|mod_info| mod_info.path.to_string_lossy().to_string())
+                .map(|file| file.path.to_string_lossy().to_string())
                 .collect();
             let instance = controller().borrow().instance_id.clone();
-            match content::mods::remote::remove_mod_files(&instance, files) {
+            match content::remote::remove_content_files(&instance, files) {
                 Ok(()) => {
                     refresh_installed(&ui);
-                    // Only a mod is ever removable here — the button is on a
-                    // detail panel that resolved installed files — so this is
-                    // the mods and nothing else.
-                    reload(&ui, Kind::Mods);
+                    if let Some(kind) = installed_kind(detail.kind) {
+                        reload(&ui, kind);
+                    }
                 }
                 Err(error) => log::error!("failed to remove content: {error}"),
             }
