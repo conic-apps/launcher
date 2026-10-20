@@ -48,14 +48,7 @@ pub(crate) fn setup(ui: &App) {
     let weak = ui.as_weak();
     state.on_close(move || {
         if let Some(ui) = weak.upgrade() {
-            mark_read(&ui);
             ui.global::<NotificationState>().set_visible(false);
-        }
-    });
-    let weak = ui.as_weak();
-    state.on_mark_read(move || {
-        if let Some(ui) = weak.upgrade() {
-            mark_read(&ui);
         }
     });
     let weak = ui.as_weak();
@@ -115,14 +108,11 @@ pub(crate) fn push(ui: &App, kind: &str, detail: &str, icon: &str) {
     });
 }
 
-fn mark_read(ui: &App) {
+fn clear(ui: &App) {
     CONTROLLER.with(|controller| {
         controller.notifications.set_vec(Vec::new());
         update_count(&ui.global::<NotificationState>(), controller);
     });
-}
-fn clear(ui: &App) {
-    mark_read(ui);
 }
 
 fn update_count(state: &NotificationState, controller: &NotificationController) {

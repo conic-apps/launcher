@@ -53,22 +53,22 @@ component NotificationRow inherits Rectangle {
 export component NotificationOverlay inherits Rectangle {
     width: 100%;
     height: 100%;
-    visible: NotificationState.count > 0 && root.phase != "closed";
+    visible: root.phase != "closed";
     background: #000000.with-alpha(0.35 * root.scrim-alpha);
 
     private property <string> phase: "closed";
     private property <bool> open: NotificationState.visible;
     private property <float> scrim-alpha: root.phase == "shown" ? 1.0 : 0.0;
     private property <length> panel-width: min(460px, root.width * 0.45);
-    private property <length> panel-x: root.phase == "shown"
-        ? root.width - root.panel-width
-        : root.width;
+    // Only the slide offset animates; the window-relative term stays outside it,
+    // so a resize moves the panel with the right edge instead of easing after it.
+    private property <length> panel-offset: root.phase == "shown" ? 0px : root.panel-width;
     private property <bool> leaving: root.phase == "leaving";
     animate scrim-alpha {
         duration: 150ms;
         easing: ease-out-quad;
     }
-    animate panel-x {
+    animate panel-offset {
         duration: root.leaving ? 180ms : 220ms;
         easing: root.leaving ? cubic-bezier(0.47, 0, 1, 0.75) : cubic-bezier(0, 0.47, 0.25, 1);
     }
@@ -80,7 +80,6 @@ export component NotificationOverlay inherits Rectangle {
         } else if root.phase != "closed" {
             root.phase = "leaving";
             leave-timer.restart();
-            NotificationState.mark-read();
         }
     }
     init => {
@@ -104,7 +103,7 @@ export component NotificationOverlay inherits Rectangle {
     }
 
     Rectangle {
-        x: root.panel-x;
+        x: root.width - root.panel-width + root.panel-offset;
         y: 0px;
         width: root.panel-width;
         height: root.height;

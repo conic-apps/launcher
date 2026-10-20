@@ -338,11 +338,9 @@ export component App inherits Window {
                         root.open-news();
                     }
                     open-notifications => {
-                        if NotificationState.count > 0 {
-                            NewsState.visible = false;
-                            NewsState.detail-visible = false;
-                            NotificationState.visible = !NotificationState.visible;
-                        }
+                        NewsState.visible = false;
+                        NewsState.detail-visible = false;
+                        NotificationState.visible = !NotificationState.visible;
                     }
                     toggle-music => { root.toggle-music(); }
                     maximize-or-fullscreen => { root.maximize-or-fullscreen(); }
