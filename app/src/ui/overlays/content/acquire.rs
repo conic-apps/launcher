@@ -78,9 +78,10 @@ pub(crate) async fn install(
     // The download knows the exact version it chose. Recording it now means the
     // detail panel can name it before the next folder scan, and an offline
     // launch can still tell which version is installed.
-    if detail.kind == RemoteKind::Mods {
-        content::mods::remote::record_installed(
-            instance_id,
+    if let Some(kind) = detail.kind.content_kind() {
+        let scope = content::remote::ContentScope::new(instance_id, kind);
+        content::remote::record_installed(
+            &scope,
             detail.platform.api(),
             &detail.id,
             version_id.as_deref(),
