@@ -3177,3 +3177,112 @@ msgstr "닫기"
 msgctxt "CrashView"
 msgid "Possible mods:"
 msgstr "가능성 있는 모드:"
+#: ui
+msgctxt "TitleBar"
+msgid "Notifications"
+msgstr "알림"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Notifications"
+msgstr "알림"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Active tasks"
+msgstr "진행 중인 작업"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "History"
+msgstr "기록"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Clear all"
+msgstr "모두 지우기"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "No notifications"
+msgstr "알림 없음"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "In progress"
+msgstr "진행 중"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Launcher update ready"
+msgstr "런처 업데이트 준비 완료"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed"
+msgstr "작업 실패"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task cancelled"
+msgstr "작업 취소됨"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft task finished"
+msgstr "Minecraft 작업 완료"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Version {} will be applied when the launcher exits"
+msgstr "런처 종료 시 버전 {}이(가) 적용됩니다"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{}"
+msgstr "{}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task was cancelled"
+msgstr "작업이 취소되었습니다"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task finished"
+msgstr "작업이 완료되었습니다"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading game files {} / {}"
+msgstr "게임 파일 다운로드 중 {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading Java {} / {}"
+msgstr "Java 다운로드 중 {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading {} installer {} / {}"
+msgstr "{} 설치 프로그램 다운로드 중 {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading dependencies {} / {}"
+msgstr "종속성 다운로드 중 {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed: {}"
+msgstr "작업 실패: {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Working"
+msgstr "작업 중"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft"
+msgstr "Minecraft"

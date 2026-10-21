@@ -3177,3 +3177,112 @@ msgstr "Zamknij"
 msgctxt "CrashView"
 msgid "Possible mods:"
 msgstr "Możliwe mody:"
+#: ui
+msgctxt "TitleBar"
+msgid "Notifications"
+msgstr "Powiadomienia"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Notifications"
+msgstr "Powiadomienia"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Active tasks"
+msgstr "Aktywne zadania"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "History"
+msgstr "Historia"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Clear all"
+msgstr "Wyczyść wszystko"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "No notifications"
+msgstr "Brak powiadomień"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "In progress"
+msgstr "W toku"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Launcher update ready"
+msgstr "Aktualizacja launchera gotowa"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed"
+msgstr "Zadanie nie powiodło się"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task cancelled"
+msgstr "Zadanie anulowane"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft task finished"
+msgstr "Zadanie Minecraft ukończone"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Version {} will be applied when the launcher exits"
+msgstr "Wersja {} zostanie zastosowana po zamknięciu launchera"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{}"
+msgstr "{}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task was cancelled"
+msgstr "Zadanie zostało anulowane"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task finished"
+msgstr "Zadanie ukończone"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading game files {} / {}"
+msgstr "Pobieranie plików gry {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading Java {} / {}"
+msgstr "Pobieranie Javy {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading {} installer {} / {}"
+msgstr "Pobieranie instalatora {} {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading dependencies {} / {}"
+msgstr "Pobieranie zależności {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed: {}"
+msgstr "Zadanie nie powiodło się: {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Working"
+msgstr "Praca w toku"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft"
+msgstr "Minecraft"

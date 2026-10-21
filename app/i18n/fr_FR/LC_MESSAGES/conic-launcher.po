@@ -3177,3 +3177,112 @@ msgstr "Fermer"
 msgctxt "CrashView"
 msgid "Possible mods:"
 msgstr "Mods possibles :"
+#: ui
+msgctxt "TitleBar"
+msgid "Notifications"
+msgstr "Notifications"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Notifications"
+msgstr "Notifications"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Active tasks"
+msgstr "Tâches actives"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "History"
+msgstr "Historial"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Clear all"
+msgstr "Tout effacer"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "No notifications"
+msgstr "Aucune notification"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "In progress"
+msgstr "En cours"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Launcher update ready"
+msgstr "Mise à jour du launcher prête"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed"
+msgstr "Échec de la tâche"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task cancelled"
+msgstr "Tâche annulée"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft task finished"
+msgstr "Tâche Minecraft terminée"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Version {} will be applied when the launcher exits"
+msgstr "La version {} sera appliquée à la fermeture du launcher"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{}"
+msgstr "{}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task was cancelled"
+msgstr "La tâche a été annulée"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task finished"
+msgstr "La tâche est terminée"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading game files {} / {}"
+msgstr "Téléchargement des fichiers du jeu {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading Java {} / {}"
+msgstr "Téléchargement de Java {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading {} installer {} / {}"
+msgstr "Téléchargement de l’installeur {} {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading dependencies {} / {}"
+msgstr "Téléchargement des dépendances {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed: {}"
+msgstr "Échec de la tâche : {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Working"
+msgstr "Traitement en cours"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft"
+msgstr "Minecraft"

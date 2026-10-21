@@ -21,7 +21,7 @@ use std::{cell::RefCell, rc::Rc};
 use log::info;
 use slint::{ComponentHandle, Timer, Weak};
 
-use slint_backend::{App, AppConfig};
+use slint_backend::{App, AppConfig, Navigation, NewsState, NotificationState};
 use window::WindowService;
 
 /// Claims the single-instance role, waiting out a relaunch.
@@ -161,6 +161,18 @@ fn main() {
     // The news browser: the title bar's newspaper button opens it, and it
     // fetches the feeds itself the first time it does.
     ui::overlays::news::setup(&ui);
+    ui::services::notifications::setup(&ui);
+    #[cfg(debug_assertions)]
+    ui::services::notifications::schedule_demo(&ui);
+    {
+        let weak_ui = ui.as_weak();
+        ui.global::<Navigation>().on_page_changed(move |_| {
+            if let Some(ui) = weak_ui.upgrade() {
+                ui.global::<NewsState>().set_visible(false);
+                ui.global::<NotificationState>().set_visible(false);
+            }
+        });
+    }
     // The command palette, on the same whole-session layer as the news browser;
     // it opens from the title bar's search field and the `Ctrl`/`⌘` + `/`
     // shortcut, both bound in the view.

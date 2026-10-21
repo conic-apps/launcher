@@ -312,12 +312,33 @@ export component CommandPaletteOverlay inherits Rectangle {
     private property <length> panel-height: 74px + root.results-height + 2px;
 
     private property <bool> shown: CommandPaletteState.visible;
-    visible: root.shown;
+    private property <bool> closing: false;
+    visible: root.shown || root.closing;
+    changed shown => {
+        if root.shown {
+            root.closing = false;
+        } else {
+            root.closing = true;
+            close-timer.restart();
+        }
+    }
+    close-timer := Timer {
+        interval: 280ms;
+        running: root.closing;
+        triggered => { root.closing = false; }
+    }
+
+    private property <length> animated-width: root.shown
+        ? max(600px, root.width - 500px)
+        : max(320px, root.width - 500px);
+    private property <length> animated-height: root.shown ? root.panel-height : 26px;
 
     panel := Rectangle {
-        // The same span the title bar's search field is given.
-        width: max(600px, root.width - 500px);
-        height: root.panel-height;
+        // The panel starts at the title bar search field's compact size and
+        // expands into the command palette, so opening it is one continuous
+        // transition rather than a replacement rectangle.
+        width: root.animated-width;
+        height: root.animated-height;
         x: (root.width - self.width) / 2;
         // 4px below the top edge: the backdrop is the whole window, so the panel
         // hangs inside the title bar.
@@ -328,6 +349,14 @@ export component CommandPaletteOverlay inherits Rectangle {
         border-width: 1px;
         border-color: Theme.surface-1.with-alpha(0.9);
         border-radius: 12px;
+        animate width {
+            duration: 280ms;
+            easing: cubic-bezier(0.22, 0.75, 0.2, 1);
+        }
+        animate height {
+            duration: 280ms;
+            easing: cubic-bezier(0.22, 0.75, 0.2, 1);
+        }
 
         // A Slint border is drawn inside the box and does not inset the children,
         // so the content box starts 1px in, which keeps the hairline visible.
@@ -440,7 +469,7 @@ export component CommandPaletteOverlay inherits Rectangle {
                         icon-color: Theme.default-text-color.transparentize(0.2);
                     }
 
-                    if CommandPaletteState.query == "": Text {
+                    if CommandPaletteState.query == "" && !input.has-focus: Text {
                         x: 42px;
                         y: 12px;
                         width: parent.width - 42px - 16px;
