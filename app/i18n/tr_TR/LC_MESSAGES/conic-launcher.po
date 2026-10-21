@@ -3177,3 +3177,112 @@ msgstr "Kapat"
 msgctxt "CrashView"
 msgid "Possible mods:"
 msgstr "Olası modlar:"
+#: ui
+msgctxt "TitleBar"
+msgid "Notifications"
+msgstr "Bildirimler"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Notifications"
+msgstr "Bildirimler"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Active tasks"
+msgstr "Etkin görevler"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "History"
+msgstr "Geçmiş"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Clear all"
+msgstr "Tümünü temizle"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "No notifications"
+msgstr "Bildirim yok"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "In progress"
+msgstr "Devam ediyor"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Launcher update ready"
+msgstr "Başlatıcı güncellemesi hazır"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed"
+msgstr "Görev başarısız"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task cancelled"
+msgstr "Görev iptal edildi"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft task finished"
+msgstr "Minecraft görevi tamamlandı"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Version {} will be applied when the launcher exits"
+msgstr "{} sürümü başlatıcı kapatıldığında uygulanır"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{}"
+msgstr "{}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task was cancelled"
+msgstr "Görev iptal edildi"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task finished"
+msgstr "Görev tamamlandı"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading game files {} / {}"
+msgstr "Oyun dosyaları indiriliyor {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading Java {} / {}"
+msgstr "Java indiriliyor {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading {} installer {} / {}"
+msgstr "{} yükleyicisi indiriliyor {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading dependencies {} / {}"
+msgstr "Bağımlılıklar indiriliyor {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed: {}"
+msgstr "Görev başarısız: {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Working"
+msgstr "Çalışıyor"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft"
+msgstr "Minecraft"

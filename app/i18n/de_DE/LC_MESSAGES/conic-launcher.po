@@ -3177,3 +3177,112 @@ msgstr "Schließen"
 msgctxt "CrashView"
 msgid "Possible mods:"
 msgstr "Mögliche Mods:"
+#: ui
+msgctxt "TitleBar"
+msgid "Notifications"
+msgstr "Benachrichtigungen"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Notifications"
+msgstr "Benachrichtigungen"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Active tasks"
+msgstr "Aktive Aufgaben"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "History"
+msgstr "Verlauf"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Clear all"
+msgstr "Alle löschen"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "No notifications"
+msgstr "Keine Benachrichtigungen"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "In progress"
+msgstr "In Bearbeitung"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Launcher update ready"
+msgstr "Launcher-Update bereit"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed"
+msgstr "Aufgabe fehlgeschlagen"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task cancelled"
+msgstr "Aufgabe abgebrochen"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft task finished"
+msgstr "Minecraft-Aufgabe abgeschlossen"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Version {} will be applied when the launcher exits"
+msgstr "Version {} wird beim Beenden des Launchers angewendet"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{}"
+msgstr "{}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task was cancelled"
+msgstr "Die Aufgabe wurde abgebrochen"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task finished"
+msgstr "Die Aufgabe wurde abgeschlossen"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading game files {} / {}"
+msgstr "Spieldateien werden heruntergeladen {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading Java {} / {}"
+msgstr "Java wird heruntergeladen {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading {} installer {} / {}"
+msgstr "{}-Installer wird heruntergeladen {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading dependencies {} / {}"
+msgstr "Abhängigkeiten werden heruntergeladen {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed: {}"
+msgstr "Aufgabe fehlgeschlagen: {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Working"
+msgstr "Wird bearbeitet"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft"
+msgstr "Minecraft"

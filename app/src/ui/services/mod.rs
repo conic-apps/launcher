@@ -9,6 +9,7 @@
 //! `AppConfig` adapter, and scrolling.
 
 pub(crate) mod app_config;
+pub(crate) mod notifications;
 pub(crate) mod report;
 pub(crate) mod scroll;
 pub(crate) mod tooltip;

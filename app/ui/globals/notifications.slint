@@ -1,0 +1,50 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+/// A completed notification shown by the notification centre.
+export struct NotificationItem {
+    kind: string,
+    detail: string,
+    icon: string,
+}
+
+export global NotificationState {
+    in-out property <bool> visible: false;
+    in-out property <[NotificationItem]> notifications: [];
+    in-out property <int> notification-count: 0;
+
+    callback close();
+    callback clear();
+}
+
+export global NotificationText {
+    public pure function notification-title(item: NotificationItem) -> string {
+        if item.kind == "update-ready" {
+            return @tr("NotificationText" => "Launcher update ready");
+        }
+        if item.kind == "task-error" {
+            return @tr("NotificationText" => "Task failed");
+        }
+        if item.kind == "task-cancelled" {
+            return @tr("NotificationText" => "Task cancelled");
+        }
+        return @tr("NotificationText" => "Minecraft task finished");
+    }
+
+    public pure function notification-message(item: NotificationItem) -> string {
+        if item.kind == "update-ready" {
+            return @tr("NotificationText" => "Version {} will be applied when the launcher exits", item.detail);
+        }
+        if item.kind == "task-error" {
+            return @tr("NotificationText" => "{}", item.detail);
+        }
+        if item.kind == "task-cancelled" {
+            return @tr("NotificationText" => "The task was cancelled");
+        }
+        if item.kind == "task-finished" {
+            return @tr("NotificationText" => "The task finished");
+        }
+        return item.detail;
+    }
+}

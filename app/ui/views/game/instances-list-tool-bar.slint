@@ -111,10 +111,10 @@ export component InstancesListToolBar inherits Rectangle {
                             text: @tr("Search...");
                             font-size: 14px;
                             color: Theme.default-text-color.transparentize(0.4);
-                            visible: GameState.search-query == "";
+                            visible: GameState.search-query == "" && !input.has-focus;
                         }
 
-                        TextInput {
+                        input := TextInput {
                             horizontal-stretch: 1;
                             text: GameState.search-query;
                             font-size: 14px;

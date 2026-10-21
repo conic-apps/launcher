@@ -8,13 +8,16 @@ import { Theme } from "../../theme.slint";
 // navigation buttons; icons are Ionicons-style stroked paths (512 viewbox).
 export component TitleBarActionButton inherits Rectangle {
     in property <string> icon-commands;
+    in property <int> icon-viewbox: 512;
     in property <length> icon-stroke-width: 0px;
+    in property <bool> selected: false;
     callback clicked;
 
     width: 28px;
     height: 28px;
     border-radius: 6px;
-    background: touch.has-hover ? Theme.surface-2.transparentize(0.3)
+    background: root.selected ? Theme.mauve.transparentize(0.7)
+        : touch.has-hover ? Theme.surface-2.transparentize(0.3)
         : touch.pressed ? Theme.overlay-0.transparentize(0.3)
         : transparent;
     animate background {
@@ -27,12 +30,12 @@ export component TitleBarActionButton inherits Rectangle {
 
     Path {
         commands: root.icon-commands;
-        viewbox-width: 512;
-        viewbox-height: 512;
+        viewbox-width: root.icon-viewbox;
+        viewbox-height: root.icon-viewbox;
         width: 18px;
         height: 18px;
         fill: transparent;
-        stroke: Theme.text;
+        stroke: root.selected ? Theme.mauve : Theme.text;
         stroke-width: root.icon-stroke-width;
         stroke-line-cap: LineCap.round;
         stroke-line-join: LineJoin.round;

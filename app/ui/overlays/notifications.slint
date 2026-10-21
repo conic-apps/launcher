@@ -1,0 +1,184 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { AppIcon } from "../components/display/app-icon.slint";
+import { ScrollView } from "../components/containers/scroll-view.slint";
+import {
+    NotificationItem,
+    NotificationState,
+    NotificationText,
+} from "../globals/notifications.slint";
+
+component NotificationRow inherits Rectangle {
+    in property <NotificationItem> item;
+    height: 54px;
+    border-radius: 8px;
+    background: Theme.surface-0.transparentize(0.18);
+
+    AppIcon {
+        name: root.item.icon;
+        size: 18px;
+        icon-color: Theme.mauve;
+        x: 12px;
+        y: 18px;
+    }
+
+    VerticalLayout {
+        x: 42px;
+        y: 8px;
+        width: root.width - 54px;
+        height: root.height - 16px;
+        spacing: 3px;
+        Text {
+            text: NotificationText.notification-title(root.item);
+            color: Theme.text;
+            font-size: 13px;
+            overflow: elide;
+        }
+
+        Text {
+            text: NotificationText.notification-message(root.item);
+            color: Theme.subtext-0;
+            font-size: 11px;
+            overflow: elide;
+        }
+    }
+}
+
+/// The notification centre uses the same full-height side-panel treatment as
+/// the news surface, entering from the right and covering the window's right
+/// side rather than floating above the page.
+export component NotificationOverlay inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    visible: root.phase != "closed";
+    // The panel's drop shadow paints outside its box; clip it so the top blur
+    // cannot cross into the title bar above this overlay.
+    clip: true;
+    background: #000000.with-alpha(0.35 * root.scrim-alpha);
+
+    private property <string> phase: "closed";
+    private property <bool> open: NotificationState.visible;
+    private property <float> scrim-alpha: root.phase == "shown" ? 1.0 : 0.0;
+    private property <length> panel-width: 300px;
+    // Only the slide offset animates; the window-relative term stays outside it,
+    // so a resize moves the panel with the right edge instead of easing after it.
+    private property <length> panel-offset: root.phase == "shown" ? 0px : root.panel-width;
+    private property <bool> leaving: root.phase == "leaving";
+    animate scrim-alpha {
+        duration: 150ms;
+        easing: ease-out-quad;
+    }
+    animate panel-offset {
+        duration: root.leaving ? 180ms : 220ms;
+        easing: root.leaving ? cubic-bezier(0.47, 0, 1, 0.75) : cubic-bezier(0, 0.47, 0.25, 1);
+    }
+
+    changed open => {
+        if root.open {
+            root.phase = "starting";
+            start-timer.restart();
+        } else if root.phase != "closed" {
+            root.phase = "leaving";
+            leave-timer.restart();
+        }
+    }
+    init => {
+        if NotificationState.visible { root.phase = "shown"; }
+    }
+    start-timer := Timer {
+        interval: 16ms;
+        running: root.phase == "starting";
+        triggered => { root.phase = "shown"; }
+    }
+
+    leave-timer := Timer {
+        interval: 180ms;
+        running: root.phase == "leaving";
+        triggered => { root.phase = "closed"; }
+    }
+
+    TouchArea {
+        clicked => { NotificationState.close(); }
+        scroll-event(event) => { accept }
+    }
+
+    Rectangle {
+        x: root.width - root.panel-width + root.panel-offset;
+        y: 0px;
+        width: root.panel-width;
+        height: root.height;
+        background: Theme.base;
+        drop-shadow-color: #00000059;
+        drop-shadow-blur: 24px;
+        drop-shadow-offset-x: -6px;
+
+        TouchArea { }
+
+        ScrollView {
+            scrollbar-top: 8px;
+            scrollbar-bottom: 8px;
+            VerticalLayout {
+                padding-top: 16px;
+                padding-right: 24px;
+                padding-bottom: 16px;
+                padding-left: 24px;
+                spacing: 8px;
+                HorizontalLayout {
+                    height: 24px;
+                    spacing: 8px;
+                    Text {
+                        text: @tr("NotificationOverlay" => "Notifications");
+                        color: Theme.text;
+                        font-size: 13px;
+                        font-weight: Theme.font-weight-bold;
+                        vertical-alignment: center;
+                    }
+
+                    Text {
+                        text: "" + NotificationState.notification-count;
+                        color: Theme.mauve;
+                        font-size: 13px;
+                        font-weight: Theme.font-weight-bold;
+                        vertical-alignment: center;
+                    }
+
+                    Rectangle {
+                        horizontal-stretch: 1;
+                    }
+
+                    clear-all := Rectangle {
+                        width: clear-all-label.preferred-width;
+                        height: parent.height;
+                        background: transparent;
+
+                        clear-all-label := Text {
+                            text: @tr("NotificationOverlay" => "Clear all");
+                            color: clear-all-touch.has-hover ? Theme.yellow : Theme.text;
+                            font-size: 12px;
+                            font-weight: Theme.font-weight-normal;
+                            width: parent.width;
+                            height: parent.height;
+                            vertical-alignment: center;
+                            horizontal-alignment: right;
+                            animate color {
+                                duration: 120ms;
+                                easing: ease;
+                            }
+                        }
+
+                        clear-all-touch := TouchArea {
+                            clicked => { NotificationState.clear(); }
+                        }
+                    }
+                }
+
+                for item in NotificationState.notifications: NotificationRow {
+                    item: item;
+                }
+            }
+        }
+    }
+}

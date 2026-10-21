@@ -8,6 +8,8 @@ import { CommandPaletteState } from "../globals/command-palette.slint";
 import { NavigationButton } from "title-bar/navigation-button.slint";
 import { TitleBarActionButton } from "title-bar/title-bar-action-button.slint";
 import { SearchBar } from "title-bar/search-bar.slint";
+import { NewsState } from "../globals/news.slint";
+import { NotificationState } from "../globals/notifications.slint";
 
 component LinuxWindowControlButton inherits Rectangle {
     in property <string> icon-commands;
@@ -175,6 +177,7 @@ export component TitleBar inherits Rectangle {
     callback open-settings();
     callback open-search();
     callback open-news();
+    callback open-notifications();
     callback toggle-music();
     callback maximize-or-fullscreen();
     callback minimize-window();
@@ -298,6 +301,7 @@ export component TitleBar inherits Rectangle {
         // inside its right edge.
         search-container := Rectangle {
             width: max(0px, root.width - 500px);
+            x: (root.width - self.width) / 2;
             height: root.height;
             y: 0px;
 
@@ -306,6 +310,7 @@ export component TitleBar inherits Rectangle {
                 height: 26px;
                 x: 0px;
                 placeholder: root.search-placeholder;
+                active: CommandPaletteState.visible;
                 activated => { root.open-search(); }
             }
 
@@ -326,16 +331,15 @@ export component TitleBar inherits Rectangle {
             }
         }
 
-        // Right-side actions (news, then music). The window controls take the
+        // Right-side actions (news, notifications, then music). The window controls take the
         // far right on the platforms that have them there; macOS traffic lights
         // remain on the left.
         //
-        // One container rather than two absolutely-placed buttons, so the news
-        // button keeps its place to the left of the music one whether music is
-        // enabled or not: the container's own width shrinks by the music button
-        // and its 8px gap when the setting is off.
+        // One container rather than three absolutely-placed buttons, so the news
+        // button keeps its place when the music button is absent: the container's
+        // own width shrinks by that button and its 8px gap.
         Rectangle {
-            width: 28px + (root.music-enabled ? 8px + 28px : 0px);
+            width: 28px + 8px + 28px + (root.music-enabled ? 8px + 28px : 0px);
             height: 28px;
             x: root.width - self.width - root.controls-inset;
 
@@ -345,8 +349,18 @@ export component TitleBar inherits Rectangle {
                 TitleBarActionButton {
                     icon-commands: Icons.stroke-commands("newspaper");
                     icon-stroke-width: root.stroked-icon-width;
+                    selected: NewsState.visible;
                     accessible-label: @tr("News");
                     clicked => { root.open-news(); }
+                }
+
+                TitleBarActionButton {
+                    icon-commands: Icons.stroke-commands("bell");
+                    icon-viewbox: Icons.viewbox("bell");
+                    icon-stroke-width: root.stroked-icon-width;
+                    selected: NotificationState.visible;
+                    accessible-label: @tr("Notifications");
+                    clicked => { root.open-notifications(); }
                 }
 
                 if root.music-enabled: TitleBarActionButton {

@@ -3177,3 +3177,112 @@ msgstr "關閉"
 msgctxt "CrashView"
 msgid "Possible mods:"
 msgstr "可能的模組："
+#: ui
+msgctxt "TitleBar"
+msgid "Notifications"
+msgstr "通知"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Notifications"
+msgstr "通知"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Active tasks"
+msgstr "進行中的工作"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "History"
+msgstr "通知記錄"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Clear all"
+msgstr "全部清除"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "No notifications"
+msgstr "沒有通知"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "In progress"
+msgstr "進行中"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Launcher update ready"
+msgstr "啟動器更新已就緒"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed"
+msgstr "工作失敗"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task cancelled"
+msgstr "工作已取消"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft task finished"
+msgstr "Minecraft 工作已完成"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Version {} will be applied when the launcher exits"
+msgstr "版本 {} 將在啟動器退出時套用"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{}"
+msgstr "{}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task was cancelled"
+msgstr "工作已取消"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task finished"
+msgstr "工作已完成"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading game files {} / {}"
+msgstr "正在下載遊戲檔案 {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading Java {} / {}"
+msgstr "正在下載 Java {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading {} installer {} / {}"
+msgstr "正在下載 {} 安裝程式 {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading dependencies {} / {}"
+msgstr "正在下載相依項目 {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed: {}"
+msgstr "工作失敗：{}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Working"
+msgstr "處理中"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft"
+msgstr "Minecraft"

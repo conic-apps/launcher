@@ -3177,3 +3177,112 @@ msgstr "Cerrar"
 msgctxt "CrashView"
 msgid "Possible mods:"
 msgstr "Mods posibles:"
+#: ui
+msgctxt "TitleBar"
+msgid "Notifications"
+msgstr "Notificaciones"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Notifications"
+msgstr "Notificaciones"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Active tasks"
+msgstr "Tareas activas"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "History"
+msgstr "Historial"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "Clear all"
+msgstr "Borrar todo"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "No notifications"
+msgstr "Sin notificaciones"
+
+#: ui
+msgctxt "NotificationOverlay"
+msgid "In progress"
+msgstr "En curso"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Launcher update ready"
+msgstr "Actualización del launcher lista"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed"
+msgstr "Tarea fallida"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task cancelled"
+msgstr "Tarea cancelada"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft task finished"
+msgstr "Tarea de Minecraft completada"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Version {} will be applied when the launcher exits"
+msgstr "La versión {} se aplicará al cerrar el launcher"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{}"
+msgstr "{}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task was cancelled"
+msgstr "La tarea fue cancelada"
+
+#: ui
+msgctxt "NotificationText"
+msgid "The task finished"
+msgstr "La tarea terminó"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading game files {} / {}"
+msgstr "Descargando archivos del juego {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading Java {} / {}"
+msgstr "Descargando Java {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading {} installer {} / {}"
+msgstr "Descargando instalador de {} {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Downloading dependencies {} / {}"
+msgstr "Descargando dependencias {} / {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Task failed: {}"
+msgstr "Tarea fallida: {}"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Working"
+msgstr "Trabajando"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft"
+msgstr "Minecraft"
