@@ -125,8 +125,8 @@ cargo build --release  # 构建生产版本
 
 ## 架构
 
-界面使用 [Slint](https://slint.dev) 构建，并直接连接各领域 crates—没有 IPC 层。`app/` 存放二进制与
-`.slint` 界面树；每项能力各自位于独立的 `crates/*` 工作区模块中，独立演进、按需组合。
+界面使用 [Slint](https://slint.dev) 构建，并直接连接各领域 crates—没有 IPC 层。`app/` 存放二进制，`ui/`
+存放 `.slint` 界面树；每项能力各自位于独立的 `crates/*` 工作区模块中，独立演进、按需组合。
 
 完整内容—存储位置、应用分层、UI 分桶结构与 crate 一览—请见
 [ARCHITECTURE.md](../../ARCHITECTURE.md)。

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The player-head image `AccountAvatar` draws, plus the 18 default skins
-//! bundled in `app/ui/assets/skins`.
+//! bundled in `ui/assets/skins`.
 //!
 //! The head is cropped out of the skin texture: the 8x8 face region is drawn
 //! inset into the square, then the 8x8 hat layer is stretched over the whole of
@@ -12,7 +12,7 @@
 //! blend where the hat is opaque.
 //!
 //! The square is left square here. The corner rounding happens in [`round_image`],
-//! which the `AvatarMask.rounded` callback (`app/ui/globals/avatar.slint`)
+//! which the `AvatarMask.rounded` callback (`ui/globals/avatar.slint`)
 //! runs as `AccountAvatar` draws, so each caller picks its own radius. It cannot
 //! be Slint's `clip: true` + `border-radius`: a clipped box is clipped
 //! **rectangularly** by Slint's software renderer (`i-slint-renderer-software`'s
@@ -29,15 +29,16 @@
 
 use account::Account;
 use base64::{Engine, engine::general_purpose};
+use conic_ui::assets::skins;
 use slint::{ComponentHandle, Image, SharedPixelBuffer};
 
 use crate::slint_backend::{App, AvatarMask};
 
 /// A skin of the bundled default set.
 ///
-/// It carries the two names and the texture bytes together because
-/// `include_bytes!` needs a literal path, so the table is the only place the
-/// name and the file are known together.
+/// It carries the two names and the texture bytes together, so
+/// `bundled_skin_image` can look a skin up by name and still hand out the
+/// bytes without a second table to keep in step.
 #[derive(Clone, Copy)]
 pub struct DefaultSkin {
     // The two names `bundled_skin_image` looks a skin up by.
@@ -53,146 +54,92 @@ const DEFAULT_SKINS: [DefaultSkin; 18] = [
     DefaultSkin {
         texture_name: "alex",
         model_type: "slim",
-        texture: include_bytes!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/ui/assets/skins/slim/alex.webp"
-        )),
+        texture: skins::SLIM_ALEX,
     },
     DefaultSkin {
         texture_name: "ari",
         model_type: "slim",
-        texture: include_bytes!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/ui/assets/skins/slim/ari.webp"
-        )),
+        texture: skins::SLIM_ARI,
     },
     DefaultSkin {
         texture_name: "efe",
         model_type: "slim",
-        texture: include_bytes!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/ui/assets/skins/slim/efe.webp"
-        )),
+        texture: skins::SLIM_EFE,
     },
     DefaultSkin {
         texture_name: "kai",
         model_type: "slim",
-        texture: include_bytes!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/ui/assets/skins/slim/kai.webp"
-        )),
+        texture: skins::SLIM_KAI,
     },
     DefaultSkin {
         texture_name: "makena",
         model_type: "slim",
-        texture: include_bytes!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/ui/assets/skins/slim/makena.webp"
-        )),
+        texture: skins::SLIM_MAKENA,
     },
     DefaultSkin {
         texture_name: "noor",
         model_type: "slim",
-        texture: include_bytes!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/ui/assets/skins/slim/noor.webp"
-        )),
+        texture: skins::SLIM_NOOR,
     },
     DefaultSkin {
         texture_name: "steve",
         model_type: "slim",
-        texture: include_bytes!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/ui/assets/skins/slim/steve.webp"
-        )),
+        texture: skins::SLIM_STEVE,
     },
     DefaultSkin {
         texture_name: "sunny",
         model_type: "slim",
-        texture: include_bytes!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/ui/assets/skins/slim/sunny.webp"
-        )),
+        texture: skins::SLIM_SUNNY,
     },
     DefaultSkin {
         texture_name: "zuri",
         model_type: "slim",
-        texture: include_bytes!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/ui/assets/skins/slim/zuri.webp"
-        )),
+        texture: skins::SLIM_ZURI,
     },
     DefaultSkin {
         texture_name: "alex",
         model_type: "wide",
-        texture: include_bytes!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/ui/assets/skins/wide/alex.webp"
-        )),
+        texture: skins::WIDE_ALEX,
     },
     DefaultSkin {
         texture_name: "ari",
         model_type: "wide",
-        texture: include_bytes!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/ui/assets/skins/wide/ari.webp"
-        )),
+        texture: skins::WIDE_ARI,
     },
     DefaultSkin {
         texture_name: "efe",
         model_type: "wide",
-        texture: include_bytes!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/ui/assets/skins/wide/efe.webp"
-        )),
+        texture: skins::WIDE_EFE,
     },
     DefaultSkin {
         texture_name: "kai",
         model_type: "wide",
-        texture: include_bytes!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/ui/assets/skins/wide/kai.webp"
-        )),
+        texture: skins::WIDE_KAI,
     },
     DefaultSkin {
         texture_name: "makena",
         model_type: "wide",
-        texture: include_bytes!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/ui/assets/skins/wide/makena.webp"
-        )),
+        texture: skins::WIDE_MAKENA,
     },
     DefaultSkin {
         texture_name: "noor",
         model_type: "wide",
-        texture: include_bytes!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/ui/assets/skins/wide/noor.webp"
-        )),
+        texture: skins::WIDE_NOOR,
     },
     DefaultSkin {
         texture_name: "steve",
         model_type: "wide",
-        texture: include_bytes!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/ui/assets/skins/wide/steve.webp"
-        )),
+        texture: skins::WIDE_STEVE,
     },
     DefaultSkin {
         texture_name: "sunny",
         model_type: "wide",
-        texture: include_bytes!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/ui/assets/skins/wide/sunny.webp"
-        )),
+        texture: skins::WIDE_SUNNY,
     },
     DefaultSkin {
         texture_name: "zuri",
         model_type: "wide",
-        texture: include_bytes!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/ui/assets/skins/wide/zuri.webp"
-        )),
+        texture: skins::WIDE_ZURI,
     },
 ];
 
@@ -497,7 +444,7 @@ fn box_blur(data: &mut [f32], width: u32, height: u32, radius: i32) {
     }
 }
 
-/// Wires the `AvatarMask` global (`app/ui/globals/avatar.slint`) to the two pixel
+/// Wires the `AvatarMask` global (`ui/globals/avatar.slint`) to the two pixel
 /// effects above.
 ///
 /// The callbacks are how the radius and the shadow reach the pixels: Slint cannot

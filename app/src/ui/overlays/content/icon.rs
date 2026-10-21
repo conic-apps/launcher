@@ -225,7 +225,7 @@ pub(crate) fn resolve_icon(image: PendingImage) -> Option<Image> {
 }
 
 /// The card icon a save, mod, resource pack or pack falls back to:
-/// `app/ui/assets/images/unknown-server.webp`. A card whose icon is missing or
+/// `ui/assets/images/unknown-server.webp`. A card whose icon is missing or
 /// failed to decode would otherwise come out as an empty box.
 ///
 /// Decoded on first use and kept: it is the same 120x120 bitmap every time, and
@@ -234,10 +234,7 @@ pub(crate) fn unknown_icon() -> Option<Image> {
     if let Some(image) = UNKNOWN_ICON.with(|cached| cached.borrow().clone()) {
         return Some(image);
     }
-    let bytes = include_bytes!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/ui/assets/images/unknown-server.webp"
-    ));
+    let bytes = conic_ui::assets::UNKNOWN_SERVER_WEBP;
     let (width, height, rgba) = decode_to_rgba(bytes)?;
     let image = Image::from_rgba8(SharedPixelBuffer::clone_from_slice(&rgba, width, height));
     UNKNOWN_ICON.with(|cached| *cached.borrow_mut() = Some(image.clone()));

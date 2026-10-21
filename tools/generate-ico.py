@@ -13,8 +13,8 @@ two constraints:
   `.ico` next to the `.wxs`, and the runner has no Pillow — let alone a reason
   to install one — so a package that could only be built where the generator runs
   is not a package.
-* **One master, downsampled.** `app/ui/assets/logo.png` is the 4267px artwork.
-  The 512px `app/ui/assets/images/app-icon.png` is what the *window* draws, so it
+* **One master, downsampled.** `ui/assets/logo.png` is the 4267px artwork.
+  The 512px `ui/assets/images/app-icon.png` is what the *window* draws, so it
   is the worst possible source here for the same reason it is the wrong source
   for the `.icns`.
 
@@ -48,7 +48,7 @@ import sys
 from PIL import Image
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-MASTER = ROOT / "app/ui/assets/logo.png"
+MASTER = ROOT / "ui/assets/logo.png"
 OUT = ROOT / "packaging/windows"
 TARGET = OUT / "conic-launcher.ico"
 

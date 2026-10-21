@@ -34,8 +34,8 @@ import sys
 from pathlib import Path
 
 APP = Path(__file__).resolve().parent.parent
-I18N = APP / "app" / "i18n"
-DOMAIN = "conic-launcher"
+I18N = APP / "ui" / "i18n"
+DOMAIN = "conic-ui"
 
 # The languages, in the order the settings pickers list them.
 LANGUAGES = [

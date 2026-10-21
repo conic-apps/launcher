@@ -64,7 +64,7 @@ mod preview;
 mod search;
 mod wiring;
 /// The world map's tile queue. It lives under `content` because the map is
-/// opened from a save's card, mirroring `app/ui/overlays/content/world-map.slint`.
+/// opened from a save's card, mirroring `ui/overlays/content/world-map.slint`.
 pub(crate) mod world_map;
 
 pub(crate) use acquire::*;

@@ -10,8 +10,8 @@ two constraints:
 * **Committed, not generated at package time.** `iconutil` exists on macOS and
   nowhere else, so a build machine that is not macOS cannot produce the `.icns`
   — and the `.app` bundle is assembled from files in this directory.
-* **One master, downsampled.** `app/ui/assets/logo.png` is the 4267px artwork.
-  The 512px `app/ui/assets/images/app-icon.png` is the macOS Dock icon (it is
+* **One master, downsampled.** `ui/assets/logo.png` is the 4267px artwork.
+  The 512px `ui/assets/images/app-icon.png` is the macOS Dock icon (it is
   embedded in the binary by `app/src/main.rs`), so it is also the worst possible
   source for a `.icns`: macOS asks for 1024px, and upscaling produces the
   blurriest possible result at the one size a Dock icon is judged at.
@@ -35,7 +35,7 @@ import tempfile
 from PIL import Image
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-MASTER = ROOT / "app/ui/assets/logo.png"
+MASTER = ROOT / "ui/assets/logo.png"
 OUT = ROOT / "packaging/macos"
 ICONSET = OUT / "conic-launcher.iconset"
 

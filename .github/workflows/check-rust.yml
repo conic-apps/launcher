@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/check-rust.yml"
       - "crates/**"
+      - "ui/**"
       - "app/**"
       - "Cargo.toml"
       - "Cargo.lock"
@@ -14,6 +15,7 @@ on:
     paths:
       - ".github/workflows/check-rust.yml"
       - "crates/**"
+      - "ui/**"
       - "app/**"
       - "Cargo.toml"
       - "Cargo.lock"

@@ -43,10 +43,7 @@ fn set() {
     use objc2::runtime::AnyObject;
     use objc2::{class, msg_send};
 
-    const ICON: &[u8] = include_bytes!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/ui/assets/images/app-icon.png"
-    ));
+    const ICON: &[u8] = conic_ui::assets::APP_ICON_PNG;
 
     unsafe {
         let data: *mut AnyObject = msg_send![

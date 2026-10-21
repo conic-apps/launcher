@@ -5,7 +5,7 @@
 //! The news overlay's Slint adapter: the models the panel draws, the geometry,
 //! the image loading and the changelog viewer.
 //!
-//! It mirrors `app/ui/overlays/news/`. The browser's UI-neutral session — the
+//! It mirrors `ui/overlays/news/`. The browser's UI-neutral session — the
 //! two feeds and the filter over them — lives in [`crate::usecases::news`] as
 //! `NewsSession`, and this controller reaches it through `Deref`; only the
 //! Slint-facing models, the card geometry (which comes from the panel's width)

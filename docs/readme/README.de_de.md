@@ -148,9 +148,9 @@ zum Einstieg, zum Einrichten Ihrer Entwicklungsumgebung und zum Einreichen eines
 ## Architektur
 
 Die Oberfläche ist mit [Slint](https://slint.dev) gebaut und direkt mit den Domänen-crates verbunden
-— es gibt keine IPC-Schicht. `app/` enthält das Binary und den `.slint`-Baum; jede Fähigkeit liegt
-in ihrem eigenen `crates/*`-Workspace-Modul, sodass sie unabhängig weiterentwickelt und nach Bedarf
-kombiniert werden.
+— es gibt keine IPC-Schicht. `app/` enthält das Binary und `ui/` den `.slint`-Baum; jede Fähigkeit
+liegt in ihrem eigenen `crates/*`-Workspace-Modul, sodass sie unabhängig weiterentwickelt und nach
+Bedarf kombiniert werden.
 
 Das vollständige Bild — Speicherorte, App-Schichtung, das UI-Bucket-Layout und die Crate-Übersicht —
 steht in [ARCHITECTURE.md](../../ARCHITECTURE.md).

@@ -11,12 +11,9 @@ homepage = "https://github.com/conic-apps/launcher"
 [dev-dependencies]
 i-slint-backend-testing = "=1.18.1"
 
-[build-dependencies]
-slint-build.workspace = true
-usvg.workspace = true
-
 [dependencies]
-slint = { workspace = true, features = ["image-default-formats", "unstable-fontique-011"] }
+slint = { workspace = true, features = ["unstable-fontique-011"] }
+conic-ui.workspace = true
 platform.workspace = true
 window.workspace = true
 config.workspace = true

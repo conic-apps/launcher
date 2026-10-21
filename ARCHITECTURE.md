@@ -38,18 +38,21 @@ Python tooling in `tools/` is not part of any CI gate:
 
 ## Directory
 
-- **`app/`** — the application crate (`conic-launcher`), the binary everything ships.
-  `app/ui/**.slint` is the whole interface and `app/build.rs` compiles it, generating
-  `app/ui/icons.slint` from the SVGs under `app/ui/assets/icons/` (gitignored). `app/src/` is
+- **`app/`** — the application crate (`conic-launcher`), the binary everything ships. `app/src/` is
   layered — see _App layering_ below. The Slint-bound Markdown/HTML renderer lives at
-  `app/src/ui/components/markdown/` (its `.slint` half at `app/ui/components/markdown/`): `comrak` +
+  `app/src/ui/components/markdown/` (its `.slint` half at `ui/components/markdown/`): `comrak` +
   `parley`/`fontique` render a content panel's body and push a display list into the Slint model,
   and the companion views draw it. It sits in `app/` rather than under `crates/` because it is not
   independent of the UI.
+- **`ui/`** — the Slint interface crate (`conic-ui`). `ui/**.slint` is the whole interface and
+  `ui/build.rs` compiles it into the generated Rust module that `app` re-exports as `slint_backend`,
+  generating `ui/icons.slint` from the SVGs under `ui/assets/icons/` (gitignored). The crate also
+  owns the interface's assets, its embedded font and the translation catalogues, and it is separate
+  from `app` so a change to the app's Rust does not recompile the generated interface.
 - **`crates/*/`** — Rust domain crates, one per capability, independent of the UI. The interface
   talks to them directly; there is no IPC layer.
 - **`packaging/`** — see [Packaging](./CONTRIBUTING.md#packaging).
-- **`app/i18n/<locale>/LC_MESSAGES/conic-launcher.po`** — 12 locales. `tools/update-i18n.py` owns
+- **`ui/i18n/<locale>/LC_MESSAGES/conic-ui.po`** — 12 locales. `tools/update-i18n.py` owns
   them; do not hand-edit.
 
 ## App layering (`app/src/`)
@@ -64,20 +67,20 @@ any of them.
 - **`usecases/`** — the app's use cases: UI-neutral orchestration over the domain crates. Nothing
   here mentions Slint, `slint_backend` or `ui/`. A use case reports progress through a
   `shared::Sink<T>` port and staleness through `usecases::generation::{Gate, Token}`.
-- **`ui/`** — the Slint adapter, and the only layer that touches `slint_backend`. It **mirrors
-  `app/ui/` bucket for bucket**: `ui/views/<surface>` ↔ `app/ui/views/…`, `ui/overlays/<surface>` ↔
-  `app/ui/overlays/…`, `ui/components/<component>` ↔ `app/ui/components/…`, plus `ui/services/` for
-  the cross-surface concerns (`report` — delivery onto the event loop; `app_config` — the
-  `AppConfig` adapter and locale; `scroll`; `notifications` — the notification model and its action
-  table). The mirror is by surface/component, not per `.slint` file, and `ui/components/` does not
-  repeat the `controls`/`display`/… role split.
+- **`ui/`** — the Slint adapter, and the only layer that touches `slint_backend`. It **mirrors the
+  interface crate bucket for bucket**: `app/src/ui/views/<surface>` ↔ `ui/views/…`,
+  `app/src/ui/overlays/<surface>` ↔ `ui/overlays/…`, `app/src/ui/components/<component>` ↔
+  `ui/components/…`, plus `app/src/ui/services/` for the cross-surface concerns (`report` — delivery
+  onto the event loop; `app_config` — the `AppConfig` adapter and locale; `scroll`; `notifications` —
+  the notification model and its action table). The mirror is by surface/component, not per `.slint`
+  file, and `ui/components/` does not repeat the `controls`/`display`/… role split.
 
 `main.rs` is the composition root: it loads the config, seeds `AppConfig`, and wires every surface's
 `setup`. A background task never touches the UI; it reports through
 `crate::ui::services::report::{report, deliver}` (or a crate's `Sink`, whose implementation lives in
 a `ui/` port).
 
-## UI layout (`app/ui/`)
+## UI layout (`ui/`)
 
 `app.slint` is the root `Window`, `theme.slint` the design tokens and `icons.slint` a `build.rs`
 product. Everything else is one of four buckets, and the bucket — not the feature — is what decides

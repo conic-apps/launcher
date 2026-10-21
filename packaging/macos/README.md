@@ -17,9 +17,9 @@ build, because they describe the app rather than the slice inside it. CI produce
 ## `conic-launcher.icns`
 
 Regenerate with `python3 tools/generate-icns.py`. It renders the ladder from
-`app/ui/assets/logo.png` and hands it to `iconutil`.
+`ui/assets/logo.png` and hands it to `iconutil`.
 
-**Not** from `app/ui/assets/images/app-icon.png`, which is also in the tree and looks like the
+**Not** from `ui/assets/images/app-icon.png`, which is also in the tree and looks like the
 obvious choice: that one is 512px and is embedded in the binary as the macOS Dock icon (see
 `app/src/main.rs`). macOS asks for a 1024px render for the 512x512@2x slot, so using it would mean
 upscaling the worst possible source at the one size a Dock icon is judged at.

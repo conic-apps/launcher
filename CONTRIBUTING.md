@@ -85,7 +85,7 @@ dev-dependency of `app`.
 
 There are two translation surfaces, and they are updated differently:
 
-- **In-app strings** live in `app/i18n/<locale>/LC_MESSAGES/conic-launcher.po`, one catalogue per
+- **In-app strings** live in `ui/i18n/<locale>/LC_MESSAGES/conic-ui.po`, one catalogue per
   language. `tools/update-i18n.py` re-keys them against `slint-tr-extractor`; do not hand-edit them.
   Adding a string to the UI means adding it to all twelve catalogues through that tool.
 - **The READMEs and the desktop entry's `Comment`** are hand-maintained. The English
