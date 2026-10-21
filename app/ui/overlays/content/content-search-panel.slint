@@ -280,7 +280,7 @@ export component ContentSearchPanel inherits Rectangle {
                         accepted => { ContentSearch.search(); }
                     }
 
-                    if ContentSearch.query == "" && !input.has-focus: Text {
+                    if ContentSearch.query == "": Text {
                         text: ContentText.search-placeholder(ContentState.remote-kind);
                         font-size: 13px;
                         color: Theme.subtext-0;

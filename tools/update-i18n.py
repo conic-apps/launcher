@@ -97,6 +97,8 @@ DROP = {
     # game data too.
     ("SettingsGeneral", "Instances"),
     ("SetupStorage", "Instances"),
+    # The title bar's search field used to be a sentence with an ellipsis.
+    ("App", "Search or type a command…"),
     # The add-account dialog's title shortened from a sentence to "Sign in".
     ("AccountAdd", "Choose an auth service and add an account"),
     # The browser flow's copy-link instruction was reworded: the paragraph now
@@ -115,6 +117,22 @@ DROP = {
 # ---------------------------------------------------------------------------
 
 SAVE_TAGS = {
+    # The title bar's search field, which opens the quick-actions palette.
+    "App": {
+        "Action": {
+            "zh_CN": "快速操作",
+            "zh_TW": "快速操作",
+            "ja_JP": "アクション",
+            "ko_KR": "작업",
+            "de_DE": "Aktion",
+            "fr_FR": "Action",
+            "es_ES": "Acción",
+            "pt_BR": "Ação",
+            "ru_RU": "Действие",
+            "tr_TR": "Eylem",
+            "pl_PL": "Akcja",
+        },
+    },
     # The add-account dialog's title.
     "AccountAdd": {
         "Sign in": {

@@ -14,11 +14,6 @@ msgid "Conic Launcher"
 msgstr "Conic Launcher"
 
 #: ui
-msgctxt "App"
-msgid "Search or type a command…"
-msgstr "検索またはコマンドを入力…"
-
-#: ui
 msgctxt "TitleBar"
 msgid "Settings"
 msgstr "設定"
@@ -3177,6 +3172,7 @@ msgstr "閉じる"
 msgctxt "CrashView"
 msgid "Possible mods:"
 msgstr "原因の可能性があるMOD："
+
 #: ui
 msgctxt "TitleBar"
 msgid "Notifications"
@@ -3286,3 +3282,8 @@ msgstr "処理中"
 msgctxt "NotificationText"
 msgid "Minecraft"
 msgstr "Minecraft"
+
+#: ui
+msgctxt "App"
+msgid "Action"
+msgstr "アクション"

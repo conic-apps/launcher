@@ -190,6 +190,13 @@ export component TitleBar inherits Rectangle {
     private property <length> controls-inset:
         root.linux ? 86px : root.window-controls-inset + 10px;
 
+    private property <length> left-actions-start:
+        root.macos && !root.fullscreen ? 90px : 16px;
+    private property <length> right-actions-width:
+        28px + 8px + 28px + (root.music-enabled ? 8px + 28px : 0px);
+    private property <length> right-actions-start:
+        root.width - root.right-actions-width - root.controls-inset;
+
     // The navigation glyphs are Ionicons (stroked, 512 viewbox, stroke-width 32)
     // read out of the generated `Icons` table rather than pasted in here, so they
     // cannot drift from the icon set. An 18px glyph on a 512 view box scales the
@@ -239,7 +246,7 @@ export component TitleBar inherits Rectangle {
         // AppKit hides them: the controls take the corner they leave behind
         // instead of lining up behind nothing.
         Rectangle {
-            x: root.macos && !root.fullscreen ? 90px : 16px;
+            x: root.left-actions-start;
             width: 60px;
             height: 28px;
 
@@ -296,38 +303,23 @@ export component TitleBar inherits Rectangle {
             }
         }
 
-        // Centered search bar. The container is `calc(100vw - 500px)` wide,
-        // centred; the search bar fills it, and the hotkey chip floats 10px
-        // inside its right edge.
-        search-container := Rectangle {
-            width: max(0px, root.width - 500px);
-            x: (root.width - self.width) / 2;
+        // Sized to the text it shows and parked immediately left of the right
+        // action group, so it moves with those buttons rather than tracking the
+        // window's centre.
+        Rectangle {
+            width: search-bar.content-width;
+            x: root.right-actions-start - 8px - self.width;
             height: root.height;
             y: 0px;
 
-            SearchBar {
+            search-bar := SearchBar {
                 width: 100%;
                 height: 26px;
                 x: 0px;
                 placeholder: root.search-placeholder;
+                hotkey: root.search-hotkey;
                 active: CommandPaletteState.visible;
                 activated => { root.open-search(); }
-            }
-
-            if root.search-hotkey != "": hotkey-chip := Rectangle {
-                width: hotkey-text.width + 12px;
-                height: 17px;
-                border-radius: 4px;
-                background: Theme.surface-2.transparentize(0.3);
-                x: search-container.width - self.width - 10px;
-
-                hotkey-text := Text {
-                    text: root.search-hotkey;
-                    font-size: 11px;
-                    color: Theme.default-text-color.transparentize(0.4);
-                    x: (hotkey-chip.width - self.width) / 2;
-                    y: (hotkey-chip.height - self.height) / 2;
-                }
             }
         }
 
@@ -339,9 +331,9 @@ export component TitleBar inherits Rectangle {
         // button keeps its place when the music button is absent: the container's
         // own width shrinks by that button and its 8px gap.
         Rectangle {
-            width: 28px + 8px + 28px + (root.music-enabled ? 8px + 28px : 0px);
+            width: root.right-actions-width;
             height: 28px;
-            x: root.width - self.width - root.controls-inset;
+            x: root.right-actions-start;
 
             HorizontalLayout {
                 spacing: 8px;
