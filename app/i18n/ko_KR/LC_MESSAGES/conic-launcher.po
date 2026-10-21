@@ -14,11 +14,6 @@ msgid "Conic Launcher"
 msgstr "Conic Launcher"
 
 #: ui
-msgctxt "App"
-msgid "Search or type a command…"
-msgstr "검색 또는 명령 입력…"
-
-#: ui
 msgctxt "TitleBar"
 msgid "Settings"
 msgstr "설정"
@@ -3177,6 +3172,7 @@ msgstr "닫기"
 msgctxt "CrashView"
 msgid "Possible mods:"
 msgstr "가능성 있는 모드:"
+
 #: ui
 msgctxt "TitleBar"
 msgid "Notifications"
@@ -3286,3 +3282,8 @@ msgstr "작업 중"
 msgctxt "NotificationText"
 msgid "Minecraft"
 msgstr "Minecraft"
+
+#: ui
+msgctxt "App"
+msgid "Action"
+msgstr "작업"

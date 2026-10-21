@@ -14,11 +14,6 @@ msgid "Conic Launcher"
 msgstr "Conic Launcher"
 
 #: ui
-msgctxt "App"
-msgid "Search or type a command…"
-msgstr "搜索或输入命令…"
-
-#: ui
 msgctxt "TitleBar"
 msgid "Settings"
 msgstr "设置"
@@ -3287,3 +3282,8 @@ msgstr "关闭"
 msgctxt "CrashView"
 msgid "Possible mods:"
 msgstr "可能的模组："
+
+#: ui
+msgctxt "App"
+msgid "Action"
+msgstr "快速操作"

@@ -14,11 +14,6 @@ msgid "Conic Launcher"
 msgstr "Conic Launcher"
 
 #: ui
-msgctxt "App"
-msgid "Search or type a command…"
-msgstr "Suchen oder Befehl eingeben…"
-
-#: ui
 msgctxt "TitleBar"
 msgid "Settings"
 msgstr "Einstellungen"
@@ -3177,6 +3172,7 @@ msgstr "Schließen"
 msgctxt "CrashView"
 msgid "Possible mods:"
 msgstr "Mögliche Mods:"
+
 #: ui
 msgctxt "TitleBar"
 msgid "Notifications"
@@ -3286,3 +3282,8 @@ msgstr "Wird bearbeitet"
 msgctxt "NotificationText"
 msgid "Minecraft"
 msgstr "Minecraft"
+
+#: ui
+msgctxt "App"
+msgid "Action"
+msgstr "Aktion"
