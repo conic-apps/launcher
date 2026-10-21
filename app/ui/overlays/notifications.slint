@@ -13,24 +13,48 @@ import {
 
 component NotificationRow inherits Rectangle {
     in property <NotificationItem> item;
-    height: 54px;
-    border-radius: 8px;
-    background: Theme.surface-0.transparentize(0.18);
+    in property <int> row-index;
+    private property <length> dismiss-width: 32px;
+    height: 68px;
+    border-radius: 10px;
+    background: card-click.pressed ? Theme.surface-2
+        : card-click.has-hover ? Theme.surface-1
+        : Theme.surface-0;
+    animate background {
+        duration: 120ms;
+        easing: ease;
+    }
 
-    AppIcon {
-        name: root.item.icon;
-        size: 18px;
-        icon-color: Theme.mauve;
-        x: 12px;
-        y: 18px;
+    card-click := TouchArea {
+        width: root.width - root.dismiss-width;
+        clicked => { NotificationState.activate(root.row-index); }
+    }
+
+    Rectangle {
+        x: 0;
+        y: 0;
+        width: 42px;
+        height: 100%;
+        border-top-left-radius: 10px;
+        border-bottom-left-radius: 10px;
+        background: Theme.mantle;
+
+        AppIcon {
+            name: root.item.icon;
+            size: 20px;
+            icon-color: Theme.text;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+        }
     }
 
     VerticalLayout {
-        x: 42px;
-        y: 8px;
-        width: root.width - 54px;
-        height: root.height - 16px;
+        x: 52px;
+        y: 10px;
+        width: root.width - 92px;
+        height: root.height - 20px;
         spacing: 3px;
+        alignment: center;
         Text {
             text: NotificationText.notification-title(root.item);
             color: Theme.text;
@@ -42,7 +66,37 @@ component NotificationRow inherits Rectangle {
             text: NotificationText.notification-message(root.item);
             color: Theme.subtext-0;
             font-size: 11px;
+            wrap: word-wrap;
+            max-lines: 2;
             overflow: elide;
+        }
+    }
+
+    dismiss-button := Rectangle {
+        x: root.width - root.dismiss-width;
+        y: 0;
+        width: root.dismiss-width;
+        height: 100%;
+        border-top-right-radius: 10px;
+        border-bottom-right-radius: 10px;
+        background: dismiss-touch.pressed ? Theme.surface-2.transparentize(0.6)
+            : dismiss-touch.has-hover ? Theme.surface-1.transparentize(0.6)
+            : Theme.surface-1.transparentize(0.82);
+        animate background {
+            duration: 120ms;
+            easing: ease;
+        }
+
+        AppIcon {
+            name: "checkmark-outline";
+            size: 16px;
+            icon-color: Theme.text;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+        }
+
+        dismiss-touch := TouchArea {
+            clicked => { NotificationState.dismiss(root.row-index); }
         }
     }
 }
@@ -175,8 +229,9 @@ export component NotificationOverlay inherits Rectangle {
                     }
                 }
 
-                for item in NotificationState.notifications: NotificationRow {
+                for item[row-index] in NotificationState.notifications: NotificationRow {
                     item: item;
+                    row-index: row-index;
                 }
             }
         }
