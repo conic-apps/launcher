@@ -3210,26 +3210,6 @@ msgstr "進行中"
 
 #: ui
 msgctxt "NotificationText"
-msgid "Launcher update ready"
-msgstr "ランチャーの更新準備完了"
-
-#: ui
-msgctxt "NotificationText"
-msgid "Task failed"
-msgstr "タスクに失敗しました"
-
-#: ui
-msgctxt "NotificationText"
-msgid "Task cancelled"
-msgstr "タスクをキャンセルしました"
-
-#: ui
-msgctxt "NotificationText"
-msgid "Minecraft task finished"
-msgstr "Minecraft のタスクが完了しました"
-
-#: ui
-msgctxt "NotificationText"
 msgid "Version {} will be applied when the launcher exits"
 msgstr "バージョン {} はランチャー終了時に適用されます"
 
@@ -3287,3 +3267,8 @@ msgstr "Minecraft"
 msgctxt "App"
 msgid "Action"
 msgstr "アクション"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Click here to return to first-run setup"
+msgstr "ここをクリックして初回セットアップに戻る"

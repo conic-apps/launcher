@@ -109,6 +109,15 @@ DROP = {
         "AccountAddMicrosoft",
         " and paste it into the browser. To finish signing in on another device, ",
     ),
+    # The notification centre now draws one body line instead of a title and a
+    # message, so the per-kind titles and the old generic fallbacks are gone.
+    ("NotificationText", "Launcher update ready"),
+    ("NotificationText", "Task failed"),
+    ("NotificationText", "Task cancelled"),
+    ("NotificationText", "Minecraft task finished"),
+    ("NotificationText", "Notification"),
+    ("NotificationText", "Setup skipped"),
+    ("NotificationText", "You can reopen the setup wizard from Settings."),
 }
 
 # ---------------------------------------------------------------------------
@@ -1498,6 +1507,23 @@ SAVE_TAGS = {
             "ru_RU": "дек",
             "tr_TR": "Ara",
             "pl_PL": "gru",
+        },
+    },
+    # The notification centre's only fixed body. The other bodies are the
+    # version, task and error templates already catalogued by hand.
+    "NotificationText": {
+        "Click here to return to first-run setup": {
+            "zh_CN": "点击这里回到首次启动设置",
+            "zh_TW": "點擊這裡回到首次啟動設定",
+            "ja_JP": "ここをクリックして初回セットアップに戻る",
+            "ko_KR": "여기를 클릭하여 첫 실행 설정으로 돌아가기",
+            "de_DE": "Klicke hier, um zur Ersteinrichtung zurückzukehren",
+            "fr_FR": "Cliquez ici pour revenir à la configuration initiale",
+            "es_ES": "Haz clic aquí para volver a la configuración inicial",
+            "pt_BR": "Clique aqui para voltar à configuração inicial",
+            "ru_RU": "Нажмите здесь, чтобы вернуться к первоначальной настройке",
+            "tr_TR": "İlk kuruluma dönmek için buraya tıklayın",
+            "pl_PL": "Kliknij tutaj, aby wrócić do konfiguracji początkowej",
         },
     },
 }
