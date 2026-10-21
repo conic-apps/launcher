@@ -1127,6 +1127,7 @@ dependencies = [
  "window",
  "windows 0.62.2",
  "winit",
+ "zip",
 ]
 
 [[package]]

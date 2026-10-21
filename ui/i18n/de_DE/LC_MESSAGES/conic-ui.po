@@ -3272,3 +3272,73 @@ msgstr "Aktion"
 msgctxt "NotificationText"
 msgid "Click here to return to first-run setup"
 msgstr "Klicke hier, um zur Ersteinrichtung zurückzukehren"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Some modpack files cannot be downloaded automatically"
+msgstr "Einige Modpack-Dateien können nicht automatisch heruntergeladen werden"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "The pack author disabled third-party downloads for these files. Continue without them, or cancel and download them manually."
+msgstr "Der Pack-Autor hat Drittanbieter-Downloads für diese Dateien deaktiviert. Fahre ohne sie fort oder brich ab und lade sie manuell herunter."
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Install this modpack?"
+msgstr "Dieses Modpack installieren?"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Instance name"
+msgstr "Instanzname"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Checking files"
+msgstr "Dateien werden geprüft"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Install"
+msgstr "Installieren"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Install anyway"
+msgstr "Trotzdem installieren"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Cancel install"
+msgstr "Installation abbrechen"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading modpack files"
+msgstr "Modpack-Dateien werden heruntergeladen"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading modpack files {} / {}"
+msgstr "Modpack-Dateien werden heruntergeladen {} / {}"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Could not check the modpack files"
+msgstr "Die Modpack-Dateien konnten nicht geprüft werden"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "The CurseForge API could not be reached. Check your connection, then retry."
+msgstr "Die CurseForge-API konnte nicht erreicht werden. Prüfe deine Verbindung und versuche es erneut."
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Retry"
+msgstr "Erneut versuchen"

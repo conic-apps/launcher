@@ -3272,3 +3272,73 @@ msgstr "快速操作"
 msgctxt "NotificationText"
 msgid "Click here to return to first-run setup"
 msgstr "點擊這裡回到首次啟動設定"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Some modpack files cannot be downloaded automatically"
+msgstr "部分整合包檔案無法自動下載"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "The pack author disabled third-party downloads for these files. Continue without them, or cancel and download them manually."
+msgstr "整合包作者已禁止這些檔案的第三方下載。你可以不帶這些檔案繼續，或取消後手動下載。"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Cancel"
+msgstr "取消"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Install this modpack?"
+msgstr "要安裝這個整合包嗎？"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Instance name"
+msgstr "實例名稱"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Checking files"
+msgstr "正在檢查檔案"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Install"
+msgstr "安裝"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Install anyway"
+msgstr "仍然安裝"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Cancel install"
+msgstr "取消安裝"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading modpack files"
+msgstr "正在下載整合包檔案"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading modpack files {} / {}"
+msgstr "正在下載整合包檔案 {} / {}"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Could not check the modpack files"
+msgstr "無法檢查整合包檔案"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "The CurseForge API could not be reached. Check your connection, then retry."
+msgstr "無法連線到 CurseForge API。請檢查網路連線後重試。"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Retry"
+msgstr "重試"

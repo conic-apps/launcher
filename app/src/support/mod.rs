@@ -10,6 +10,7 @@
 //! `slint_backend`.
 
 pub(crate) mod formatting;
+pub(crate) mod fs;
 pub(crate) mod json;
 pub(crate) mod logs;
 pub(crate) mod native;

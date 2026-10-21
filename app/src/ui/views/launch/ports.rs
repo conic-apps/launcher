@@ -17,7 +17,12 @@ use std::sync::{
 use super::*;
 
 /// The sink the launch use case reports through.
-pub(crate) fn update_sink(weak: Weak<App>, token: Token, loader: String) -> Sink<LaunchUpdate> {
+pub(crate) fn update_sink(
+    weak: Weak<App>,
+    token: Token,
+    loader: String,
+    import_id: Option<String>,
+) -> Sink<LaunchUpdate> {
     // The game is up on the first of the three startup markers, and the quit
     // dialog has nothing left to warn about from then on. Latched so the
     // dismiss runs once.
@@ -25,6 +30,12 @@ pub(crate) fn update_sink(weak: Weak<App>, token: Token, loader: String) -> Sink
     Arc::new(move |update| match update {
         LaunchUpdate::Install(progress) => {
             let view = presenter::install_view(&progress, &loader);
+            deliver(&weak, &token, move |ui| {
+                presenter::apply_view(&ui.global::<LaunchState>(), view);
+            });
+        }
+        LaunchUpdate::Modpack(snapshot) => {
+            let view = presenter::modpack_view(&snapshot);
             deliver(&weak, &token, move |ui| {
                 presenter::apply_view(&ui.global::<LaunchState>(), view);
             });
@@ -57,20 +68,32 @@ pub(crate) fn update_sink(weak: Weak<App>, token: Token, loader: String) -> Sink
         LaunchUpdate::Finished {
             quit_app,
             pause_music,
-        } => deliver(&weak, &token, move |ui| {
-            if pause_music {
-                crate::ui::overlays::music_player::pause();
-            }
-            if quit_app {
-                let _ = ui.hide();
-                let _ = slint::quit_event_loop();
-            } else if ui.global::<Navigation>().get_current_page() != "crash" {
-                // A game that crashed before the 20s "wait for launch" ends
-                // raises the crash page while this flow is still finishing; it
-                // must not be navigated away from when the flow reports back.
-                ui.global::<Navigation>().invoke_back();
-            }
-        }),
+        } => {
+            let import_id = import_id.clone();
+            deliver(&weak, &token, move |ui| {
+                // The run is over: clearing the task here keeps the page-change
+                // handler from cancelling it (and refreshing the list without a
+                // selection) after `Navigation.back` below.
+                launch_controller().borrow_mut().finish();
+                if pause_music {
+                    crate::ui::overlays::music_player::pause();
+                }
+                if quit_app {
+                    let _ = ui.hide();
+                    let _ = slint::quit_event_loop();
+                } else if ui.global::<Navigation>().get_current_page() != "crash" {
+                    if let Some(id) = import_id {
+                        ui.global::<GameState>().invoke_refresh_selecting(id.into());
+                    } else {
+                        ui.global::<GameState>().invoke_refresh();
+                    }
+                    // A game that crashed before the 20s "wait for launch" ends
+                    // raises the crash page while this flow is still finishing; it
+                    // must not be navigated away from when the flow reports back.
+                    ui.global::<Navigation>().invoke_back();
+                }
+            });
+        }
     })
 }
 

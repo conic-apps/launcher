@@ -32,6 +32,75 @@ mod error;
 pub use crate::config::*;
 pub use crate::error::*;
 
+/// The directory name an instance called `name` can be stored under.
+///
+/// The id is a directory under `instances/`, so the characters Windows forbids
+/// in a file name become `_`, a trailing dot or space is dropped (Windows
+/// strips those too), and a reserved device name gets a leading `_`. The result
+/// is capped so the instance root keeps room for the files inside it.
+pub fn sanitize_id(name: &str) -> String {
+    const RESERVED: [&str; 22] = [
+        "con", "prn", "aux", "nul", "com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8",
+        "com9", "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9",
+    ];
+
+    let cleaned: String = name
+        .trim()
+        .chars()
+        .map(|character| {
+            if character.is_control()
+                || matches!(
+                    character,
+                    '<' | '>' | ':' | '"' | '/' | '\\' | '|' | '?' | '*'
+                )
+            {
+                '_'
+            } else {
+                character
+            }
+        })
+        .collect();
+    let cleaned: String = cleaned.chars().take(80).collect();
+    let cleaned = cleaned.trim_end_matches(['.', ' ']).trim();
+    if cleaned.is_empty() {
+        return "Instance".to_string();
+    }
+    let stem = cleaned
+        .split('.')
+        .next()
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+    if RESERVED.contains(&stem.as_str()) {
+        format!("_{cleaned}")
+    } else {
+        cleaned.to_string()
+    }
+}
+
+/// A [`sanitize_id`] result that no existing instance already uses.
+///
+/// A taken id gets a ` 1`, ` 2`, … suffix, compared against the instance ids
+/// (the directory names) rather than the display names, because the id is what
+/// the directory and every lock file are keyed on.
+pub async fn unique_id(name: &str) -> Result<String> {
+    let base = sanitize_id(name);
+    let instances = list_instances(SortBy::Name).await?;
+    let mut suffix = 0;
+    loop {
+        let candidate = if suffix == 0 {
+            base.clone()
+        } else {
+            format!("{base} {suffix}")
+        };
+        if !instances.iter().any(|instance| instance.id == candidate)
+            && !LOCATIONS.instances.get_instance_root(&candidate).exists()
+        {
+            return Ok(candidate);
+        }
+        suffix += 1;
+    }
+}
+
 pub async fn create_instance(config: InstanceConfig, id: Option<&str>) -> Result<String> {
     let random_uuid = Uuid::new_v4().to_string();
     let id = id.unwrap_or(&random_uuid);

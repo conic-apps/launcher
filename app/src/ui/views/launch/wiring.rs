@@ -20,10 +20,28 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
             controller.borrow_mut().cancel();
             let token = controller.borrow_mut().begin();
 
+            // A modpack import navigates here after creating its instance and
+            // queues the resolved plan; taking it is what makes `start` install
+            // instead of launch, without a second view or a different button.
+            let importing = ui.global::<LaunchState>().get_purpose() == "import";
+            let import = if importing {
+                take_modpack_install()
+            } else {
+                None
+            };
+            if importing && import.is_none() {
+                // The marker without a plan is a stray navigation; behave like
+                // a launch rather than leaving the screen empty.
+                ui.global::<LaunchState>().set_purpose("launch".into());
+            }
+
             // Everything the flow needs that is not on disk is gathered on the
             // UI thread, because `GameState`/`LaunchState` and the config are
             // not reachable from the runtime.
-            let current_id = ui.global::<GameState>().get_current_id().to_string();
+            let import_id = import.as_ref().map(|(id, _)| id.clone());
+            let current_id = import_id
+                .clone()
+                .unwrap_or_else(|| ui.global::<GameState>().get_current_id().to_string());
             let config_snapshot = SHARED_CONFIG.with(|slot| {
                 slot.borrow()
                     .as_ref()
@@ -45,9 +63,19 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
                 let flow_config = config_snapshot.clone();
                 crate::ui::services::report::report(&weak, move |ui| {
                     reset_state(&ui, instance.as_ref(), &flow_config);
-                    let sink = update_sink(flow_weak.clone(), token, loader);
+                    let sink = update_sink(flow_weak.clone(), token, loader, import_id);
                     let task = crate::support::runtime::spawn(async move {
-                        crate::usecases::launch::run(flow_config, instance, sink).await;
+                        if let Some((_, plan)) = import {
+                            crate::usecases::modpack::run_install(
+                                current_id,
+                                plan,
+                                flow_config,
+                                sink,
+                            )
+                            .await;
+                        } else {
+                            crate::usecases::launch::run(flow_config, instance, sink).await;
+                        }
                     });
                     launch_controller().borrow_mut().task = Some(task);
                 });
@@ -73,10 +101,16 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         let controller = Rc::clone(&controller);
         let weak = ui.as_weak();
         ui.global::<Navigation>().on_page_changed(move |page| {
-            if page.as_str() != "launch" && controller.borrow_mut().cancel() {
-                // The instance list is reloaded, so `.install.lock` written by
-                // a fresh install shows up on the game screen.
-                if let Some(ui) = weak.upgrade() {
+            if page.as_str() == "launch" {
+                return;
+            }
+            let cancelled = controller.borrow_mut().cancel();
+            clear_modpack_install();
+            if let Some(ui) = weak.upgrade() {
+                ui.global::<LaunchState>().set_purpose("launch".into());
+                if cancelled {
+                    // The instance list is reloaded, so `.install.lock` written
+                    // by a fresh install shows up on the game screen.
                     ui.global::<GameState>().invoke_refresh();
                 }
             }

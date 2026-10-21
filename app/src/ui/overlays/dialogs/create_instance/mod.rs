@@ -18,7 +18,7 @@ use slint::{ComponentHandle, Image, ModelRc, SharedString, VecModel, Weak};
 
 use crate::slint_backend::{App, CreateInstanceState, Dialogs, GameState, MinecraftVersionItem};
 use crate::ui::services::app_config;
-use instance::{InstanceConfig, InstanceLaunchConfig, InstanceRuntime, ModLoaderType, SortBy};
+use instance::{InstanceConfig, InstanceLaunchConfig, InstanceRuntime, ModLoaderType};
 
 thread_local! {
     /// The whole Minecraft manifest. Only the rows of the selected category are
@@ -389,21 +389,7 @@ async fn create_instance(
     loader_version: &str,
     background: &str,
 ) -> Result<String, instance::Error> {
-    let instances = instance::list_instances(SortBy::Name)
-        .await
-        .unwrap_or_default();
-    let mut suffix = 0;
-    let id = loop {
-        let candidate = if suffix == 0 {
-            name.to_string()
-        } else {
-            format!("{name} {suffix}")
-        };
-        if !instances.iter().any(|instance| instance.id == candidate) {
-            break candidate;
-        }
-        suffix += 1;
-    };
+    let id = instance::unique_id(name).await?;
 
     let modded = loader_type != "None";
     let config = InstanceConfig {

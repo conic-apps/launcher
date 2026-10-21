@@ -318,7 +318,9 @@ export component LaunchView inherits Rectangle {
             height: 40px;
         }
 
-        login-slot := Rectangle {
+        // A modpack import has no account step; the summary would be two empty
+        // rows, so it is not mounted and the back button rises into its place.
+        if LaunchState.purpose != "import": login-slot := Rectangle {
             width: login-grid.preferred-width;
             height: login-grid.preferred-height;
             opacity: root.entry-opacity;
@@ -378,7 +380,7 @@ export component LaunchView inherits Rectangle {
             }
         }
 
-        Rectangle {
+        if LaunchState.purpose != "import": Rectangle {
             height: 36px;
         }
 
@@ -404,7 +406,9 @@ export component LaunchView inherits Rectangle {
                 }
 
                 Text {
-                    text: @tr("LaunchView" => "Cancel launch");
+                    text: LaunchState.purpose == "import"
+                        ? @tr("LaunchView" => "Cancel install")
+                        : @tr("LaunchView" => "Cancel launch");
                     font-size: 11px;
                     color: back-touch.has-hover && !LaunchState.back-disabled
                         ? Theme.text-inverse

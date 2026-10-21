@@ -311,28 +311,12 @@ fn move_contents(from: &Path, to: &Path, skip_entries: &[&str]) -> std::io::Resu
         if std::fs::rename(&source, &destination).is_ok() {
             continue;
         }
-        copy_recursively(&source, &destination)?;
+        crate::support::fs::copy_recursively(&source, &destination)?;
         if source.is_dir() {
             std::fs::remove_dir_all(&source)?;
         } else {
             std::fs::remove_file(&source)?;
         }
-    }
-    Ok(())
-}
-
-fn copy_recursively(from: &Path, to: &Path) -> std::io::Result<()> {
-    if from.is_dir() {
-        std::fs::create_dir_all(to)?;
-        for entry in std::fs::read_dir(from)? {
-            let entry = entry?;
-            copy_recursively(&entry.path(), &to.join(entry.file_name()))?;
-        }
-    } else {
-        if let Some(parent) = to.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
-        std::fs::copy(from, to)?;
     }
     Ok(())
 }
