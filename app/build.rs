@@ -387,7 +387,7 @@ fn render_icons_table(icons: &BTreeMap<String, Icon>) -> String {
     // dynamic binding) to fall back to.
     let _ = writeln!(stroke_width, "        return 32.0;");
 
-    for (signature, body) in [
+    for (index, (signature, body)) in [
         (
             "public pure function viewbox(name: string) -> int",
             &viewbox,
@@ -404,8 +404,14 @@ fn render_icons_table(icons: &BTreeMap<String, Icon>) -> String {
             "public pure function fill-commands(name: string) -> string",
             &render_commands(icons, |icon| &icon.fill),
         ),
-    ] {
-        let _ = writeln!(out, "    {signature} {{\n{body}\n    }}\n");
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        if index > 0 {
+            out.push('\n');
+        }
+        let _ = writeln!(out, "    {signature} {{\n{body}    }}");
     }
     out.push_str("}\n");
     out
