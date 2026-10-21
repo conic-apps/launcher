@@ -148,9 +148,9 @@ pautas sobre cómo empezar, configurar tu entorno de desarrollo y enviar un pull
 ## Arquitectura
 
 La interfaz está construida con [Slint](https://slint.dev) y conectada directamente a los crates de
-dominio — no hay capa IPC. `app/` contiene el binario y el árbol `.slint`; cada capacidad reside en
-su propio módulo `crates/*` del workspace, por lo que evolucionan de forma independiente y se
-combinan según sea necesario.
+dominio — no hay capa IPC. `app/` contiene el binario y `ui/` el árbol `.slint`; cada capacidad
+reside en su propio módulo `crates/*` del workspace, por lo que evolucionan de forma independiente y
+se combinan según sea necesario.
 
 Para ver el panorama completo — ubicaciones de almacenamiento, capas de la app, la organización de
 la UI y el mapa de crates — consulta [ARCHITECTURE.md](../../ARCHITECTURE.md).

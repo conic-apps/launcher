@@ -136,8 +136,8 @@ cargo build --release  # 프로덕션 빌드
 ## 아키텍처
 
 인터페이스는 [Slint](https://slint.dev)로 구축되었으며 도메인 crates에 직접 연결됩니다—IPC 계층은
-없습니다. `app/`는 바이너리와 `.slint` 트리를 담고, 각 기능은 자체 `crates/*` 워크스페이스 모듈에
-있어 독립적으로 발전하고 필요에 따라 조합됩니다.
+없습니다. `app/`는 바이너리를, `ui/`는 `.slint` 트리를 담고, 각 기능은 자체 `crates/*` 워크스페이스
+모듈에 있어 독립적으로 발전하고 필요에 따라 조합됩니다.
 
 저장 위치, 앱 계층 구조, UI 버킷 구성, crate 목록 등 전체 그림은
 [ARCHITECTURE.md](../../ARCHITECTURE.md)를 참고하세요.

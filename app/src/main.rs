@@ -5,11 +5,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![deny(clippy::unwrap_used)]
 
-// Slint-generated code uses `unwrap()` extensively; the crate-level deny above
-// stays in place for hand-written code only.
-#[allow(clippy::unwrap_used)]
+// The Slint bindings are generated in `conic-ui`; re-export them under the
+// name the rest of the app already uses.
 pub(crate) mod slint_backend {
-    slint::include_modules!();
+    pub use conic_ui::*;
 }
 
 mod support;

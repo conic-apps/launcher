@@ -145,8 +145,8 @@ get started, set up your development environment, and submit a pull request.
 ## Architecture
 
 The interface is built with [Slint](https://slint.dev) and wired to the domain crates directly.
-`app/` holds the binary and the `.slint` tree; each capability lives in its own `crates/*` workspace
-module, so they evolve independently and compose as needed.
+`app/` holds the binary and `ui/` the `.slint` tree; each capability lives in its own `crates/*`
+workspace module, so they evolve independently and compose as needed.
 
 For the full picture — storage roots, app layering, the UI bucket layout and the crate map — see
 [ARCHITECTURE.md](./ARCHITECTURE.md).

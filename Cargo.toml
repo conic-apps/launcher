@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "app/",
+    "ui/",
     "crates/*",
 ]
 resolver = "3"
@@ -14,6 +15,7 @@ rust-version = "1.88"
 [workspace.dependencies]
 # ----- local crates -----
 # NOTE: local crates that aren't published to crates.io. Their version stays `0.0.0`.
+conic-ui = { path = "./ui", version = "0.0.0" }
 shared = { path = "./crates/shared", version = "0.0.0" }
 platform = { path = "./crates/platform", version = "0.0.0" }
 window = { path = "./crates/window", version = "0.0.0" }
@@ -40,7 +42,7 @@ update = { path = "./crates/update", version = "0.0.0" }
 # ----- non-local crates -----
 slint = { version = "1.18", default-features = true }
 slint-build = "1.18"
-# The icon generator in `app/build.rs` parses the SVGs with the same
+# The icon generator in `ui/build.rs` parses the SVGs with the same
 # `usvg` Slint's own renderer rasterizes them with, so the generated path data
 # cannot disagree with what is drawn. Pinned to the version `slint` 1.18 pulls
 # in (via resvg) on purpose: a second copy would drag in its own `tiny-skia`.
@@ -82,7 +84,7 @@ conic-worldmap = { git="https://github.com/conic-apps/conic-worldmap", rev="a864
 env_logger = "0.11.5"
 futures = "0.3"
 # PNG for the skin textures `account` resolves and webp for the bundled
-# default skins (`app/ui/assets/skins`). Slint already pulls `image` in
+# default skins (`ui/assets/skins`). Slint already pulls `image` in
 # for `image-default-formats`; these are the two codecs the app needs by
 # name, so they are requested explicitly rather than inherited.
 image = { version = "0.25", default-features = false, features = ["png", "webp"] }
@@ -161,6 +163,12 @@ opt-level = 2
 debug = false
 
 [profile.dev.package.conic-launcher]
+debug = "line-tables-only"
+
+# The generated interface is compiled here, and it is the largest crate in the
+# workspace; the same reduced debug info keeps its rlib and the linked PDB from
+# dwarfing everything else.
+[profile.dev.package.conic-ui]
 debug = "line-tables-only"
 
 # A custom background is decoded at full size and then scaled down on the UI's

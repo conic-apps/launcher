@@ -4,7 +4,7 @@
 
 //! The Rust half of the reusable Slint components.
 //!
-//! Each module backs the matching component under `app/ui/components/`: they
+//! Each module backs the matching component under `ui/components/`: they
 //! are drivers and pixel producers, not use cases, and they are the only place
 //! the app builds a Slint `Image` or a display list by hand.
 

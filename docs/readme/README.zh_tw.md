@@ -125,8 +125,8 @@ cargo build --release  # 建構正式版本
 
 ## 架構
 
-介面使用 [Slint](https://slint.dev) 建構，並直接連接各領域 crates—沒有 IPC 層。`app/` 存放二進位檔與
-`.slint` 介面樹；每項能力各自位於獨立的 `crates/*` 工作區模組中，獨立演進、按需組合。
+介面使用 [Slint](https://slint.dev) 建構，並直接連接各領域 crates—沒有 IPC 層。`app/` 存放二進位檔，
+`ui/` 存放 `.slint` 介面樹；每項能力各自位於獨立的 `crates/*` 工作區模組中，獨立演進、按需組合。
 
 完整內容—儲存位置、應用分層、UI 分桶結構與 crate 一覽—請見
 [ARCHITECTURE.md](../../ARCHITECTURE.md)。

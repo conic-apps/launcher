@@ -33,8 +33,9 @@ Windows; plus a "test" job that is `cargo test --all --release --verbose --all-t
 ## Rust conventions
 
 - Workspace edition 2024, `rust-version = "1.88"`, resolver 3.
-- `#![deny(clippy::unwrap_used)]` applies to `app/src/main.rs` only. The Slint-generated module is
-  opted out with `#[allow(clippy::unwrap_used)]` — keep that scoped, do not widen it.
+- `#![deny(clippy::unwrap_used)]` applies to `app/src/main.rs` only. The Slint-generated module in
+  `ui/src/lib.rs` is opted out with `#[allow(clippy::unwrap_used)]` — keep that scoped, do not widen
+  it.
 - External deps are declared in the root `Cargo.toml` `[workspace.dependencies]` and pulled in with
   `workspace = true`; the local crates are declared there too and are not published. Platform-gated
   deps (winit, zbus, objc2, windows) are declared in the crate that needs them.
