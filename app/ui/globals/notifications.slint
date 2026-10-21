@@ -4,9 +4,14 @@
 
 /// A completed notification shown by the notification centre.
 export struct NotificationItem {
+    id: int,
     kind: string,
-    detail: string,
+    /// Literal body, empty when the kind's translated template is used.
+    body: string,
+    /// Values for the kind's template placeholders, in order.
+    args: [string],
     icon: string,
+    has-action: bool,
 }
 
 export global NotificationState {
@@ -21,25 +26,19 @@ export global NotificationState {
 }
 
 export global NotificationText {
-    public pure function notification-title(item: NotificationItem) -> string {
-        if item.kind == "update-ready" {
-            return @tr("NotificationText" => "Launcher update ready");
-        }
-        if item.kind == "task-error" {
-            return @tr("NotificationText" => "Task failed");
-        }
-        if item.kind == "task-cancelled" {
-            return @tr("NotificationText" => "Task cancelled");
-        }
-        return @tr("NotificationText" => "Minecraft task finished");
+    pure function arg(item: NotificationItem, index: int) -> string {
+        return index < item.args.length ? item.args[index] : "";
     }
 
-    public pure function notification-message(item: NotificationItem) -> string {
+    public pure function notification-body(item: NotificationItem) -> string {
+        if item.body != "" {
+            return item.body;
+        }
         if item.kind == "update-ready" {
-            return @tr("NotificationText" => "Version {} will be applied when the launcher exits", item.detail);
+            return @tr("NotificationText" => "Version {} will be applied when the launcher exits", arg(item, 0));
         }
         if item.kind == "task-error" {
-            return @tr("NotificationText" => "{}", item.detail);
+            return @tr("NotificationText" => "{}", arg(item, 0));
         }
         if item.kind == "task-cancelled" {
             return @tr("NotificationText" => "The task was cancelled");
@@ -47,6 +46,9 @@ export global NotificationText {
         if item.kind == "task-finished" {
             return @tr("NotificationText" => "The task finished");
         }
-        return item.detail;
+        if item.kind == "setup-skipped" {
+            return @tr("NotificationText" => "Click here to return to first-run setup");
+        }
+        return "";
     }
 }

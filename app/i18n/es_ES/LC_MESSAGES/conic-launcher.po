@@ -3210,26 +3210,6 @@ msgstr "En curso"
 
 #: ui
 msgctxt "NotificationText"
-msgid "Launcher update ready"
-msgstr "Actualización del launcher lista"
-
-#: ui
-msgctxt "NotificationText"
-msgid "Task failed"
-msgstr "Tarea fallida"
-
-#: ui
-msgctxt "NotificationText"
-msgid "Task cancelled"
-msgstr "Tarea cancelada"
-
-#: ui
-msgctxt "NotificationText"
-msgid "Minecraft task finished"
-msgstr "Tarea de Minecraft completada"
-
-#: ui
-msgctxt "NotificationText"
 msgid "Version {} will be applied when the launcher exits"
 msgstr "La versión {} se aplicará al cerrar el launcher"
 
@@ -3287,3 +3267,8 @@ msgstr "Minecraft"
 msgctxt "App"
 msgid "Action"
 msgstr "Acción"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Click here to return to first-run setup"
+msgstr "Haz clic aquí para volver a la configuración inicial"

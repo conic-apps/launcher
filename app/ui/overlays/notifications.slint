@@ -13,12 +13,11 @@ import {
 
 component NotificationRow inherits Rectangle {
     in property <NotificationItem> item;
-    in property <int> row-index;
     private property <length> dismiss-width: 32px;
     height: 68px;
     border-radius: 10px;
-    background: card-click.pressed ? Theme.surface-2
-        : card-click.has-hover ? Theme.surface-1
+    background: root.item.has-action && card-click.pressed ? Theme.surface-2
+        : root.item.has-action && card-click.has-hover ? Theme.surface-1
         : Theme.surface-0;
     animate background {
         duration: 120ms;
@@ -27,7 +26,8 @@ component NotificationRow inherits Rectangle {
 
     card-click := TouchArea {
         width: root.width - root.dismiss-width;
-        clicked => { NotificationState.activate(root.row-index); }
+        enabled: root.item.has-action;
+        clicked => { NotificationState.activate(root.item.id); }
     }
 
     Rectangle {
@@ -48,28 +48,18 @@ component NotificationRow inherits Rectangle {
         }
     }
 
-    VerticalLayout {
+    Text {
         x: 52px;
         y: 10px;
         width: root.width - 92px;
         height: root.height - 20px;
-        spacing: 3px;
-        alignment: center;
-        Text {
-            text: NotificationText.notification-title(root.item);
-            color: Theme.text;
-            font-size: 13px;
-            overflow: elide;
-        }
-
-        Text {
-            text: NotificationText.notification-message(root.item);
-            color: Theme.subtext-0;
-            font-size: 11px;
-            wrap: word-wrap;
-            max-lines: 2;
-            overflow: elide;
-        }
+        text: NotificationText.notification-body(root.item);
+        color: Theme.text;
+        font-size: 12px;
+        wrap: word-wrap;
+        max-lines: 3;
+        overflow: elide;
+        vertical-alignment: center;
     }
 
     dismiss-button := Rectangle {
@@ -96,7 +86,7 @@ component NotificationRow inherits Rectangle {
         }
 
         dismiss-touch := TouchArea {
-            clicked => { NotificationState.dismiss(root.row-index); }
+            clicked => { NotificationState.dismiss(root.item.id); }
         }
     }
 }
@@ -229,9 +219,8 @@ export component NotificationOverlay inherits Rectangle {
                     }
                 }
 
-                for item[row-index] in NotificationState.notifications: NotificationRow {
+                for item in NotificationState.notifications: NotificationRow {
                     item: item;
-                    row-index: row-index;
                 }
             }
         }

@@ -18,6 +18,7 @@
 //! network. The client is left as the plain transport the API crates expect.
 
 pub mod http_cache;
+pub mod notification;
 
 use std::{
     sync::{Arc, Mutex},

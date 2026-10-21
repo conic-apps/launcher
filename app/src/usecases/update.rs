@@ -5,13 +5,15 @@
 //! The self-update use case: decide whether to look, run the check, and stage
 //! the bundle.
 //!
-//! Deliberately silent. It runs once at startup, reports every step to the log
-//! and touches no interface; the staged bundle is swapped in as the process
-//! exits by `update::apply_pending`. That keeps the update out of the user's
-//! way — the next launch is simply the new version.
+//! It runs once at startup and reports every step to the log. Once a bundle is
+//! staged it posts one notice; the swap itself happens as the process exits
+//! (`update::apply_pending`), so the notice is informational rather than a
+//! prompt to restart. Failures stay in the log: a background check that found
+//! nothing must not interrupt the user.
 
 use std::sync::OnceLock;
 
+use shared::notification::{Notice, NoticeKind, NoticeSink};
 use update::{Channel, InstallForm};
 
 /// The install form, detected once. Reading the marker walks the filesystem, so
@@ -37,7 +39,7 @@ pub(crate) fn channel(configured: &config::UpdateChannel) -> Channel {
     }
 }
 
-pub(crate) async fn run(configured_channel: config::UpdateChannel) {
+pub(crate) async fn run(configured_channel: config::UpdateChannel, notices: NoticeSink) {
     let Some(kind) = install_form().kind() else {
         log::info!("update check skipped: this install is managed by a package manager");
         return;
@@ -63,10 +65,13 @@ pub(crate) async fn run(configured_channel: config::UpdateChannel) {
 
     log::info!("update {} is available; downloading", info.version);
     match update::download_and_stage(&info, kind, shared::silent()).await {
-        Ok(staged) => log::info!(
-            "update {} downloaded and staged; it will be applied as the launcher exits",
-            staged.version
-        ),
+        Ok(staged) => {
+            log::info!(
+                "update {} downloaded and staged; it will be applied as the launcher exits",
+                staged.version
+            );
+            notices(Notice::new(NoticeKind::UpdateReady).with_arg(staged.version));
+        }
         Err(error) => log::warn!("update download failed: {error}"),
     }
 }

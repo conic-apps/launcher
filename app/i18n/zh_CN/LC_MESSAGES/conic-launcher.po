@@ -3095,26 +3095,6 @@ msgstr "进行中"
 
 #: ui
 msgctxt "NotificationText"
-msgid "Launcher update ready"
-msgstr "启动器更新已就绪"
-
-#: ui
-msgctxt "NotificationText"
-msgid "Task failed"
-msgstr "任务失败"
-
-#: ui
-msgctxt "NotificationText"
-msgid "Task cancelled"
-msgstr "任务已取消"
-
-#: ui
-msgctxt "NotificationText"
-msgid "Minecraft task finished"
-msgstr "Minecraft 任务已完成"
-
-#: ui
-msgctxt "NotificationText"
 msgid "Version {} will be applied when the launcher exits"
 msgstr "版本 {} 将在启动器退出时应用"
 
@@ -3287,3 +3267,8 @@ msgstr "可能的模组："
 msgctxt "App"
 msgid "Action"
 msgstr "快速操作"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Click here to return to first-run setup"
+msgstr "点击这里回到首次启动设置"

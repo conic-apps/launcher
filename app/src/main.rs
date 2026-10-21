@@ -161,13 +161,18 @@ fn main() {
     // The news browser: the title bar's newspaper button opens it, and it
     // fetches the feeds itself the first time it does.
     ui::overlays::news::setup(&ui);
-    ui::services::notifications::setup(&ui);
-    #[cfg(debug_assertions)]
-    ui::services::notifications::schedule_demo(&ui);
+    let notices = ui::services::notifications::setup(&ui);
     {
         let weak_ui = ui.as_weak();
-        ui.global::<Navigation>().on_page_changed(move |_| {
+        let shared = Rc::clone(&shared);
+        let mut previous_page = ui.global::<Navigation>().get_current_page();
+        ui.global::<Navigation>().on_page_changed(move |page| {
+            let left_setup = previous_page.as_str() == "setup" && page.as_str() != "setup";
+            previous_page = page;
             if let Some(ui) = weak_ui.upgrade() {
+                if left_setup {
+                    ui::views::setup::notify_if_abandoned(&ui, &shared);
+                }
                 ui.global::<NewsState>().set_visible(false);
                 ui.global::<NotificationState>().set_visible(false);
             }
@@ -178,16 +183,16 @@ fn main() {
     // shortcut, both bound in the view.
     ui::overlays::command_palette::setup(&ui);
 
-    // Self-update, run silently. The install form (AppImage / .app / MSI /
-    // portable / package manager) is detected once and decides whether the
-    // settings rows are live; a package-manager install is never checked.
-    // Everything else checks in the background and only *stages* — the swap
-    // happens after `ui.run` returns, and every step goes to the log.
+    // Self-update. The install form (AppImage / .app / MSI / portable / package
+    // manager) is detected once and decides whether the settings rows are live;
+    // a package-manager install is never checked. Everything else checks in the
+    // background and only *stages* — the swap happens after `ui.run` returns, and
+    // a notice reports that a staged bundle is waiting.
     {
         ui.global::<AppConfig>()
             .set_update_self_updating(usecases::update::is_self_updating());
         if shared.borrow().auto_update && usecases::update::is_self_updating() {
-            spawn_update(&shared);
+            spawn_update(&shared, notices);
         }
     }
 
@@ -339,11 +344,11 @@ fn run_exit_work() {
 
 /// Starts one background update check + staging download.
 ///
-/// It is silent: the use case logs what it does, and the staged bundle is
-/// applied as the process exits. Nothing here touches the interface.
-fn spawn_update(shared: &Rc<RefCell<config::Config>>) {
+/// The use case logs what it does and posts a notice once the bundle is staged;
+/// the swap itself happens as the process exits.
+fn spawn_update(shared: &Rc<RefCell<config::Config>>, notices: shared::notification::NoticeSink) {
     let channel = shared.borrow().update_channel.clone();
-    crate::support::runtime::spawn(usecases::update::run(channel));
+    crate::support::runtime::spawn(usecases::update::run(channel, notices));
 }
 
 /// Removes the per-run scratch directory [`storage::LOCATIONS`] creates.

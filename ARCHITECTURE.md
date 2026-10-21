@@ -68,8 +68,9 @@ any of them.
   `app/ui/` bucket for bucket**: `ui/views/<surface>` ↔ `app/ui/views/…`, `ui/overlays/<surface>` ↔
   `app/ui/overlays/…`, `ui/components/<component>` ↔ `app/ui/components/…`, plus `ui/services/` for
   the cross-surface concerns (`report` — delivery onto the event loop; `app_config` — the
-  `AppConfig` adapter and locale; `scroll`). The mirror is by surface/component, not per `.slint`
-  file, and `ui/components/` does not repeat the `controls`/`display`/… role split.
+  `AppConfig` adapter and locale; `scroll`; `notifications` — the notification model and its action
+  table). The mirror is by surface/component, not per `.slint` file, and `ui/components/` does not
+  repeat the `controls`/`display`/… role split.
 
 `main.rs` is the composition root: it loads the config, seeds `AppConfig`, and wires every surface's
 `setup`. A background task never touches the UI; it reports through
@@ -149,7 +150,7 @@ compiles the `.slint` tree and is what catches a missed one.
 | `music`           | Local music files + playback                                                                                        |
 | `news`            | Mojang launcher-content client: the news feed and the Java changelogs                                               |
 | `platform`        | OS detection                                                                                                        |
-| `shared`          | Common types/utilities (the shared `HTTP_CLIENT`)                                                                   |
+| `shared`          | Common types/utilities (the shared `HTTP_CLIENT`, the `Sink` ports and the notification `Notice` request)           |
 | `single-instance` | One instance per machine                                                                                            |
 | `tilemap`         | World-map tile source port (`TileSource`) and its plain data                                                        |
 | `statistics`      | Playtime statistics                                                                                                 |
