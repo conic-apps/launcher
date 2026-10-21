@@ -57,6 +57,12 @@ pub(crate) fn setup(ui: &App) {
             clear(&ui);
         }
     });
+    let weak = ui.as_weak();
+    state.on_dismiss(move |index| {
+        if let Some(ui) = weak.upgrade() {
+            dismiss(&ui, index);
+        }
+    });
 }
 
 pub(crate) fn toggle(ui: &App) {
@@ -138,6 +144,16 @@ pub(crate) fn push(ui: &App, kind: &str, detail: &str, icon: &str) {
 fn clear(ui: &App) {
     CONTROLLER.with(|controller| {
         controller.notifications.set_vec(Vec::new());
+        update_count(&ui.global::<NotificationState>(), controller);
+    });
+}
+
+fn dismiss(ui: &App, index: i32) {
+    CONTROLLER.with(|controller| {
+        let index = index as usize;
+        if index < controller.notifications.row_count() {
+            controller.notifications.remove(index);
+        }
         update_count(&ui.global::<NotificationState>(), controller);
     });
 }
