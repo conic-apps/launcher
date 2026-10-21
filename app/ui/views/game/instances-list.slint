@@ -771,6 +771,8 @@ export component InstancesList inherits Rectangle {
             width: parent.width;
             height: parent.height;
 
+            clicked => { FocusManager.clear(); }
+
             scroll-event(event) => {
                 if Dropdown.open {
                     return accept;

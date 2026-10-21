@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { GameIntro } from "../globals/game.slint";
+import { FocusManager } from "../globals/focus.slint";
 import { PageMotion } from "../globals/page-motion.slint";
 import { InstanceSummary } from "game/instance-summary.slint";
 import { InstancesList } from "game/instances-list.slint";
@@ -53,6 +54,14 @@ export component GameView inherits Rectangle {
             GameIntro.played = true;
             intro-timer.running = false;
         }
+    }
+
+    // A click on the page's empty space blurs a focused field, as on the
+    // settings page.
+    background-touch := TouchArea {
+        width: parent.width;
+        height: parent.height;
+        clicked => { FocusManager.clear(); }
     }
 
     instance-summary := InstanceSummary {
