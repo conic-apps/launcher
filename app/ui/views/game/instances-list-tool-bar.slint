@@ -6,6 +6,7 @@ import { Theme } from "../../theme.slint";
 import { AppIcon } from "../../components/display/app-icon.slint";
 import { GameState, GameIntro } from "../../globals/game.slint";
 import { DropdownOption } from "../../globals/dropdown.slint";
+import { FocusManager } from "../../globals/focus.slint";
 import { InstanceListDropdown } from "instance-list-dropdown.slint";
 
 // Search + sort/group toolbar above the instance list, anchored to the
@@ -49,6 +50,9 @@ export component InstancesListToolBar inherits Rectangle {
     private property <length> intro-dx: GameIntro.played ? 0px : 100px;
     private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
 
+    private property <int> clear-sequence: FocusManager.clear-sequence;
+    changed clear-sequence => { input.clear-focus(); }
+
     animate intro-dx {
         duration: 500ms;
         delay: 50ms;
@@ -87,6 +91,7 @@ export component InstancesListToolBar inherits Rectangle {
             // would let the wheel through to the list, so accept it to keep the
             // list from scrolling under the panel.
             scroll-event(event) => { accept }
+            clicked => { FocusManager.clear(); }
         }
 
         VerticalLayout {
@@ -107,21 +112,28 @@ export component InstancesListToolBar inherits Rectangle {
                         padding-left: 16px;
                         cross-axis-alignment: center;
 
-                        Text {
-                            text: @tr("Search...");
-                            font-size: 14px;
-                            color: Theme.default-text-color.transparentize(0.4);
-                            visible: GameState.search-query == "" && !input.has-focus;
-                        }
-
                         input := TextInput {
                             horizontal-stretch: 1;
                             text: GameState.search-query;
                             font-size: 14px;
+                            selection-background-color: Theme.default-text-color.with-alpha(0.3);
+                            selection-foreground-color: Theme.default-text-color;
                             single-line: true;
                             vertical-alignment: center;
                             edited => { GameState.search-changed(self.text); }
                         }
+                    }
+
+                    // Slint's `TextInput` has no placeholder of its own, so it is
+                    // drawn over the field rather than laid out beside it.
+                    if GameState.search-query == "" && !input.has-focus: Text {
+                        x: 16px;
+                        y: 0;
+                        height: parent.height;
+                        text: @tr("Search...");
+                        font-size: 14px;
+                        color: Theme.default-text-color.transparentize(0.4);
+                        vertical-alignment: center;
                     }
                 }
 
