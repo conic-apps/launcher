@@ -28,8 +28,8 @@ The set is the freedesktop hicolor ladder (`16x16` … `512x512`, plus `scalable
 `usr/share/icons/hicolor/<size>/apps/conic-launcher.<ext>`. Anything outside that ladder is never
 looked up by an icon theme, so there is no reason to add a tenth raster.
 
-The master artwork is `app/ui/assets/logo.png`; the scalable entry is
-`app/ui/assets/images/logo-flat.svg`. Both are read in place, never copied into the app tree — the
+The master artwork is `ui/assets/logo.png`; the scalable entry is
+`ui/assets/images/logo-flat.svg`. Both are read in place, never copied into the app tree — the
 package payload is the only copy.
 
 ## Naming
@@ -73,7 +73,7 @@ it are easy to get wrong from memory:
 The strings are the tagline from `README.md`, whose twelve translations already exist under
 `docs/readme/README.<locale>.md` (the line under the badges), so a new language is a line in both
 places rather than a new translation. Nothing in the build fails when a catalogue is added and its
-`Comment` is not: keeping this file in step with `app/i18n/` is a reviewer's job.
+`Comment` is not: keeping this file in step with `ui/i18n/` is a reviewer's job.
 
 Validate changes with `desktop-file-validate` (the `desktop-file-utils` package);
 `packaging/arch/PKGBUILD` runs it in its `check()` and CI runs it too.

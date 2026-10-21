@@ -152,7 +152,7 @@ soumettre une pull request.
 ## Architecture
 
 L'interface est construite avec [Slint](https://slint.dev) et reliée directement aux crates de
-domaine — il n'y a pas de couche IPC. `app/` contient le binaire et l'arbre `.slint` ; chaque
+domaine — il n'y a pas de couche IPC. `app/` contient le binaire et `ui/` l'arbre `.slint` ; chaque
 capacité réside dans son propre module `crates/*` du workspace, de sorte qu'elles évoluent
 indépendamment et se composent au besoin.
 

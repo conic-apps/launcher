@@ -145,8 +145,8 @@ yönergeleri için lütfen [CONTRIBUTING.md](../../CONTRIBUTING.md) dosyasını 
 ## Mimari
 
 Arayüz [Slint](https://slint.dev) ile oluşturulmuş ve doğrudan alan crates'ine bağlanmıştır — IPC
-katmanı yoktur. `app/` ikili dosyayı ve `.slint` ağacını barındırır; her yetenek kendi `crates/*`
-çalışma alanı modülünde yer alır, böylece bağımsız olarak gelişir ve gerektiğinde birleşir.
+katmanı yoktur. `app/` ikili dosyayı, `ui/` ise `.slint` ağacını barındırır; her yetenek kendi
+`crates/*` çalışma alanı modülünde yer alır, böylece bağımsız olarak gelişir ve gerektiğinde birleşir.
 
 Depolama kökleri, uygulama katmanları, UI bucket düzeni ve crate haritası dahil tam resim için
 [ARCHITECTURE.md](../../ARCHITECTURE.md) dosyasına bakın.

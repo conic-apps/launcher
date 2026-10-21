@@ -5,12 +5,12 @@
 
 """Generate the hicolor icon set the Linux packages install.
 
-`app/ui/assets/logo.png` is the 4267px master artwork, and it is not usable
+`ui/assets/logo.png` is the 4267px master artwork, and it is not usable
 as-is by a package: a desktop environment asks the icon theme for a fixed
 ladder of sizes (`16x16` up to `512x512`), and the master is none of them. So the
 rasters are downsampled here into `packaging/linux/icons/`.
 
-`app/ui/assets/images/logo-flat.svg` is the same mark as a vector, and is copied
+`ui/assets/images/logo-flat.svg` is the same mark as a vector, and is copied
 in as the `scalable` entry. Its framing is not identical to the rasters' -- the
 master has a few percent of padding around the mark and the SVG fills its
 viewBox -- which is why it is copied rather than re-framed to match. Re-framing
@@ -39,8 +39,8 @@ import sys
 from PIL import Image
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-MASTER = ROOT / "app/ui/assets/logo.png"
-VECTOR = ROOT / "app/ui/assets/images/logo-flat.svg"
+MASTER = ROOT / "ui/assets/logo.png"
+VECTOR = ROOT / "ui/assets/images/logo-flat.svg"
 OUT = ROOT / "packaging/linux/icons"
 
 # The freedesktop "standard" icon sizes, all nine of them. Anything outside this

@@ -148,9 +148,9 @@ pull requesta.
 ## Architektura
 
 Interfejs jest zbudowany z użyciem [Slint](https://slint.dev) i połączony bezpośrednio z crate'ami
-domenowymi — nie ma warstwy IPC. `app/` zawiera plik binarny i drzewo `.slint`; każda możliwość
-znajduje się we własnym module `crates/*` workspace'u, dzięki czemu ewoluują niezależnie i łączą się
-w razie potrzeby.
+domenowymi — nie ma warstwy IPC. `app/` zawiera plik binarny, a `ui/` drzewo `.slint`; każda
+możliwość znajduje się we własnym module `crates/*` workspace'u, dzięki czemu ewoluują niezależnie i
+łączą się w razie potrzeby.
 
 Pełny obraz — lokalizacje danych, warstwy aplikacji, układ bucketów UI i mapa crate'ów — znajdziesz
 w [ARCHITECTURE.md](../../ARCHITECTURE.md).

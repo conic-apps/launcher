@@ -103,8 +103,8 @@ row reads `PFiles` in both cases, so no amount of reading the package finds it.
 
 ## `conic-launcher.ico`
 
-Regenerate with `python3 tools/generate-ico.py`. It renders the ladder from `app/ui/assets/logo.png`
-— not `app/ui/assets/images/app-icon.png`, which is 512px and is embedded in the binary for the
+Regenerate with `python3 tools/generate-ico.py`. It renders the ladder from `ui/assets/logo.png`
+— not `ui/assets/images/app-icon.png`, which is 512px and is embedded in the binary for the
 _window_ icon (see `app/src/main.rs`); upscaling that for the 256px frame is the same mistake
 `generate-icns.py` documents.
 
@@ -151,6 +151,6 @@ one.
   installed through the `.msi` are named by the installer rather than by the binary. The window icon
   is set at runtime from the embedded image, and the Start menu shortcut gets the icon out of the
   `Icon` table, so neither is affected. Adding this means a `winres`-style build step in
-  `app/build.rs`, which is an app change rather than a packaging one.
+  `ui/build.rs`, which is an app change rather than a packaging one.
 - **No localised installer.** `Language="1033"`, English, like the desktop entry and `Info.plist`. A
   `.wxl` is what it would take.

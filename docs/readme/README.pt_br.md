@@ -148,9 +148,9 @@ como começar, configurar seu ambiente de desenvolvimento e enviar um pull reque
 ## Arquitetura
 
 A interface é construída com [Slint](https://slint.dev) e conectada diretamente aos crates de
-domínio — não há camada IPC. `app/` contém o binário e a árvore `.slint`; cada capacidade reside em
-seu próprio módulo `crates/*` do workspace, então evoluem independentemente e se combinam conforme
-necessário.
+domínio — não há camada IPC. `app/` contém o binário e `ui/` a árvore `.slint`; cada capacidade
+reside em seu próprio módulo `crates/*` do workspace, então evoluem independentemente e se combinam
+conforme necessário.
 
 Para o panorama completo — raízes de armazenamento, camadas do app, a organização da UI e o mapa de
 crates — consulte o [ARCHITECTURE.md](../../ARCHITECTURE.md).

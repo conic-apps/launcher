@@ -21,7 +21,7 @@
 #   tools/fonts/Comfortaa-Latin.woff2 (variable, wght 300-700)
 #   tools/fonts/Nunito-Digits.woff2   (variable, wght 200-1000, digits only)
 # Output:
-#   app/ui/fonts/ComfortaaNunito.ttf  (family "Comfortaa Nunito")
+#   ui/fonts/ComfortaaNunito.ttf  (family "Comfortaa Nunito")
 #
 # Usage: python3 merge-digit-font.py [--verify]
 

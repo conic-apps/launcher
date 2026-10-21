@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Everything drawn above a page, mirroring `app/ui/overlays/`.
+//! Everything drawn above a page, mirroring `ui/overlays/`.
 
 pub(crate) mod account_view;
 pub(crate) mod command_palette;

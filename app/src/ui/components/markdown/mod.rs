@@ -40,7 +40,7 @@
 //!
 //! # The view
 //!
-//! `app/ui/components/markdown/markdown-view.slint` is the companion component.
+//! `ui/components/markdown/markdown-view.slint` is the companion component.
 //! The app imports it by relative path, and the display list is pushed into it.
 //! The engine itself has no Slint item tree in it, so the same module serves a
 //! caller that draws with `Text`/`Image` directly.
