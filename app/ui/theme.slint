@@ -240,9 +240,6 @@ export global Theme {
     in-out property <color> text-inverse;
 
     in-out property <color> titlebar-background;
-    // The title bar's search field. On the three dark flavors it is the flavor's
-    // `surface0`; on Latte it is the same `crust` the controller background uses.
-    in-out property <color> titlebar-search-background;
     in-out property <color> controllers-background;
     in-out property <color> controllers-background-hover;
     in-out property <color> controllers-background-focus;
@@ -399,8 +396,6 @@ export component ThemeProvider inherits Rectangle {
         Theme.active-palette == "Latte" ? Catppuccin.mocha.text : Catppuccin.latte.text;
 
     in-out property <color> titlebar-background: ctp.surface0;
-    in-out property <color> titlebar-search-background:
-        root.dark ? ctp.surface0 : ctp.crust;
 
     in-out property <color> controllers-background: root.dark ? ctp.surface1 : ctp.crust;
     in-out property <color> controllers-background-hover: root.dark ? ctp.surface2 : ctp.surface0;
@@ -452,7 +447,7 @@ export component ThemeProvider inherits Rectangle {
     in-out property <length> dialog-border-radius: 10px;
 
     // The changes that are allowed to fade (see `Theme.transitions-enabled`).
-    animate base, mantle, crust, surface-0, surface-1, surface-2, overlay-0, overlay-1, overlay-2, text, subtext-0, subtext-1, rosewater, flamingo, pink, mauve, maroon, red, peach, yellow, green, teal, sky, sapphire, blue, lavender, default-text-color, text-inverse, titlebar-background, titlebar-search-background, controllers-background, controllers-background-hover, controllers-background-focus, controllers-border, controllers-outline-focus, setting-item-background, setting-item-background-hover, setting-item-background-active, setting-group-border, setting-group-danger-border, toggle-switch-background, toggle-switch-outline, toggle-switch-button, toggle-switch-active, card-background, card-border, dialog-background, dialog-border {
+    animate base, mantle, crust, surface-0, surface-1, surface-2, overlay-0, overlay-1, overlay-2, text, subtext-0, subtext-1, rosewater, flamingo, pink, mauve, maroon, red, peach, yellow, green, teal, sky, sapphire, blue, lavender, default-text-color, text-inverse, titlebar-background, controllers-background, controllers-background-hover, controllers-background-focus, controllers-border, controllers-outline-focus, setting-item-background, setting-item-background-hover, setting-item-background-active, setting-group-border, setting-group-danger-border, toggle-switch-background, toggle-switch-outline, toggle-switch-button, toggle-switch-active, card-background, card-border, dialog-background, dialog-border {
         duration: Theme.transitions-enabled ? Theme.transitions-duration : 0ms;
         easing: ease;
     }
@@ -489,7 +484,6 @@ export component ThemeProvider inherits Rectangle {
         Theme.default-text-color = root.default-text-color;
         Theme.text-inverse = root.text-inverse;
         Theme.titlebar-background = root.titlebar-background;
-        Theme.titlebar-search-background = root.titlebar-search-background;
         Theme.controllers-background = root.controllers-background;
         Theme.controllers-background-hover = root.controllers-background-hover;
         Theme.controllers-background-focus = root.controllers-background-focus;
@@ -545,7 +539,6 @@ export component ThemeProvider inherits Rectangle {
     changed default-text-color => { Theme.default-text-color = root.default-text-color; }
     changed text-inverse => { Theme.text-inverse = root.text-inverse; }
     changed titlebar-background => { Theme.titlebar-background = root.titlebar-background; }
-    changed titlebar-search-background => { Theme.titlebar-search-background = root.titlebar-search-background; }
     changed controllers-background => { Theme.controllers-background = root.controllers-background; }
     changed controllers-background-hover => { Theme.controllers-background-hover = root.controllers-background-hover; }
     changed controllers-background-focus => { Theme.controllers-background-focus = root.controllers-background-focus; }

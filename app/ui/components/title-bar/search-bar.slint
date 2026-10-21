@@ -3,50 +3,62 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../../theme.slint";
-import { Icons } from "../../icons.slint";
+import { AppIcon } from "../display/app-icon.slint";
 
-// Centered search / command palette opener. The icon is the Font Awesome Pro v7
-// 640-viewbox `search` glyph, read out of the generated `Icons` table like every
-// other icon. The hotkey chip lives in the title bar container, not here.
+// Search / command palette opener. The icon is the Ionicons `search-outline`
+// glyph, read out of the generated `Icons` table like every other icon. The
+// hotkey chip is part of the field so the field can size itself to everything
+// it shows.
 export component SearchBar inherits Rectangle {
     in property <string> placeholder;
+    in property <string> hotkey: "";
     in property <bool> active: false;
+    out property <length> content-width:
+        36px + placeholder-text.preferred-width
+        + (root.hotkey == "" ? 12px : hotkey-chip.width + 18px);
     callback activated;
 
     height: 26px;
     border-radius: Theme.controllers-border-radius;
-    border-width: 1px;
-    border-color: Theme.controllers-border;
-    // Not the controller background: the title bar overrides it with the
-    // flavor's surface-0 on every dark flavor, and leaves it as the controller
-    // background on Latte. See `Theme.titlebar-search-background`.
-    background: Theme.titlebar-search-background;
+    background: root.active || touch.pressed ? Theme.surface-2
+        : touch.has-hover ? Theme.surface-1
+        : transparent;
     clip: true;
-    animate width {
-        duration: 220ms;
-        easing: Easing.ease;
-    }
 
     accessible-role: button;
     accessible-label: root.placeholder;
     accessible-action-default => { root.activated(); }
 
-    Path {
-        commands: Icons.fill-commands("search");
-        viewbox-width: Icons.viewbox("search");
-        viewbox-height: Icons.viewbox("search");
-        width: 20px;
-        height: 20px;
+    AppIcon {
+        name: "search";
         x: 10px;
-        fill: Theme.default-text-color.transparentize(0.1);
+        size: 20px;
+        icon-color: Theme.default-text-color.transparentize(0.1);
     }
 
-    Text {
+    placeholder-text := Text {
         text: root.placeholder;
         font-size: 13px;
         color: Theme.default-text-color.transparentize(0.2);
         x: 36px;
-        visible: !root.active;
+    }
+
+    hotkey-chip := Rectangle {
+        visible: root.hotkey != "";
+        width: hotkey-text.preferred-width + 12px;
+        height: 17px;
+        y: (root.height - self.height) / 2;
+        x: root.width - self.width - 10px;
+        border-radius: 4px;
+        background: Theme.surface-2.transparentize(0.3);
+
+        hotkey-text := Text {
+            text: root.hotkey;
+            font-size: 11px;
+            color: Theme.default-text-color.transparentize(0.4);
+            x: (hotkey-chip.width - self.width) / 2;
+            y: (hotkey-chip.height - self.height) / 2;
+        }
     }
 
     touch := TouchArea {

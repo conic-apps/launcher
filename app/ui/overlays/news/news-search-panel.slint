@@ -156,7 +156,7 @@ export component NewsSearchPanel inherits Rectangle {
                         accepted => { NewsSearch.search(); }
                     }
 
-                    if NewsSearch.query == "" && !input.has-focus: Text {
+                    if NewsSearch.query == "": Text {
                         text: NewsText.search-placeholder();
                         font-size: 13px;
                         color: Theme.subtext-0;
