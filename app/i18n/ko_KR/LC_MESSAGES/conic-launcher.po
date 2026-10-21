@@ -3210,26 +3210,6 @@ msgstr "진행 중"
 
 #: ui
 msgctxt "NotificationText"
-msgid "Launcher update ready"
-msgstr "런처 업데이트 준비 완료"
-
-#: ui
-msgctxt "NotificationText"
-msgid "Task failed"
-msgstr "작업 실패"
-
-#: ui
-msgctxt "NotificationText"
-msgid "Task cancelled"
-msgstr "작업 취소됨"
-
-#: ui
-msgctxt "NotificationText"
-msgid "Minecraft task finished"
-msgstr "Minecraft 작업 완료"
-
-#: ui
-msgctxt "NotificationText"
 msgid "Version {} will be applied when the launcher exits"
 msgstr "런처 종료 시 버전 {}이(가) 적용됩니다"
 
@@ -3287,3 +3267,8 @@ msgstr "Minecraft"
 msgctxt "App"
 msgid "Action"
 msgstr "작업"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Click here to return to first-run setup"
+msgstr "여기를 클릭하여 첫 실행 설정으로 돌아가기"

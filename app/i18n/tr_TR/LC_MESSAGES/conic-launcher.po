@@ -3210,26 +3210,6 @@ msgstr "Devam ediyor"
 
 #: ui
 msgctxt "NotificationText"
-msgid "Launcher update ready"
-msgstr "Başlatıcı güncellemesi hazır"
-
-#: ui
-msgctxt "NotificationText"
-msgid "Task failed"
-msgstr "Görev başarısız"
-
-#: ui
-msgctxt "NotificationText"
-msgid "Task cancelled"
-msgstr "Görev iptal edildi"
-
-#: ui
-msgctxt "NotificationText"
-msgid "Minecraft task finished"
-msgstr "Minecraft görevi tamamlandı"
-
-#: ui
-msgctxt "NotificationText"
 msgid "Version {} will be applied when the launcher exits"
 msgstr "{} sürümü başlatıcı kapatıldığında uygulanır"
 
@@ -3287,3 +3267,8 @@ msgstr "Minecraft"
 msgctxt "App"
 msgid "Action"
 msgstr "Eylem"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Click here to return to first-run setup"
+msgstr "İlk kuruluma dönmek için buraya tıklayın"

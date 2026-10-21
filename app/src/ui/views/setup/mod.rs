@@ -34,8 +34,10 @@ use std::{
 
 use slint::{ComponentHandle, SharedString, Weak};
 
-use crate::slint_backend::{App, AppConfig, GameState, SetupWizardState};
+use crate::slint_backend::{App, AppConfig, GameState, Navigation, SetupWizardState};
+use crate::ui::services::notifications;
 use instance::{InstanceConfig, InstanceLaunchConfig};
+use shared::notification::{Notice, NoticeKind};
 
 /// Which end of the Mojang manifest a wizard-created instance is built on —
 /// `latest.release` or `latest.snapshot`.
@@ -207,7 +209,7 @@ fn finish(ui: &App, shared: &Rc<RefCell<config::Config>>) {
 /// Marks the wizard done without applying a pending choice: the user gets the
 /// defaults (or whatever storage was already configured), and the picks made in
 /// the skipped session are discarded because nothing was ever written for them.
-fn skip(_ui: &App, shared: &Rc<RefCell<config::Config>>) {
+fn skip(ui: &App, shared: &Rc<RefCell<config::Config>>) {
     {
         let mut config = shared.borrow_mut();
         config.setup_completed = true;
@@ -223,8 +225,33 @@ fn skip(_ui: &App, shared: &Rc<RefCell<config::Config>>) {
     if let Err(error) = config::save_config(&config) {
         log::error!("failed to save config: {error}");
     }
-    // TODO(notification-center): once the notification center exists, raise a
-    // notification here — "you skipped the setup wizard, click to return".
+    notify(ui);
+}
+
+/// Raises the "return to setup" notice when the user leaves the wizard before
+/// completing it.
+///
+/// `finish` marks the config done before it navigates, so a completed wizard
+/// takes the early return. The close button calls `skip`, which marks the
+/// wizard done but calls [`notify`] itself because the user still left without
+/// finishing the steps.
+pub(crate) fn notify_if_abandoned(ui: &App, shared: &Rc<RefCell<config::Config>>) {
+    if shared.borrow().setup_completed {
+        return;
+    }
+    notify(ui);
+}
+
+fn notify(ui: &App) {
+    let weak = ui.as_weak();
+    notifications::send(
+        ui,
+        Notice::new(NoticeKind::SetupSkipped).on_click(move || {
+            if let Some(ui) = weak.upgrade() {
+                ui.global::<Navigation>().invoke_navigate("setup".into());
+            }
+        }),
+    );
 }
 
 /// The overrides the wizard's rows ask for: each row that differs from the
