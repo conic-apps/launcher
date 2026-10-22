@@ -17,11 +17,19 @@ export struct NotificationItem {
 export global NotificationState {
     in-out property <bool> visible: false;
     in-out property <[NotificationItem]> notifications: [];
+    /// The floating previews in the top-right corner. Its rows mirror
+    /// `notifications` until one expires, at which point only the preview goes
+    /// away and the centre keeps the card.
+    in-out property <[NotificationItem]> toasts: [];
     in-out property <int> notification-count: 0;
 
     callback close();
     callback clear();
     callback dismiss(int);
+    /// A preview finished its exit and should leave `toasts` alone.
+    callback expire(int);
+    /// Drops every preview, e.g. when the centre opens.
+    callback expire-all();
     callback activate(int);
 }
 
