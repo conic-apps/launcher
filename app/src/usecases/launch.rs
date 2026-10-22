@@ -13,6 +13,7 @@ use std::sync::Arc;
 
 use account::Account;
 use config::Config;
+use download::progress::DownloadSnapshot;
 use instance::Instance;
 use shared::Sink;
 
@@ -32,6 +33,8 @@ pub enum LaunchDialog {
 pub enum LaunchUpdate {
     /// The `install` crate's progress, passed straight through.
     Install(install::InstallProgress),
+    /// A modpack's files being downloaded into the new instance.
+    Modpack(DownloadSnapshot),
     /// The `launch` crate's progress, passed straight through.
     Launch(launch::LaunchProgress),
     /// The account is being refreshed, before a stage bar is set.

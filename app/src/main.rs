@@ -161,6 +161,7 @@ fn main() {
     // fetches the feeds itself the first time it does.
     ui::overlays::news::setup(&ui);
     let notices = ui::services::notifications::setup(&ui);
+    ui::overlays::dialogs::modpack_import::setup(&ui, notices.clone());
     {
         let weak_ui = ui.as_weak();
         let shared = Rc::clone(&shared);

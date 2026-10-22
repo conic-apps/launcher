@@ -1100,6 +1100,7 @@ dependencies = [
  "java-discovery",
  "launch",
  "log",
+ "modpack",
  "modrinth",
  "multiplayer",
  "music",
@@ -3894,6 +3895,27 @@ dependencies = [
  "libc",
  "wasi",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "modpack"
+version = "0.0.0"
+dependencies = [
+ "config",
+ "curseforge",
+ "download",
+ "futures",
+ "install",
+ "instance",
+ "log",
+ "serde",
+ "serde_json",
+ "shared",
+ "storage",
+ "thiserror 2.0.21",
+ "tokio",
+ "uuid",
+ "zip",
 ]
 
 [[package]]

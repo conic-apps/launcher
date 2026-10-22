@@ -38,6 +38,15 @@ thread_local! {
     /// event-loop closure writes it through here (and persists it).
     static SHARED_CONFIG: RefCell<Option<Rc<RefCell<Config>>>> = const { RefCell::new(None) };
 
+    /// A modpack install queued by the import dialog, taken by `on_start` on the
+    /// next mount of the launch view.
+    ///
+    /// The plan holds the resolved file list and the pack's source, so it must
+    /// survive the dialog closing; it is created on the UI thread and moved into
+    /// the runtime task by `on_start`, which is also on the UI thread.
+    static PENDING_MODPACK: RefCell<Option<(String, modpack::Plan)>> =
+        const { RefCell::new(None) };
+
     /// The one controller, for use on the UI thread.
     ///
     /// It lives in a thread-local rather than in a value `setup` owns because an
@@ -47,6 +56,22 @@ thread_local! {
     /// async task carries only owned values and a `Weak<App>`.
     static CONTROLLER: RefCell<Option<Rc<RefCell<LaunchController>>>> =
         const { RefCell::new(None) };
+}
+
+/// Queues a modpack install for the launch view's next `start`.
+pub(crate) fn queue_modpack_install(id: String, plan: modpack::Plan) {
+    PENDING_MODPACK.with(|slot| *slot.borrow_mut() = Some((id, plan)));
+}
+
+/// Takes the queued install, if any. Called by `on_start` on the UI thread.
+pub(crate) fn take_modpack_install() -> Option<(String, modpack::Plan)> {
+    PENDING_MODPACK.with(|slot| slot.borrow_mut().take())
+}
+
+/// Drops a queued install that never reached `on_start`, or one whose launch
+/// view was left.
+pub(crate) fn clear_modpack_install() {
+    PENDING_MODPACK.with(|slot| *slot.borrow_mut() = None);
 }
 
 /// Named apart from `setup`'s own `controller` binding, which would shadow it.
@@ -86,5 +111,14 @@ impl LaunchController {
             task.abort();
         }
         had_task
+    }
+
+    /// Marks the run finished before its `Finished` update reaches the screen.
+    ///
+    /// The page-change handler cancels whatever is still in `task` and refreshes
+    /// the game list; a finished run must not trigger either a second time, or
+    /// the instance the import just selected would be refreshed away.
+    fn finish(&mut self) {
+        self.task = None;
     }
 }

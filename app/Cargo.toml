@@ -24,6 +24,7 @@ content.workspace = true
 tilemap.workspace = true
 shared.workspace = true
 modrinth.workspace = true
+modpack.workspace = true
 curseforge.workspace = true
 version.workspace = true
 download.workspace = true
