@@ -3274,6 +3274,61 @@ msgid "Click here to return to first-run setup"
 msgstr "여기를 클릭하여 첫 실행 설정으로 돌아가기"
 
 #: ui
+msgctxt "ModpackImport"
+msgid "Some modpack files cannot be downloaded automatically"
+msgstr "일부 모드팩 파일을 자동으로 다운로드할 수 없습니다"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "The pack author disabled third-party downloads for these files. Continue without them, or cancel and download them manually."
+msgstr "팩 작성자가 이 파일들의 제3자 다운로드를 비활성화했습니다. 이 파일 없이 계속하거나 취소하고 직접 다운로드하세요."
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Cancel"
+msgstr "취소"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Install this modpack?"
+msgstr "이 모드팩을 설치할까요?"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Instance name"
+msgstr "인스턴스 이름"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Checking files"
+msgstr "파일 확인 중"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Install"
+msgstr "설치"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Install anyway"
+msgstr "그래도 설치"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Could not check the modpack files"
+msgstr "모드팩 파일을 확인할 수 없습니다"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "The CurseForge API could not be reached. Check your connection, then retry."
+msgstr "CurseForge API에 연결할 수 없습니다. 연결을 확인한 후 다시 시도하세요."
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Retry"
+msgstr "다시 시도"
+
+#: ui
 msgctxt "ContentNotFound"
 msgid "Search failed, please try again"
 msgstr "검색에 실패했습니다. 다시 시도해 주세요"

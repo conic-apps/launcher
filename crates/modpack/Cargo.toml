@@ -1,0 +1,27 @@
+[package]
+name = "modpack"
+description = "CurseForge modpack import"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+config.workspace = true
+storage.workspace = true
+instance.workspace = true
+install.workspace = true
+download.workspace = true
+curseforge.workspace = true
+shared.workspace = true
+
+log.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+futures.workspace = true
+zip.workspace = true
+
+[dev-dependencies]
+uuid.workspace = true

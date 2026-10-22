@@ -3274,6 +3274,61 @@ msgid "Click here to return to first-run setup"
 msgstr "İlk kuruluma dönmek için buraya tıklayın"
 
 #: ui
+msgctxt "ModpackImport"
+msgid "Some modpack files cannot be downloaded automatically"
+msgstr "Bazı mod paketi dosyaları otomatik olarak indirilemiyor"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "The pack author disabled third-party downloads for these files. Continue without them, or cancel and download them manually."
+msgstr "Paket yazarı bu dosyalar için üçüncü taraf indirmelerini devre dışı bıraktı. Bunlar olmadan devam edin veya iptal edip elle indirin."
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Cancel"
+msgstr "İptal"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Install this modpack?"
+msgstr "Bu mod paketi kurulsun mu?"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Instance name"
+msgstr "Örnek adı"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Checking files"
+msgstr "Dosyalar kontrol ediliyor"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Install"
+msgstr "Kur"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Install anyway"
+msgstr "Yine de kur"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Could not check the modpack files"
+msgstr "Mod paketi dosyaları kontrol edilemedi"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "The CurseForge API could not be reached. Check your connection, then retry."
+msgstr "CurseForge API'sine ulaşılamadı. Bağlantınızı kontrol edip yeniden deneyin."
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Retry"
+msgstr "Yeniden dene"
+
+#: ui
 msgctxt "ContentNotFound"
 msgid "Search failed, please try again"
 msgstr "Arama başarısız oldu, lütfen tekrar deneyin"

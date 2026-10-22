@@ -109,6 +109,52 @@ export global Dialogs {
     in-out property <bool> confirm-delete-account-visible: false;
 }
 
+// A dropped CurseForge pack, before it is installed.
+//
+// The prompt appears as soon as the manifest is read and the file list is
+// resolved in the background (`checking`), so the user can set the instance
+// name while the metadata is fetched. If files cannot be downloaded, they are
+// listed and the confirm button means "install anyway".
+export global ModpackImportState {
+    in-out property <bool> visible: false;
+    in-out property <bool> checking: false;
+    /// The file lookup failed; the dialog stays open showing the error and a
+    /// Retry button instead of the Install controls.
+    in-out property <bool> failed: false;
+    in-out property <string> error-message: "";
+    in-out property <string> pack-name: "";
+    in-out property <string> minecraft-version: "";
+    in-out property <bool> has-loader: false;
+    in-out property <string> loader-type: "";
+    in-out property <string> loader-version: "";
+    /// The editable instance name, seeded with the pack name by Rust.
+    in-out property <string> instance-name: "";
+    /// The manifest files that cannot be downloaded, with their reason.
+    in-out property <[string]> files: [];
+
+    callback cancel();
+    callback confirm();
+    callback retry();
+
+    out property <string> install-title: @tr("ModpackImport" => "Install this modpack?");
+    out property <string> instance-name-label: @tr("ModpackImport" => "Instance name");
+    out property <string> checking-text: @tr("ModpackImport" => "Checking files");
+    out property <string> install-text: @tr("ModpackImport" => "Install");
+    out property <string> install-anyway-text: @tr("ModpackImport" => "Install anyway");
+    out property <string> error-title: @tr("ModpackImport" => "Could not check the modpack files");
+    out property <string> error-detail: @tr(
+        "ModpackImport" => "The CurseForge API could not be reached. Check your connection, then retry."
+    );
+    out property <string> retry-text: @tr("ModpackImport" => "Retry");
+    out property <string> warning-title: @tr(
+        "ModpackImport" => "Some modpack files cannot be downloaded automatically"
+    );
+    out property <string> warning-detail: @tr(
+        "ModpackImport" => "The pack author disabled third-party downloads for these files. Continue without them, or cancel and download them manually."
+    );
+    out property <string> cancel-text: @tr("ModpackImport" => "Cancel");
+}
+
 // The "delete instance" dialog.
 //
 // Rust fills the fields below from the instance that was current when the row

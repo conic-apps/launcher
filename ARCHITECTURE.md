@@ -149,6 +149,7 @@ compiles the `.slint` tree and is what catches a missed one.
 | `java-discovery`  | Java discovery/parsing                                                                                              |
 | `launch`          | Game launch with progress reporting                                                                                 |
 | `modrinth`        | Modrinth API client                                                                                                 |
+| `modpack`         | CurseForge modpack import: manifest/file resolution, overrides, instance creation and install orchestration         |
 | `multiplayer`     | Conic Nexus cross-LAN multiplayer                                                                                   |
 | `music`           | Local music files + playback                                                                                        |
 | `news`            | Mojang launcher-content client: the news feed and the Java changelogs                                               |

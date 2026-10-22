@@ -6,4 +6,5 @@
 
 pub(crate) mod account_add;
 pub(crate) mod create_instance;
+pub(crate) mod modpack_import;
 pub(crate) mod multiplayer;

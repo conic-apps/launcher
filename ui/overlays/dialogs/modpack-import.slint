@@ -1,0 +1,248 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { Dialog } from "dialog.slint";
+import { Button } from "../../components/controls/button.slint";
+import { AppIcon } from "../../components/display/app-icon.slint";
+import { Input } from "../../components/controls/input.slint";
+import { Loading } from "../../components/controls/loading.slint";
+import { ScrollView } from "../../components/containers/scroll-view.slint";
+import { ModpackImportState } from "../../globals/dialogs.slint";
+
+// The confirmation before a modpack install.
+//
+// It opens as soon as the manifest is read, while the pack's CurseForge file
+// list is still being resolved (`checking`), so the user can set the instance
+// name in the meantime. Files that cannot be downloaded (the author disabled
+// distribution, the file was deleted, or its name was unsafe) appear in the
+// scrollable list; the confirm button then means "install anyway".
+//
+// Confirming creates the instance and navigates to the launch screen, whose
+// own install panel and cancel button take over (`LaunchState.purpose`).
+export component ModpackImportDialog inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    Dialog {
+        dialog-visible: ModpackImportState.visible;
+        dialog-width: 520px;
+        dialog-height: ModpackImportState.failed
+            ? 400px
+            : (ModpackImportState.files.length > 0 ? 500px : 340px);
+
+        VerticalLayout {
+            width: 100%;
+            height: 100%;
+            padding: 8px;
+            spacing: 12px;
+
+            HorizontalLayout {
+                height: 50px;
+                spacing: 16px;
+                cross-axis-alignment: center;
+
+                AppIcon {
+                    name: "package";
+                    size: 50px;
+                }
+
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 4px;
+
+                    Text {
+                        text: ModpackImportState.install-title;
+                        font-size: 17px;
+                        color: Theme.default-text-color.transparentize(0.1);
+                        wrap: word-wrap;
+                    }
+
+                    Text {
+                        text: ModpackImportState.pack-name;
+                        font-size: 13px;
+                        color: Theme.default-text-color.transparentize(0.35);
+                        wrap: word-wrap;
+                    }
+                }
+            }
+
+            HorizontalLayout {
+                spacing: 16px;
+                alignment: start;
+
+                Text {
+                    text: "Minecraft " + ModpackImportState.minecraft-version;
+                    font-size: 13px;
+                    color: Theme.default-text-color.transparentize(0.25);
+                    vertical-alignment: center;
+                }
+
+                if ModpackImportState.has-loader: Text {
+                    text: ModpackImportState.loader-type + " " + ModpackImportState.loader-version;
+                    font-size: 13px;
+                    color: Theme.default-text-color.transparentize(0.25);
+                    vertical-alignment: center;
+                }
+            }
+
+            Text {
+                text: ModpackImportState.instance-name-label;
+                font-size: 12px;
+                color: Theme.default-text-color.transparentize(0.35);
+            }
+
+            Input {
+                input-width: 0px;
+                horizontal-stretch: 1;
+                value <=> ModpackImportState.instance-name;
+            }
+
+            if ModpackImportState.checking: HorizontalLayout {
+                spacing: 8px;
+                cross-axis-alignment: center;
+
+                Loading {
+                    size: 16px;
+                }
+
+                Text {
+                    text: ModpackImportState.checking-text;
+                    font-size: 12px;
+                    color: Theme.default-text-color.transparentize(0.35);
+                    vertical-alignment: center;
+                }
+            }
+
+            if !ModpackImportState.checking && ModpackImportState.failed: VerticalLayout {
+                vertical-stretch: 1;
+                spacing: 6px;
+
+                Text {
+                    text: ModpackImportState.error-title;
+                    font-size: 13px;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    wrap: word-wrap;
+                }
+
+                Text {
+                    text: ModpackImportState.error-detail;
+                    font-size: 12px;
+                    color: Theme.default-text-color.transparentize(0.35);
+                    wrap: word-wrap;
+                }
+
+                // The API's own message, kept small and bounded: the translated
+                // sentence above says what the user can do about it.
+                Text {
+                    text: ModpackImportState.error-message;
+                    font-size: 11px;
+                    color: Theme.default-text-color.transparentize(0.5);
+                    wrap: word-wrap;
+                    max-lines: 4;
+                    overflow: elide;
+                }
+            }
+
+            if !ModpackImportState.checking && !ModpackImportState.failed && ModpackImportState.files.length > 0: VerticalLayout {
+                vertical-stretch: 1;
+                spacing: 6px;
+
+                Text {
+                    text: ModpackImportState.warning-title;
+                    font-size: 13px;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    wrap: word-wrap;
+                }
+
+                Text {
+                    text: ModpackImportState.warning-detail;
+                    font-size: 12px;
+                    color: Theme.default-text-color.transparentize(0.35);
+                    wrap: word-wrap;
+                }
+
+                Rectangle {
+                    vertical-stretch: 1;
+                    background: Theme.surface-0;
+                    border-radius: 6px;
+
+                    ScrollView {
+                        width: 100%;
+                        height: 100%;
+
+                        VerticalLayout {
+                            padding: 8px;
+                            spacing: 4px;
+                            alignment: start;
+
+                            for file in ModpackImportState.files: Text {
+                                text: file;
+                                font-size: 12px;
+                                color: Theme.default-text-color.transparentize(0.1);
+                                wrap: word-wrap;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Keeps the buttons at the bottom when there is no list to fill the
+            // space. The list above owns the stretch when there is one.
+            if !ModpackImportState.failed && ModpackImportState.files.length == 0: Rectangle {
+                vertical-stretch: 1;
+                background: transparent;
+            }
+
+            HorizontalLayout {
+                width: 100%;
+                cross-axis-alignment: center;
+
+                Button {
+                    horizontal-stretch: 1;
+                    text: ModpackImportState.cancel-text;
+                    text-color: Theme.text-inverse;
+                    button-radius: 4px;
+                    button-background: Theme.blue;
+                    clicked => {
+                        ModpackImportState.cancel();
+                    }
+                }
+
+                // The 8px between the two buttons: both stretch equally, so the
+                // gap is what is left over.
+                Rectangle {
+                    width: 8px;
+                    background: transparent;
+                }
+
+                if ModpackImportState.failed: Button {
+                    horizontal-stretch: 1;
+                    text: ModpackImportState.retry-text;
+                    text-color: Theme.text-inverse;
+                    button-radius: 4px;
+                    button-background: Theme.red;
+                    clicked => {
+                        ModpackImportState.retry();
+                    }
+                }
+
+                if !ModpackImportState.failed: Button {
+                    horizontal-stretch: 1;
+                    text: ModpackImportState.files.length > 0
+                        ? ModpackImportState.install-anyway-text
+                        : ModpackImportState.install-text;
+                    text-color: Theme.text-inverse;
+                    button-radius: 4px;
+                    button-background: Theme.red;
+                    button-enabled: !ModpackImportState.checking;
+                    clicked => {
+                        ModpackImportState.confirm();
+                    }
+                }
+            }
+        }
+    }
+}

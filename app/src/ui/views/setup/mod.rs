@@ -420,7 +420,7 @@ fn create_latest(weak: &Weak<App>, channel: Channel) {
 }
 
 /// Writes the instance with the launch config the wizard uses. No `id`, so the
-/// instance gets a random one.
+/// instance crate derives one from the name.
 async fn create_instance(name: &str, version: &str) -> Result<String, instance::Error> {
     let mut config = InstanceConfig::new(name, version);
     config.launch_config = InstanceLaunchConfig {
