@@ -13,80 +13,317 @@ import {
 
 component NotificationRow inherits Rectangle {
     in property <NotificationItem> item;
+    /// How far the card travels on enter and leave. The centre clips at its
+    /// content padding, so its default keeps the exit visible; the toast sits
+    /// nearer the window edge and has room for a longer throw.
+    in property <length> slide-distance: 24px;
+    /// The floating preview needs a shadow to lift it off the page; the centre
+    /// card sits in a panel of its own and stays flat.
+    in property <bool> floating: false;
+    /// Set by the centre's Clear all; the whole list exits as one stagger.
+    in property <bool> clearing: false;
+    in property <int> clear-index: 0;
+    /// The toast checkmark drops the card instead of sliding it right.
+    in property <bool> fall-on-dismiss: false;
+    /// The centre's cards leave with opacity only; a toast still slides right
+    /// when its five seconds run out.
+    in property <bool> slide-on-exit: true;
+    /// The toast body fades before its action runs.
+    in property <bool> fade-on-body-click: false;
+    /// Read by a toast to pause its deadline while the pointer is on the card.
+    out property <bool> hovered: card-click.has-hover || dismiss-touch.has-hover;
+    /// The card is already leaving; a toast must stop its deadline.
+    out property <bool> closing: root.leaving || root.falling || root.body-fading;
+
     private property <length> dismiss-width: 32px;
+    // `starting` holds the offset for one frame: Slint only advances an animated
+    // property while something reads it, so the renderer has to see the start
+    // values before the enter retargets them to rest.
+    private property <string> phase: "starting";
+    private property <bool> leaving: root.phase == "leaving";
+    private property <length> phase-dx: root.phase == "starting"
+        || (root.phase == "leaving" && root.slide-on-exit)
+        ? root.slide-distance : 0px;
+    private property <float> phase-alpha: root.phase == "shown" ? 1.0 : 0.0;
+    // Clear all keeps the rows in the model while they leave, so they travel
+    // from their own slots instead of collapsing into each other.
+    private property <length> clear-dx: root.clearing && root.slide-on-exit
+        ? root.slide-distance : 0px;
+    private property <float> clear-alpha: root.clearing ? 0.0 : 1.0;
+    // The fall is simulated rather than eased: a real toss needs the vertical
+    // speed to reverse, which no single cubic-bezier can express.
+    private property <bool> falling: false;
+    private property <int> fall-ms: 0;
+    private property <float> fall-t: root.fall-ms / 1000.0;
+    private property <length> fall-dx: root.fall-t * -620px;
+    private property <length> fall-dy: root.fall-t * -110px + root.fall-t * root.fall-t * 2400px;
+    private property <angle> fall-rotation: root.fall-t * -50deg;
+    private property <float> fall-alpha: max(0.0, 1.0 - root.fall-t / 0.45);
+    private property <bool> body-fading: false;
+    private property <float> body-alpha: root.body-fading ? 0.0 : 1.0;
+
+    width: 100%;
     height: 68px;
-    border-radius: 10px;
-    background: root.item.has-action && card-click.pressed ? Theme.surface-2
-        : root.item.has-action && card-click.has-hover ? Theme.surface-1
-        : Theme.surface-0;
-    animate background {
-        duration: 120ms;
-        easing: ease;
+    background: transparent;
+
+    animate phase-dx, phase-alpha {
+        duration: root.leaving ? 200ms : 240ms;
+        easing: root.leaving
+            ? cubic-bezier(0.55, 0, 1, 0.45)
+            : cubic-bezier(0, 0.55, 0.35, 1);
+    }
+    animate clear-dx, clear-alpha {
+        duration: 200ms;
+        delay: root.clear-index * 40ms;
+        easing: cubic-bezier(0.55, 0, 1, 0.45);
+    }
+    animate body-alpha {
+        duration: 160ms;
+        easing: ease-out-quad;
     }
 
-    card-click := TouchArea {
-        width: root.width - root.dismiss-width;
-        enabled: root.item.has-action;
-        clicked => { NotificationState.activate(root.item.id); }
-    }
-
-    Rectangle {
-        x: 0;
-        y: 0;
-        width: 42px;
-        height: 100%;
-        border-top-left-radius: 10px;
-        border-bottom-left-radius: 10px;
-        background: Theme.mantle;
-
-        AppIcon {
-            name: root.item.icon;
-            size: 20px;
-            icon-color: Theme.text;
-            x: (parent.width - self.width) / 2;
-            y: (parent.height - self.height) / 2;
-        }
-    }
-
-    Text {
-        x: 52px;
-        y: 10px;
-        width: root.width - 92px;
-        height: root.height - 20px;
-        text: NotificationText.notification-body(root.item);
-        color: Theme.text;
-        font-size: 12px;
-        wrap: word-wrap;
-        max-lines: 3;
-        overflow: elide;
-        vertical-alignment: center;
-    }
-
-    dismiss-button := Rectangle {
-        x: root.width - root.dismiss-width;
-        y: 0;
-        width: root.dismiss-width;
-        height: 100%;
-        border-top-right-radius: 10px;
-        border-bottom-right-radius: 10px;
-        background: dismiss-touch.pressed ? Theme.surface-2.transparentize(0.6)
-            : dismiss-touch.has-hover ? Theme.surface-1.transparentize(0.6)
-            : Theme.surface-1.transparentize(0.82);
+    // The wrapper's y belongs to the stack; the card moves itself inside it, so
+    // the fall and the reflow do not both animate the same property.
+    card := Rectangle {
+        width: 100%;
+        height: 68px;
+        x: root.phase-dx + root.clear-dx + root.fall-dx;
+        y: root.fall-dy;
+        transform-origin: { x: self.width / 2, y: self.height / 2 };
+        transform-rotation: root.fall-rotation;
+        opacity: root.phase-alpha * root.clear-alpha * root.fall-alpha * root.body-alpha;
+        border-radius: 10px;
+        drop-shadow-color: root.floating ? #00000073 : transparent;
+        drop-shadow-blur: root.floating ? 20px : 0px;
+        drop-shadow-offset-y: root.floating ? 6px : 0px;
+        background: root.item.has-action && card-click.pressed ? Theme.surface-2
+            : root.item.has-action && card-click.has-hover ? Theme.surface-1
+            : Theme.surface-0;
         animate background {
             duration: 120ms;
             easing: ease;
         }
 
-        AppIcon {
-            name: "checkmark-outline";
-            size: 16px;
-            icon-color: Theme.text;
-            x: (parent.width - self.width) / 2;
-            y: (parent.height - self.height) / 2;
+        card-click := TouchArea {
+            width: root.width - root.dismiss-width;
+            // Enabled even without an action: `hovered` above is what pauses a
+            // toast's deadline, and a disabled area never reports hover.
+            enabled: !root.closing;
+            clicked => {
+                if root.fade-on-body-click {
+                    root.start-body-fade();
+                } else {
+                    root.body-clicked();
+                }
+            }
         }
 
-        dismiss-touch := TouchArea {
-            clicked => { NotificationState.dismiss(root.item.id); }
+        Rectangle {
+            x: 0;
+            y: 0;
+            width: 42px;
+            height: 100%;
+            border-top-left-radius: 10px;
+            border-bottom-left-radius: 10px;
+            background: Theme.mantle;
+
+            AppIcon {
+                name: root.item.icon;
+                size: 20px;
+                icon-color: Theme.text;
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+            }
+        }
+
+        Text {
+            x: 52px;
+            y: 10px;
+            width: root.width - 92px;
+            height: root.height - 20px;
+            text: NotificationText.notification-body(root.item);
+            color: Theme.text;
+            font-size: 12px;
+            wrap: word-wrap;
+            max-lines: 3;
+            overflow: elide;
+            vertical-alignment: center;
+        }
+
+        dismiss-button := Rectangle {
+            x: root.width - root.dismiss-width;
+            y: 0;
+            width: root.dismiss-width;
+            height: 100%;
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;
+            background: dismiss-touch.pressed ? Theme.surface-2.transparentize(0.6)
+                : dismiss-touch.has-hover ? Theme.surface-1.transparentize(0.6)
+                : Theme.surface-1.transparentize(0.82);
+            animate background {
+                duration: 120ms;
+                easing: ease;
+            }
+
+            AppIcon {
+                name: "checkmark-outline";
+                size: 16px;
+                icon-color: Theme.text;
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+            }
+
+            dismiss-touch := TouchArea {
+                enabled: !root.closing;
+                clicked => {
+                    root.dismiss-on-finish = true;
+                    if root.fall-on-dismiss {
+                        root.start-fall();
+                    } else {
+                        root.leave();
+                    }
+                }
+            }
+        }
+    }
+
+    /// The exit finished; the owner decides whether the card leaves only its
+    /// preview or the centre as well.
+    callback finished();
+    /// The checkmark asked to dismiss the notification itself, not just its
+    /// preview (a preview expires on its own without touching the centre).
+    callback dismiss-requested();
+    /// The body was clicked; the owner runs the notice's action.
+    callback body-clicked();
+
+    private property <bool> dismiss-on-finish: false;
+
+    public function leave() {
+        if root.phase != "leaving" {
+            root.phase = "leaving";
+        }
+    }
+
+    function start-fall() {
+        if !root.falling {
+            root.fall-ms = 0;
+            root.falling = true;
+        }
+    }
+
+    function start-body-fade() {
+        if !root.body-fading {
+            root.body-fading = true;
+        }
+    }
+
+    enter-timer := Timer {
+        interval: 16ms;
+        running: root.phase == "starting";
+        triggered => { root.phase = "shown"; }
+    }
+
+    leave-timer := Timer {
+        interval: 220ms;
+        running: root.phase == "leaving";
+        triggered => {
+            if root.dismiss-on-finish {
+                root.dismiss-requested();
+            } else {
+                root.finished();
+            }
+        }
+    }
+
+    fall-timer := Timer {
+        interval: 16ms;
+        running: root.falling;
+        triggered => {
+            root.fall-ms += 16;
+            if root.fall-ms >= 450 {
+                root.falling = false;
+                root.dismiss-requested();
+            }
+        }
+    }
+
+    body-fade-timer := Timer {
+        interval: 160ms;
+        running: root.body-fading;
+        triggered => {
+            root.body-fading = false;
+            root.body-clicked();
+        }
+    }
+}
+
+// One floating preview. Only the toast owns the deadline; the centre's copy of
+// the same notice has none.
+component NotificationToast inherits Rectangle {
+    in property <NotificationItem> item;
+    width: 100%;
+    height: 68px;
+    background: transparent;
+
+    private property <int> remaining-ms: 5000;
+
+    card := NotificationRow {
+        item: root.item;
+        slide-distance: 48px;
+        floating: true;
+        fall-on-dismiss: true;
+        fade-on-body-click: true;
+        finished => { NotificationState.expire(root.item.id); }
+        dismiss-requested => { NotificationState.dismiss(root.item.id); }
+        body-clicked => {
+            if root.item.has-action {
+                NotificationState.activate(root.item.id);
+            }
+            NotificationState.expire(root.item.id);
+        }
+    }
+
+    // Stopping the timer while hovered preserves `remaining-ms`, so the deadline
+    // pauses rather than restarting the whole five seconds.
+    expire-timer := Timer {
+        interval: 50ms;
+        running: !card.hovered && !card.closing && root.remaining-ms > 0;
+        triggered => {
+            root.remaining-ms -= 50;
+            if root.remaining-ms <= 0 {
+                card.leave();
+            }
+        }
+    }
+}
+
+/// The floating previews in the window's top-right corner. They mirror the
+/// centre's newest notifications and stack downwards; a preview that expires
+/// leaves the centre untouched.
+export component NotificationToasts inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    private property <length> toast-width: 320px;
+    private property <length> toast-pitch: 76px;
+    private property <length> toast-margin: 16px;
+
+    // Absolute positions, like the centre's stack: a layout child's position
+    // belongs to its layout and would snap when the rows move.
+    toast-stack := Rectangle {
+        x: root.width - root.toast-width - root.toast-margin;
+        y: root.toast-margin;
+        width: root.toast-width;
+        height: max(0px, NotificationState.toasts.length * root.toast-pitch - 8px);
+
+        for item[i] in NotificationState.toasts: NotificationToast {
+            item: item;
+            y: i * root.toast-pitch;
+            animate y {
+                duration: 260ms;
+                easing: cubic-bezier(0.33, 1, 0.68, 1);
+            }
         }
     }
 }
@@ -111,6 +348,9 @@ export component NotificationOverlay inherits Rectangle {
     // so a resize moves the panel with the right edge instead of easing after it.
     private property <length> panel-offset: root.phase == "shown" ? 0px : root.panel-width;
     private property <bool> leaving: root.phase == "leaving";
+    // Clear all keeps the rows mounted while they leave; the timer below drops
+    // them from the model only after the last staggered card has finished.
+    private property <bool> clearing: false;
     animate scrim-alpha {
         duration: 150ms;
         easing: ease-out-quad;
@@ -122,6 +362,9 @@ export component NotificationOverlay inherits Rectangle {
 
     changed open => {
         if root.open {
+            // The centre already lists them; a preview would only cover it and
+            // should not keep its own deadline running behind the panel.
+            NotificationState.expire-all();
             root.phase = "starting";
             start-timer.restart();
         } else if root.phase != "closed" {
@@ -132,6 +375,13 @@ export component NotificationOverlay inherits Rectangle {
     init => {
         if NotificationState.visible { root.phase = "shown"; }
     }
+
+    function start-clear() {
+        if !root.clearing && NotificationState.notifications.length > 0 {
+            root.clearing = true;
+        }
+    }
+
     start-timer := Timer {
         interval: 16ms;
         running: root.phase == "starting";
@@ -142,6 +392,16 @@ export component NotificationOverlay inherits Rectangle {
         interval: 180ms;
         running: root.phase == "leaving";
         triggered => { root.phase = "closed"; }
+    }
+
+    // 40ms per row plus the 200ms exit, with 20ms of margin.
+    clear-timer := Timer {
+        interval: (NotificationState.notifications.length - 1) * 40ms + 220ms;
+        running: root.clearing;
+        triggered => {
+            root.clearing = false;
+            NotificationState.clear();
+        }
     }
 
     TouchArea {
@@ -214,13 +474,43 @@ export component NotificationOverlay inherits Rectangle {
                         }
 
                         clear-all-touch := TouchArea {
-                            clicked => { NotificationState.clear(); }
+                            enabled: !root.clearing;
+                            clicked => { root.start-clear(); }
                         }
                     }
                 }
 
-                for item in NotificationState.notifications: NotificationRow {
-                    item: item;
+                // Fixed-height rows are positioned absolutely so one that
+                // outlives the card above it can glide to its new slot; a layout
+                // would snap it there in one frame.
+                notifications-stack := Rectangle {
+                    height: max(0px, NotificationState.notifications.length * 76px - 8px);
+
+                    for item[i] in NotificationState.notifications: NotificationRow {
+                        item: item;
+                        y: i * 76px;
+                        clearing: root.clearing;
+                        clear-index: i;
+                        slide-on-exit: false;
+                        animate y {
+                            duration: 260ms;
+                            easing: cubic-bezier(0.33, 1, 0.68, 1);
+                        }
+                        // While Clear all runs, the rows must survive until the
+                        // list timer drops them together; an individual exit
+                        // must not pull one out from under the stagger.
+                        finished => {
+                            if !root.clearing {
+                                NotificationState.dismiss(item.id);
+                            }
+                        }
+                        dismiss-requested => { NotificationState.dismiss(item.id); }
+                        body-clicked => {
+                            if item.has-action {
+                                NotificationState.activate(item.id);
+                            }
+                        }
+                    }
                 }
             }
         }

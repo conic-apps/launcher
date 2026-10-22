@@ -15,7 +15,10 @@ import { DialogRoot } from "overlays/dialog-root.slint";
 import { CommandPaletteOverlay } from "overlays/command-palette.slint";
 import { MusicPlayerOverlay } from "overlays/music-player.slint";
 import { NewsRoot } from "overlays/news/news-root.slint";
-import { NotificationOverlay } from "overlays/notifications.slint";
+import {
+    NotificationOverlay,
+    NotificationToasts,
+} from "overlays/notifications.slint";
 import { NotificationState } from "globals/notifications.slint";
 import { NewsState } from "globals/news.slint";
 import { WindowDrag } from "globals/window-drag.slint";
@@ -385,8 +388,16 @@ export component App inherits Window {
                 z: 1100;
             }
 
+            // The floating previews sit above the centre panel but under the
+            // title bar, so the window controls stay reachable.
+            NotificationToasts {
+                y: root.title-bar-height;
+                height: root.height - root.title-bar-height;
+                z: 1150;
+            }
+
             // Mounted outside the page layout so the bar stays above the
-            // notification, news and music layers (z: 1100 and below), while
+            // notification, news and music layers (z: 1150 and below), while
             // still sitting under the command palette and dialogs.
             TitleBar {
                 x: 0;

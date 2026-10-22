@@ -45,6 +45,14 @@
 //! reports the state into the UI, which is what moves the leading controls back
 //! into the corner they occupy on every other platform.
 //!
+//! # Title bar gestures
+//!
+//! The native title bar owns the whole top strip and turns a double-click there
+//! into a zoom before Slint's hit testing sees the press. The custom bar has
+//! controls of its own there and already handles double-clicking through its
+//! `TouchArea`, so [`install_titlebar_guard`] removes AppKit's owner of that
+//! gesture; otherwise a quick double-click on the bell maximised the window.
+//!
 //! # Keeping the fallback honest
 //!
 //! The three metric selectors are private API, so [`install()`] arms a one-shot
@@ -139,6 +147,7 @@ static STYLE_MASK_KEY: u8 = 0;
 /// during `NSWindow` initialisation, so a window created earlier would keep
 /// AppKit's own frame view and never see our metrics.
 pub fn install() {
+    install_titlebar_guard();
     if std::env::var_os("CONIC_FORCE_TRAFFIC_LIGHT_FALLBACK").is_some() {
         log::warn!(
             target: "shell",
@@ -355,6 +364,55 @@ fn as_imp(implementation: *const c_void) -> ffi::IMP {
     Some(unsafe { std::mem::transmute::<*const c_void, unsafe extern "C" fn()>(implementation) })
 }
 
+/// Suppresses the native title bar's double-click zoom.
+///
+/// The custom bar draws its controls over a native title bar that still owns
+/// the top strip. AppKit turns a double-click there into a zoom before Slint's
+/// hit testing ever sees the press, so a quick double-click on the bell
+/// maximised the window even though the bell had handled the clicks. The bar
+/// already gives double-clicking to its own `TouchArea` (fullscreen on macOS),
+/// so the native owner of that gesture is removed here rather than shadowed.
+///
+/// Dragging is not touched: a `WindowMoveArea` starts it through
+/// `performWindowDragWithEvent`, while AppKit's title-bar drag is a separate
+/// gesture with no reliable point to interpose on.
+fn install_titlebar_guard() {
+    // SAFETY: every step goes through the Objective-C runtime on the main
+    // thread, before the window exists. Missing selectors are reported rather
+    // than assumed, since they are private API.
+    unsafe {
+        let window = ffi::objc_getClass(c"NSWindow".as_ptr());
+        if window.is_null() {
+            log::warn!(target: "shell", "titlebar guard: NSWindow is unavailable");
+            return;
+        }
+
+        let zoom = set_method_implementation(
+            window,
+            c"zoom:",
+            suppress_titlebar_zoom as *const () as *const c_void,
+        );
+        let perform_zoom = set_method_implementation(
+            window,
+            c"performZoom:",
+            suppress_titlebar_zoom as *const () as *const c_void,
+        );
+
+        if zoom && perform_zoom {
+            log::debug!(target: "shell", "titlebar guard: native double-click zoom suppressed");
+        } else {
+            log::warn!(
+                target: "shell",
+                "titlebar guard: incomplete (zoom {zoom}, performZoom {perform_zoom}); a \
+                 double-click on the title bar may still maximise the window"
+            );
+        }
+    }
+}
+
+/// `-[NSWindow zoom:]` / `-performZoom:`: the native title bar's double-click.
+unsafe extern "C" fn suppress_titlebar_zoom(_this: Id, _cmd: SelPtr, _sender: Id) {}
+
 /// `-[NSThemeFrame _titlebarHeight]`: how tall the title bar is.
 ///
 /// This is the one that moves the buttons vertically — see
@@ -444,6 +502,24 @@ unsafe fn is_fullscreen(frame: Id) -> bool {
         ]
     };
     style_mask & STYLE_MASK_FULLSCREEN != 0
+}
+
+/// Replaces the implementation of `name` on `cls`.
+///
+/// Returns `false` and leaves the class alone when the selector is missing, so
+/// a renamed private method is visible in the log instead of silently skipped.
+unsafe fn set_method_implementation(
+    cls: *const ffi::objc_class,
+    name: &CStr,
+    implementation: *const c_void,
+) -> bool {
+    let sel = unsafe { ffi::sel_registerName(name.as_ptr()) };
+    let method = unsafe { ffi::class_getInstanceMethod(cls, sel) };
+    let Some(method) = (unsafe { method.as_ref() }) else {
+        return false;
+    };
+    unsafe { ffi::method_setImplementation(method, as_imp(implementation)) };
+    true
 }
 
 /// Looks up a method's implementation, or `None` if the selector is gone.
