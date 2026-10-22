@@ -2,30 +2,26 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The modpack install's progress, mapped onto the launch screen's port.
+//! The app-side modpack install.
 //!
-//! The import itself lives in the `modpack` crate; this is the one place that
-//! knows both the crate's `Progress` and the launch use case's `LaunchUpdate`.
-//! The finished/error update is also the launch screen's: an import ends by
-//! returning to the instance list, not by launching a game.
+//! The import itself lives in the `modpack` crate; this runs it with the
+//! launcher's config. TODO: show the progress in the UI — until then the
+//! crate's progress goes to the log.
 
 use std::sync::Arc;
 
 use config::Config;
+use shared::Sink;
 
-use super::launch::{LaunchSink, LaunchUpdate};
-
-pub(crate) async fn install(id: String, plan: modpack::Plan, config: Config, out: LaunchSink) {
-    let progress_out = out.clone();
-    let sink: modpack::ProgressSink = Arc::new(move |progress| match progress {
-        modpack::Progress::Install(progress) => progress_out(LaunchUpdate::Install(progress)),
-        modpack::Progress::Download(snapshot) => progress_out(LaunchUpdate::Modpack(snapshot)),
+pub(crate) async fn install(
+    id: String,
+    plan: modpack::Plan,
+    config: Config,
+) -> modpack::Result<()> {
+    // TODO: surface these on an install screen instead of the log.
+    let sink: Sink<modpack::Progress> = Arc::new(|progress| match progress {
+        modpack::Progress::Install(progress) => log::info!("modpack install: {progress:?}"),
+        modpack::Progress::Download(snapshot) => log::info!("modpack download: {snapshot:?}"),
     });
-    match modpack::install(id, plan, config, sink).await {
-        Ok(()) => out(LaunchUpdate::Finished {
-            quit_app: false,
-            pause_music: false,
-        }),
-        Err(error) => out(LaunchUpdate::Error(error.to_string())),
-    }
+    modpack::install(id, plan, config, sink).await
 }

@@ -100,18 +100,6 @@ pub(crate) fn install_view(progress: &InstallProgress, loader: &str) -> LaunchVi
     }
 }
 
-/// The view for a modpack's file download. The stage before the total is known
-/// (and the existing-file verification pass) uses the same loading row as the
-/// game download.
-pub(crate) fn modpack_view(snapshot: &DownloadSnapshot) -> LaunchView {
-    LaunchView::download(
-        "download-modpack",
-        "download-modpack-pending",
-        String::new(),
-        snapshot,
-    )
-}
-
 /// The view for a launch event, or `None` for the ones the screen does not show.
 pub(crate) fn launch_view(progress: &LaunchProgress) -> Option<LaunchView> {
     let view = match progress {

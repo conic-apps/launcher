@@ -15,7 +15,7 @@ use std::sync::Arc;
 use config::Config;
 use download::progress::{DownloadSnapshot, DownloadState};
 use install as install_crate;
-use instance::{InstanceConfig, InstanceLaunchConfig, InstanceRuntime, SortBy};
+use instance::{InstanceConfig, InstanceLaunchConfig, InstanceRuntime};
 use storage::LOCATIONS;
 
 use crate::Plan;
@@ -30,9 +30,6 @@ pub enum Progress {
     Download(DownloadSnapshot),
 }
 
-/// The sink an install reports through.
-pub type ProgressSink = shared::Sink<Progress>;
-
 /// Creates the instance for a resolved pack.
 ///
 /// The instance is written before the install starts so the frontend can show
@@ -46,7 +43,10 @@ pub async fn create_instance(plan: &Plan, name: &str) -> Result<String> {
     } else {
         name
     };
-    let id = unique_id(name).await?;
+    // The id is chosen first so a failed write can remove the directory again.
+    let id = instance::unique_id(name)
+        .await
+        .map_err(|error| Error::Instance(format!("could not choose an instance id: {error}")))?;
     let instance_config = InstanceConfig {
         name: name.to_string(),
         runtime: InstanceRuntime {
@@ -70,7 +70,12 @@ pub async fn create_instance(plan: &Plan, name: &str) -> Result<String> {
 }
 
 /// Installs a created instance's game, loader, files and overrides.
-pub async fn install(id: String, plan: Plan, config: Config, sink: ProgressSink) -> Result<()> {
+pub async fn install(
+    id: String,
+    plan: Plan,
+    config: Config,
+    sink: shared::Sink<Progress>,
+) -> Result<()> {
     let Some(instance) = instance::get_instance_by_id(&id).await else {
         return Err(Error::MissingInstance);
     };
@@ -129,68 +134,6 @@ pub async fn install(id: String, plan: Plan, config: Config, sink: ProgressSink)
     Ok(())
 }
 
-/// The directory name an instance called `name` can be stored under.
-fn sanitize_id(name: &str) -> String {
-    const RESERVED: [&str; 22] = [
-        "con", "prn", "aux", "nul", "com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8",
-        "com9", "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9",
-    ];
-
-    let cleaned: String = name
-        .trim()
-        .chars()
-        .map(|character| {
-            if character.is_control()
-                || matches!(
-                    character,
-                    '<' | '>' | ':' | '"' | '/' | '\\' | '|' | '?' | '*'
-                )
-            {
-                '_'
-            } else {
-                character
-            }
-        })
-        .collect();
-    let cleaned: String = cleaned.chars().take(80).collect();
-    let cleaned = cleaned.trim_end_matches(['.', ' ']).trim();
-    if cleaned.is_empty() {
-        return "Instance".to_string();
-    }
-    let stem = cleaned
-        .split('.')
-        .next()
-        .unwrap_or_default()
-        .to_ascii_lowercase();
-    if RESERVED.contains(&stem.as_str()) {
-        format!("_{cleaned}")
-    } else {
-        cleaned.to_string()
-    }
-}
-
-/// A [`sanitize_id`] result that no existing instance already uses.
-async fn unique_id(name: &str) -> Result<String> {
-    let base = sanitize_id(name);
-    let instances = instance::list_instances(SortBy::Name)
-        .await
-        .map_err(|error| Error::Instance(format!("could not list instances: {error}")))?;
-    let mut suffix = 0;
-    loop {
-        let candidate = if suffix == 0 {
-            base.clone()
-        } else {
-            format!("{base} {suffix}")
-        };
-        if !instances.iter().any(|instance| instance.id == candidate)
-            && !LOCATIONS.instances.get_instance_root(&candidate).exists()
-        {
-            return Ok(candidate);
-        }
-        suffix += 1;
-    }
-}
-
 /// Removes `.install.lock` when an install is dropped before it finishes.
 struct InstallLockGuard {
     id: String,
@@ -212,18 +155,5 @@ impl Drop for InstallLockGuard {
         tokio::spawn(async move {
             let _ = instance::remove_install_lock(&id).await;
         });
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::sanitize_id;
-
-    #[test]
-    fn sanitizes_instance_ids() {
-        assert_eq!(sanitize_id("DUEL OF THE END"), "DUEL OF THE END");
-        assert_eq!(sanitize_id("a/b:c"), "a_b_c");
-        assert_eq!(sanitize_id("con"), "_con");
-        assert_eq!(sanitize_id("   "), "Instance");
     }
 }

@@ -24,7 +24,7 @@ mod install;
 mod overrides;
 
 pub use error::{Error, Result};
-pub use install::{Progress, ProgressSink, create_instance, install};
+pub use install::{Progress, create_instance, install};
 
 use std::path::Path;
 
@@ -34,35 +34,91 @@ use instance::ModLoaderType;
 #[derive(Clone)]
 pub struct Inspection {
     /// The pack's display name, which seeds the instance name.
-    pub name: String,
-    pub minecraft: String,
-    pub loader_type: Option<ModLoaderType>,
-    pub loader_version: Option<String>,
-    pub(crate) format: format::FormatInspection,
+    name: String,
+    minecraft: String,
+    loader_type: Option<ModLoaderType>,
+    loader_version: Option<String>,
+    format: format::FormatInspection,
+}
+
+impl Inspection {
+    /// The pack's display name.
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// The Minecraft version the pack pins.
+    pub fn minecraft(&self) -> &str {
+        &self.minecraft
+    }
+
+    /// The loader the pack pins, if any.
+    pub fn loader_type(&self) -> Option<&ModLoaderType> {
+        self.loader_type.as_ref()
+    }
+
+    /// The loader version the pack pins, if any.
+    pub fn loader_version(&self) -> Option<&str> {
+        self.loader_version.as_deref()
+    }
 }
 
 /// A fully resolved pack, ready to install.
 pub struct Plan {
     /// The pack's display name, which seeds the instance id.
-    pub name: String,
+    name: String,
     /// The files that could not be resolved, in manifest order.
-    pub unavailable: Vec<UnavailableFile>,
-    pub(crate) minecraft: String,
-    pub(crate) loader_type: Option<ModLoaderType>,
-    pub(crate) loader_version: Option<String>,
-    pub(crate) files: Vec<ResolvedFile>,
-    pub(crate) overrides: Vec<overrides::Overrides>,
+    unavailable: Vec<UnavailableFile>,
+    minecraft: String,
+    loader_type: Option<ModLoaderType>,
+    loader_version: Option<String>,
+    files: Vec<ResolvedFile>,
+    overrides: Vec<overrides::Overrides>,
+}
+
+impl Plan {
+    /// The files that could not be resolved, in manifest order.
+    pub fn unavailable(&self) -> &[UnavailableFile] {
+        &self.unavailable
+    }
 }
 
 /// A manifest file that could not be turned into a download.
 #[derive(Debug, Clone)]
 pub struct UnavailableFile {
     /// The file name when the API knew it, otherwise a `project/file` label.
-    pub file_name: String,
-    pub project_id: i64,
-    pub file_id: i64,
-    pub required: bool,
-    pub reason: String,
+    file_name: String,
+    project_id: i64,
+    file_id: i64,
+    required: bool,
+    reason: String,
+}
+
+impl UnavailableFile {
+    /// The file name when the API knew it, otherwise a `project/file` label.
+    pub fn file_name(&self) -> &str {
+        &self.file_name
+    }
+
+    /// The CurseForge project id.
+    pub fn project_id(&self) -> i64 {
+        self.project_id
+    }
+
+    /// The CurseForge file id.
+    pub fn file_id(&self) -> i64 {
+        self.file_id
+    }
+
+    /// Whether the pack requires this file.
+    pub fn required(&self) -> bool {
+        self.required
+    }
+
+    /// Why the file could not be resolved.
+    pub fn reason(&self) -> &str {
+        &self.reason
+    }
 }
 
 /// One resolved download, with the file name the source chose.

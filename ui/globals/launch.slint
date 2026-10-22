@@ -16,9 +16,6 @@ export global LaunchState {
     in-out property <bool> has-loader: false;
     in-out property <string> loader-type: "";
     in-out property <string> loader-version: "";
-    /// "launch" (a normal first launch or launch) or "import" (a modpack's
-    /// game files being installed, with no account check and no launch).
-    in-out property <string> purpose: "launch";
 
     in-out property <image> account-avatar;
     /// "Microsoft" | "Yggdrasil" | "Offline" | "" (the avatar ring colour and
@@ -30,8 +27,7 @@ export global LaunchState {
 
     in-out property <bool> error: false;
     /// The progress line's kind: "preparing", "refresh-account",
-    /// "prepare-download", "verify-files", "download-files", "download-modpack",
-    /// "download-modpack-pending", "check-java",
+    /// "prepare-download", "verify-files", "download-files", "check-java",
     /// "download-java", "install-mod-loader", "download-installer",
     /// "download-installer-progress", "download-deps", "download-deps-progress",
     /// "run-installer", "preparing-launch", "generate-script", "wait-for-launch",
@@ -66,12 +62,6 @@ export global LaunchState {
         }
         if self.progress-kind == "download-files" {
             return @tr("LaunchView" => "Downloading game files {} / {}", self.progress-current, self.progress-total);
-        }
-        if self.progress-kind == "download-modpack" {
-            return @tr("LaunchView" => "Downloading modpack files {} / {}", self.progress-current, self.progress-total);
-        }
-        if self.progress-kind == "download-modpack-pending" {
-            return @tr("LaunchView" => "Downloading modpack files");
         }
         if self.progress-kind == "check-java" {
             return @tr("LaunchView" => "Checking Java runtime");

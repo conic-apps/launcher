@@ -18,7 +18,7 @@ use slint::{ComponentHandle, Image, ModelRc, SharedString, VecModel, Weak};
 
 use crate::slint_backend::{App, CreateInstanceState, Dialogs, GameState, MinecraftVersionItem};
 use crate::ui::services::app_config;
-use instance::{InstanceConfig, InstanceLaunchConfig, InstanceRuntime, ModLoaderType, SortBy};
+use instance::{InstanceConfig, InstanceLaunchConfig, InstanceRuntime, ModLoaderType};
 
 thread_local! {
     /// The whole Minecraft manifest. Only the rows of the selected category are
@@ -380,8 +380,8 @@ fn neoforge_groups(version: &str, count: usize) -> Option<Vec<&str>> {
 
 /// Writes the instance and copies the background over.
 ///
-/// A name that is already taken gets a " 1", " 2", … suffix, compared against
-/// the instance *ids*.
+/// The instance id comes from `instance::create_instance`, which derives it from
+/// the name and suffixes one already taken.
 async fn create_instance(
     name: &str,
     minecraft: &str,
@@ -389,22 +389,6 @@ async fn create_instance(
     loader_version: &str,
     background: &str,
 ) -> Result<String, instance::Error> {
-    let instances = instance::list_instances(SortBy::Name)
-        .await
-        .unwrap_or_default();
-    let mut suffix = 0;
-    let id = loop {
-        let candidate = if suffix == 0 {
-            name.to_string()
-        } else {
-            format!("{name} {suffix}")
-        };
-        if !instances.iter().any(|instance| instance.id == candidate) {
-            break candidate;
-        }
-        suffix += 1;
-    };
-
     let modded = loader_type != "None";
     let config = InstanceConfig {
         name: name.to_string(),
@@ -423,7 +407,7 @@ async fn create_instance(
         },
         ..Default::default()
     };
-    instance::create_instance(config, Some(&id)).await?;
+    let id = instance::create_instance(config, None).await?;
     if !background.is_empty() {
         instance::add_background_image(Path::new(background), &id).await?;
     }

@@ -22,7 +22,6 @@ use log::{info, warn};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use storage::LOCATIONS;
-use uuid::Uuid;
 
 mod config;
 mod error;
@@ -32,10 +31,17 @@ mod error;
 pub use crate::config::*;
 pub use crate::error::*;
 
+/// Writes a new instance's `instance.toml`.
+///
+/// `id` is the directory name under the instances root. `None` derives one from
+/// the instance name with [`sanitize_id`], suffixing `_1`, `_2`, … until no
+/// directory uses it.
 pub async fn create_instance(config: InstanceConfig, id: Option<&str>) -> Result<String> {
-    let random_uuid = Uuid::new_v4().to_string();
-    let id = id.unwrap_or(&random_uuid);
-    let instance_root = LOCATIONS.instances.get_instance_root(id);
+    let id = match id {
+        Some(id) => id.to_string(),
+        None => unique_id(&config.name).await?,
+    };
+    let instance_root = LOCATIONS.instances.get_instance_root(&id);
     let config_file_path = instance_root.join("instance.toml");
     if let Some(parent) = config_file_path.parent() {
         tokio::fs::create_dir_all(parent).await?
@@ -45,7 +51,75 @@ pub async fn create_instance(config: InstanceConfig, id: Option<&str>) -> Result
     // off (the lock files, the logs, `statistics.json`), and the name is the only
     // one a user can recognise. The three CRUD lines are consistent on purpose.
     info!("Created instance '{}' ({id})", config.name);
-    Ok(id.to_string())
+    Ok(id)
+}
+
+/// The directory name an instance called `name` can be stored under.
+///
+/// The result is safe on every platform the launcher ships on: control
+/// characters and the Windows-reserved punctuation become `_`, trailing dots and
+/// spaces are dropped, the length is capped, and a reserved device name is
+/// prefixed so it cannot name a device instead of a directory.
+pub fn sanitize_id(name: &str) -> String {
+    const RESERVED: [&str; 22] = [
+        "con", "prn", "aux", "nul", "com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8",
+        "com9", "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9",
+    ];
+
+    let cleaned: String = name
+        .trim()
+        .chars()
+        .map(|character| {
+            if character.is_control()
+                || matches!(
+                    character,
+                    '<' | '>' | ':' | '"' | '/' | '\\' | '|' | '?' | '*'
+                )
+            {
+                '_'
+            } else {
+                character
+            }
+        })
+        .collect();
+    let cleaned: String = cleaned.chars().take(80).collect();
+    let cleaned = cleaned.trim_end_matches(['.', ' ']).trim();
+    if cleaned.is_empty() {
+        return "Instance".to_string();
+    }
+    let stem = cleaned
+        .split('.')
+        .next()
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+    if RESERVED.contains(&stem.as_str()) {
+        format!("_{cleaned}")
+    } else {
+        cleaned.to_string()
+    }
+}
+
+/// A [`sanitize_id`] result that no existing instance directory already uses.
+///
+/// The first collision takes `_1`, then `_2`, and so on.
+pub async fn unique_id(name: &str) -> Result<String> {
+    let base = sanitize_id(name);
+    let mut suffix = 0;
+    loop {
+        let candidate = candidate_id(&base, suffix);
+        if !tokio::fs::try_exists(LOCATIONS.instances.get_instance_root(&candidate)).await? {
+            return Ok(candidate);
+        }
+        suffix += 1;
+    }
+}
+
+fn candidate_id(base: &str, suffix: u32) -> String {
+    if suffix == 0 {
+        base.to_string()
+    } else {
+        format!("{base}_{suffix}")
+    }
 }
 
 #[derive(Clone, Copy, Deserialize)]
@@ -675,6 +749,21 @@ fn get_launch_script_timestamp(instance_id: &str) -> Option<u64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sanitizes_instance_ids() {
+        assert_eq!(sanitize_id("DUEL OF THE END"), "DUEL OF THE END");
+        assert_eq!(sanitize_id("a/b:c"), "a_b_c");
+        assert_eq!(sanitize_id("con"), "_con");
+        assert_eq!(sanitize_id("   "), "Instance");
+    }
+
+    #[test]
+    fn unique_ids_suffix_a_taken_name() {
+        assert_eq!(candidate_id("1.20.1", 0), "1.20.1");
+        assert_eq!(candidate_id("1.20.1", 1), "1.20.1_1");
+        assert_eq!(candidate_id("1.20.1", 2), "1.20.1_2");
+    }
 
     fn order(a: &str, b: &str) -> Ordering {
         compare_minecraft_versions(a, b)

@@ -7,9 +7,11 @@
 //! Dropping a pack's `.zip` or extracted folder on the window opens the
 //! confirmation dialog: it shows the pack's name, Minecraft version and loader,
 //! lets the user name the instance, and resolves the manifest's CurseForge file
-//! list in the background. Confirming creates the instance and navigates to the
-//! launch screen, which installs the game, the loader and the mods through its
-//! own progress panel and cancel button (`LaunchState.purpose == "import"`).
+//! list in the background. Confirming creates the instance and installs its
+//! game, loader, files and overrides in the background.
+//!
+//! TODO: show the install's progress in the UI. Until that exists the progress
+//! is written to the log only.
 //!
 //! A failed file lookup keeps the dialog open with the error and a Retry button:
 //! the drop already named the pack and the user may have typed an instance name,
@@ -18,6 +20,7 @@
 //! The OS file drop only reaches Rust through `window::on_window_event`, so the
 //! filter is registered here; the actual work stays on the tokio runtime.
 
+use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
@@ -25,13 +28,13 @@ use std::sync::{Arc, Mutex};
 use shared::notification::{Notice, NoticeKind, NoticeSink};
 use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
 
-use crate::slint_backend::{App, LaunchState, ModpackImportState, Navigation};
+use crate::slint_backend::{App, GameState, ModpackImportState, Navigation};
 use crate::support::runtime;
 use crate::ui::services::report;
 
-pub(crate) fn setup(ui: &App, notices: NoticeSink) {
-    // One import at a time, from the drop until the launch screen is entered.
-    // A drop on the launch page is rejected separately: an install is already
+pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: NoticeSink) {
+    // One import at a time, from the drop until its install finishes. A drop on
+    // the launch page is rejected separately: a launch or install is already
     // running there.
     let busy = Arc::new(AtomicBool::new(false));
     let pending: Arc<Mutex<Option<modpack::Plan>>> = Arc::new(Mutex::new(None));
@@ -105,6 +108,7 @@ pub(crate) fn setup(ui: &App, notices: NoticeSink) {
             state.set_checking(false);
             state.set_visible(false);
 
+            let config = config.borrow().clone();
             let busy_task = Arc::clone(&busy);
             let notices = notices.clone();
             let weak = weak.clone();
@@ -112,23 +116,35 @@ pub(crate) fn setup(ui: &App, notices: NoticeSink) {
                 match modpack::create_instance(&plan, &name).await {
                     Ok(id) => {
                         log::info!("modpack instance {id} created; starting the install");
-                        let busy = Arc::clone(&busy_task);
+                        let created_id = id.clone();
                         report::report(&weak, move |ui| {
-                            ui.global::<LaunchState>().set_purpose("import".into());
-                            crate::ui::views::launch::queue_modpack_install(id, plan);
-                            ui.global::<Navigation>().invoke_navigate("launch".into());
-                            // Only now is the launch page current; clearing this
-                            // earlier would let a drop slip in before the view
-                            // that owns the install has taken the plan.
-                            busy.store(false, Ordering::SeqCst);
+                            ui.global::<GameState>()
+                                .invoke_refresh_selecting(created_id.into());
+                        });
+                        let result =
+                            crate::usecases::modpack::install(id.clone(), plan, config).await;
+                        match result {
+                            Ok(()) => {
+                                log::info!("modpack install into {id} finished");
+                                notices(Notice::new(NoticeKind::TaskFinished));
+                            }
+                            Err(error) => {
+                                log::error!("modpack install into {id} failed: {error}");
+                                notices(
+                                    Notice::new(NoticeKind::TaskFailed).with_arg(error.to_string()),
+                                );
+                            }
+                        }
+                        report::report(&weak, |ui| {
+                            ui.global::<GameState>().invoke_refresh();
                         });
                     }
                     Err(error) => {
                         log::error!("could not create the modpack instance: {error}");
                         notices(Notice::new(NoticeKind::TaskFailed).with_arg(error.to_string()));
-                        busy_task.store(false, Ordering::SeqCst);
                     }
                 }
+                busy_task.store(false, Ordering::SeqCst);
             });
         });
     }
@@ -219,19 +235,18 @@ pub(crate) fn setup(ui: &App, notices: NoticeSink) {
             }
 
             let state = ui.global::<ModpackImportState>();
-            state.set_pack_name(inspection.name.clone().into());
-            state.set_minecraft_version(inspection.minecraft.clone().into());
-            state.set_has_loader(inspection.loader_type.is_some());
+            state.set_pack_name(inspection.name().into());
+            state.set_minecraft_version(inspection.minecraft().into());
+            state.set_has_loader(inspection.loader_type().is_some());
             state.set_loader_type(
                 inspection
-                    .loader_type
-                    .as_ref()
+                    .loader_type()
                     .map(std::string::ToString::to_string)
                     .unwrap_or_default()
                     .into(),
             );
-            state.set_loader_version(inspection.loader_version.clone().unwrap_or_default().into());
-            state.set_instance_name(inspection.name.clone().into());
+            state.set_loader_version(inspection.loader_version().unwrap_or_default().into());
+            state.set_instance_name(inspection.name().into());
             state.set_files(ModelRc::from(Rc::new(VecModel::from(
                 Vec::<SharedString>::new(),
             ))));
@@ -273,17 +288,20 @@ fn start_resolve(
                     return;
                 }
                 let files: Vec<SharedString> = plan
-                    .unavailable
+                    .unavailable()
                     .iter()
                     .map(|file| {
-                        let scope = if file.required {
+                        let scope = if file.required() {
                             "required"
                         } else {
                             "optional"
                         };
                         format!(
                             "{} — project {}, file {} ({scope}): {}",
-                            file.file_name, file.project_id, file.file_id, file.reason
+                            file.file_name(),
+                            file.project_id(),
+                            file.file_id(),
+                            file.reason()
                         )
                         .into()
                     })

@@ -3314,21 +3314,6 @@ msgid "Install anyway"
 msgstr "Yine de kur"
 
 #: ui
-msgctxt "LaunchView"
-msgid "Cancel install"
-msgstr "Kurulumu iptal et"
-
-#: ui
-msgctxt "LaunchView"
-msgid "Downloading modpack files"
-msgstr "Mod paketi dosyaları indiriliyor"
-
-#: ui
-msgctxt "LaunchView"
-msgid "Downloading modpack files {} / {}"
-msgstr "Mod paketi dosyaları indiriliyor {} / {}"
-
-#: ui
 msgctxt "ModpackImport"
 msgid "Could not check the modpack files"
 msgstr "Mod paketi dosyaları kontrol edilemedi"

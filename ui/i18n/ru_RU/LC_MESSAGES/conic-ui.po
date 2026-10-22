@@ -3314,21 +3314,6 @@ msgid "Install anyway"
 msgstr "Всё равно установить"
 
 #: ui
-msgctxt "LaunchView"
-msgid "Cancel install"
-msgstr "Отменить установку"
-
-#: ui
-msgctxt "LaunchView"
-msgid "Downloading modpack files"
-msgstr "Загрузка файлов модпака"
-
-#: ui
-msgctxt "LaunchView"
-msgid "Downloading modpack files {} / {}"
-msgstr "Загрузка файлов модпака {} / {}"
-
-#: ui
 msgctxt "ModpackImport"
 msgid "Could not check the modpack files"
 msgstr "Не удалось проверить файлы модпака"

@@ -3314,21 +3314,6 @@ msgid "Install anyway"
 msgstr "仍然安裝"
 
 #: ui
-msgctxt "LaunchView"
-msgid "Cancel install"
-msgstr "取消安裝"
-
-#: ui
-msgctxt "LaunchView"
-msgid "Downloading modpack files"
-msgstr "正在下載整合包檔案"
-
-#: ui
-msgctxt "LaunchView"
-msgid "Downloading modpack files {} / {}"
-msgstr "正在下載整合包檔案 {} / {}"
-
-#: ui
 msgctxt "ModpackImport"
 msgid "Could not check the modpack files"
 msgstr "無法檢查整合包檔案"

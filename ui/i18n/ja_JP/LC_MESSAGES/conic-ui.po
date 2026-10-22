@@ -3314,21 +3314,6 @@ msgid "Install anyway"
 msgstr "それでもインストール"
 
 #: ui
-msgctxt "LaunchView"
-msgid "Cancel install"
-msgstr "インストールをキャンセル"
-
-#: ui
-msgctxt "LaunchView"
-msgid "Downloading modpack files"
-msgstr "MODパックのファイルをダウンロード中"
-
-#: ui
-msgctxt "LaunchView"
-msgid "Downloading modpack files {} / {}"
-msgstr "MODパックのファイルをダウンロード中 {} / {}"
-
-#: ui
 msgctxt "ModpackImport"
 msgid "Could not check the modpack files"
 msgstr "MODパックのファイルを確認できませんでした"
