@@ -5,7 +5,7 @@
 //! The Modrinth API client.
 //!
 //! The requests depend on three base URLs (the MCIM mirror for everything the
-//! mirror serves, the official API for the one endpoint it does not), the
+//! mirror serves, the official API when the mirror does not answer), the
 //! `shared` HTTP client and URL builder, and response handling in which
 //! `get_versions_from_hashes` treats a client error as "no hash matched".
 //!
@@ -36,18 +36,26 @@ const OFFICIAL_BASE_URL: &str = "https://api.modrinth.com";
 // See https://github.com/mcmod-info-mirror/translate-mod-summary
 const TRANSLATE_BASE_URL: &str = "https://mod.mcimirror.top/translate";
 
+fn build_url(base_url: &str, segments: &[&str]) -> Result<Url> {
+    Ok(Url::parse(base_url)?.append_path(segments.iter().copied())?)
+}
+
 /// Sends `request` and decodes the answer, recording what happened along the way.
 ///
-/// Every entry point in this crate is one request and one decode, and the three
-/// ways that can go wrong are otherwise indistinguishable from the caller:
-/// `send()` and `.json()` both yield a `reqwest::Error`, neither carries the URL,
-/// and a non-2xx is not an error at all unless somebody looks for it — a mirror
-/// that answers `429` and a mirror that answers an HTML error page reach the
-/// caller as the same variant. The status is the one fact that tells them apart,
-/// so it is recorded here rather than reconstructed from a message.
+/// Every entry point in this crate is one request and one decode, and the ways
+/// that can go wrong are otherwise indistinguishable from the caller: `send()`
+/// and `.json()` both yield a `reqwest::Error` and neither carries the URL, and
+/// a non-2xx is not an error at all unless somebody looks for it. A mirror that
+/// answers `429` and a mirror that answers an HTML error page would reach the
+/// caller as the same variant, so the status is recorded here.
 ///
 /// `url` is passed separately because `RequestBuilder` cannot be asked what it is
 /// about to send, and the URL is the one thing every one of these lines needs.
+///
+/// Any non-2xx is returned as an error rather than decoded. That is what lets
+/// [`get_json_with_fallback`] ask the official API when the mirror answers with
+/// an error page, instead of treating the page as a successful (but empty)
+/// result.
 ///
 /// A successful decode is not logged. The callers that care about the *shape* of
 /// the answer (a hit count, a match count) log that themselves.
@@ -58,7 +66,7 @@ async fn get_json(url: &Url, request: reqwest::RequestBuilder) -> Result<Value> 
         Error::Network(error)
     })?;
     let status = response.status();
-    if !status.is_success() {
+    if let Err(error) = response.error_for_status_ref() {
         // `429` gets its own line because it is the one answer that says "come
         // back later" rather than "this is wrong" — and `content`'s mod cache
         // holds whatever this call returns for a day.
@@ -71,6 +79,7 @@ async fn get_json(url: &Url, request: reqwest::RequestBuilder) -> Result<Value> 
             ),
             None => warn!("{url} answered {status}"),
         }
+        return Err(Error::Network(error));
     }
     response.json().await.map_err(|error| {
         warn!("{url} answered {status} but the body did not parse as JSON: {error}");
@@ -78,13 +87,45 @@ async fn get_json(url: &Url, request: reqwest::RequestBuilder) -> Result<Value> 
     })
 }
 
+/// Sends one request to `base_url` and decodes it.
+async fn get_json_at<F>(base_url: &str, segments: &[&str], build: F) -> Result<Value>
+where
+    F: Fn(&Url) -> reqwest::RequestBuilder,
+{
+    let url = build_url(base_url, segments)?;
+    get_json(&url, build(&url)).await
+}
+
+/// Queries the MCIM mirror first and the official API when the mirror fails.
+///
+/// The mirror is a cache, not the source of truth, so a transport error, a
+/// non-2xx answer or an undecodable body is a reason to ask the official API
+/// rather than to report the failure. A successful answer is used as-is, even
+/// when it is empty: an empty result is a legitimate answer to a search.
+async fn get_json_with_fallback<F>(segments: &[&str], build: F) -> Result<Value>
+where
+    F: Fn(&Url) -> reqwest::RequestBuilder,
+{
+    match get_json_at(BASE_URL, segments, &build).await {
+        Ok(value) => Ok(value),
+        Err(error) => {
+            warn!("the Modrinth mirror did not answer ({error}); asking the official API");
+            get_json_at(OFFICIAL_BASE_URL, segments, build).await
+        }
+    }
+}
+
 /// Fetch the translated descriptions of the given Modrinth projects. Projects
 /// without a translation are simply absent from the response.
+///
+/// The translation service has no official counterpart, so this endpoint never
+/// falls back.
 pub async fn get_project_translations(project_ids: &[String]) -> Result<Value> {
-    let url = Url::parse(TRANSLATE_BASE_URL)?.append_path(["modrinth"])?;
     let body = serde_json::json!({ "project_ids": project_ids });
-    let request = HTTP_CLIENT.post(url.clone()).json(&body);
-    get_json(&url, request).await
+    get_json_at(TRANSLATE_BASE_URL, &["modrinth"], |url| {
+        HTTP_CLIENT.post(url.clone()).json(&body)
+    })
+    .await
 }
 
 #[derive(Serialize, Deserialize)]
@@ -97,9 +138,10 @@ pub struct SearchParameters {
 }
 
 pub async fn search_projects(params: &SearchParameters) -> Result<Value> {
-    let url = Url::parse(BASE_URL)?.append_path(["v2", "search"])?;
-    let request = HTTP_CLIENT.get(url.clone()).query(params);
-    let value = get_json(&url, request).await?;
+    let value = get_json_with_fallback(&["v2", "search"], |url| {
+        HTTP_CLIENT.get(url.clone()).query(params)
+    })
+    .await?;
     // The hit count is the only useful success signal a search has: an empty
     // result and a response that never carried a `hits` array look the same to
     // the caller, and the panel can only say "nothing found".
@@ -116,15 +158,17 @@ pub async fn search_projects(params: &SearchParameters) -> Result<Value> {
 }
 
 pub async fn get_project(id_or_slug: &str) -> Result<Value> {
-    let url = Url::parse(BASE_URL)?.append_path(["v2", "project", id_or_slug])?;
-    let request = HTTP_CLIENT.get(url.clone());
-    get_json(&url, request).await
+    get_json_with_fallback(&["v2", "project", id_or_slug], |url| {
+        HTTP_CLIENT.get(url.clone())
+    })
+    .await
 }
 
 pub async fn get_all_dependencies(id: &str) -> Result<Value> {
-    let url = Url::parse(BASE_URL)?.append_path(["v2", "project", id, "dependencies"])?;
-    let request = HTTP_CLIENT.get(url.clone());
-    get_json(&url, request).await
+    get_json_with_fallback(&["v2", "project", id, "dependencies"], |url| {
+        HTTP_CLIENT.get(url.clone())
+    })
+    .await
 }
 
 #[derive(Serialize, Deserialize)]
@@ -139,9 +183,10 @@ pub async fn list_project_versions(
     id_or_slug: &str,
     params: &ListProjectVersionsParams,
 ) -> Result<Value> {
-    let url = Url::parse(BASE_URL)?.append_path(["v2", "project", id_or_slug, "version"])?;
-    let request = HTTP_CLIENT.get(url.clone()).query(params);
-    get_json(&url, request).await
+    get_json_with_fallback(&["v2", "project", id_or_slug, "version"], |url| {
+        HTTP_CLIENT.get(url.clone()).query(params)
+    })
+    .await
 }
 
 /// Look up the versions matching the given file hashes.
@@ -151,34 +196,32 @@ pub async fn list_project_versions(
 /// The response maps each requested hash to its version. Hashes that did not
 /// match are simply absent; when none of the hashes match the API answers with
 /// a client error, which is treated as an empty result here.
+///
+/// The mirror is asked first and the official API second, because the caller
+/// writes the empty map into `content`'s identity cache with a 24-hour
+/// lifetime: a mirror outage must not pin "these mods are unknown" for a day.
 pub async fn get_versions_from_hashes(
     hashes: &[String],
     algorithm: &str,
 ) -> Result<HashMap<String, Value>> {
-    let url = Url::parse(BASE_URL)?.append_path(["v2", "version_files"])?;
     let body = serde_json::json!({
         "hashes": hashes,
         "algorithm": algorithm,
     });
-    let response = HTTP_CLIENT.post(url.clone()).json(&body).send().await?;
-    if let Err(error) = response.error_for_status_ref() {
-        // This arm is the one that decides "no mod matches". The caller treats the
-        // empty map as a definitive answer and `content` writes it into the mod
-        // identity cache with a 24-hour lifetime, so a rate limit here does not
-        // cost one lookup — it pins "these mods are unknown" for a day.
-        let retry_after = response
-            .headers()
-            .get(reqwest::header::RETRY_AFTER)
-            .and_then(|value| value.to_str().ok())
-            .unwrap_or("<none>");
-        warn!(
-            "the Modrinth hash lookup for {} hash(es) failed ({error}); treating them as \
-             unmatched, and a retry would have been due after {retry_after}",
+    let mirror_url = build_url(BASE_URL, &["v2", "version_files"])?;
+    if let Some(matched) = fetch_versions_from_hashes(&mirror_url, &body, hashes.len()).await {
+        info!(
+            "Modrinth matched {}/{} of the requested hashes",
+            matched.len(),
             hashes.len()
         );
-        return Ok(HashMap::new());
+        return Ok(matched);
     }
-    let matched: HashMap<String, Value> = response.json().await?;
+    warn!("the Modrinth mirror's hash lookup failed; asking the official API");
+    let official_url = build_url(OFFICIAL_BASE_URL, &["v2", "version_files"])?;
+    let matched = fetch_versions_from_hashes(&official_url, &body, hashes.len())
+        .await
+        .unwrap_or_default();
     info!(
         "Modrinth matched {}/{} of the requested hashes",
         matched.len(),
@@ -187,18 +230,60 @@ pub async fn get_versions_from_hashes(
     Ok(matched)
 }
 
+/// One attempt at the hash lookup, or `None` when the server did not answer
+/// with a usable JSON object.
+async fn fetch_versions_from_hashes(
+    url: &Url,
+    body: &Value,
+    requested: usize,
+) -> Option<HashMap<String, Value>> {
+    let response = HTTP_CLIENT.post(url.clone()).json(body).send().await;
+    let response = match response {
+        Ok(response) => response,
+        Err(error) => {
+            warn!("{url} could not be reached: {error}");
+            return None;
+        }
+    };
+    if let Err(error) = response.error_for_status_ref() {
+        let retry_after = response
+            .headers()
+            .get(reqwest::header::RETRY_AFTER)
+            .and_then(|value| value.to_str().ok())
+            .unwrap_or("<none>");
+        warn!(
+            "the Modrinth hash lookup for {requested} hash(es) at {url} failed ({error}); \
+             a retry would have been due after {retry_after}"
+        );
+        return None;
+    }
+    match response.json().await {
+        Ok(matched) => Some(matched),
+        Err(error) => {
+            warn!("{url} answered but the hash lookup did not parse as JSON: {error}");
+            None
+        }
+    }
+}
+
 /// Fetch several projects in one request. `ids` accepts project ids or slugs.
 pub async fn get_projects(ids: &[&str]) -> Result<Value> {
-    let url = Url::parse(BASE_URL)?.append_path(["v2", "projects"])?;
     let ids_param = serde_json::to_string(ids)?;
-    let request = HTTP_CLIENT.get(url.clone()).query(&[("ids", ids_param)]);
-    get_json(&url, request).await
+    get_json_with_fallback(&["v2", "projects"], |url| {
+        HTTP_CLIENT
+            .get(url.clone())
+            .query(&[("ids", ids_param.clone())])
+    })
+    .await
 }
 
 /// Fetch the members of a project team. The mirror does not serve this
 /// endpoint, so the official API is queried directly.
 pub async fn get_team_members(team_id: &str) -> Result<Value> {
-    let url = Url::parse(OFFICIAL_BASE_URL)?.append_path(["v2", "team", team_id, "members"])?;
-    let request = HTTP_CLIENT.get(url.clone());
-    get_json(&url, request).await
+    get_json_at(
+        OFFICIAL_BASE_URL,
+        &["v2", "team", team_id, "members"],
+        |url| HTTP_CLIENT.get(url.clone()),
+    )
+    .await
 }

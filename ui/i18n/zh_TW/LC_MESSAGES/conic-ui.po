@@ -3272,3 +3272,13 @@ msgstr "快速操作"
 msgctxt "NotificationText"
 msgid "Click here to return to first-run setup"
 msgstr "點擊這裡回到首次啟動設定"
+
+#: ui
+msgctxt "ContentNotFound"
+msgid "Search failed, please try again"
+msgstr "搜尋失敗，請檢查網路連線"
+
+#: ui
+msgctxt "ContentNotFound"
+msgid "Click here to retry"
+msgstr "點擊此處重試"

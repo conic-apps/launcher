@@ -3272,3 +3272,13 @@ msgstr "작업"
 msgctxt "NotificationText"
 msgid "Click here to return to first-run setup"
 msgstr "여기를 클릭하여 첫 실행 설정으로 돌아가기"
+
+#: ui
+msgctxt "ContentNotFound"
+msgid "Search failed, please try again"
+msgstr "검색에 실패했습니다. 다시 시도해 주세요"
+
+#: ui
+msgctxt "ContentNotFound"
+msgid "Click here to retry"
+msgstr "여기를 클릭하여 다시 시도"

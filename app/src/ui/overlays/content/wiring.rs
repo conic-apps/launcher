@@ -58,6 +58,7 @@ pub(crate) fn setup_open_content(ui: &App) {
             state.sync_instance(&ui);
             state.kind = RemoteKind::from_key(&kind);
             state.source = "local".into();
+            state.source_generation += 1;
             state.form = SearchForm::default();
             state.targets.clear();
             if kind == "resourcepacks" {
@@ -102,15 +103,16 @@ pub(crate) fn setup_open_packs(ui: &App) {
     let weak = ui.as_weak();
     ui.global::<GameState>().on_open_packs(move || {
         let Some(ui) = weak.upgrade() else { return };
-        let instance_id = {
+        let (instance_id, generation) = {
             let state = controller();
             let mut state = state.borrow_mut();
             state.sync_instance(&ui);
             state.kind = RemoteKind::Packs;
             state.platform = Platform::Modrinth;
             state.source = "modrinth".into();
+            state.source_generation += 1;
             state.form = SearchForm::default();
-            state.instance_id.clone()
+            (state.instance_id.clone(), state.source_generation)
         };
         // The lists are seeded from the instance's own loader and version, so
         // `instance.toml` is read on the runtime before the panel is filled in.
@@ -118,6 +120,9 @@ pub(crate) fn setup_open_packs(ui: &App) {
         crate::support::runtime::spawn(async move {
             let runtime = instance_runtime(&instance_id).await;
             crate::ui::services::report::report(&weak, move |ui| {
+                if controller().borrow().source_generation != generation {
+                    return;
+                }
                 {
                     let state = controller();
                     let mut state = state.borrow_mut();
@@ -144,11 +149,12 @@ pub(crate) fn setup_source_switch(ui: &App) {
     ui.global::<ContentState>().on_set_source(move |source| {
         let Some(ui) = weak.upgrade() else { return };
         let source = source.to_string();
-        {
+        let (instance_id, generation) = {
             let state = controller();
             let mut state = state.borrow_mut();
             state.sync_instance(&ui);
             state.source = source.clone();
+            state.source_generation += 1;
             if source != "local" {
                 state.platform = if source == "modrinth" {
                     Platform::Modrinth
@@ -160,16 +166,19 @@ pub(crate) fn setup_source_switch(ui: &App) {
                 // has not already been opened on this instance.
                 state.form = SearchForm::default();
             }
-        }
+            (state.instance_id.clone(), state.source_generation)
+        };
         // The remote lists are seeded from the instance's own loader and
         // version, so `instance.toml` is read on the runtime before the
         // panel is filled in. A local list has nothing to seed.
-        let instance_id = controller().borrow().instance_id.clone();
         let source = source.clone();
         let weak = weak.clone();
         crate::support::runtime::spawn(async move {
             let runtime = instance_runtime(&instance_id).await;
             crate::ui::services::report::report(&weak, move |ui| {
+                if controller().borrow().source_generation != generation {
+                    return;
+                }
                 if source != "local" {
                     let state = controller();
                     let mut state = state.borrow_mut();
@@ -177,8 +186,9 @@ pub(crate) fn setup_source_switch(ui: &App) {
                     initialize_list(&mut state, &list, &runtime);
                     state.targets.clear();
                 }
-                ui.global::<ContentState>()
-                    .set_source(SharedString::from(source.as_str()));
+                let ui_state = ui.global::<ContentState>();
+                ui_state.set_remote_failed(false);
+                ui_state.set_source(SharedString::from(source.as_str()));
                 // The list being shown is the grid a resize re-lays out from
                 // here on, and it is re-laid out now — the local list in
                 // particular was loaded while another source was open, at
@@ -228,6 +238,7 @@ pub(crate) fn setup_close(ui: &App) {
         let weak = ui.as_weak();
         ui.global::<ContentState>().on_close(move || {
             let Some(ui) = weak.upgrade() else { return };
+            controller().borrow_mut().source_generation += 1;
             let ui_state = ui.global::<ContentState>();
             ui_state.set_open_panel(SharedString::default());
             ui_state.set_open_detail(SharedString::default());

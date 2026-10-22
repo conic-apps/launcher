@@ -19,7 +19,12 @@ import { Loading } from "../../components/controls/loading.slint";
 // first, exactly like `Dialog` and `DescriptionTooltip` do.
 export component ContentNotFound inherits Rectangle {
     in property <bool> show: false;
+    /// The failure variant: a connectivity icon, the failing message and the
+    /// error colour, with the same spring, body and block as the empty one.
+    in property <bool> failed: false;
     in property <string> description: "";
+    /// The failure variant's small line was clicked.
+    callback retry;
     /// The block it occupies, and the box the body is centred in. A definite
     /// height rather than `100%` or a measured one: it is a child of a column,
     /// and a component whose height is measured collapses to nothing there (see
@@ -105,28 +110,48 @@ export component ContentNotFound inherits Rectangle {
 
                 AppIcon {
                     y: 0;
-                    name: "about";
+                    name: root.failed ? "cloud-offline-outline" : "about";
+                    icon-color: root.failed
+                        ? Theme.red
+                        : Theme.default-text-color.transparentize(0.1);
                     size: 64px;
                 }
             }
 
             Text {
-                text: @tr("No results match the current filter");
+                text: root.failed
+                    ? @tr("Search failed, please try again")
+                    : @tr("No results match the current filter");
                 font-size: 16px;
-                color: Theme.default-text-color.transparentize(0.1);
+                color: root.failed ? Theme.red : Theme.default-text-color.transparentize(0.1);
                 horizontal-alignment: center;
                 height: 16px;
             }
 
-            if root.description != "": Text {
-                // Wrapped at the block's 380px like any paragraph — no height of
-                // its own.
-                text: root.description;
-                font-size: 12px;
-                color: Theme.default-text-color.transparentize(0.1);
-                horizontal-alignment: center;
-                wrap: word-wrap;
+            if root.failed || root.description != "": Rectangle {
+                height: description-label.preferred-height;
+                background: transparent;
+
+                description-label := Text {
+                    // Wrapped at the block's 380px like any paragraph — no
+                    // height of its own.
+                    text: root.failed ? @tr("Click here to retry") : root.description;
+                    font-size: 12px;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    horizontal-alignment: center;
+                    wrap: word-wrap;
+                    width: parent.width;
+                }
             }
+        }
+
+        // The whole failure body is the retry control. The empty-state
+        // placeholder has no click of its own, so this sits only in the
+        // failure variant.
+        if root.failed: TouchArea {
+            width: parent.width;
+            height: parent.height;
+            clicked => { root.retry(); }
         }
     }
 }
