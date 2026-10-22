@@ -3272,3 +3272,13 @@ msgstr "Eylem"
 msgctxt "NotificationText"
 msgid "Click here to return to first-run setup"
 msgstr "İlk kuruluma dönmek için buraya tıklayın"
+
+#: ui
+msgctxt "ContentNotFound"
+msgid "Search failed, please try again"
+msgstr "Arama başarısız oldu, lütfen tekrar deneyin"
+
+#: ui
+msgctxt "ContentNotFound"
+msgid "Click here to retry"
+msgstr "Yeniden denemek için buraya tıklayın"
