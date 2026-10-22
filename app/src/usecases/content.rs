@@ -261,6 +261,10 @@ pub(crate) struct ContentSession {
     pub(crate) platform: Platform,
     /// "" | "local" | "modrinth" | "curseforge"
     pub(crate) source: String,
+    /// Bumped whenever the source changes, so the instance-runtime lookup a
+    /// switch starts cannot apply after a newer switch (or another open) has
+    /// replaced it.
+    pub(crate) source_generation: u64,
     pub(crate) form: SearchForm,
     /// The Minecraft release list, newest first. Empty until it arrives.
     pub(crate) version_options: Vec<String>,
@@ -292,6 +296,7 @@ impl Default for ContentSession {
             kind: RemoteKind::Mods,
             platform: Platform::Modrinth,
             source: "local".into(),
+            source_generation: 0,
             form: SearchForm::default(),
             version_options: Vec::new(),
             pages: HashMap::new(),

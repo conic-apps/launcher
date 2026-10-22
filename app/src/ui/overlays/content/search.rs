@@ -392,6 +392,10 @@ pub(crate) fn run_search(ui: &App, page: usize) {
         (list, request)
     };
 
+    // A new request clears the previous failure before the cache is consulted:
+    // a cached page is a success, and a fresh request owns the loading state.
+    ui.global::<ContentState>().set_remote_failed(false);
+
     // The cache is read *before* the loading flag is raised, so a page that has
     // been seen is drawn without the spinner a fresh request shows.
     let cached = {
@@ -410,11 +414,17 @@ pub(crate) fn run_search(ui: &App, page: usize) {
 
     // The request is composed from a snapshot: the spawn runs on another
     // thread and may not reach the state.
-    let (platform, kind, form, token) = {
+    let (platform, kind, form, token, generation) = {
         let state = controller();
         let state = state.borrow();
         let token = state.lists.get(&list).map(|entry| entry.token).unwrap_or(0);
-        (state.platform, state.kind, state.form.clone(), token)
+        (
+            state.platform,
+            state.kind,
+            state.form.clone(),
+            token,
+            state.source_generation,
+        )
     };
     ui.global::<ContentState>().set_remote_loading(true);
     push_pages(ui);
@@ -427,7 +437,9 @@ pub(crate) fn run_search(ui: &App, page: usize) {
         };
         crate::ui::services::report::report(&weak, move |ui| {
             // An answer for a request the user has paged (or switched) away
-            // from is dropped, and dropped *before* it is cached.
+            // from is dropped, and dropped *before* it is cached. The list
+            // check covers the source switch as well: its token belongs to a
+            // list that is no longer the one on screen.
             let newest = {
                 let state = controller();
                 let state = state.borrow();
@@ -437,17 +449,27 @@ pub(crate) fn run_search(ui: &App, page: usize) {
                     .map(|entry| entry.token == token)
                     .unwrap_or(false)
             };
-            if !newest {
+            let switched = controller().borrow().source_generation != generation;
+            if !newest || switched || !list_is_open(&list) {
                 return;
             }
-            // A failed request draws nothing and caches nothing: the page it was
-            // replacing stays on screen, and the next attempt asks the server
-            // again rather than reading back an empty page out of the cache.
+            // A failed request draws the failure placeholder and discards the
+            // previous list's cards. Leaving them in the model would show them
+            // under the new source — the bug this guard exists to prevent.
             let (cards, total) = match result {
                 Ok(result) => result,
                 Err(error) => {
                     log::error!("content search failed: {error}");
+                    {
+                        let state = controller();
+                        let mut state = state.borrow_mut();
+                        state.targets.clear();
+                        state.pages.insert(list.clone(), (page, 0));
+                    }
+                    set_cards(&ui, Grid::Remote, Vec::new());
                     ui.global::<ContentState>().set_remote_loading(false);
+                    ui.global::<ContentState>().set_remote_failed(true);
+                    push_pages(&ui);
                     return;
                 }
             };
@@ -494,23 +516,27 @@ pub(crate) fn request_key(
     )
 }
 
+/// Whether `list` is the remote list on screen. A local source has no remote
+/// list, even though `platform` still names the last remote one.
+pub(crate) fn list_is_open(list: &str) -> bool {
+    let state = controller();
+    let state = state.borrow();
+    state.source != "local" && list_key(state.kind, state.platform.key()) == list
+}
+
 /// Draws a page of results — from the cache or straight off the wire.
 ///
 /// `list` is the list the request was made *for*: a slow answer for a list the
 /// user has since switched away from is cached but not drawn, because each list
 /// owns its own results.
 pub(crate) fn show_results(ui: &App, list: &str, page: usize, cards: Vec<BuiltCard>, total: usize) {
-    let (open, favorites_only) = {
-        let state = controller();
-        let state = state.borrow();
-        (
-            list_key(state.kind, state.platform.key()) == list,
-            state.form.favorites_only,
-        )
-    };
-    if !open {
+    if !list_is_open(list) {
         return;
     }
+    let favorites_only = {
+        let state = controller();
+        state.borrow().form.favorites_only
+    };
     // The favourites chip narrows what is drawn, against the favourites as they
     // are now; the page itself, and the hit count its page numbers come from,
     // are untouched.
@@ -540,6 +566,7 @@ pub(crate) fn show_results(ui: &App, list: &str, page: usize, cards: Vec<BuiltCa
         state.pages.insert(list.to_string(), (page, total_pages));
     }
     ui.global::<ContentState>().set_remote_loading(false);
+    ui.global::<ContentState>().set_remote_failed(false);
     let ids: Vec<String> = cards
         .iter()
         .filter_map(|built| match &built.target {

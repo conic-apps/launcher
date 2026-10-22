@@ -3272,3 +3272,13 @@ msgstr "Akcja"
 msgctxt "NotificationText"
 msgid "Click here to return to first-run setup"
 msgstr "Kliknij tutaj, aby wrócić do konfiguracji początkowej"
+
+#: ui
+msgctxt "ContentNotFound"
+msgid "Search failed, please try again"
+msgstr "Wyszukiwanie nie powiodło się, spróbuj ponownie"
+
+#: ui
+msgctxt "ContentNotFound"
+msgid "Click here to retry"
+msgstr "Kliknij tutaj, aby spróbować ponownie"
