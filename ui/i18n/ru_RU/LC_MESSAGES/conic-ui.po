@@ -3274,6 +3274,61 @@ msgid "Click here to return to first-run setup"
 msgstr "Нажмите здесь, чтобы вернуться к первоначальной настройке"
 
 #: ui
+msgctxt "ModpackImport"
+msgid "Some modpack files cannot be downloaded automatically"
+msgstr "Некоторые файлы модпака не удаётся скачать автоматически"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "The pack author disabled third-party downloads for these files. Continue without them, or cancel and download them manually."
+msgstr "Автор модпака отключил сторонние загрузки для этих файлов. Продолжите без них или отмените и скачайте их вручную."
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Cancel"
+msgstr "Отмена"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Install this modpack?"
+msgstr "Установить этот модпак?"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Instance name"
+msgstr "Имя экземпляра"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Checking files"
+msgstr "Проверка файлов"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Install"
+msgstr "Установить"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Install anyway"
+msgstr "Всё равно установить"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Could not check the modpack files"
+msgstr "Не удалось проверить файлы модпака"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "The CurseForge API could not be reached. Check your connection, then retry."
+msgstr "Не удалось подключиться к API CurseForge. Проверьте соединение и повторите попытку."
+
+#: ui
+msgctxt "ModpackImport"
+msgid "Retry"
+msgstr "Повторить"
+
+#: ui
 msgctxt "ContentNotFound"
 msgid "Search failed, please try again"
 msgstr "Поиск не удался, попробуйте ещё раз"
