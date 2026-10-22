@@ -228,6 +228,10 @@ export global ContentState {
     /// The spinner shows while there is no result yet *or* a request is in
     /// flight, so this covers both.
     in-out property <bool> remote-loading: true;
+    /// The last remote search failed. The panels draw the failure placeholder
+    /// instead of the empty one, and no result from the previous list is left
+    /// underneath it.
+    in-out property <bool> remote-failed: false;
 
     in-out property <bool> detail-loading: false;
     in-out property <string> detail-title: "";

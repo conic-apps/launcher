@@ -35,6 +35,7 @@ struct PendingAction {
 
 struct NotificationController {
     notifications: Rc<VecModel<NotificationItem>>,
+    toasts: Rc<VecModel<NotificationItem>>,
     actions: RefCell<HashMap<i32, PendingAction>>,
     next_id: Cell<i32>,
 }
@@ -43,6 +44,7 @@ impl NotificationController {
     fn new() -> Self {
         Self {
             notifications: Rc::new(VecModel::default()),
+            toasts: Rc::new(VecModel::default()),
             actions: RefCell::new(HashMap::new()),
             next_id: Cell::new(0),
         }
@@ -70,7 +72,8 @@ impl NotificationController {
                 .into(),
             has_action,
         };
-        self.notifications.insert(0, item);
+        self.notifications.insert(0, item.clone());
+        self.toasts.insert(0, item);
         if let Some(action) = notice.action {
             self.actions
                 .borrow_mut()
@@ -96,34 +99,58 @@ impl NotificationController {
     }
 
     fn remove(&self, id: i32) -> bool {
-        let Some(index) = self.notifications.iter().position(|item| item.id == id) else {
-            return false;
-        };
-        self.actions.borrow_mut().remove(&id);
-        self.notifications.remove(index);
-        true
+        let removed = remove_from(&self.notifications, id);
+        remove_from(&self.toasts, id);
+        if removed {
+            self.actions.borrow_mut().remove(&id);
+        }
+        removed
+    }
+
+    /// Drops a preview without touching the centre's card.
+    fn expire(&self, id: i32) {
+        remove_from(&self.toasts, id);
+    }
+
+    fn expire_all(&self) {
+        self.toasts.set_vec(Vec::new());
     }
 
     /// Disables a card that stays in the centre after its action ran.
     fn mark_spent(&self, id: i32) -> bool {
-        let Some(index) = self.notifications.iter().position(|item| item.id == id) else {
-            return false;
-        };
-        let Some(mut item) = self.notifications.row_data(index) else {
-            return false;
-        };
-        if !item.has_action {
-            return false;
-        }
-        item.has_action = false;
-        self.notifications.set_row_data(index, item);
-        true
+        let marked = mark_spent_in(&self.notifications, id);
+        mark_spent_in(&self.toasts, id);
+        marked
     }
 
     fn clear(&self) {
         self.notifications.set_vec(Vec::new());
+        self.toasts.set_vec(Vec::new());
         self.actions.borrow_mut().clear();
     }
+}
+
+fn remove_from(model: &VecModel<NotificationItem>, id: i32) -> bool {
+    let Some(index) = model.iter().position(|item| item.id == id) else {
+        return false;
+    };
+    model.remove(index);
+    true
+}
+
+fn mark_spent_in(model: &VecModel<NotificationItem>, id: i32) -> bool {
+    let Some(index) = model.iter().position(|item| item.id == id) else {
+        return false;
+    };
+    let Some(mut item) = model.row_data(index) else {
+        return false;
+    };
+    if !item.has_action {
+        return false;
+    }
+    item.has_action = false;
+    model.set_row_data(index, item);
+    true
 }
 
 /// Registers the Slint callbacks and returns the port a producer posts through.
@@ -131,6 +158,7 @@ pub(crate) fn setup(ui: &App) -> NoticeSink {
     CONTROLLER.with(|controller| {
         let state = ui.global::<NotificationState>();
         state.set_notifications(ModelRc::from(Rc::clone(&controller.notifications)));
+        state.set_toasts(ModelRc::from(Rc::clone(&controller.toasts)));
         update_count(&state, controller);
     });
 
@@ -159,6 +187,12 @@ pub(crate) fn setup(ui: &App) -> NoticeSink {
         if let Some(ui) = weak.upgrade() {
             dismiss(&ui, id);
         }
+    });
+    state.on_expire(|id| {
+        CONTROLLER.with(|controller| controller.expire(id));
+    });
+    state.on_expire_all(|| {
+        CONTROLLER.with(|controller| controller.expire_all());
     });
     let weak = ui.as_weak();
     state.on_activate(move |id| {
@@ -296,8 +330,48 @@ mod tests {
         (pending.action)();
         assert!(controller.remove(item.id));
         assert_eq!(controller.notifications.row_count(), 0);
+        assert_eq!(controller.toasts.row_count(), 0);
         assert_eq!(hits.load(Ordering::SeqCst), 1);
         assert!(controller.take_action(item.id).is_none());
+    }
+
+    #[test]
+    fn new_notices_go_to_the_front_of_both_models() {
+        let controller = NotificationController::new();
+        controller.send(Notice::new(NoticeKind::TaskCancelled));
+        controller.send(Notice::new(NoticeKind::TaskFinished));
+
+        let first = controller.notifications.row_data(0).expect("newest notice");
+        let preview = controller.toasts.row_data(0).expect("newest preview");
+        assert_eq!(first.id, preview.id);
+        assert_eq!(controller.notifications.row_count(), 2);
+        assert_eq!(controller.toasts.row_count(), 2);
+    }
+
+    #[test]
+    fn an_expired_preview_keeps_the_centre_card() {
+        let controller = NotificationController::new();
+        controller.send(Notice::new(NoticeKind::TaskFailed));
+
+        let item = controller.notifications.row_data(0).expect("one notice");
+        controller.expire(item.id);
+
+        assert_eq!(controller.toasts.row_count(), 0);
+        assert_eq!(controller.notifications.row_count(), 1);
+        assert!(controller.remove(item.id));
+        assert_eq!(controller.notifications.row_count(), 0);
+    }
+
+    #[test]
+    fn expiring_every_preview_keeps_the_centre_cards() {
+        let controller = NotificationController::new();
+        controller.send(Notice::new(NoticeKind::TaskFinished));
+        controller.send(Notice::new(NoticeKind::TaskFailed));
+
+        controller.expire_all();
+
+        assert_eq!(controller.toasts.row_count(), 0);
+        assert_eq!(controller.notifications.row_count(), 2);
     }
 
     #[test]
@@ -381,6 +455,7 @@ mod tests {
         controller.clear();
         assert!(dropped.load(Ordering::SeqCst));
         assert_eq!(controller.notifications.row_count(), 0);
+        assert_eq!(controller.toasts.row_count(), 0);
         assert!(controller.actions.borrow().is_empty());
     }
 
@@ -398,5 +473,6 @@ mod tests {
         assert!(dropped.load(Ordering::SeqCst));
         assert!(!controller.remove(item.id));
         assert_eq!(controller.notifications.row_count(), 0);
+        assert_eq!(controller.toasts.row_count(), 0);
     }
 }

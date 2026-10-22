@@ -472,7 +472,7 @@ export component ContentModsPanel inherits Rectangle {
 
         if ContentState.source != "local" && ContentState.remote-loading: ContentLoading { }
 
-        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length > 0): ContentCardGrid {
+        if (ContentState.source != "local" && !ContentState.remote-loading && !ContentState.remote-failed && ContentState.remote-cards.length > 0): ContentCardGrid {
             cards: ContentState.remote-cards;
             icon-size: 72px;
             grid-height: ContentState.remote-grid-height;
@@ -482,10 +482,12 @@ export component ContentModsPanel inherits Rectangle {
             toggle-favorite(id) => { ContentState.toggle-favorite(id); }
         }
 
-        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0): remote-not-found := ContentNotFound {
+        if (ContentState.source != "local" && !ContentState.remote-loading && (ContentState.remote-failed || ContentState.remote-cards.length == 0)): remote-not-found := ContentNotFound {
             show: true;
+            failed: ContentState.remote-failed;
             block-height: remote-not-found.content-height + 80px;
-            description: @tr("Try adjusting keywords or filters and search again");
+            description: ContentState.remote-failed ? "" : @tr("Try adjusting keywords or filters and search again");
+            retry => { ContentSearch.search(); }
         }
 
         // One element per remote list, each drawn only while *its* list is the
@@ -566,7 +568,7 @@ export component ContentResourcepacksPanel inherits Rectangle {
 
         if ContentState.source != "local" && ContentState.remote-loading: ContentLoading { }
 
-        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length > 0): ContentCardGrid {
+        if (ContentState.source != "local" && !ContentState.remote-loading && !ContentState.remote-failed && ContentState.remote-cards.length > 0): ContentCardGrid {
             cards: ContentState.remote-cards;
             icon-size: 72px;
             grid-height: ContentState.remote-grid-height;
@@ -576,10 +578,12 @@ export component ContentResourcepacksPanel inherits Rectangle {
             toggle-favorite(id) => { ContentState.toggle-favorite(id); }
         }
 
-        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0): remote-not-found := ContentNotFound {
+        if (ContentState.source != "local" && !ContentState.remote-loading && (ContentState.remote-failed || ContentState.remote-cards.length == 0)): remote-not-found := ContentNotFound {
             show: true;
+            failed: ContentState.remote-failed;
             block-height: remote-not-found.content-height + 80px;
-            description: @tr("Try adjusting keywords or filters and search again");
+            description: ContentState.remote-failed ? "" : @tr("Try adjusting keywords or filters and search again");
+            retry => { ContentSearch.search(); }
         }
 
         // One element each for the Modrinth and CurseForge lists, drawn only for
@@ -635,7 +639,7 @@ export component ContentPacksPanel inherits Rectangle {
 
         if ContentState.remote-loading: ContentLoading { }
 
-        if !ContentState.remote-loading && ContentState.remote-cards.length > 0: ContentCardGrid {
+        if !ContentState.remote-loading && !ContentState.remote-failed && ContentState.remote-cards.length > 0: ContentCardGrid {
             cards: ContentState.remote-cards;
             icon-size: 72px;
             grid-height: ContentState.remote-grid-height;
@@ -645,10 +649,12 @@ export component ContentPacksPanel inherits Rectangle {
             toggle-favorite(id) => { ContentState.toggle-favorite(id); }
         }
 
-        if !ContentState.remote-loading && ContentState.remote-cards.length == 0: remote-not-found := ContentNotFound {
+        if !ContentState.remote-loading && (ContentState.remote-failed || ContentState.remote-cards.length == 0): remote-not-found := ContentNotFound {
             show: true;
+            failed: ContentState.remote-failed;
             block-height: remote-not-found.content-height + 80px;
-            description: @tr("Try adjusting keywords or filters and search again");
+            description: ContentState.remote-failed ? "" : @tr("Try adjusting keywords or filters and search again");
+            retry => { ContentSearch.search(); }
         }
 
         // One element each for the Modrinth and CurseForge lists; this panel has

@@ -3327,3 +3327,13 @@ msgstr "無法連線到 CurseForge API。請檢查網路連線後重試。"
 msgctxt "ModpackImport"
 msgid "Retry"
 msgstr "重試"
+
+#: ui
+msgctxt "ContentNotFound"
+msgid "Search failed, please try again"
+msgstr "搜尋失敗，請檢查網路連線"
+
+#: ui
+msgctxt "ContentNotFound"
+msgid "Click here to retry"
+msgstr "點擊此處重試"

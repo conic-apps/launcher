@@ -1511,6 +1511,36 @@ SAVE_TAGS = {
             "pl_PL": "gru",
         },
     },
+    # The content browser's failure placeholder. The empty one was catalogued by
+    # hand; this variant only exists when the remote search itself failed.
+    "ContentNotFound": {
+        "Search failed, please try again": {
+            "zh_CN": "搜索失败，请检查网络连接",
+            "zh_TW": "搜尋失敗，請檢查網路連線",
+            "ja_JP": "検索に失敗しました。もう一度お試しください",
+            "ko_KR": "검색에 실패했습니다. 다시 시도해 주세요",
+            "de_DE": "Suche fehlgeschlagen, bitte erneut versuchen",
+            "fr_FR": "Échec de la recherche, veuillez réessayer",
+            "es_ES": "La búsqueda ha fallado, inténtalo de nuevo",
+            "pt_BR": "A pesquisa falhou, tente novamente",
+            "ru_RU": "Поиск не удался, попробуйте ещё раз",
+            "tr_TR": "Arama başarısız oldu, lütfen tekrar deneyin",
+            "pl_PL": "Wyszukiwanie nie powiodło się, spróbuj ponownie",
+        },
+        "Click here to retry": {
+            "zh_CN": "点击此处重试",
+            "zh_TW": "點擊此處重試",
+            "ja_JP": "ここをクリックして再試行",
+            "ko_KR": "여기를 클릭하여 다시 시도",
+            "de_DE": "Hier klicken, um es erneut zu versuchen",
+            "fr_FR": "Cliquez ici pour réessayer",
+            "es_ES": "Haz clic aquí para reintentar",
+            "pt_BR": "Clique aqui para tentar novamente",
+            "ru_RU": "Нажмите здесь, чтобы повторить",
+            "tr_TR": "Yeniden denemek için buraya tıklayın",
+            "pl_PL": "Kliknij tutaj, aby spróbować ponownie",
+        },
+    },
     # The notification centre's only fixed body. The other bodies are the
     # version, task and error templates already catalogued by hand.
     "NotificationText": {

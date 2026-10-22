@@ -3327,3 +3327,13 @@ msgstr "CurseForge API に接続できませんでした。接続を確認して
 msgctxt "ModpackImport"
 msgid "Retry"
 msgstr "再試行"
+
+#: ui
+msgctxt "ContentNotFound"
+msgid "Search failed, please try again"
+msgstr "検索に失敗しました。もう一度お試しください"
+
+#: ui
+msgctxt "ContentNotFound"
+msgid "Click here to retry"
+msgstr "ここをクリックして再試行"

@@ -3332,3 +3332,13 @@ msgstr "The CurseForge API could not be reached. Check your connection, then ret
 msgctxt "ModpackImport"
 msgid "Retry"
 msgstr "Retry"
+
+#: ui
+msgctxt "ContentNotFound"
+msgid "Search failed, please try again"
+msgstr "Search failed, please try again"
+
+#: ui
+msgctxt "ContentNotFound"
+msgid "Click here to retry"
+msgstr "Click here to retry"

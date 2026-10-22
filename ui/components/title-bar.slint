@@ -231,6 +231,13 @@ export component TitleBar inherits Rectangle {
         }
     }
 
+    // The drag surface is a sibling behind the controls, not their parent. As
+    // their parent, `WindowMoveArea` would see the press in its before-children
+    // filter even when a button was about to handle it, so a drag begun on the
+    // bell would move the window. Behind the controls, the button's `TouchArea`
+    // aborts the traversal first and the drag filter never runs. macOS's native
+    // title bar also turns a double-click into a zoom; that gesture is disabled
+    // in `native/macos/traffic_lights.rs`.
     WindowMoveArea {
         width: root.width;
         height: root.height;
@@ -240,127 +247,127 @@ export component TitleBar inherits Rectangle {
             height: root.height;
             double-clicked => { root.maximize-or-fullscreen(); }
         }
+    }
 
-        // Left navigation actions (settings, home). At left:16, or left:90 on
-        // macOS to clear the native traffic lights — except in fullscreen, where
-        // AppKit hides them: the controls take the corner they leave behind
-        // instead of lining up behind nothing.
-        Rectangle {
-            x: root.left-actions-start;
-            width: 60px;
-            height: 28px;
+    // Left navigation actions (settings, home). At left:16, or left:90 on
+    // macOS to clear the native traffic lights — except in fullscreen, where
+    // AppKit hides them: the controls take the corner they leave behind
+    // instead of lining up behind nothing.
+    Rectangle {
+        x: root.left-actions-start;
+        width: 60px;
+        height: 28px;
 
-            HorizontalLayout {
-                spacing: 4px;
+        HorizontalLayout {
+            spacing: 4px;
 
-                NavigationButton {
-                    icon-commands: Icons.stroke-commands("settings");
-                    icon-stroke-width: root.stroked-icon-width;
-                    selected: root.current-page == "settings";
-                    accessible-label: @tr("Settings");
-                    clicked => { root.open-settings(); }
-                }
+            NavigationButton {
+                icon-commands: Icons.stroke-commands("settings");
+                icon-stroke-width: root.stroked-icon-width;
+                selected: root.current-page == "settings";
+                accessible-label: @tr("Settings");
+                clicked => { root.open-settings(); }
+            }
 
-                NavigationButton {
-                    icon-commands: Icons.stroke-commands("house");
-                    icon-stroke-width: root.stroked-icon-width;
-                    selected: root.current-page == "game";
-                    accessible-label: @tr("Home");
-                    clicked => { root.open-home(); }
-                }
+            NavigationButton {
+                icon-commands: Icons.stroke-commands("house");
+                icon-stroke-width: root.stroked-icon-width;
+                selected: root.current-page == "game";
+                accessible-label: @tr("Home");
+                clicked => { root.open-home(); }
             }
         }
+    }
 
-        if root.linux: Rectangle {
-            width: 78px;
-            height: 28px;
-            x: root.width - self.width;
-            y: (root.height - self.height) / 2;
+    if root.linux: Rectangle {
+        width: 78px;
+        height: 28px;
+        x: root.width - self.width;
+        y: (root.height - self.height) / 2;
 
-            HorizontalLayout {
-                x: 0px;
-                y: 5px;
-                width: 66px;
-                height: 18px;
-                spacing: 6px;
-                alignment: start;
-                cross-axis-alignment: center;
+        HorizontalLayout {
+            x: 0px;
+            y: 5px;
+            width: 66px;
+            height: 18px;
+            spacing: 6px;
+            alignment: start;
+            cross-axis-alignment: center;
 
-                LinuxWindowControlButton {
-                    icon-commands: root.minimize-icon;
-                    clicked => { root.minimize-window(); }
-                }
+            LinuxWindowControlButton {
+                icon-commands: root.minimize-icon;
+                clicked => { root.minimize-window(); }
+            }
 
-                LinuxWindowControlButton {
-                    icon-commands: root.maximize-icon;
-                    clicked => { root.maximize-or-fullscreen(); }
-                }
+            LinuxWindowControlButton {
+                icon-commands: root.maximize-icon;
+                clicked => { root.maximize-or-fullscreen(); }
+            }
 
-                LinuxWindowControlButton {
-                    icon-commands: root.close-icon;
-                    clicked => { root.close-window(); }
-                }
+            LinuxWindowControlButton {
+                icon-commands: root.close-icon;
+                clicked => { root.close-window(); }
             }
         }
+    }
 
-        // Sized to the text it shows and parked immediately left of the right
-        // action group, so it moves with those buttons rather than tracking the
-        // window's centre.
-        Rectangle {
-            width: search-bar.content-width;
-            x: root.right-actions-start - 8px - self.width;
-            height: root.height;
-            y: 0px;
+    // Sized to the text it shows and parked immediately left of the right
+    // action group, so it moves with those buttons rather than tracking the
+    // window's centre.
+    Rectangle {
+        width: search-bar.content-width;
+        x: root.right-actions-start - 8px - self.width;
+        height: root.height;
+        y: 0px;
 
-            search-bar := SearchBar {
-                width: 100%;
-                height: 26px;
-                x: 0px;
-                placeholder: root.search-placeholder;
-                hotkey: root.search-hotkey;
-                active: CommandPaletteState.visible;
-                activated => { root.open-search(); }
-            }
+        search-bar := SearchBar {
+            width: 100%;
+            height: 26px;
+            x: 0px;
+            placeholder: root.search-placeholder;
+            hotkey: root.search-hotkey;
+            active: CommandPaletteState.visible;
+            activated => { root.open-search(); }
         }
+    }
 
-        // Right-side actions (news, notifications, then music). The window controls take the
-        // far right on the platforms that have them there; macOS traffic lights
-        // remain on the left.
-        //
-        // One container rather than three absolutely-placed buttons, so the news
-        // button keeps its place when the music button is absent: the container's
-        // own width shrinks by that button and its 8px gap.
-        Rectangle {
-            width: root.right-actions-width;
-            height: 28px;
-            x: root.right-actions-start;
+    // Right-side actions (news, notifications, then music). The window controls take the
+    // far right on the platforms that have them there; macOS traffic lights
+    // remain on the left.
+    //
+    // One container rather than three absolutely-placed buttons, so the news
+    // button keeps its place when the music button is absent: the container's
+    // own width shrinks by that button and its 8px gap.
+    Rectangle {
+        width: root.right-actions-width;
+        height: 28px;
+        x: root.right-actions-start;
 
-            HorizontalLayout {
-                spacing: 8px;
+        HorizontalLayout {
+            spacing: 8px;
 
-                TitleBarActionButton {
-                    icon-commands: Icons.stroke-commands("newspaper");
-                    icon-stroke-width: root.stroked-icon-width;
-                    selected: NewsState.visible;
-                    accessible-label: @tr("News");
-                    clicked => { root.open-news(); }
-                }
+            TitleBarActionButton {
+                icon-commands: Icons.stroke-commands("newspaper");
+                icon-stroke-width: root.stroked-icon-width;
+                selected: NewsState.visible;
+                accessible-label: @tr("News");
+                clicked => { root.open-news(); }
+            }
 
-                TitleBarActionButton {
-                    icon-commands: Icons.stroke-commands("bell");
-                    icon-viewbox: Icons.viewbox("bell");
-                    icon-stroke-width: root.stroked-icon-width;
-                    selected: NotificationState.visible;
-                    accessible-label: @tr("Notifications");
-                    clicked => { root.open-notifications(); }
-                }
+            TitleBarActionButton {
+                icon-commands: Icons.stroke-commands("bell");
+                icon-viewbox: Icons.viewbox("bell");
+                icon-stroke-width: root.stroked-icon-width;
+                selected: NotificationState.visible;
+                accessible-label: @tr("Notifications");
+                clicked => { root.open-notifications(); }
+            }
 
-                if root.music-enabled: TitleBarActionButton {
-                    icon-commands: Icons.stroke-commands("musical-notes");
-                    icon-stroke-width: root.stroked-icon-width;
-                    accessible-label: @tr("Music");
-                    clicked => { root.toggle-music(); }
-                }
+            if root.music-enabled: TitleBarActionButton {
+                icon-commands: Icons.stroke-commands("musical-notes");
+                icon-stroke-width: root.stroked-icon-width;
+                accessible-label: @tr("Music");
+                clicked => { root.toggle-music(); }
             }
         }
     }

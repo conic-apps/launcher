@@ -3327,3 +3327,13 @@ msgstr "CurseForge API'sine ulaşılamadı. Bağlantınızı kontrol edip yenide
 msgctxt "ModpackImport"
 msgid "Retry"
 msgstr "Yeniden dene"
+
+#: ui
+msgctxt "ContentNotFound"
+msgid "Search failed, please try again"
+msgstr "Arama başarısız oldu, lütfen tekrar deneyin"
+
+#: ui
+msgctxt "ContentNotFound"
+msgid "Click here to retry"
+msgstr "Yeniden denemek için buraya tıklayın"
