@@ -30,15 +30,15 @@ pub enum Error {
         #[source]
         source: zip::result::ZipError,
     },
-    /// The manifest is not a CurseForge manifest this importer understands.
+    /// The manifest is not a pack format this importer understands.
     #[error("{0}")]
     Manifest(String),
     /// The manifest names a loader this launcher cannot install.
     #[error("{0}")]
     Loader(String),
-    /// CurseForge file metadata could not be fetched.
-    #[error("could not resolve the CurseForge files: {0}")]
-    CurseForge(String),
+    /// The pack's file metadata could not be fetched.
+    #[error("could not resolve the modpack's files: {0}")]
+    Source(String),
     /// The created instance disappeared before the install could read it.
     #[error("the new instance could not be read back")]
     MissingInstance,
@@ -51,6 +51,9 @@ pub enum Error {
     /// Downloading the pack's files failed.
     #[error("could not download the modpack's files: {0}")]
     Download(#[from] download::Error),
+    /// A resolved file would be written outside the instance root.
+    #[error("the modpack file path is not safe: {0}")]
+    UnsafePath(String),
     /// Writing an override file failed.
     #[error("could not write {path}: {source}")]
     Write {

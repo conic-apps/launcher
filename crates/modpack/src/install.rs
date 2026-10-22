@@ -10,6 +10,7 @@
 //! so the frontend can drive its install screen without this crate knowing
 //! about it.
 
+use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
 
 use config::Config;
@@ -100,22 +101,26 @@ pub async fn install(
         Arc::new(move |progress| install_out(Progress::Install(progress)));
     install_crate::install(config, instance, install_sink).await?;
 
-    let mods_dir = LOCATIONS.instances.get_instance_root(&id).join("mods");
+    let instance_root = LOCATIONS.instances.get_instance_root(&id);
     let downloads: Vec<download::DownloadTask> = plan
         .files
         .iter()
-        .map(|file| download::DownloadTask {
-            url: file.url.clone(),
-            file: mods_dir.join(&file.file_name),
-            size_bytes: file.size_bytes,
-            checksum: file
-                .sha1
-                .clone()
-                .map(download::Checksum::Sha1)
-                .unwrap_or(download::Checksum::None),
-            task_type: download::DownloadTaskType::CurseforgeMod,
+        .map(|file| {
+            Ok(download::DownloadTask {
+                url: file.url.clone(),
+                file: target_path(&instance_root, &file.path)?,
+                size_bytes: file.size_bytes,
+                checksum: file
+                    .sha1
+                    .clone()
+                    .map(download::Checksum::Sha1)
+                    .unwrap_or(download::Checksum::None),
+                // The downloader classifies the source from the URL; a
+                // modpack format must not pick the task type.
+                task_type: download::DownloadTaskType::Unknown,
+            })
         })
-        .collect();
+        .collect::<Result<Vec<_>>>()?;
     if !downloads.is_empty() {
         log::info!("downloading {} modpack files", downloads.len());
         let state = DownloadState::default();
@@ -128,10 +133,32 @@ pub async fn install(
         .await?;
     }
 
-    extract_all(&plan.overrides, &LOCATIONS.instances.get_instance_root(&id)).await?;
+    extract_all(&plan.overrides, &instance_root).await?;
 
     lock.disarm();
     Ok(())
+}
+
+/// Resolves a pack-relative path under the instance root.
+///
+/// A format supplies the path, so it is untrusted: only normal components are
+/// allowed, or a malicious pack could write outside the instance.
+fn target_path(instance_root: &Path, relative: &Path) -> Result<PathBuf> {
+    let mut target = instance_root.to_path_buf();
+    let mut has_component = false;
+    for component in relative.components() {
+        match component {
+            Component::Normal(part) => {
+                target.push(part);
+                has_component = true;
+            }
+            _ => return Err(Error::UnsafePath(relative.display().to_string())),
+        }
+    }
+    if !has_component {
+        return Err(Error::UnsafePath(relative.display().to_string()));
+    }
+    Ok(target)
 }
 
 /// Removes `.install.lock` when an install is dropped before it finishes.
@@ -155,5 +182,28 @@ impl Drop for InstallLockGuard {
         tokio::spawn(async move {
             let _ = instance::remove_install_lock(&id).await;
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::target_path;
+    use std::path::Path;
+
+    #[test]
+    fn a_pack_relative_path_stays_under_the_instance_root() {
+        let root = Path::new("instances/test");
+        assert_eq!(
+            target_path(root, Path::new("mods/a.jar")).unwrap(),
+            root.join("mods/a.jar")
+        );
+    }
+
+    #[test]
+    fn a_path_that_escapes_the_instance_root_is_rejected() {
+        let root = Path::new("instances/test");
+        assert!(target_path(root, Path::new("../a.jar")).is_err());
+        assert!(target_path(root, Path::new("mods/../../a.jar")).is_err());
+        assert!(target_path(root, Path::new("")).is_err());
     }
 }

@@ -26,7 +26,7 @@ mod overrides;
 pub use error::{Error, Result};
 pub use install::{Progress, create_instance, install};
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use instance::ModLoaderType;
 
@@ -86,28 +86,23 @@ impl Plan {
 /// A manifest file that could not be turned into a download.
 #[derive(Debug, Clone)]
 pub struct UnavailableFile {
-    /// The file name when the API knew it, otherwise a `project/file` label.
+    /// The file name when the source knew it, otherwise a source-specific label.
     file_name: String,
-    project_id: i64,
-    file_id: i64,
+    /// The source's own reference for the file, if it has one.
+    reference: String,
     required: bool,
     reason: String,
 }
 
 impl UnavailableFile {
-    /// The file name when the API knew it, otherwise a `project/file` label.
+    /// The file name when the source knew it, otherwise a source-specific label.
     pub fn file_name(&self) -> &str {
         &self.file_name
     }
 
-    /// The CurseForge project id.
-    pub fn project_id(&self) -> i64 {
-        self.project_id
-    }
-
-    /// The CurseForge file id.
-    pub fn file_id(&self) -> i64 {
-        self.file_id
+    /// The source's own reference for the file.
+    pub fn reference(&self) -> &str {
+        &self.reference
     }
 
     /// Whether the pack requires this file.
@@ -121,9 +116,9 @@ impl UnavailableFile {
     }
 }
 
-/// One resolved download, with the file name the source chose.
+/// One resolved download and where it goes under the instance root.
 pub(crate) struct ResolvedFile {
-    pub(crate) file_name: String,
+    pub(crate) path: PathBuf,
     pub(crate) url: String,
     pub(crate) size_bytes: Option<u64>,
     pub(crate) sha1: Option<String>,

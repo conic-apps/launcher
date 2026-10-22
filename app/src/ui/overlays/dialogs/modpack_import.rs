@@ -297,10 +297,9 @@ fn start_resolve(
                             "optional"
                         };
                         format!(
-                            "{} — project {}, file {} ({scope}): {}",
+                            "{} — {} ({scope}): {}",
                             file.file_name(),
-                            file.project_id(),
-                            file.file_id(),
+                            file.reference(),
                             file.reason()
                         )
                         .into()

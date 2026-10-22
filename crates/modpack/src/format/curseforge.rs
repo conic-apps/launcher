@@ -351,7 +351,7 @@ async fn resolve_files(
     if metadata.is_empty()
         && let Some(error) = last_error
     {
-        return Err(Error::CurseForge(error));
+        return Err(Error::Source(error));
     }
 
     let needs_url: Vec<(i64, i64)> = files
@@ -395,8 +395,7 @@ async fn resolve_files(
         let Some(api_file) = metadata.get(&file.file_id) else {
             unavailable.push(UnavailableFile {
                 file_name: format!("project {} / file {}", file.project_id, file.file_id),
-                project_id: file.project_id,
-                file_id: file.file_id,
+                reference: format!("project {} / file {}", file.project_id, file.file_id),
                 required: file.required,
                 reason: "the file is no longer available on CurseForge".to_string(),
             });
@@ -409,8 +408,7 @@ async fn resolve_files(
         let Some(file_name) = valid_file_name(raw_name) else {
             unavailable.push(UnavailableFile {
                 file_name: format!("project {} / file {}", file.project_id, file.file_id),
-                project_id: file.project_id,
-                file_id: file.file_id,
+                reference: format!("project {} / file {}", file.project_id, file.file_id),
                 required: file.required,
                 reason: format!("CurseForge returned an unusable file name ({raw_name:?})"),
             });
@@ -423,8 +421,7 @@ async fn resolve_files(
         {
             unavailable.push(UnavailableFile {
                 file_name,
-                project_id: file.project_id,
-                file_id: file.file_id,
+                reference: format!("project {} / file {}", file.project_id, file.file_id),
                 required: file.required,
                 reason: "the file is marked unavailable on CurseForge".to_string(),
             });
@@ -433,8 +430,7 @@ async fn resolve_files(
         if !names.insert(file_name.to_ascii_lowercase()) {
             unavailable.push(UnavailableFile {
                 file_name,
-                project_id: file.project_id,
-                file_id: file.file_id,
+                reference: format!("project {} / file {}", file.project_id, file.file_id),
                 required: file.required,
                 reason: "another manifest entry already uses this file name".to_string(),
             });
@@ -449,15 +445,14 @@ async fn resolve_files(
         let Some(url) = url else {
             unavailable.push(UnavailableFile {
                 file_name,
-                project_id: file.project_id,
-                file_id: file.file_id,
+                reference: format!("project {} / file {}", file.project_id, file.file_id),
                 required: file.required,
                 reason: "the author disabled third-party downloads".to_string(),
             });
             continue;
         };
         resolved.push(ResolvedFile {
-            file_name,
+            path: PathBuf::from("mods").join(file_name),
             url,
             size_bytes: api_file.get("fileLength").and_then(Value::as_u64),
             sha1: api_file
