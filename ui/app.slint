@@ -35,6 +35,8 @@ import { TodoPlaceholder } from "views/todo-placeholder.slint";
 // `slint_backend::GameState`).
 export { AppConfig, JavaRuntime } from "globals/settings.slint";
 export { Navigation } from "globals/navigation.slint";
+export { Dropdown } from "globals/dropdown.slint";
+export { FocusManager } from "globals/focus.slint";
 export { GameState, GameRow, AccountItem } from "globals/game.slint";
 export { LaunchState } from "globals/launch.slint";
 export { CrashState } from "globals/crash.slint";
@@ -276,6 +278,14 @@ export component App inherits Window {
         KeyBinding {
             keys: @keys(Control + W);
             activated => { root.close(); }
+        }
+
+        // Escape returns to the home (game) page and closes whatever transient
+        // UI is above it. The command palette owns Escape while it is open; its
+        // final step calls the same `Navigation.escape`.
+        KeyBinding {
+            keys: @keys(Escape);
+            activated => { Navigation.escape(); }
         }
 
         // The focus goes to the palette's search field while it is open and comes

@@ -199,8 +199,10 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
             let winit::event::WindowEvent::DroppedFile(path) = event else {
                 return;
             };
+            log::info!("modpack: dropped {}", path.display());
             let Some(ui) = weak.upgrade() else { return };
             if ui.global::<Navigation>().get_current_page() == "launch" {
+                log::warn!("modpack: ignoring the drop while the launch page is open");
                 notices(
                     Notice::new(NoticeKind::TaskFailed)
                         .with_arg("another install is already running"),
@@ -208,6 +210,7 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
                 return;
             }
             if busy.swap(true, Ordering::SeqCst) {
+                log::warn!("modpack: ignoring the drop while another import is running");
                 notices(
                     Notice::new(NoticeKind::TaskFailed)
                         .with_arg("another install is already running"),
