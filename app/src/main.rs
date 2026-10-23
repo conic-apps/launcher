@@ -182,6 +182,9 @@ fn main() {
     // it opens from the title bar's search field and the `Ctrl`/`⌘` + `/`
     // shortcut, both bound in the view.
     ui::overlays::command_palette::setup(&ui);
+    // The Escape shortcut closes every transient surface; register it after
+    // those surfaces have registered their own close callbacks.
+    ui::services::escape::setup(&ui);
 
     // Self-update. The install form (AppImage / .app / MSI / portable / package
     // manager) is detected once and decides whether the settings rows are live;
