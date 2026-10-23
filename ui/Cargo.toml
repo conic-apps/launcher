@@ -6,6 +6,12 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 
+[lib]
+# The generated Slint module is too large to compile a second time for a test
+# harness on a 16 GB runner, and this crate has no unit tests. `--all-targets`
+# selects the harness regardless, so CI excludes this crate as well.
+test = false
+
 [build-dependencies]
 slint-build.workspace = true
 usvg.workspace = true

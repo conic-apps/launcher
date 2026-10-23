@@ -115,4 +115,4 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Run cargo test
-        run: cargo test --all --verbose --all-targets
+        run: cargo test --workspace --exclude conic-ui --verbose --all-targets
