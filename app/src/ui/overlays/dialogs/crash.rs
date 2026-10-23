@@ -10,14 +10,14 @@
 //! long after that flow — and its generation token — are gone. This is the
 //! single `Sink` the composition root installs (see `launch::running`).
 //!
-//! The report button writes one combined report into the launcher's logs and
-//! opens it: the game's own report (or the collected details), the captured
-//! console, `logs/latest.log` and the launcher log. The note in the dialog asks
-//! the user to send that file, not a screenshot.
+//! The report button hands the collected strings to `usecases::crash_report`,
+//! which writes one combined report into the launcher's logs; this adapter then
+//! opens that file. The report contains the game's own report (or the collected
+//! details), the captured console, `logs/latest.log` and the launcher log. The
+//! note in the dialog asks the user to send that file, not a screenshot.
 
 use std::rc::Rc;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use launch::crash::{CrashReport, Reason};
 use launch::running::{self, SessionEvent};
@@ -26,9 +26,7 @@ use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
 
 use crate::slint_backend::{App, CrashState, Navigation};
 use crate::ui::services::app_config;
-
-/// How many trailing lines of the launcher log the exported report keeps.
-const LAUNCHER_LOG_TAIL_LINES: usize = 500;
+use crate::usecases::crash_report;
 
 /// Installs the app's running-session subscriber and the dialog's callbacks.
 pub(crate) fn setup(ui: &App) {
@@ -121,144 +119,34 @@ fn show(ui: &App, crash: CrashReport) {
 /// (or the collected details when it wrote none) beside both logs.
 fn open_report(ui: &App) {
     let state = ui.global::<CrashState>();
+    let source = crash_report::Source {
+        instance_name: state.get_instance_name().to_string(),
+        summary: state.get_summary().to_string(),
+        exit: state.get_exit_code().to_string(),
+        report_path: state.get_report_path().to_string(),
+        reasons: state.get_reasons().to_string(),
+        keywords: state.get_keywords().to_string(),
+        details: state.get_details().to_string(),
+        game_console: state.get_game_console().to_string(),
+        game_log: state.get_game_log().to_string(),
+    };
     let directory = storage::LOCATIONS.launcher.logs.clone();
-    let file = directory.join(format!(
-        "crash-report-{}-{}.txt",
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|elapsed| elapsed.as_secs())
-            .unwrap_or_default(),
-        std::process::id()
-    ));
-    if let Err(error) = std::fs::create_dir_all(&directory)
-        .and_then(|()| std::fs::write(&file, report_text(&state)))
-    {
-        log::error!(
-            "could not write the crash report at {}: {error}",
-            file.display()
-        );
-        return;
-    }
+    let file = match crash_report::write(&directory, &source) {
+        Ok(file) => file,
+        Err(error) => {
+            log::error!(
+                "could not write the crash report in {}: {error}",
+                directory.display()
+            );
+            return;
+        }
+    };
     if let Err(error) = app_config::open_external(file.to_string_lossy().as_ref()) {
         log::warn!(
             "could not open the crash report at {}: {error}",
             file.display()
         );
     }
-}
-
-/// The report text: the diagnosis first, then the evidence a helper needs.
-///
-/// The dialog's friendly sentence is deliberately absent here: a helper gets
-/// the raw rules, the game's own report, the game output around the crash and
-/// the launcher log tail, which is what they can search and quote.
-fn report_text(state: &CrashState) -> String {
-    let mut report = String::from("Conic Launcher crash report\n");
-    let instance = state.get_instance_name();
-    if !instance.is_empty() {
-        report.push_str(&format!("Instance: {instance}\n"));
-    }
-    let summary = state.get_summary();
-    if !summary.is_empty() {
-        report.push_str(&format!("Summary: {summary}\n"));
-    }
-    let exit = state.get_exit_code();
-    if !exit.is_empty() {
-        report.push_str(&format!("Exit: {exit}\n"));
-    }
-    let report_path = state.get_report_path();
-    if !report_path.is_empty() {
-        report.push_str(&format!("Game report: {report_path}\n"));
-    }
-    let reasons = state.get_reasons();
-    if !reasons.is_empty() {
-        report.push_str(&format!("Reasons:\n{reasons}\n"));
-    }
-    let keywords = state.get_keywords();
-    if !keywords.is_empty() {
-        report.push_str(&format!("Possible mods: {keywords}\n"));
-    }
-
-    let game_console = state.get_game_console();
-    if !game_console.is_empty() {
-        report.push_str("\n--- game console (before the crash) ---\n");
-        report.push_str(&game_console);
-        if !game_console.ends_with('\n') {
-            report.push('\n');
-        }
-    }
-
-    let game_log = state.get_game_log();
-    if !game_log.is_empty() {
-        report.push_str("\n--- game logs/latest.log ---\n");
-        report.push_str(&game_log);
-        if !game_log.ends_with('\n') {
-            report.push('\n');
-        }
-    }
-
-    if game_console.is_empty() && game_log.is_empty() {
-        report.push_str("\n--- game output ---\n(no output was captured)\n");
-    }
-
-    let game_report = game_report(state);
-    if game_report.is_empty() {
-        report.push_str("\n--- game crash report ---\n(no crash report was saved)\n");
-    } else {
-        report.push_str("\n--- game crash report ---\n");
-        report.push_str(&game_report);
-        if !game_report.ends_with('\n') {
-            report.push('\n');
-        }
-    }
-
-    report.push_str("\n--- launcher log ---\n");
-    let launcher = launcher_log();
-    if launcher.is_empty() {
-        report.push_str("(empty)\n");
-    } else {
-        report.push_str(&launcher);
-        if !launcher.ends_with('\n') {
-            report.push('\n');
-        }
-    }
-    report
-}
-
-/// The game's own crash report, read fresh so a report whose file is still
-/// there is not limited to the 16 KiB `details` copy. The collected details are
-/// the fallback when the game wrote no file or it has since gone.
-fn game_report(state: &CrashState) -> String {
-    let path = state.get_report_path();
-    if !path.is_empty()
-        && let Ok(contents) = std::fs::read_to_string(path.as_str())
-    {
-        return contents;
-    }
-    state.get_details().to_string()
-}
-
-/// The launcher log's tail: the in-memory run the report is being written in,
-/// which both builds keep. The file is only a fallback for a logger that never
-/// formatted a record (the tests).
-fn launcher_log() -> String {
-    let recent = crate::support::logs::recent(LAUNCHER_LOG_TAIL_LINES);
-    if !recent.is_empty() {
-        return recent;
-    }
-    let path = storage::LOCATIONS.launcher.logs.join("conic-launcher.log");
-    match std::fs::read(&path) {
-        Ok(bytes) => {
-            let text = String::from_utf8_lossy(&bytes);
-            tail_lines(&text, LAUNCHER_LOG_TAIL_LINES)
-        }
-        Err(error) => format!("(no launcher log at {}: {error})", path.display()),
-    }
-}
-
-fn tail_lines(text: &str, lines: usize) -> String {
-    let all: Vec<&str> = text.lines().collect();
-    all[all.len().saturating_sub(lines)..].join("\n")
 }
 
 /// The user-facing family for each matched rule, deduplicated.
@@ -353,7 +241,7 @@ fn format_reasons(reasons: &[Reason]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{category, tail_lines};
+    use super::category;
 
     #[test]
     fn memory_rules_become_the_memory_reason() {
@@ -377,11 +265,5 @@ mod tests {
     fn unrecognised_rules_stay_unknown() {
         assert_eq!(category("ENTITY"), "unknown");
         assert_eq!(category("not-a-rule"), "unknown");
-    }
-
-    #[test]
-    fn the_report_tail_keeps_the_newest_lines() {
-        assert_eq!(tail_lines("a\nb\nc\n", 2), "b\nc");
-        assert_eq!(tail_lines("only\n", 500), "only");
     }
 }

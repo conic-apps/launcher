@@ -42,6 +42,11 @@ const FILE_NAME: &str = "conic-launcher";
 
 const MAX_FILE_SIZE: u64 = 50_000;
 
+/// The active log file in `directory`, whether or not it exists.
+pub(crate) fn log_path(directory: &Path) -> PathBuf {
+    directory.join(format!("{FILE_NAME}.log"))
+}
+
 /// How many records are kept in memory for the crash report. The debug build
 /// has no log file, and a report is more useful with the run that produced it
 /// than with a note that its launcher log lives on stdout.

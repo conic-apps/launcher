@@ -49,7 +49,6 @@ impl GameController {
             current_id,
             sort,
             group_mode,
-            search: String::new(),
             expanded: saved.expanded.into_iter().collect(),
             accounts: Vec::new(),
             playtime: HashMap::new(),
@@ -163,31 +162,6 @@ impl GameController {
         }
     }
 
-    pub(crate) fn filtered(&self) -> Vec<&Instance> {
-        let query = self.search.trim().to_lowercase();
-        if query.is_empty() {
-            return self.instances.iter().collect();
-        }
-        self.instances
-            .iter()
-            .filter(|instance| {
-                let runtime = &instance.config.runtime;
-                let loader = runtime
-                    .mod_loader_type
-                    .as_ref()
-                    .map(ModLoaderType::to_string)
-                    .unwrap_or_else(|| "vanilla".to_string());
-                [
-                    instance.config.name.clone(),
-                    runtime.minecraft.clone(),
-                    loader,
-                ]
-                .iter()
-                .any(|field| field.to_lowercase().contains(&query))
-            })
-            .collect()
-    }
-
     pub(crate) fn expanded(&self, key: &str) -> bool {
         self.expanded.get(key).copied().unwrap_or(true)
     }
@@ -196,8 +170,8 @@ impl GameController {
     /// expanded groups.
     ///
     /// It is written on a sort, a grouping, a group toggle and an instance
-    /// switch — not on a scroll, a search or a refresh — since a write is a few
-    /// kilobytes of JSON.
+    /// switch — not on a scroll or a refresh — since a write is a few kilobytes
+    /// of JSON.
     pub(crate) fn persist(&self) {
         let state = InstanceViewState {
             current_id: self.current_id.clone().unwrap_or_default(),
@@ -231,8 +205,8 @@ impl GameController {
         const GROUP_HEIGHT: f32 = 42.0;
         const CARD_HEIGHT: f32 = 58.0;
 
-        let filtered = self.filtered();
-        let favorites: Vec<&Instance> = filtered
+        let instances: Vec<&Instance> = self.instances.iter().collect();
+        let favorites: Vec<&Instance> = instances
             .iter()
             .copied()
             .filter(|instance| instance.is_starred())
@@ -251,7 +225,7 @@ impl GameController {
                 ("forge", "Forge"),
                 ("vanilla", "Vanilla"),
             ] {
-                let members: Vec<&Instance> = filtered
+                let members: Vec<&Instance> = instances
                     .iter()
                     .copied()
                     .filter(|instance| Self::loader(instance).1 == key)
@@ -260,8 +234,8 @@ impl GameController {
                     groups.push((key, "literal", title, members));
                 }
             }
-        } else if !filtered.is_empty() {
-            groups.push(("all", "all", "", filtered));
+        } else if !instances.is_empty() {
+            groups.push(("all", "all", "", instances));
         }
 
         let mut rows: Vec<GameRow> = Vec::new();
@@ -327,8 +301,8 @@ impl GameController {
     /// group each belongs to. Favorites come first; a starred instance that also
     /// belongs to a loader group is listed once, with its first group.
     fn ordered_ids(&self) -> Vec<(String, String)> {
-        let filtered = self.filtered();
-        let favorites: Vec<&Instance> = filtered
+        let instances: Vec<&Instance> = self.instances.iter().collect();
+        let favorites: Vec<&Instance> = instances
             .iter()
             .copied()
             .filter(|instance| instance.is_starred())
@@ -339,7 +313,7 @@ impl GameController {
         }
         if self.group_mode == "loader" {
             for key in ["quilt", "fabric", "neoforge", "forge", "vanilla"] {
-                let members: Vec<&Instance> = filtered
+                let members: Vec<&Instance> = instances
                     .iter()
                     .copied()
                     .filter(|instance| Self::loader(instance).1 == key)
@@ -348,8 +322,8 @@ impl GameController {
                     groups.push((key, members));
                 }
             }
-        } else if !filtered.is_empty() {
-            groups.push(("all", filtered));
+        } else if !instances.is_empty() {
+            groups.push(("all", instances));
         }
 
         let mut seen = HashSet::new();
@@ -554,7 +528,7 @@ impl GameController {
             }
         }
 
-        // Rows that are gone (deleted, filtered out, regrouped): removed from the
+        // Rows that are gone (deleted or regrouped): removed from the
         // back so the indices below stay valid.
         for index in (0..model.row_count()).rev() {
             let Some(current) = model.row_data(index) else {
@@ -584,9 +558,7 @@ impl GameController {
     }
 
     pub(crate) fn apply(&mut self, ui: &App) {
-        let filtered = self.filtered();
-        let show_placeholder =
-            self.instances.is_empty() || (!self.search.trim().is_empty() && filtered.is_empty());
+        let show_placeholder = self.instances.is_empty();
         let (mut rows, mut content_height, mut current_row) = self.build_rows();
         self.groups = Self::group_ranges(&rows);
         // Grouping is an accordion: one open page, the others collapsed. A
@@ -771,10 +743,10 @@ fn apply_current(state: &GameState<'_>, current: Option<&Instance>, playtime: u6
 /// The summary's four counts and its four preview rows, out of the content
 /// cache the overlay draws from.
 ///
-/// `apply` runs on every list change — a sort, a group toggle, a keystroke in
-/// the search box — so this is where the cache is asked rather than where the
-/// instance is selected: it is a lookup while the cache answers, which is what
-/// keeps those three from re-reading the disk. It also writes the counts
+/// `apply` runs on every list change — a sort, a group toggle, an instance
+/// switch — so this is where the cache is asked rather than where the instance
+/// is selected: it is a lookup while the cache answers, which is what keeps
+/// those three from re-reading the disk. It also writes the counts
 /// synchronously, so a fresh cache answers immediately instead of on the next
 /// parse to land.
 fn apply_content(ui: &App, current_id: Option<&str>) {

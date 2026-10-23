@@ -5,8 +5,8 @@
 // Game view state.
 //
 // Domain state (the instance list, the current instance, accounts) lives in
-// Rust and is pushed into this global; pure-UI state (search query, sort/group
-// mode, selected account) is written here by the view and read back by Rust
+// Rust and is pushed into this global; pure-UI state (sort/group mode and the
+// selected account) is written here by the view and read back by Rust
 // through the callbacks. This keeps the crate layer free of any Slint types.
 
 /// A single flattened row of the instance list: either a group header or an
@@ -52,7 +52,7 @@ export struct GameRow {
     /// on their group's slot with opacity 0 — so the view's `for` items are never
     /// destroyed and can glide along the rail (and fade) when the group toggles.
     opacity: float,
-    /// False until a row that was just added (search, sort, grouping, starring)
+    /// False until a row that was just added (sort, grouping, starring)
     /// has been revealed; the view slides such rows in along the rail from +24px.
     /// Rust flips it one frame after the row appears in the model, which is what
     /// triggers the animation.
@@ -154,7 +154,6 @@ export global GameState {
     in-out property <length> current-row-height: 0px;
     in-out property <bool> has-instances: false;
     in-out property <bool> show-placeholder: false;
-    in-out property <string> search-query: "";
     // "playtime" | "name" | "version" | "lastplay"
     in-out property <string> sort-mode: "playtime";
     // "none" | "loader"
@@ -235,7 +234,6 @@ export global GameState {
     callback toggle-group(string);
     callback set-sort(string);
     callback set-group-mode(string);
-    callback search-changed(string);
     // Footer / summary actions.
     callback launch();
     callback repair-and-launch();

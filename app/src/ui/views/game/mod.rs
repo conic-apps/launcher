@@ -19,7 +19,7 @@ use crate::slint_backend::{
     AccountItem, App, Dialogs, GameRow, GameState, MultiplayerState, Navigation,
 };
 use account::Account;
-use instance::{Instance, ModLoaderType, SortBy};
+use instance::{Instance, SortBy};
 use slint::Image;
 
 use crate::usecases::game::{GroupMode, InstanceViewState, SortMode as SavedSortMode};
@@ -77,7 +77,6 @@ pub(crate) struct GameController {
     current_id: Option<String>,
     sort: SortBy,
     group_mode: &'static str,
-    search: String,
     expanded: HashMap<String, bool>,
     accounts: Vec<Account>,
     playtime: HashMap<String, u64>,

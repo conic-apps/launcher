@@ -148,16 +148,6 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     {
         let controller = Rc::clone(&controller);
         let weak = ui.as_weak();
-        state.on_search_changed(move |query| {
-            controller.borrow_mut().search = query.to_string();
-            if let Some(ui) = weak.upgrade() {
-                controller.borrow_mut().apply(&ui);
-            }
-        });
-    }
-    {
-        let controller = Rc::clone(&controller);
-        let weak = ui.as_weak();
         state.on_select_account(move |key| {
             let key = key.to_string();
             let account = controller
