@@ -5,8 +5,8 @@
 // Game view state.
 //
 // Domain state (the instance list, the current instance, accounts) lives in
-// Rust and is pushed into this global; pure-UI state (search query, sort/group
-// mode, selected account) is written here by the view and read back by Rust
+// Rust and is pushed into this global; pure-UI state (sort/group mode and the
+// selected account) is written here by the view and read back by Rust
 // through the callbacks. This keeps the crate layer free of any Slint types.
 
 /// A single flattened row of the instance list: either a group header or an
@@ -52,7 +52,7 @@ export struct GameRow {
     /// on their group's slot with opacity 0 — so the view's `for` items are never
     /// destroyed and can glide along the rail (and fade) when the group toggles.
     opacity: float,
-    /// False until a row that was just added (search, sort, grouping, starring)
+    /// False until a row that was just added (sort, grouping, starring)
     /// has been revealed; the view slides such rows in along the rail from +24px.
     /// Rust flips it one frame after the row appears in the model, which is what
     /// triggers the animation.
@@ -142,12 +142,18 @@ export global GameState {
     /// Total scrollable height of the instance list content (gap top + rows +
     /// gap bottom).
     in-out property <length> list-content-height: 0px;
+    /// Bumped after the current instance changes from the keyboard or
+    /// Alt/Option + the wheel, so the list can glide to its row.
+    in-out property <int> selection-serial: 0;
+    /// A group header's content position and the serial that asks the list to
+    /// put it just below the sort/group bar after the group is expanded.
+    in-out property <length> group-scroll-y: 0px;
+    in-out property <int> group-scroll-serial: 0;
     /// Position/size of the current instance's row, used to center it on open.
     in-out property <length> current-row-y: -1px;
     in-out property <length> current-row-height: 0px;
     in-out property <bool> has-instances: false;
     in-out property <bool> show-placeholder: false;
-    in-out property <string> search-query: "";
     // "playtime" | "name" | "version" | "lastplay"
     in-out property <string> sort-mode: "playtime";
     // "none" | "loader"
@@ -221,11 +227,13 @@ export global GameState {
     callback select-first-account();
     // An instance card was clicked.
     callback select-instance(string);
+    /// Moves the current instance by one in the displayed order: -1 previous,
+    /// 1 next. Used by Up/Down and by Alt/Option + a mouse wheel notch.
+    callback move-selection(int);
     // A group header was clicked.
     callback toggle-group(string);
     callback set-sort(string);
     callback set-group-mode(string);
-    callback search-changed(string);
     // Footer / summary actions.
     callback launch();
     callback repair-and-launch();

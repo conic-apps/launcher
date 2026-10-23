@@ -15,15 +15,22 @@
 //! The file name and the archive naming match what earlier installs wrote, so a
 //! folder shared across versions looks the same.
 //!
+//! Every record is also kept in a bounded in-memory buffer. The crash report
+//! embeds that buffer, so a debug build �� which writes no log file �� still
+//! carries the launcher log, and a release build gets the run up to the crash
+//! without racing the file's rotation.
+//!
 //! `env_logger` has no rotation, so the writer is a `Target::Pipe` around a
 //! small one: it appends, counts what it has written, and moves the file aside
 //! once it passes the limit. The count is in bytes rather than lines — it is what
 //! a 50 kB file limit means.
 
 use std::{
+    collections::VecDeque,
     fs::{self, OpenOptions},
     io::{self, Write},
     path::{Path, PathBuf},
+    sync::{LazyLock, Mutex, PoisonError},
 };
 
 use chrono::Local;
@@ -34,6 +41,19 @@ use storage::LOCATIONS;
 const FILE_NAME: &str = "conic-launcher";
 
 const MAX_FILE_SIZE: u64 = 50_000;
+
+/// The active log file in `directory`, whether or not it exists.
+pub(crate) fn log_path(directory: &Path) -> PathBuf {
+    directory.join(format!("{FILE_NAME}.log"))
+}
+
+/// How many records are kept in memory for the crash report. The debug build
+/// has no log file, and a report is more useful with the run that produced it
+/// than with a note that its launcher log lives on stdout.
+const RECENT_LINES: usize = 1_000;
+
+static RECENT: LazyLock<Mutex<VecDeque<String>>> =
+    LazyLock::new(|| Mutex::new(VecDeque::with_capacity(RECENT_LINES)));
 
 /// How many files to keep in the folder, the active one included.
 const KEEP: usize = 10;
@@ -203,6 +223,17 @@ fn format_record(buffer: &mut Formatter, record: &Record) -> std::io::Result<()>
     // the same format serves a terminal and a log file: no bracket needs to know
     // which one it is going to.
     let style = buffer.default_level_style(record.level());
+    // Plain, unbounded by colour: the crash report is read in an editor, like
+    // the release log file. The buffer is filled for every build because the
+    // debug one has no file to read back.
+    let plain = format!(
+        "{} - {:<5} / {}: {}\n",
+        now.format("%d/%m/%Y %H:%M:%S"),
+        record.level(),
+        record.target(),
+        record.args()
+    );
+    push_recent(&plain);
     // `Formatter` is an `io::Write`, not a `fmt::Write`, so this is
     // `write_fmt` and not the `write!` macro. `{style:#}` writes the reset that
     // closes the level's colour; both sides of a `Style` render as nothing when
@@ -217,6 +248,26 @@ fn format_record(buffer: &mut Formatter, record: &Record) -> std::io::Result<()>
         record.target(),
         record.args()
     ))
+}
+
+fn push_recent(line: &str) {
+    let mut recent = RECENT.lock().unwrap_or_else(PoisonError::into_inner);
+    if recent.len() == RECENT_LINES {
+        recent.pop_front();
+    }
+    recent.push_back(line.to_string());
+}
+
+/// The newest `lines` records, without their trailing newlines, oldest first.
+pub(crate) fn recent(lines: usize) -> String {
+    let recent = RECENT.lock().unwrap_or_else(PoisonError::into_inner);
+    let start = recent.len().saturating_sub(lines);
+    recent
+        .iter()
+        .skip(start)
+        .map(|line| line.trim_end_matches('\n'))
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 /// Installs the logger, choosing the sink by build: stdout for a debug build,

@@ -35,6 +35,11 @@ use storage::LOCATIONS;
 /// kilobytes of stack trace; the crude viewer shows a head of it.
 const DETAILS_LIMIT: usize = 16 * 1024;
 
+/// How many trailing lines of the captured console and of `logs/latest.log`
+/// the opened report keeps. Both are there for a helper to read, not for the
+/// dialog.
+const REPORT_LOG_LINES: usize = 500;
+
 /// How many trailing lines of `logs/latest.log` are kept when the game wrote no
 /// crash report.
 const LOG_TAIL_LINES: usize = 100;
@@ -137,6 +142,12 @@ pub struct CrashReport {
     /// The raw crash report, or the tail of the console, capped to a bounded
     /// head.
     pub details: String,
+    /// The tail of the process's captured stdout and stderr. This is the
+    /// output before the crash; the dialog does not show it, the report does.
+    pub console_log: String,
+    /// The tail of `<instance>/logs/latest.log`, or empty when the game wrote
+    /// none. The report includes it beside the captured console.
+    pub game_log: String,
     /// The crash report file the details came from, when one was found.
     pub report_path: Option<String>,
     /// The rules the output matched, in the table's order.
@@ -227,6 +238,8 @@ pub fn analyze(
         exit_code,
         summary,
         details,
+        console_log: tail_lines(console_log, REPORT_LOG_LINES),
+        game_log: tail_lines(&latest_log, REPORT_LOG_LINES),
         report_path: report_path.map(|path| path.to_string_lossy().into_owned()),
         reasons,
         keywords: analyzer::find_keywords(&contents),
@@ -308,6 +321,12 @@ pub(crate) fn log_tail(root: &Path) -> Vec<String> {
     tail
 }
 
+/// The last `lines` lines of `text`, oldest first, without a trailing newline.
+fn tail_lines(text: &str, lines: usize) -> String {
+    let all: Vec<&str> = text.lines().collect();
+    all[all.len().saturating_sub(lines)..].join("\n")
+}
+
 fn truncate(text: &str, limit: usize) -> String {
     if text.len() <= limit {
         return text.to_string();
@@ -378,6 +397,13 @@ mod tests {
             classify_exit(Some(1), None, true, "boom"),
             ExitType::Interrupted
         );
+    }
+
+    #[test]
+    fn a_report_keeps_the_newest_log_lines() {
+        assert_eq!(tail_lines("1\n2\n3\n4\n", 2), "3\n4");
+        assert_eq!(tail_lines("only\n", 500), "only");
+        assert_eq!(tail_lines("", 500), "");
     }
 
     #[test]

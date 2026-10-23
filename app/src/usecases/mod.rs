@@ -10,6 +10,7 @@
 
 pub(crate) mod account_login;
 pub(crate) mod content;
+pub(crate) mod crash_report;
 pub(crate) mod game;
 pub(crate) mod generation;
 pub(crate) mod launch;

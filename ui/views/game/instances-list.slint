@@ -603,11 +603,11 @@ export component InstancesList inherits Rectangle {
     background: transparent;
 
     // The scrollbar is pinned against the *window*: 8px from its right edge,
-    // 6px wide, spanning from 126px below the title bar (below the toolbar) to
-    // 60px above the bottom.
+    // 6px wide, spanning from 55px below the title bar (below the compact
+    // sort/group pill) to 60px above the bottom.
     private property <length> scrollbar-right: 8px;
     private property <length> scrollbar-width: 6px;
-    private property <length> scrollbar-top: 8px + 112px + 6px;
+    private property <length> scrollbar-top: 8px + 41px + 6px;
     private property <length> scrollbar-bottom: 56px + 4px;
 
     /// Smoothed scroll offset: 0 at the top, growing as the list scrolls down.
@@ -691,6 +691,23 @@ export component InstancesList inherits Rectangle {
         if root.dropdown-open {
             root.target-y = root.scroll-y;
         }
+    }
+
+    // Up/Down and Alt/Option + a wheel notch move the current instance; the
+    // serial is bumped after Rust has re-laid out the rows, so centring reads
+    // the new row.
+    private property <int> selection-serial: GameState.selection-serial;
+    changed selection-serial => {
+        root.scroll-to-current(true);
+    }
+
+    // A newly opened group keeps its header just below the floating
+    // sort/group bar (8px top + 41px bar + 6px gap), rather than at the
+    // viewport's top edge where the bar would cover it.
+    private property <length> group-scroll-top: 8px + 41px + 6px;
+    private property <int> group-scroll-serial: GameState.group-scroll-serial;
+    changed group-scroll-serial => {
+        root.target-y = clamp(GameState.group-scroll-y - root.group-scroll-top, 0px, root.max-scroll);
     }
 
     changed scrolling => {
@@ -777,30 +794,42 @@ export component InstancesList inherits Rectangle {
                 if Dropdown.open {
                     return accept;
                 }
-                if !root.settling && root.max-scroll > 0px {
-                    if ScrollInput.source() == ScrollSource.wheel {
-                        // A wheel notch is a *distance*, not a motion: it goes
-                        // into the target and the offset eases after it.
-                        root.target-y = clamp(
-                            root.target-y - event.delta-y * root.wheel-step,
-                            0px,
-                            root.max-scroll,
-                        );
-                    } else {
-                        // A trackpad, fingers down or coasting: the deltas *are*
-                        // the motion, so the list goes exactly where they put it
-                        // (writing the target too drops a glide in flight). Its
-                        // momentum is macOS' own, derived from the velocity the
-                        // gesture ended at — easing it would stall the list on
-                        // release and ramp back up, see `scroll-view.slint`.
-                        root.scroll-y = clamp(
-                            root.scroll-y - event.delta-y,
-                            0px,
-                            root.max-scroll,
-                        );
-                        root.target-y = root.scroll-y;
+                if !root.settling {
+                    // Alt/Option turns the wheel into an instance stepper.
+                    // Without it the wheel is only a scroll, so a stray notch
+                    // never changes the selection. Arrow keys use the same
+                    // `move-selection`, without a modifier.
+                    if ScrollInput.source() == ScrollSource.wheel && event.modifiers.alt {
+                        if event.delta-y != 0 {
+                            GameState.move-selection(event.delta-y > 0 ? -1 : 1);
+                            return accept;
+                        }
                     }
-                    return accept;
+                    if root.max-scroll > 0px {
+                        if ScrollInput.source() == ScrollSource.wheel {
+                            // A wheel notch is a *distance*, not a motion: it goes
+                            // into the target and the offset eases after it.
+                            root.target-y = clamp(
+                                root.target-y - event.delta-y * root.wheel-step,
+                                0px,
+                                root.max-scroll,
+                            );
+                        } else {
+                            // A trackpad, fingers down or coasting: the deltas *are*
+                            // the motion, so the list goes exactly where they put it
+                            // (writing the target too drops a glide in flight). Its
+                            // momentum is macOS' own, derived from the velocity the
+                            // gesture ended at �� easing it would stall the list on
+                            // release and ramp back up, see `scroll-view.slint`.
+                            root.scroll-y = clamp(
+                                root.scroll-y - event.delta-y,
+                                0px,
+                                root.max-scroll,
+                            );
+                            root.target-y = root.scroll-y;
+                        }
+                        return accept;
+                    }
                 }
                 reject
             }

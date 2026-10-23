@@ -7,6 +7,7 @@ import { TitleBar, WindowControl } from "components/title-bar.slint";
 import { AppConfig } from "globals/settings.slint";
 import { CommandPaletteState } from "globals/command-palette.slint";
 import { Navigation } from "globals/navigation.slint";
+import { GameState } from "globals/game.slint";
 import { Dialogs } from "globals/dialogs.slint";
 import { DropdownOverlay } from "overlays/dropdown-overlay.slint";
 import { DescriptionTooltipOverlay } from "overlays/description-tooltip.slint";
@@ -26,7 +27,6 @@ import { WindowBackground } from "components/display/window-background.slint";
 import { SettingsView } from "views/settings-view.slint";
 import { GameView } from "views/game-view.slint";
 import { LaunchView } from "views/launch-view.slint";
-import { CrashView } from "views/crash-view.slint";
 import { SetupView } from "views/setup-view.slint";
 import { TodoPlaceholder } from "views/todo-placeholder.slint";
 
@@ -228,6 +228,10 @@ export component App inherits Window {
         if Navigation.transition-stage == "idle" {
             Navigation.transition-stage = "starting";
         }
+        // Make the Up/Down bindings live from the first frame; `forward-focus`
+        // covers a window that gains focus, but the app is already frontmost
+        // when it is launched from a running terminal.
+        app-scope.focus();
     }
 
     callback toggle-music();
@@ -286,6 +290,25 @@ export component App inherits Window {
         KeyBinding {
             keys: @keys(Escape);
             activated => { Navigation.escape(); }
+        }
+
+        // Up/Down move the current instance on the game page. This is a
+        // `key-pressed` handler rather than a `KeyBinding`: the winit backend
+        // reports arrows through the key text, and a binding for them was not
+        // matched. The command palette owns the arrows while it is open (its
+        // field moves its own selection); other pages keep their own keys.
+        key-pressed(event) => {
+            if Navigation.current-page == "game" && !CommandPaletteState.visible {
+                if event.text == Key.UpArrow {
+                    GameState.move-selection(-1);
+                    return accept;
+                }
+                if event.text == Key.DownArrow {
+                    GameState.move-selection(1);
+                    return accept;
+                }
+            }
+            reject
         }
 
         // The focus goes to the palette's search field while it is open and comes
@@ -352,9 +375,8 @@ export component App inherits Window {
                     if Navigation.current-page == "settings" || Navigation.leaving-page == "settings": SettingsView { }
                     if Navigation.current-page == "game" || Navigation.leaving-page == "game": GameView { }
                     if Navigation.current-page == "launch": LaunchView { }
-                    if Navigation.current-page == "crash": CrashView { }
                     if Navigation.current-page == "setup" || Navigation.leaving-page == "setup": SetupView { }
-                    if Navigation.current-page != "settings" && Navigation.current-page != "game" && Navigation.current-page != "launch" && Navigation.current-page != "crash" && Navigation.current-page != "setup": TodoPlaceholder { }
+                    if Navigation.current-page != "settings" && Navigation.current-page != "game" && Navigation.current-page != "launch" && Navigation.current-page != "setup": TodoPlaceholder { }
                 }
             }
 

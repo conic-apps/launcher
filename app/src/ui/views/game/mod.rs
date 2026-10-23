@@ -19,7 +19,7 @@ use crate::slint_backend::{
     AccountItem, App, Dialogs, GameRow, GameState, MultiplayerState, Navigation,
 };
 use account::Account;
-use instance::{Instance, ModLoaderType, SortBy};
+use instance::{Instance, SortBy};
 use slint::Image;
 
 use crate::usecases::game::{GroupMode, InstanceViewState, SortMode as SavedSortMode};
@@ -63,13 +63,20 @@ pub(crate) struct CachedBackground {
     image: Image,
 }
 
+/// One group in display order, and whether it is open. Used by the accordion
+/// normalisation and the arrow / Alt-wheel instance stepper.
+#[derive(Clone, Debug)]
+pub(crate) struct GroupRange {
+    key: String,
+    expanded: bool,
+}
+
 pub(crate) struct GameController {
     config: Rc<RefCell<config::Config>>,
     instances: Vec<Instance>,
     current_id: Option<String>,
     sort: SortBy,
     group_mode: &'static str,
-    search: String,
     expanded: HashMap<String, bool>,
     accounts: Vec<Account>,
     playtime: HashMap<String, u64>,
@@ -81,6 +88,9 @@ pub(crate) struct GameController {
     /// because the card needs a decoded image and `apply` runs on every list
     /// change; the background file's modified time is the invalidation key.
     backgrounds: RefCell<HashMap<String, CachedBackground>>,
+    /// The groups of the current flattened list, cached so a wheel event can
+    /// decide whether it crossed a group edge without rebuilding the rows.
+    groups: Vec<GroupRange>,
     /// The instance list. It is kept across applies and reconciled in place (see
     /// `sync_rows`), so the view's row items survive a relayout and can animate
     /// along the rail to their new slot instead of being recreated in place.
