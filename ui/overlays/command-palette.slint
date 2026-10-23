@@ -7,6 +7,7 @@ import { AppIcon } from "../components/display/app-icon.slint";
 import { Loading } from "../components/controls/loading.slint";
 import { ScrollView } from "../components/containers/scroll-view.slint";
 import { ContentText } from "../globals/content.slint";
+import { Navigation } from "../globals/navigation.slint";
 import {
     CommandPaletteState,
     CommandText,
@@ -265,7 +266,7 @@ component PaletteRow inherits Rectangle {
 //   ↑ ↓        move the selection, wrapping at both ends
 //   Enter      perform the selected row — the `TextInput`'s `accepted` callback,
 //              which is the one Slint does call for a single-line field
-//   Escape     clear the query, else go back a mode, else close
+//   Escape     clear the query, else go back a mode, else close and go home
 //   Backspace  on an *empty* query, go back a mode
 //
 // All four are read in `capture-key-pressed` and not in `key-pressed`, and that is
@@ -390,7 +391,7 @@ export component CommandPaletteOverlay inherits Rectangle {
                         } else if (CommandPaletteState.mode != "root") {
                             CommandPaletteState.back-to-root();
                         } else {
-                            CommandPaletteState.close();
+                            Navigation.escape();
                         }
                         return accept;
                     }

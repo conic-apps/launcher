@@ -43,6 +43,9 @@ export global Navigation {
     /// away from it without going through the back button.
     callback page-changed(string);
 
+    /// The app-wide Escape shortcut: close transient UI and go home.
+    callback escape();
+
     changed current-page => {
         self.page-changed(self.current-page);
     }
