@@ -3337,3 +3337,48 @@ msgstr "A pesquisa falhou, tente novamente"
 msgctxt "ContentNotFound"
 msgid "Click here to retry"
 msgstr "Clique aqui para tentar novamente"
+
+#: ui
+msgctxt "CrashView"
+msgid "Open error report"
+msgstr "Abrir relatório de erro"
+
+#: ui
+msgctxt "CrashView"
+msgid "Close window"
+msgstr "Fechar janela"
+
+#: ui
+msgctxt "CrashView"
+msgid "If you need help from others, send them the error report instead of just a screenshot of this window."
+msgstr "Se precisar de ajuda de outras pessoas, envie o relatório de erro em vez de apenas uma captura de tela desta janela."
+
+#: ui
+msgctxt "CrashText"
+msgid "Minecraft ran out of memory. Close other programs, or allocate more memory to this instance."
+msgstr "O Minecraft ficou sem memória. Feche outros programas ou aloque mais memória para esta instância."
+
+#: ui
+msgctxt "CrashText"
+msgid "The Java version does not match this Minecraft version. Check the Java settings for this instance."
+msgstr "A versão do Java não corresponde a esta versão do Minecraft. Verifique as configurações de Java desta instância."
+
+#: ui
+msgctxt "CrashText"
+msgid "A mod is missing a dependency, conflicts with another mod, or failed to load. Check the mod list and the error report."
+msgstr "Um mod está sem uma dependência, entrou em conflito com outro mod ou não pôde ser carregado. Verifique a lista de mods e o relatório de erro."
+
+#: ui
+msgctxt "CrashText"
+msgid "The graphics driver or OpenGL could not start Minecraft. Update the graphics driver and check the game settings."
+msgstr "O driver gráfico ou a inicialização do OpenGL não conseguiu iniciar o Minecraft. Atualize o driver gráfico e verifique as configurações do jogo."
+
+#: ui
+msgctxt "CrashText"
+msgid "Some game or loader files are missing or damaged. Repair the instance or reinstall it."
+msgstr "Alguns arquivos do jogo ou do loader estão faltando ou corrompidos. Repare a instância ou reinstale-a."
+
+#: ui
+msgctxt "CrashText"
+msgid "Minecraft crashed and the cause could not be determined. Open the error report for details."
+msgstr "O Minecraft travou e não foi possível determinar a causa. Abra o relatório de erro para mais detalhes."

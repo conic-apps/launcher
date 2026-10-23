@@ -3337,3 +3337,48 @@ msgstr "Поиск не удался, попробуйте ещё раз"
 msgctxt "ContentNotFound"
 msgid "Click here to retry"
 msgstr "Нажмите здесь, чтобы повторить"
+
+#: ui
+msgctxt "CrashView"
+msgid "Open error report"
+msgstr "Открыть отчёт об ошибке"
+
+#: ui
+msgctxt "CrashView"
+msgid "Close window"
+msgstr "Закрыть окно"
+
+#: ui
+msgctxt "CrashView"
+msgid "If you need help from others, send them the error report instead of just a screenshot of this window."
+msgstr "Если вам нужна помощь, отправьте отчёт об ошибке, а не только снимок этого окна."
+
+#: ui
+msgctxt "CrashText"
+msgid "Minecraft ran out of memory. Close other programs, or allocate more memory to this instance."
+msgstr "Minecraft не хватило памяти. Закройте другие программы или выделите больше памяти этому экземпляру."
+
+#: ui
+msgctxt "CrashText"
+msgid "The Java version does not match this Minecraft version. Check the Java settings for this instance."
+msgstr "Версия Java не соответствует этой версии Minecraft. Проверьте настройки Java для этого экземпляра."
+
+#: ui
+msgctxt "CrashText"
+msgid "A mod is missing a dependency, conflicts with another mod, or failed to load. Check the mod list and the error report."
+msgstr "У мода отсутствует зависимость, он конфликтует с другим модом или не загрузился. Проверьте список модов и отчёт об ошибке."
+
+#: ui
+msgctxt "CrashText"
+msgid "The graphics driver or OpenGL could not start Minecraft. Update the graphics driver and check the game settings."
+msgstr "Графический драйвер или OpenGL не смогли запустить Minecraft. Обновите драйвер и проверьте настройки игры."
+
+#: ui
+msgctxt "CrashText"
+msgid "Some game or loader files are missing or damaged. Repair the instance or reinstall it."
+msgstr "Некоторые файлы игры или загрузчика отсутствуют или повреждены. Восстановите экземпляр или переустановите его."
+
+#: ui
+msgctxt "CrashText"
+msgid "Minecraft crashed and the cause could not be determined. Open the error report for details."
+msgstr "Minecraft завершился с ошибкой, причину определить не удалось. Откройте отчёт об ошибке для подробностей."

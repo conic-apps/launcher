@@ -3,20 +3,20 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../../theme.slint";
-import { AppIcon } from "../../components/display/app-icon.slint";
 import { GameState, GameIntro } from "../../globals/game.slint";
 import { DropdownOption } from "../../globals/dropdown.slint";
 import { FocusManager } from "../../globals/focus.slint";
 import { InstanceListDropdown } from "instance-list-dropdown.slint";
 
-// Search + sort/group toolbar above the instance list, anchored to the
-// top-right.
+// The instance list's view controls: sorting and grouping in one compact pill
+// at the top-right. The search field that used to share this panel was removed;
+// the palette in the title bar is the search entry point for the whole app.
 export component InstancesListToolBar inherits Rectangle {
-    width: 400px;
-    height: 112px;
-    // The root is only the 400×112 box `InstancesList` positions against; the
-    // panel with the background is `body` below, because the intro animates that
-    // whole element.
+    width: 360px;
+    height: 41px;
+    // The root is only the box `InstancesList` positions against; the panel with
+    // the background is `body` below, because the intro animates that whole
+    // element.
     background: transparent;
     // NOTE: a `z` is not set here. A component root's `z` only reaches the
     // parent's stacking order when the parent places it from a `for` loop — for
@@ -50,9 +50,6 @@ export component InstancesListToolBar inherits Rectangle {
     private property <length> intro-dx: GameIntro.played ? 0px : 100px;
     private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
 
-    private property <int> clear-sequence: FocusManager.clear-sequence;
-    changed clear-sequence => { input.clear-focus(); }
-
     animate intro-dx {
         duration: 500ms;
         delay: 50ms;
@@ -73,8 +70,7 @@ export component InstancesListToolBar inherits Rectangle {
         width: root.width;
         height: root.height;
         background: Theme.surface-0.transparentize(0.6);
-        border-top-left-radius: 16px;
-        border-bottom-left-radius: 16px;
+        border-radius: 8px;
         opacity: root.intro-alpha;
         visible: root.intro-alpha > 0.01;
 
@@ -94,108 +90,41 @@ export component InstancesListToolBar inherits Rectangle {
             clicked => { FocusManager.clear(); }
         }
 
-        VerticalLayout {
-            padding: 16px;
-            spacing: 12px;
-            alignment: start;
+        // The two dropdowns split the row exactly in half. `horizontal-stretch:
+        // 1` alone cannot do that: it only hands out what is left after each
+        // child's preferred size, and these two prefer different widths
+        // ("Sort" against "Group", "Play time" against "Ungrouped").
+        //
+        // So the preferred size is zero on both: equal floors plus equal
+        // stretch factors make the two come out exactly equal whatever the
+        // value is, and the row divides rather than packs.
+        HorizontalLayout {
+            width: 100%;
+            height: 100%;
+            padding: 8px;
+            spacing: 8px;
+            cross-axis-alignment: center;
 
-            search-row := HorizontalLayout {
-                height: 40px;
-
-                input-box := Rectangle {
-                    horizontal-stretch: 1;
-                    background: Theme.surface-0;
-                    border-top-left-radius: 8px;
-                    border-bottom-left-radius: 8px;
-
-                    HorizontalLayout {
-                        padding-left: 16px;
-                        cross-axis-alignment: center;
-
-                        input := TextInput {
-                            horizontal-stretch: 1;
-                            text: GameState.search-query;
-                            font-size: 14px;
-                            selection-background-color: Theme.default-text-color.with-alpha(0.3);
-                            selection-foreground-color: Theme.default-text-color;
-                            single-line: true;
-                            vertical-alignment: center;
-                            edited => { GameState.search-changed(self.text); }
-                        }
-                    }
-
-                    // Slint's `TextInput` has no placeholder of its own, so it is
-                    // drawn over the field rather than laid out beside it.
-                    if GameState.search-query == "" && !input.has-focus: Text {
-                        x: 16px;
-                        y: 0;
-                        height: parent.height;
-                        text: @tr("Search...");
-                        font-size: 14px;
-                        color: Theme.default-text-color.transparentize(0.4);
-                        vertical-alignment: center;
-                    }
-                }
-
-                search-button := Rectangle {
-                    width: 40px;
-                    background: search-touch.pressed ? Theme.surface-2
-                        : search-touch.has-hover ? Theme.surface-2.transparentize(0.2)
-                        : Theme.surface-1;
-                    border-top-right-radius: 8px;
-                    border-bottom-right-radius: 8px;
-
-                    HorizontalLayout {
-                        alignment: center;
-                        cross-axis-alignment: center;
-
-                        AppIcon {
-                            name: "search";
-                            size: 20px;
-                        }
-                    }
-
-                    search-touch := TouchArea { }
-                }
+            InstanceListDropdown {
+                preferred-width: 0px;
+                horizontal-stretch: 1;
+                label: @tr("Sort");
+                selected: root.sort-label;
+                options: root.sort-options;
+                selected-key: GameState.sort-mode;
+                dropdown-id: "instance-sort";
+                select(key) => { GameState.set-sort(key); }
             }
 
-            // The two dropdowns split the row exactly in half. `horizontal-stretch:
-            // 1` alone cannot do that: it only hands out what is left after each
-            // child's preferred size, and these two prefer different widths
-            // ("Sort" against "Group", "Play time" against "Ungrouped").
-            //
-            // So the preferred size is zero on both: equal floors plus equal
-            // stretch factors make the two come out exactly equal whatever the
-            // value is, and the row divides rather than packs. Stating the half
-            // directly — reading `other-row.width` — is what this *cannot* do: a
-            // child's preferred size feeding the layout cache that decides the
-            // very width it read is a binding loop, and it is one that cost the
-            // dropdowns their click handling outright.
-            other-row := HorizontalLayout {
-                height: 25px;
-                spacing: 8px;
-
-                InstanceListDropdown {
-                    preferred-width: 0px;
-                    horizontal-stretch: 1;
-                    label: @tr("Sort");
-                    selected: root.sort-label;
-                    options: root.sort-options;
-                    selected-key: GameState.sort-mode;
-                    dropdown-id: "instance-sort";
-                    select(key) => { GameState.set-sort(key); }
-                }
-
-                InstanceListDropdown {
-                    preferred-width: 0px;
-                    horizontal-stretch: 1;
-                    label: @tr("Group");
-                    selected: root.group-label;
-                    options: root.group-options;
-                    selected-key: GameState.group-mode;
-                    dropdown-id: "instance-group";
-                    select(key) => { GameState.set-group-mode(key); }
-                }
+            InstanceListDropdown {
+                preferred-width: 0px;
+                horizontal-stretch: 1;
+                label: @tr("Group");
+                selected: root.group-label;
+                options: root.group-options;
+                selected-key: GameState.group-mode;
+                dropdown-id: "instance-group";
+                select(key) => { GameState.set-group-mode(key); }
             }
         }
     }

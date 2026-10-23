@@ -63,6 +63,14 @@ pub(crate) struct CachedBackground {
     image: Image,
 }
 
+/// One group in display order, and whether it is open. Used by the accordion
+/// normalisation and the arrow / Alt-wheel instance stepper.
+#[derive(Clone, Debug)]
+pub(crate) struct GroupRange {
+    key: String,
+    expanded: bool,
+}
+
 pub(crate) struct GameController {
     config: Rc<RefCell<config::Config>>,
     instances: Vec<Instance>,
@@ -81,6 +89,9 @@ pub(crate) struct GameController {
     /// because the card needs a decoded image and `apply` runs on every list
     /// change; the background file's modified time is the invalidation key.
     backgrounds: RefCell<HashMap<String, CachedBackground>>,
+    /// The groups of the current flattened list, cached so a wheel event can
+    /// decide whether it crossed a group edge without rebuilding the rows.
+    groups: Vec<GroupRange>,
     /// The instance list. It is kept across applies and reconciled in place (see
     /// `sync_rows`), so the view's row items survive a relayout and can animate
     /// along the rail to their new slot instead of being recreated in place.

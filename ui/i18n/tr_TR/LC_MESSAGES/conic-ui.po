@@ -3337,3 +3337,48 @@ msgstr "Arama başarısız oldu, lütfen tekrar deneyin"
 msgctxt "ContentNotFound"
 msgid "Click here to retry"
 msgstr "Yeniden denemek için buraya tıklayın"
+
+#: ui
+msgctxt "CrashView"
+msgid "Open error report"
+msgstr "Hata raporunu aç"
+
+#: ui
+msgctxt "CrashView"
+msgid "Close window"
+msgstr "Pencereyi kapat"
+
+#: ui
+msgctxt "CrashView"
+msgid "If you need help from others, send them the error report instead of just a screenshot of this window."
+msgstr "Başkalarından yardım istiyorsanız, bu pencerenin yalnızca ekran görüntüsünü değil, hata raporunu da gönderin."
+
+#: ui
+msgctxt "CrashText"
+msgid "Minecraft ran out of memory. Close other programs, or allocate more memory to this instance."
+msgstr "Minecraft'ın belleği yetersiz kaldı. Diğer programları kapatın veya bu örneğe daha fazla bellek ayırın."
+
+#: ui
+msgctxt "CrashText"
+msgid "The Java version does not match this Minecraft version. Check the Java settings for this instance."
+msgstr "Java sürümü bu Minecraft sürümüyle eşleşmiyor. Bu örneğin Java ayarlarını kontrol edin."
+
+#: ui
+msgctxt "CrashText"
+msgid "A mod is missing a dependency, conflicts with another mod, or failed to load. Check the mod list and the error report."
+msgstr "Bir modun bağımlılığı eksik, başka bir modla çakışıyor veya yüklenemedi. Mod listesini ve hata raporunu kontrol edin."
+
+#: ui
+msgctxt "CrashText"
+msgid "The graphics driver or OpenGL could not start Minecraft. Update the graphics driver and check the game settings."
+msgstr "Grafik sürücüsü veya OpenGL başlatılamadığı için Minecraft açılamadı. Grafik sürücüsünü güncelleyin ve oyun ayarlarını kontrol edin."
+
+#: ui
+msgctxt "CrashText"
+msgid "Some game or loader files are missing or damaged. Repair the instance or reinstall it."
+msgstr "Bazı oyun veya yükleyici dosyaları eksik ya da bozuk. Örneği onarın veya yeniden yükleyin."
+
+#: ui
+msgctxt "CrashText"
+msgid "Minecraft crashed and the cause could not be determined. Open the error report for details."
+msgstr "Minecraft çöktü ancak nedeni belirlenemedi. Ayrıntılar için hata raporunu açın."

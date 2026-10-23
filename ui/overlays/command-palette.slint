@@ -259,9 +259,11 @@ component PaletteRow inherits Rectangle {
     }
 }
 
-// The whole overlay: the `#00000042` scrim and the palette panel under it.
+// The whole overlay: a scrim that fades with the panel, and the palette panel
+// under it. The panel expands from the title bar and contracts back into it;
+// both directions run through the same `phase` state.
 //
-// There is no entrance animation; the panel simply appears. The key handling is:
+// The key handling is:
 //
 //   ↑ ↓        move the selection, wrapping at both ends
 //   Enter      perform the selected row — the `TextInput`'s `accepted` callback,
@@ -279,7 +281,6 @@ component PaletteRow inherits Rectangle {
 export component CommandPaletteOverlay inherits Rectangle {
     width: 100%;
     height: 100%;
-    background: #00000042;
     border-radius: 16px;
     // Above the music player and the content overlays (which set no `z` of their
     // own), below the dialogs (`z: 2000`) — so this sits between the two in
@@ -312,13 +313,68 @@ export component CommandPaletteOverlay inherits Rectangle {
     // the footer (8 + 14 + 8 + a 1px rule) + 1px of border.
     private property <length> panel-height: 74px + root.results-height + 2px;
 
+    private property <string> phase: "closed";
+    private property <float> reveal: root.phase == "shown" ? 1.0 : 0.0;
+    private property <float> scrim-alpha: root.phase == "shown" ? 1.0 : 0.0;
     private property <bool> shown: CommandPaletteState.visible;
-    visible: root.shown;
+
+    visible: root.phase != "closed";
+    background: #000000.with-alpha(0.259 * root.scrim-alpha);
+
+    changed shown => {
+        if root.shown {
+            if root.phase == "closed" {
+                root.phase = "starting";
+                open-timer.restart();
+            } else if root.phase == "leaving" {
+                root.phase = "shown";
+            }
+        } else if root.phase == "starting" || root.phase == "shown" {
+            root.phase = "leaving";
+        }
+    }
+
+    // The same first-frame trick as `Dialog`: a hidden or zero-height element is
+    // not animated from its current value, so the panel is shown for one frame at
+    // the closed height before it is told to grow.
+    open-timer := Timer {
+        interval: 16ms;
+        running: root.phase == "starting";
+        triggered => { root.phase = "shown"; }
+    }
+
+    // The height animation is 260ms; the extra 20ms keeps the panel on screen
+    // until its last frame has been painted.
+    close-timer := Timer {
+        interval: 280ms;
+        running: root.phase == "leaving";
+        triggered => { root.phase = "closed"; }
+    }
+
+    init => {
+        if root.shown {
+            root.phase = "shown";
+        }
+    }
+
+    animate reveal {
+        duration: 260ms;
+        easing: ease-out-quad;
+    }
+
+    animate scrim-alpha {
+        duration: 200ms;
+        easing: ease-out-quad;
+    }
 
     panel := Rectangle {
         // The same span the title bar's search field is given.
         width: max(600px, root.width - 500px);
-        height: root.panel-height;
+        // The panel grows downward from just below the title bar. The input row
+        // is revealed first, then the results and finally the footer, because
+        // they are all laid out inside the clipped content box.
+        height: root.panel-height * root.reveal;
+        opacity: root.reveal;
         x: (root.width - self.width) / 2;
         // 4px below the top edge: the backdrop is the whole window, so the panel
         // hangs inside the title bar.
@@ -340,7 +396,7 @@ export component CommandPaletteOverlay inherits Rectangle {
             x: 1px;
             y: 1px;
             width: parent.width - 2px;
-            height: parent.height - 2px;
+            height: max(0px, parent.height - 2px);
             border-radius: 11px;
             clip: true;
             background: transparent;

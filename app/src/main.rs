@@ -138,9 +138,9 @@ fn main() {
     ui::overlays::instance_settings::setup(&ui, Rc::clone(&shared));
     ui::overlays::content::setup(&ui);
     ui::views::launch::setup(&ui, Rc::clone(&shared));
-    // The crash page: it subscribes to the launch crate's session events for
+    // The crash dialog: it subscribes to the launch crate's session events for
     // the whole app, so it has to be wired before a game can ever be launched.
-    ui::views::crash::setup(&ui);
+    ui::overlays::dialogs::crash::setup(&ui);
     ui::overlays::dialogs::create_instance::setup(&ui, Rc::clone(&shared));
     ui::overlays::dialogs::account_add::setup(&ui);
     ui::views::setup::setup(&ui, Rc::clone(&shared));

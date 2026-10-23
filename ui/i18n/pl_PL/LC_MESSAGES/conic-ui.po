@@ -3337,3 +3337,48 @@ msgstr "Wyszukiwanie nie powiodło się, spróbuj ponownie"
 msgctxt "ContentNotFound"
 msgid "Click here to retry"
 msgstr "Kliknij tutaj, aby spróbować ponownie"
+
+#: ui
+msgctxt "CrashView"
+msgid "Open error report"
+msgstr "Otwórz raport błędu"
+
+#: ui
+msgctxt "CrashView"
+msgid "Close window"
+msgstr "Zamknij okno"
+
+#: ui
+msgctxt "CrashView"
+msgid "If you need help from others, send them the error report instead of just a screenshot of this window."
+msgstr "Jeśli potrzebujesz pomocy innych osób, wyślij im raport błędu, a nie tylko zrzut ekranu tego okna."
+
+#: ui
+msgctxt "CrashText"
+msgid "Minecraft ran out of memory. Close other programs, or allocate more memory to this instance."
+msgstr "Minecraftowi zabrakło pamięci. Zamknij inne programy lub przydziel tej instancji więcej pamięci."
+
+#: ui
+msgctxt "CrashText"
+msgid "The Java version does not match this Minecraft version. Check the Java settings for this instance."
+msgstr "Wersja Javy nie pasuje do tej wersji Minecrafta. Sprawdź ustawienia Javy tej instancji."
+
+#: ui
+msgctxt "CrashText"
+msgid "A mod is missing a dependency, conflicts with another mod, or failed to load. Check the mod list and the error report."
+msgstr "Brakuje zależności moda, koliduje on z innym modem lub nie udało się go wczytać. Sprawdź listę modów i raport błędu."
+
+#: ui
+msgctxt "CrashText"
+msgid "The graphics driver or OpenGL could not start Minecraft. Update the graphics driver and check the game settings."
+msgstr "Sterownik graficzny lub OpenGL nie pozwoliły uruchomić Minecrafta. Zaktualizuj sterownik graficzny i sprawdź ustawienia gry."
+
+#: ui
+msgctxt "CrashText"
+msgid "Some game or loader files are missing or damaged. Repair the instance or reinstall it."
+msgstr "Brakuje niektórych plików gry lub loadera albo są uszkodzone. Napraw instancję lub zainstaluj ją ponownie."
+
+#: ui
+msgctxt "CrashText"
+msgid "Minecraft crashed and the cause could not be determined. Open the error report for details."
+msgstr "Minecraft uległ awarii, ale nie udało się ustalić przyczyny. Otwórz raport błędu, aby zobaczyć szczegóły."

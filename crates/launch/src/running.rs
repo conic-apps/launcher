@@ -75,7 +75,7 @@ pub enum SessionEvent {
         /// not ask for it.
         abnormal: bool,
         /// The collected crash information, when the exit was abnormal.
-        crash: Option<CrashReport>,
+        crash: Option<Box<CrashReport>>,
     },
 }
 
@@ -378,9 +378,9 @@ fn watch(
         if let Err(error) = instance::mark_last_exit_abnormal(&id) {
             warn!("could not mark instance {id} as crashed: {error}");
         }
-        Some(crate::crash::analyze(
+        Some(Box::new(crate::crash::analyze(
             &instance, exit_type, exit_code, &console,
-        ))
+        )))
     } else {
         if let Err(error) = instance::clear_last_exit_abnormal(&id) {
             warn!("could not clear the crash marker of instance {id}: {error}");
