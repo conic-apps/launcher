@@ -73,6 +73,12 @@ export global NotificationText {
             return @tr("NotificationText" => "The task was cancelled");
         }
         if item.kind == "task-finished" {
+            if arg(item, 1) == "content-download" || arg(item, 1) == "library-download" {
+                return @tr("NotificationText" => "{} downloaded. Click here to view", arg(item, 0));
+            }
+            if arg(item, 1) == "modpack-install" || arg(item, 1) == "game-install" {
+                return @tr("NotificationText" => "{} installed. Click here to view", arg(item, 0));
+            }
             return @tr("NotificationText" => "The task finished");
         }
         if item.kind == "setup-skipped" {

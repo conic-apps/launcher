@@ -1,0 +1,120 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+/// One running task in the notification centre.
+///
+/// The fields are plain data: `kind` and `stage` are keys the view translates,
+/// and `action-kind` says whether a click on the body has somewhere to go.
+export struct TaskItem {
+    id: int,
+    /// "content-download" | "modpack-install" | "game-install" | "library-download"
+    kind: string,
+    /// Project / pack / version name. Data, never a sentence.
+    subject: string,
+    /// Instance name or another short context line.
+    context: string,
+    /// "preparing" | "verifying" | "downloading" | "installing-game"
+    /// | "installing-java" | "installing-loader" | "extracting" | "finalizing"
+    stage: string,
+    value: float,
+    max: float,
+    /// The size is not known yet; the bar sweeps instead of filling.
+    indeterminate: bool,
+    /// The user asked to stop it and the work has not acknowledged that yet.
+    cancelling: bool,
+    /// A preview that is leaving after its task ended; the centre's card never
+    /// sets it.
+    closing: bool,
+    icon: string,
+    /// "content" | "instance" | "launch" | "library" | "none"
+    action-kind: string,
+}
+
+export global TaskState {
+    in-out property <[TaskItem]> tasks: [];
+    /// One live preview per newly started task, in the top-right corner.
+    in-out property <[TaskItem]> toasts: [];
+    in-out property <int> task-count: 0;
+    /// The task name the confirmation dialog shows.
+    in-out property <string> pending-cancel-subject: "";
+
+    /// The card's X was pressed. Rust applies the 10-second confirmation rule.
+    callback request-cancel(int);
+    /// The confirmation dialog's confirm button.
+    callback confirm-cancel();
+    /// The confirmation dialog's cancel button.
+    callback dismiss-cancel();
+    /// The card body was pressed.
+    callback activate(int);
+    /// A preview's five seconds ran out; its card stays in the centre.
+    callback expire-toast(int);
+    /// Drops every preview, e.g. when the notification centre opens.
+    callback expire-all-toasts();
+}
+
+/// The task centre's translated strings.
+///
+/// Kept in Slint for the same reason as `NotificationText`: a string Rust pushed
+/// into a model is fixed at that moment and would not follow a language change,
+/// while an `@tr` binding re-evaluates.
+export global TaskText {
+    public pure function title(item: TaskItem) -> string {
+        if item.kind == "content-download" {
+            return @tr("TaskText" => "Downloading {}", item.subject);
+        }
+        if item.kind == "modpack-install" {
+            return @tr("TaskText" => "Installing modpack {}", item.subject);
+        }
+        if item.kind == "game-install" {
+            return @tr("TaskText" => "Installing {}", item.subject);
+        }
+        if item.kind == "library-download" {
+            return @tr("TaskText" => "Downloading Conic Nexus");
+        }
+        return item.subject;
+    }
+
+    public pure function stage(key: string) -> string {
+        if key == "preparing" {
+            return @tr("TaskText" => "Preparing");
+        }
+        if key == "verifying" {
+            return @tr("TaskText" => "Verifying files");
+        }
+        if key == "downloading" {
+            return @tr("TaskText" => "Downloading");
+        }
+        if key == "installing-game" {
+            return @tr("TaskText" => "Installing game");
+        }
+        if key == "installing-java" {
+            return @tr("TaskText" => "Installing Java");
+        }
+        if key == "installing-loader" {
+            return @tr("TaskText" => "Installing mod loader");
+        }
+        if key == "extracting" {
+            return @tr("TaskText" => "Extracting files");
+        }
+        if key == "finalizing" {
+            return @tr("TaskText" => "Finishing");
+        }
+        return "";
+    }
+
+    public pure function detail(item: TaskItem) -> string {
+        if item.cancelling {
+            return @tr("TaskText" => "Stopping…");
+        }
+        // The title already says "Downloading", so the stage line would repeat
+        // it for every content and library download.
+        if item.kind == "content-download" || item.kind == "library-download" {
+            return item.context;
+        }
+        if item.context != "" {
+            return item.context + " · " + self.stage(item.stage);
+        }
+        return self.stage(item.stage);
+    }
+}

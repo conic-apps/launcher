@@ -623,13 +623,43 @@ pub(crate) fn setup_detail_actions(ui: &App) {
             let Some(detail) = controller().borrow().detail.clone() else {
                 return;
             };
+            if ui.global::<ContentState>().get_detail_operating() {
+                return;
+            }
             let instance = controller().borrow().instance_id.clone();
+            let subject = ui.global::<ContentState>().get_detail_title().to_string();
+            let context = ui.global::<GameState>().get_current_name().to_string();
+            let service = crate::ui::services::tasks::service();
+            let task = service.begin(shared::task::TaskSpec {
+                kind: shared::task::TaskKind::ContentDownload,
+                subject: if subject.is_empty() {
+                    detail.id.clone()
+                } else {
+                    subject
+                },
+                context,
+                target: shared::task::TaskTarget::Content {
+                    instance_id: instance.clone(),
+                    kind: detail.kind.key().into(),
+                    platform: detail.platform.key().into(),
+                    project_id: detail.id.clone(),
+                },
+            });
+            let id = task.id();
+            let completion = task.clone();
             ui.global::<ContentState>().set_detail_operating(true);
-            let token = controller().borrow_mut().detail_download_gate.issue();
             let weak = ui.as_weak();
-            crate::support::runtime::spawn(async move {
-                let outcome = install(&instance, &detail, weak.clone(), token.clone()).await;
-                deliver(&weak, &token, move |ui| {
+            let handle = crate::support::runtime::spawn(async move {
+                let outcome =
+                    crate::usecases::content_install::install(&instance, &detail, task).await;
+                match &outcome {
+                    Ok(()) => completion.succeed(),
+                    Err(error) => {
+                        completion.fail(error.clone());
+                        log::error!("failed to download content: {error}");
+                    }
+                }
+                crate::ui::services::report::report(&weak, move |ui| {
                     let state = ui.global::<ContentState>();
                     state.set_detail_operating(false);
                     state.set_detail_progress(0.0);
@@ -650,6 +680,7 @@ pub(crate) fn setup_detail_actions(ui: &App) {
                     }
                 });
             });
+            service.attach_cancel(id, std::sync::Arc::new(move || handle.abort()));
         });
     }
     {

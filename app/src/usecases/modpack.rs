@@ -5,23 +5,40 @@
 //! The app-side modpack install.
 //!
 //! The import itself lives in the `modpack` crate; this runs it with the
-//! launcher's config. TODO: show the progress in the UI — until then the
-//! crate's progress goes to the log.
+//! launcher's config and adapts its two progress vocabularies into the task
+//! centre's one.
 
 use std::sync::Arc;
 
 use config::Config;
-use shared::Sink;
+use shared::{
+    Sink,
+    task::{TaskProgress, TaskStage},
+};
+
+use crate::usecases::tasks::TaskHandle;
 
 pub(crate) async fn install(
     id: String,
     plan: modpack::Plan,
     config: Config,
+    task: TaskHandle,
 ) -> modpack::Result<()> {
-    // TODO: surface these on an install screen instead of the log.
-    let sink: Sink<modpack::Progress> = Arc::new(|progress| match progress {
-        modpack::Progress::Install(progress) => log::info!("modpack install: {progress:?}"),
-        modpack::Progress::Download(snapshot) => log::info!("modpack download: {snapshot:?}"),
-    });
+    let sink: Sink<modpack::Progress> = {
+        let task = task.clone();
+        Arc::new(move |progress| match progress {
+            modpack::Progress::Install(progress) => {
+                let (stage, progress) = crate::usecases::progress::install(&progress);
+                task.update(stage, progress);
+            }
+            modpack::Progress::Download(snapshot) => {
+                let (stage, progress) = crate::usecases::progress::download(&snapshot);
+                task.update(stage, progress);
+            }
+            modpack::Progress::Extracting => {
+                task.update(TaskStage::Extracting, TaskProgress::Indeterminate);
+            }
+        })
+    };
     modpack::install(id, plan, config, sink).await
 }

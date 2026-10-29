@@ -3692,3 +3692,98 @@ msgstr "Montón / RAM"
 msgctxt "CrashText"
 msgid "Java version"
 msgstr "Versión de Java"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{} downloaded. Click here to view"
+msgstr "{} se ha descargado. Haz clic aquí para verlo"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{} installed. Click here to view"
+msgstr "{} se ha instalado. Haz clic aquí para verlo"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading {}"
+msgstr "Descargando {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing modpack {}"
+msgstr "Instalando el modpack {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing {}"
+msgstr "Instalando {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading Conic Nexus"
+msgstr "Descargando Conic Nexus"
+
+#: ui
+msgctxt "TaskText"
+msgid "Preparing"
+msgstr "Preparando"
+
+#: ui
+msgctxt "TaskText"
+msgid "Verifying files"
+msgstr "Verificando archivos"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading"
+msgstr "Descargando"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing game"
+msgstr "Instalando el juego"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing Java"
+msgstr "Instalando Java"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing mod loader"
+msgstr "Instalando el cargador de mods"
+
+#: ui
+msgctxt "TaskText"
+msgid "Extracting files"
+msgstr "Extrayendo archivos"
+
+#: ui
+msgctxt "TaskText"
+msgid "Finishing"
+msgstr "Finalizando"
+
+#: ui
+msgctxt "TaskText"
+msgid "Stopping…"
+msgstr "Deteniendo…"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Stop the task「{}」?"
+msgstr "¿Detener la tarea «{}»?"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "It has been running for a while. Stopping it may leave unfinished files or a half-created instance."
+msgstr "La tarea lleva un tiempo en ejecución. Detenerla puede dejar archivos incompletos o una instancia a medio crear."
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Keep waiting"
+msgstr "Seguir esperando"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Stop task"
+msgstr "Detener tarea"

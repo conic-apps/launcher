@@ -10,6 +10,284 @@ import {
     NotificationState,
     NotificationText,
 } from "../globals/notifications.slint";
+import { TaskItem, TaskState, TaskText } from "../globals/tasks.slint";
+
+// The 4px progress strip at the bottom of a task card. It spans the card's full
+// width; the card's own rounded clip gives the bottom corners their shape.
+component TaskBar inherits Rectangle {
+    in property <float> value: 0;
+    in property <float> max: 0;
+    in property <bool> loading: false;
+
+    height: 4px;
+    background: Theme.surface-2;
+
+    private property <float> phase: mod(animation-tick(), 1.25s) / 1.25s;
+    private property <float> sweep: self.phase * self.phase * (3.0 - 2.0 * self.phase);
+    private property <length> sweep-x: root.width * (-0.60 + self.sweep * 1.70);
+
+    if root.loading: Rectangle {
+        width: root.width * 0.5;
+        height: 100%;
+        x: root.sweep-x;
+        background: #f0f0f0;
+    }
+
+    if !root.loading: Rectangle {
+        width: root.max > 0.0 ? min(root.value / root.max, 1.0) * root.width : 0px;
+        height: 100%;
+        x: 0px;
+        background: #f0f0f0;
+        animate width {
+            duration: 300ms;
+            easing: ease;
+        }
+    }
+}
+
+// One running task. The body is clickable when the task has a target; the X
+// always asks for a stop, and the task centre decides whether it must confirm.
+component TaskRow inherits Rectangle {
+    in property <TaskItem> item;
+    /// Read by a preview to pause its deadline while the pointer is on the card.
+    out property <bool> hovered: card-click.has-hover || dismiss-touch.has-hover;
+    /// The body was clicked. The centre navigates directly; a preview fades
+    /// first and only then runs the action.
+    callback body-clicked();
+
+    width: 100%;
+    height: 76px;
+    background: transparent;
+
+    card := Rectangle {
+        width: 100%;
+        height: 76px;
+        border-radius: 10px;
+        clip: true;
+        background: root.item.action-kind != "none" && card-click.pressed ? Theme.surface-2
+            : root.item.action-kind != "none" && card-click.has-hover ? Theme.surface-1
+            : Theme.surface-0;
+        animate background {
+            duration: 120ms;
+            easing: ease;
+        }
+
+        Rectangle {
+            x: 0;
+            y: 0;
+            width: 42px;
+            height: 100%;
+            border-top-left-radius: 10px;
+            border-bottom-left-radius: 10px;
+            background: Theme.mantle;
+
+            AppIcon {
+                name: root.item.icon;
+                size: 20px;
+                icon-color: Theme.text;
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+            }
+        }
+
+        Text {
+            x: 52px;
+            y: 11px;
+            width: root.width - 92px;
+            height: 16px;
+            text: TaskText.title(root.item);
+            color: Theme.text;
+            font-size: 12px;
+            font-weight: 600;
+            overflow: elide;
+            vertical-alignment: center;
+        }
+
+        Text {
+            x: 52px;
+            y: 28px;
+            width: root.width - 92px;
+            height: 36px;
+            text: TaskText.detail(root.item);
+            color: Theme.text;
+            font-size: 12px;
+            wrap: word-wrap;
+            max-lines: 2;
+            overflow: elide;
+            vertical-alignment: top;
+        }
+
+        card-click := TouchArea {
+            width: root.width - 32px;
+            height: 100%;
+            // Enabled without a target too: a preview's deadline pauses on
+            // hover, and a disabled area never reports it.
+            enabled: !root.item.cancelling;
+            clicked => {
+                if root.item.action-kind != "none" {
+                    root.body-clicked();
+                }
+            }
+        }
+
+        dismiss-button := Rectangle {
+            x: root.width - 32px;
+            y: 0;
+            width: 32px;
+            height: 100%;
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;
+            background: dismiss-touch.pressed ? Theme.surface-2.transparentize(0.6)
+                : dismiss-touch.has-hover ? Theme.surface-1.transparentize(0.6)
+                : Theme.surface-1.transparentize(0.82);
+            animate background {
+                duration: 120ms;
+                easing: ease;
+            }
+
+            AppIcon {
+                name: "xmark";
+                size: 16px;
+                icon-color: root.item.cancelling ? Theme.subtext-0 : Theme.text;
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+            }
+
+            dismiss-touch := TouchArea {
+                enabled: !root.item.cancelling;
+                clicked => { TaskState.request-cancel(root.item.id); }
+            }
+        }
+
+        TaskBar {
+            x: 0;
+            y: root.height - 4px;
+            width: 100%;
+            value: root.item.value;
+            max: root.item.max;
+            loading: root.item.indeterminate;
+        }
+    }
+}
+
+// One floating preview of a running task. The task card itself is the toast; it
+// disappears after five seconds while the centre keeps the ongoing card. The
+// enter/leave motion mirrors `NotificationToast`: a short slide from the edge,
+// a fade on a body click, and a slide back out before the row is removed.
+component TaskToast inherits Rectangle {
+    in property <TaskItem> item;
+
+    width: 100%;
+    height: 76px;
+    background: transparent;
+
+    private property <string> phase: "starting";
+    private property <bool> leaving: root.phase == "leaving";
+    private property <length> phase-dx: root.phase == "starting" || root.leaving ? 48px : 0px;
+    private property <float> phase-alpha: root.phase == "shown" ? 1.0 : 0.0;
+    private property <bool> body-fading: false;
+    private property <float> body-alpha: root.body-fading ? 0.0 : 1.0;
+
+    animate phase-dx, phase-alpha {
+        duration: root.leaving ? 200ms : 240ms;
+        easing: root.leaving
+            ? cubic-bezier(0.55, 0, 1, 0.45)
+            : cubic-bezier(0, 0.55, 0.35, 1);
+    }
+    animate body-alpha {
+        duration: 160ms;
+        easing: ease-out-quad;
+    }
+
+    card := Rectangle {
+        x: root.phase-dx;
+        width: 100%;
+        height: 100%;
+        opacity: root.phase-alpha * root.body-alpha;
+        background: transparent;
+
+        // The shadow is a backdrop, not a property of the card: the card clips
+        // its own contents to round the progress strip, and a blurred shadow on
+        // that clipped layer would blur the text too.
+        Rectangle {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+            background: Theme.surface-0;
+            drop-shadow-color: #00000073;
+            drop-shadow-blur: 20px;
+            drop-shadow-offset-y: 6px;
+        }
+
+        task := TaskRow {
+            item: root.item;
+            body-clicked => { root.start-body-fade(); }
+        }
+    }
+
+    private property <int> remaining-ms: 5000;
+    private property <int> shown-id: -1;
+
+    // A row reused when another task is inserted at the front must get its own
+    // deadline and enter motion; progress updates keep the same id.
+    changed item => {
+        if root.item.id != root.shown-id {
+            root.shown-id = root.item.id;
+            root.remaining-ms = 5000;
+            root.body-fading = false;
+            root.phase = "starting";
+            enter-timer.restart();
+        }
+        if root.item.closing {
+            root.leave();
+        }
+    }
+
+    public function leave() {
+        if root.phase != "leaving" {
+            root.phase = "leaving";
+        }
+    }
+
+    function start-body-fade() {
+        if !root.body-fading && !root.leaving {
+            root.body-fading = true;
+        }
+    }
+
+    enter-timer := Timer {
+        interval: 16ms;
+        running: root.phase == "starting";
+        triggered => { root.phase = "shown"; }
+    }
+
+    leave-timer := Timer {
+        interval: 220ms;
+        running: root.leaving;
+        triggered => { TaskState.expire-toast(root.item.id); }
+    }
+
+    body-fade-timer := Timer {
+        interval: 160ms;
+        running: root.body-fading;
+        triggered => {
+            root.body-fading = false;
+            TaskState.activate(root.item.id);
+            TaskState.expire-toast(root.item.id);
+        }
+    }
+
+    expire-timer := Timer {
+        interval: 50ms;
+        running: !task.hovered && !root.leaving && !root.body-fading && root.remaining-ms > 0;
+        triggered => {
+            root.remaining-ms -= 50;
+            if root.remaining-ms <= 0 {
+                root.leave();
+            }
+        }
+    }
+}
 
 component NotificationRow inherits Rectangle {
     in property <NotificationItem> item;
@@ -326,15 +604,41 @@ export component NotificationToasts inherits Rectangle {
 
     private property <length> toast-width: 320px;
     private property <length> toast-pitch: 76px;
+    private property <length> task-toast-pitch: 84px;
     private property <length> toast-margin: 16px;
+    private property <length> task-toast-height: max(0px, TaskState.toasts.length * root.task-toast-pitch - 8px);
+    // Running task previews come first; completed notices wait below them.
+    private property <length> notification-y: root.toast-margin
+        + (TaskState.toasts.length > 0 ? root.task-toast-height + 8px : 0px);
 
     // Absolute positions, like the centre's stack: a layout child's position
     // belongs to its layout and would snap when the rows move.
-    toast-stack := Rectangle {
+    task-toast-stack := Rectangle {
         x: root.width - root.toast-width - root.toast-margin;
         y: root.toast-margin;
         width: root.toast-width;
+        height: root.task-toast-height;
+
+        for item[i] in TaskState.toasts: TaskToast {
+            item: item;
+            y: i * root.task-toast-pitch;
+            animate y {
+                duration: 260ms;
+                easing: cubic-bezier(0.33, 1, 0.68, 1);
+            }
+        }
+    }
+
+    toast-stack := Rectangle {
+        x: root.width - root.toast-width - root.toast-margin;
+        y: root.notification-y;
+        width: root.toast-width;
         height: max(0px, NotificationState.toasts.length * root.toast-pitch - 8px);
+
+        animate y {
+            duration: 260ms;
+            easing: cubic-bezier(0.33, 1, 0.68, 1);
+        }
 
         for item[i] in NotificationState.toasts: NotificationToast {
             item: item;
@@ -384,6 +688,7 @@ export component NotificationOverlay inherits Rectangle {
             // The centre already lists them; a preview would only cover it and
             // should not keep its own deadline running behind the panel.
             NotificationState.expire-all();
+            TaskState.expire-all-toasts();
             root.phase = "starting";
             start-timer.restart();
         } else if root.phase != "closed" {
@@ -495,6 +800,51 @@ export component NotificationOverlay inherits Rectangle {
                         clear-all-touch := TouchArea {
                             enabled: !root.clearing;
                             clicked => { root.start-clear(); }
+                        }
+                    }
+                }
+
+                // Running work comes before the completed notices. The two
+                // stacks keep their own pitch because a task card carries a
+                // progress strip at its bottom and is taller than a notice.
+                if TaskState.tasks.length > 0: VerticalLayout {
+                    spacing: 6px;
+
+                    HorizontalLayout {
+                        height: 24px;
+                        spacing: 8px;
+                        Text {
+                            text: @tr("NotificationOverlay" => "Active tasks");
+                            color: Theme.text;
+                            font-size: 13px;
+                            font-weight: Theme.font-weight-bold;
+                            vertical-alignment: center;
+                        }
+
+                        Text {
+                            text: "" + TaskState.task-count;
+                            color: Theme.mauve;
+                            font-size: 13px;
+                            font-weight: Theme.font-weight-bold;
+                            vertical-alignment: center;
+                        }
+
+                        Rectangle {
+                            horizontal-stretch: 1;
+                        }
+                    }
+
+                    tasks-stack := Rectangle {
+                        height: max(0px, TaskState.tasks.length * 84px - 8px);
+
+                        for item[i] in TaskState.tasks: TaskRow {
+                            item: item;
+                            y: i * 84px;
+                            body-clicked => { TaskState.activate(item.id); }
+                            animate y {
+                                duration: 260ms;
+                                easing: cubic-bezier(0.33, 1, 0.68, 1);
+                            }
                         }
                     }
                 }

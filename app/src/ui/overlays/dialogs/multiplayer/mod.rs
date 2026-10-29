@@ -60,6 +60,8 @@ pub(crate) struct Controller {
     initialized: Cell<bool>,
     /// The running library download.
     download_task: RefCell<Option<tokio::task::JoinHandle<()>>>,
+    /// The task-centre card for the running library download, -1 when none.
+    download_task_id: Cell<i32>,
     /// Issues the library download's token and invalidates it on cancel.
     download_gate: Gate,
 }

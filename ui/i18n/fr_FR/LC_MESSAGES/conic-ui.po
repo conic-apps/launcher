@@ -3692,3 +3692,98 @@ msgstr "Tas / RAM"
 msgctxt "CrashText"
 msgid "Java version"
 msgstr "Version de Java"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{} downloaded. Click here to view"
+msgstr "{} a été téléchargé. Cliquez ici pour l'afficher"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{} installed. Click here to view"
+msgstr "{} a été installé. Cliquez ici pour l'afficher"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading {}"
+msgstr "Téléchargement de {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing modpack {}"
+msgstr "Installation du modpack {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing {}"
+msgstr "Installation de {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading Conic Nexus"
+msgstr "Téléchargement de Conic Nexus"
+
+#: ui
+msgctxt "TaskText"
+msgid "Preparing"
+msgstr "Préparation"
+
+#: ui
+msgctxt "TaskText"
+msgid "Verifying files"
+msgstr "Vérification des fichiers"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading"
+msgstr "Téléchargement"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing game"
+msgstr "Installation du jeu"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing Java"
+msgstr "Installation de Java"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing mod loader"
+msgstr "Installation du chargeur de mods"
+
+#: ui
+msgctxt "TaskText"
+msgid "Extracting files"
+msgstr "Extraction des fichiers"
+
+#: ui
+msgctxt "TaskText"
+msgid "Finishing"
+msgstr "Finalisation"
+
+#: ui
+msgctxt "TaskText"
+msgid "Stopping…"
+msgstr "Arrêt…"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Stop the task「{}」?"
+msgstr "Arrêter la tâche « {} » ?"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "It has been running for a while. Stopping it may leave unfinished files or a half-created instance."
+msgstr "Cette tâche s'exécute depuis un moment. L'arrêter peut laisser des fichiers inachevés ou une instance partiellement créée."
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Keep waiting"
+msgstr "Continuer d'attendre"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Stop task"
+msgstr "Arrêter la tâche"

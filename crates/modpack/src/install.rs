@@ -29,6 +29,8 @@ pub enum Progress {
     Install(install_crate::InstallProgress),
     /// The pack's own files being downloaded.
     Download(DownloadSnapshot),
+    /// The overrides are being copied out of the archive.
+    Extracting,
 }
 
 /// Creates the instance for a resolved pack.
@@ -133,6 +135,7 @@ pub async fn install(
         .await?;
     }
 
+    sink(Progress::Extracting);
     extract_all(&plan.overrides, &instance_root).await?;
 
     lock.disarm();

@@ -34,6 +34,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
             // `instance.toml` is read on the runtime, and the state is reset
             // behind that read.
             let weak = weak.clone();
+            let install_task_id = Arc::clone(&controller.borrow().install_task_id);
             crate::support::runtime::spawn(async move {
                 let instance = instance::get_instance_by_id(&current_id).await;
                 let loader = instance
@@ -45,7 +46,26 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
                 let flow_config = config_snapshot.clone();
                 crate::ui::services::report::report(&weak, move |ui| {
                     reset_state(&ui, instance.as_ref(), &flow_config);
-                    let sink = update_sink(flow_weak.clone(), token, loader);
+                    let install_spec = instance
+                        .as_ref()
+                        .filter(|instance| !instance.installed)
+                        .map(|instance| shared::task::TaskSpec {
+                            kind: shared::task::TaskKind::GameInstall,
+                            subject: instance.config.name.clone(),
+                            context: instance.config.runtime.minecraft.clone(),
+                            target: shared::task::TaskTarget::Launch {
+                                instance_id: instance.id.clone(),
+                            },
+                        });
+                    let starter = crate::ui::services::tasks::service().starter();
+                    let sink = update_sink(
+                        flow_weak.clone(),
+                        token,
+                        loader,
+                        starter,
+                        install_spec,
+                        Arc::clone(&install_task_id),
+                    );
                     let task = crate::support::runtime::spawn(async move {
                         crate::usecases::launch::run(flow_config, instance, sink).await;
                     });
