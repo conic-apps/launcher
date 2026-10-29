@@ -10,26 +10,54 @@
 //! cancelled or superseded run cannot draw.
 
 use std::sync::{
-    Arc,
+    Arc, Mutex,
     atomic::{AtomicBool, Ordering},
 };
 
+use shared::task::TaskSpec;
+
 use super::*;
+use crate::ui::services::tasks::TaskStarter;
+use crate::usecases::tasks::TaskHandle;
+
+#[derive(Default)]
+struct InstallTask {
+    handle: Option<TaskHandle>,
+    finished: bool,
+}
 
 /// The sink the launch use case reports through.
-pub(crate) fn update_sink(weak: Weak<App>, token: Token, loader: String) -> Sink<LaunchUpdate> {
+///
+/// The install card is started lazily when the first install event arrives:
+/// the launch flow may be refused during its account checks and never touch the
+/// disk, and an empty "installing" card would be a lie.
+pub(crate) fn update_sink(
+    weak: Weak<App>,
+    token: Token,
+    loader: String,
+    starter: TaskStarter,
+    install_spec: Option<TaskSpec>,
+    task_id: Arc<Mutex<Option<i32>>>,
+) -> Sink<LaunchUpdate> {
     // The game is up on the first of the three startup markers, and the quit
     // dialog has nothing left to warn about from then on. Latched so the
     // dismiss runs once.
     let game_up = Arc::new(AtomicBool::new(false));
+    let install_task = Mutex::new(InstallTask::default());
     Arc::new(move |update| match update {
         LaunchUpdate::Install(progress) => {
+            if let Some(spec) = &install_spec {
+                update_install_task(&weak, &starter, &install_task, &task_id, spec, &progress);
+            }
             let view = presenter::install_view(&progress, &loader);
             deliver(&weak, &token, move |ui| {
                 presenter::apply_view(&ui.global::<LaunchState>(), view);
             });
         }
         LaunchUpdate::Launch(progress) => {
+            // The install is over as soon as the launch crate starts its own
+            // stages; the launch screen keeps the rest.
+            finish_install_task(&install_task, &task_id, None);
             if matches!(
                 progress,
                 launch::LaunchProgress::LogLwjglVersion
@@ -52,23 +80,94 @@ pub(crate) fn update_sink(weak: Weak<App>, token: Token, loader: String) -> Sink
             state.set_progress_loading(true);
         }),
         LaunchUpdate::Dialog(dialog) => show_dialog(&weak, &token, dialog),
-        LaunchUpdate::Error(message) => set_error(&weak, &token, message),
+        LaunchUpdate::Error(message) => {
+            finish_install_task(&install_task, &task_id, Some(message.clone()));
+            set_error(&weak, &token, message);
+        }
         LaunchUpdate::Account(account) => store_account(&weak, &token, account),
         LaunchUpdate::Finished {
             quit_app,
             pause_music,
-        } => deliver(&weak, &token, move |ui| {
-            if pause_music {
-                crate::ui::overlays::music_player::pause();
-            }
-            if quit_app {
-                let _ = ui.hide();
-                let _ = slint::quit_event_loop();
-            } else {
-                ui.global::<Navigation>().invoke_back();
-            }
-        }),
+        } => {
+            finish_install_task(&install_task, &task_id, None);
+            deliver(&weak, &token, move |ui| {
+                if pause_music {
+                    crate::ui::overlays::music_player::pause();
+                }
+                if quit_app {
+                    let _ = ui.hide();
+                    let _ = slint::quit_event_loop();
+                } else {
+                    ui.global::<Navigation>().invoke_back();
+                }
+            })
+        }
     })
+}
+
+fn update_install_task(
+    weak: &Weak<App>,
+    starter: &TaskStarter,
+    state: &Mutex<InstallTask>,
+    task_id: &Mutex<Option<i32>>,
+    spec: &TaskSpec,
+    progress: &install::InstallProgress,
+) {
+    let mut state = state
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    if state.finished {
+        return;
+    }
+    if state.handle.is_none() {
+        let handle = starter.begin(spec.clone());
+        let id = handle.id();
+        if let Ok(mut slot) = task_id.lock() {
+            *slot = Some(id);
+        }
+        let weak = weak.clone();
+        starter.attach_cancel(
+            id,
+            Arc::new(move || {
+                let weak = weak.clone();
+                let _ = weak.upgrade_in_event_loop(|ui| {
+                    crate::ui::views::launch::launch_controller()
+                        .borrow_mut()
+                        .cancel();
+                    ui.global::<Navigation>().invoke_back();
+                });
+            }),
+        );
+        state.handle = Some(handle);
+    }
+    if let Some(handle) = state.handle.as_ref() {
+        let (stage, progress) = crate::usecases::progress::install(progress);
+        handle.update(stage, progress);
+    }
+}
+
+fn finish_install_task(
+    state: &Mutex<InstallTask>,
+    task_id: &Mutex<Option<i32>>,
+    error: Option<String>,
+) {
+    if let Ok(mut slot) = task_id.lock() {
+        *slot = None;
+    }
+    let mut state = state
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    if state.finished {
+        return;
+    }
+    state.finished = true;
+    let Some(handle) = state.handle.take() else {
+        return;
+    };
+    match error {
+        Some(error) => handle.fail(error),
+        None => handle.succeed(),
+    }
 }
 
 fn show_dialog(weak: &Weak<App>, token: &Token, dialog: LaunchDialog) {

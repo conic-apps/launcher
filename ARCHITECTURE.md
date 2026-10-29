@@ -67,12 +67,16 @@ any of them.
 - **`usecases/`** — the app's use cases: UI-neutral orchestration over the domain crates. Nothing
   here mentions Slint, `slint_backend` or `ui/`. A use case reports progress through a
   `shared::Sink<T>` port and staleness through `usecases::generation::{Gate, Token}`.
+  `usecases::tasks::TaskCenter` is the registry of running work: it owns task ids, the cancel
+  policy and the completion notices, while `usecases::progress` flattens the download/install
+  progress vocabularies into one task stage.
 - **`ui/`** — the Slint adapter, and the only layer that touches `slint_backend`. It **mirrors the
   interface crate bucket for bucket**: `app/src/ui/views/<surface>` ↔ `ui/views/…`,
   `app/src/ui/overlays/<surface>` ↔ `ui/overlays/…`, `app/src/ui/components/<component>` ↔
   `ui/components/…`, plus `app/src/ui/services/` for the cross-surface concerns (`report` — delivery
   onto the event loop; `app_config` — the `AppConfig` adapter and locale; `scroll`; `notifications` —
-  the notification model and its action table). The mirror is by surface/component, not per `.slint`
+  the notification model and its action table; `tasks` — the task model, click targets and cancel
+  confirmation). The mirror is by surface/component, not per `.slint`
   file, and `ui/components/` does not repeat the `controls`/`display`/… role split.
 
 `main.rs` is the composition root: it loads the config, seeds `AppConfig`, and wires every surface's
@@ -108,9 +112,36 @@ where a file goes:
   is `content/`, and the news browser — a list flow over the Mojang news feed and the Java
   changelogs, with an in-panel changelog reader — is `news/`.
 - **`globals/`** — one singleton per domain (`Navigation`, `AppConfig`, `ContentState`,
-  `PageMotion`, …). Slint components are only reachable from Rust through a global, and a global is
-  also how cross-screen state is shared without prop drilling; the owning `app/src/ui/…` surface
-  wires each one, and the ones no single surface owns (`scroll`) live in `app/src/ui/services/`.
+  `PageMotion`, `NotificationState`, `TaskState`, …). Slint components are only reachable from Rust
+  through a global, and a global is also how cross-screen state is shared without prop drilling; the
+  owning `app/src/ui/…` surface wires each one, and the ones no single surface owns (`scroll`,
+  `tasks`) live in `app/src/ui/services/`.
+
+## Task centre
+
+The notification centre also shows running work. A task is not a notice: it is live, cancellable and
+removed when it ends, while a notice is the record of something that already happened. The two share
+one panel but not a model.
+
+- `crates/shared/src/task.rs` — the UI-neutral contract: ids, kinds, stages, progress, targets,
+  `TaskEvent` and the `TaskSink`/`TaskCancel` ports.
+- `app/src/usecases/tasks.rs` — `TaskCenter`, the only owner of a running task's lifecycle. `begin`
+  reports it, `update` records a stage, `succeed`/`fail` remove it and post the matching existing
+  notification, and `request_cancel` applies the ten-second rule: under ten seconds the task stops
+  immediately; over it the frontend asks first.
+- `app/src/usecases/progress.rs` — the one mapping from `DownloadSnapshot` and `InstallProgress` to
+  `TaskProgress`/`TaskStage`.
+- `app/src/ui/services/tasks.rs` — the Slint adapter and a `Send` starter for producers that decide
+  to start work on a worker thread (the launch flow). It projects tasks into `TaskState`, mirrors a
+  content task's progress into an open detail panel, implements the card's targets, and turns a
+  completed task's target into the action behind its “Click here to view” notice. New tasks also get
+  a five-second top-right preview while the centre keeps the ongoing card.
+- `ui/globals/tasks.slint` and `ui/overlays/notifications.slint` — the “Active tasks” section above
+  the notices, its 4px bottom progress strip, and `ui/overlays/dialogs/confirm-cancel-task.slint`
+  for the ten-second confirmation.
+
+Tasks are runtime-only and are not persisted across restarts. Self-update deliberately stays out of
+the section: it is a silent startup check, not work the user started.
 
 Naming, once a file is placed: `*View` is a page, `*Overlay`/`*Dialog`/`*Panel`/ `*Card` is a
 surface, `*Root` is an overlay layer host. There is **no `base-` family** — the control itself is
@@ -154,7 +185,7 @@ compiles the `.slint` tree and is what catches a missed one.
 | `music`           | Local music files + playback                                                                                        |
 | `news`            | Mojang launcher-content client: the news feed and the Java changelogs                                               |
 | `platform`        | OS detection                                                                                                        |
-| `shared`          | Common types/utilities (the shared `HTTP_CLIENT`, the `Sink` ports and the notification `Notice` request)           |
+| `shared`          | Common types/utilities (the shared `HTTP_CLIENT`, the `Sink` ports, the notification `Notice` request and the task contract) |
 | `single-instance` | One instance per machine                                                                                            |
 | `tilemap`         | World-map tile source port (`TileSource`) and its plain data                                                        |
 | `statistics`      | Playtime statistics                                                                                                 |

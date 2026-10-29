@@ -3692,3 +3692,98 @@ msgstr "堆内存 / 总内存"
 msgctxt "CrashText"
 msgid "Java version"
 msgstr "Java 版本"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{} downloaded. Click here to view"
+msgstr "{} 已下载。点击此处查看"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{} installed. Click here to view"
+msgstr "{} 已安装。点击此处查看"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading {}"
+msgstr "正在下载 {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing modpack {}"
+msgstr "正在安装整合包 {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing {}"
+msgstr "正在安装 {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading Conic Nexus"
+msgstr "正在下载 Conic Nexus"
+
+#: ui
+msgctxt "TaskText"
+msgid "Preparing"
+msgstr "准备中"
+
+#: ui
+msgctxt "TaskText"
+msgid "Verifying files"
+msgstr "校验文件"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading"
+msgstr "下载中"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing game"
+msgstr "安装游戏"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing Java"
+msgstr "安装 Java"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing mod loader"
+msgstr "安装模组加载器"
+
+#: ui
+msgctxt "TaskText"
+msgid "Extracting files"
+msgstr "解压文件"
+
+#: ui
+msgctxt "TaskText"
+msgid "Finishing"
+msgstr "即将完成"
+
+#: ui
+msgctxt "TaskText"
+msgid "Stopping…"
+msgstr "正在停止…"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Stop the task「{}」?"
+msgstr "终止任务「{}」？"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "It has been running for a while. Stopping it may leave unfinished files or a half-created instance."
+msgstr "任务已经运行了一段时间。终止后可能留下未完成的文件或半创建的实例。"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Keep waiting"
+msgstr "继续等待"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Stop task"
+msgstr "终止任务"

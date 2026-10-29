@@ -31,35 +31,31 @@
 //!
 //! The code is split by concern: the controller, the presenters and the models
 //! live here, the callback wiring is in `wiring`, and the per-list work is in
-//! `cache`, `lists`, `preview`, `search`, `grid`, `body`, `detail`, `acquire`
-//! and `icon`.
+//! `cache`, `lists`, `preview`, `search`, `grid`, `body`, `detail` and `icon`.
+//! Selecting and downloading a project lives in `usecases::content_install`, so
+//! the download can outlive this panel and appear in the task centre.
 
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 use serde_json::{Value, json};
-use slint::{
-    ComponentHandle, Image, Model, ModelRc, SharedPixelBuffer, SharedString, VecModel, Weak,
-};
+use slint::{ComponentHandle, Image, Model, ModelRc, SharedPixelBuffer, SharedString, VecModel};
 
 use crate::slint_backend::{
     App, AppConfig, CardTag, ContentCard, ContentSearch, ContentState, DeleteSaveState, Dialogs,
-    FilterChip, FilterRow, GalleryShot, GameState, MarkdownImage, MdChunk, MdItem, PageButton,
+    FilterChip, FilterRow, GalleryShot, GameState, MarkdownImage, MdChunk, MdItem, Navigation,
+    PageButton,
 };
-use crate::ui::services::report::deliver;
-use crate::usecases::generation::Token;
 use content::mods::{ModLoader, ResolvedMod};
 use instance::InstanceRuntime;
 
-mod acquire;
 mod body;
 pub(crate) mod cache;
 mod detail;
 mod grid;
 mod icon;
 mod lists;
-mod presenter;
 mod preview;
 mod search;
 mod wiring;
@@ -67,14 +63,12 @@ mod wiring;
 /// opened from a save's card, mirroring `ui/overlays/content/world-map.slint`.
 pub(crate) mod world_map;
 
-pub(crate) use acquire::*;
 pub(crate) use body::*;
 pub(crate) use cache::*;
 pub(crate) use detail::*;
 pub(crate) use grid::*;
 pub(crate) use icon::*;
 pub(crate) use lists::*;
-pub(crate) use presenter::*;
 pub(crate) use preview::*;
 pub(crate) use search::*;
 pub(crate) use wiring::*;

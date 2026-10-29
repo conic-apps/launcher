@@ -1,0 +1,38 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Dialog } from "dialog.slint";
+import { ConfirmWarningBody } from "confirm-warning.slint";
+import { Dialogs } from "../../globals/dialogs.slint";
+import { TaskState } from "../../globals/tasks.slint";
+
+// A task that has been running for more than ten seconds is stopped through
+// this prompt: its partial files, a half-created instance or a detached blocking
+// pass are worth one more click. Shorter tasks are stopped immediately by the
+// task service, without ever mounting this dialog.
+export component ConfirmCancelTask inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    dialog := Dialog {
+        dialog-visible: Dialogs.confirm-cancel-task-visible;
+        dialog-width: 500px;
+        // `fit-content`: `Dialog` keeps 32px of its own — 16px on each side
+        // (a 1px clip and 15px of padding).
+        dialog-height: body.preferred-height + 32px;
+
+        body := ConfirmWarningBody {
+            content-width: dialog.content-width;
+            title-text: @tr("ConfirmCancelTask" => "Stop the task「{}」?", TaskState.pending-cancel-subject);
+            detail-text: @tr(
+                "ConfirmCancelTask" => "It has been running for a while. Stopping it may leave unfinished files or a half-created instance."
+            );
+            cancel-text: @tr("ConfirmCancelTask" => "Keep waiting");
+            confirm-text: @tr("ConfirmCancelTask" => "Stop task");
+            cancel => { TaskState.dismiss-cancel(); }
+            confirm => { TaskState.confirm-cancel(); }
+        }
+    }
+}

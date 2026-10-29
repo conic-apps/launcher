@@ -19,6 +19,7 @@
 
 pub mod http_cache;
 pub mod notification;
+pub mod task;
 
 use std::{
     sync::{Arc, Mutex},

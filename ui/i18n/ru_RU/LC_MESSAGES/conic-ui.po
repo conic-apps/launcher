@@ -3692,3 +3692,98 @@ msgstr "Куча / ОЗУ"
 msgctxt "CrashText"
 msgid "Java version"
 msgstr "Версия Java"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{} downloaded. Click here to view"
+msgstr "{} загружено. Нажмите здесь, чтобы посмотреть"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{} installed. Click here to view"
+msgstr "{} установлено. Нажмите здесь, чтобы посмотреть"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading {}"
+msgstr "Загрузка {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing modpack {}"
+msgstr "Установка модпака {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing {}"
+msgstr "Установка {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading Conic Nexus"
+msgstr "Загрузка Conic Nexus"
+
+#: ui
+msgctxt "TaskText"
+msgid "Preparing"
+msgstr "Подготовка"
+
+#: ui
+msgctxt "TaskText"
+msgid "Verifying files"
+msgstr "Проверка файлов"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading"
+msgstr "Загрузка"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing game"
+msgstr "Установка игры"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing Java"
+msgstr "Установка Java"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing mod loader"
+msgstr "Установка загрузчика модов"
+
+#: ui
+msgctxt "TaskText"
+msgid "Extracting files"
+msgstr "Распаковка файлов"
+
+#: ui
+msgctxt "TaskText"
+msgid "Finishing"
+msgstr "Завершение"
+
+#: ui
+msgctxt "TaskText"
+msgid "Stopping…"
+msgstr "Остановка…"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Stop the task「{}」?"
+msgstr "Остановить задачу «{}»?"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "It has been running for a while. Stopping it may leave unfinished files or a half-created instance."
+msgstr "Задача выполняется уже некоторое время. При остановке могут остаться незавершённые файлы или частично созданный экземпляр."
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Keep waiting"
+msgstr "Продолжить ожидание"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Stop task"
+msgstr "Остановить задачу"

@@ -24,6 +24,7 @@ pub fn setup(ui: &App) {
         switch_timer: Timer::default(),
         initialized: Cell::new(false),
         download_task: RefCell::new(None),
+        download_task_id: Cell::new(-1),
         download_gate: Gate::new(),
     });
     CONTROLLER.with(|slot| *slot.borrow_mut() = Some(Rc::clone(&controller)));
@@ -195,8 +196,8 @@ pub(crate) fn setup_download_actions(ui: &App, controller: Rc<Controller>) {
         let weak = ui.as_weak();
         let controller = Rc::clone(&controller);
         state.on_cancel_download(move || {
-            cancel_download(&controller);
             let Some(ui) = weak.upgrade() else { return };
+            cancel_download(&ui, &controller);
             let state = ui.global::<MultiplayerState>();
             state.set_component("downloadDescription".into());
             state.set_visible(false);

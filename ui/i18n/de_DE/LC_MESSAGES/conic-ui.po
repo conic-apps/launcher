@@ -3692,3 +3692,98 @@ msgstr "Heap / RAM"
 msgctxt "CrashText"
 msgid "Java version"
 msgstr "Java-Version"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{} downloaded. Click here to view"
+msgstr "{} wurde heruntergeladen. Klicke hier, um es anzuzeigen"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{} installed. Click here to view"
+msgstr "{} wurde installiert. Klicke hier, um es anzuzeigen"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading {}"
+msgstr "{} wird heruntergeladen"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing modpack {}"
+msgstr "Modpack {} wird installiert"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing {}"
+msgstr "{} wird installiert"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading Conic Nexus"
+msgstr "Conic Nexus wird heruntergeladen"
+
+#: ui
+msgctxt "TaskText"
+msgid "Preparing"
+msgstr "Wird vorbereitet"
+
+#: ui
+msgctxt "TaskText"
+msgid "Verifying files"
+msgstr "Dateien werden geprüft"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading"
+msgstr "Wird heruntergeladen"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing game"
+msgstr "Spiel wird installiert"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing Java"
+msgstr "Java wird installiert"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing mod loader"
+msgstr "Mod-Loader wird installiert"
+
+#: ui
+msgctxt "TaskText"
+msgid "Extracting files"
+msgstr "Dateien werden entpackt"
+
+#: ui
+msgctxt "TaskText"
+msgid "Finishing"
+msgstr "Wird abgeschlossen"
+
+#: ui
+msgctxt "TaskText"
+msgid "Stopping…"
+msgstr "Wird beendet…"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Stop the task「{}」?"
+msgstr "Aufgabe „{}“ beenden?"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "It has been running for a while. Stopping it may leave unfinished files or a half-created instance."
+msgstr "Die Aufgabe läuft bereits eine Weile. Beim Beenden können unfertige Dateien oder eine halb erstellte Instanz zurückbleiben."
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Keep waiting"
+msgstr "Weiter warten"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Stop task"
+msgstr "Aufgabe beenden"

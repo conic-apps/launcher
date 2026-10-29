@@ -9,7 +9,11 @@
 //! through, gated by a [`Token`] so a cancelled or superseded run cannot draw.
 //! Cancelling aborts the task.
 
-use std::{cell::RefCell, rc::Rc};
+use std::{
+    cell::RefCell,
+    rc::Rc,
+    sync::{Arc, Mutex},
+};
 
 use slint::{ComponentHandle, Weak};
 
@@ -63,6 +67,9 @@ pub(crate) fn launch_controller() -> Rc<RefCell<LaunchController>> {
 pub(crate) struct LaunchController {
     task: Option<tokio::task::JoinHandle<()>>,
     gate: Gate,
+    /// The task-centre card for the install stage, shared with the output sink
+    /// that starts it lazily. `None` when no install is running.
+    pub(crate) install_task_id: Arc<Mutex<Option<i32>>>,
 }
 
 impl LaunchController {
@@ -70,6 +77,7 @@ impl LaunchController {
         Self {
             task: None,
             gate: Gate::new(),
+            install_task_id: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -84,6 +92,17 @@ impl LaunchController {
         self.gate.invalidate();
         if let Some(task) = self.task.take() {
             task.abort();
+        }
+        // The install card is started by the sink, not here, so its id is the
+        // only way a cancel from the launch page or the task centre can agree
+        // on which piece of work is being abandoned.
+        if let Some(id) = self
+            .install_task_id
+            .lock()
+            .ok()
+            .and_then(|mut slot| slot.take())
+        {
+            crate::ui::services::tasks::service().cancel_now(id);
         }
         had_task
     }

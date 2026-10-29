@@ -10,8 +10,8 @@
 //! list in the background. Confirming creates the instance and installs its
 //! game, loader, files and overrides in the background.
 //!
-//! TODO: show the install's progress in the UI. Until that exists the progress
-//! is written to the log only.
+//! The install itself runs as a task-centre card, so its progress survives the
+//! dialog closing and can be cancelled from the notification centre.
 //!
 //! A failed file lookup keeps the dialog open with the error and a Retry button:
 //! the drop already named the pack and the user may have typed an instance name,
@@ -25,7 +25,10 @@ use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
-use shared::notification::{Notice, NoticeKind, NoticeSink};
+use shared::{
+    notification::{Notice, NoticeKind, NoticeSink},
+    task::{TaskKind, TaskSpec, TaskTarget},
+};
 use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
 
 use crate::slint_backend::{App, GameState, ModpackImportState, Navigation};
@@ -79,7 +82,6 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
         let pending = Arc::clone(&pending);
         let inspection = Arc::clone(&inspection);
         let busy = Arc::clone(&busy);
-        let notices = notices.clone();
         let weak = ui.as_weak();
         ui.global::<ModpackImportState>().on_confirm(move || {
             let Some(ui) = weak.upgrade() else { return };
@@ -110,29 +112,47 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
 
             let config = config.borrow().clone();
             let busy_task = Arc::clone(&busy);
-            let notices = notices.clone();
+            let service = crate::ui::services::tasks::service();
+            let subject = ui
+                .global::<ModpackImportState>()
+                .get_pack_name()
+                .to_string();
+            let task = service.begin(TaskSpec {
+                kind: TaskKind::ModpackInstall,
+                subject,
+                context: name.clone(),
+                target: TaskTarget::None,
+            });
+            let id = task.id();
+            let completion = task.clone();
             let weak = weak.clone();
-            runtime::spawn(async move {
+            let handle = runtime::spawn(async move {
                 match modpack::create_instance(&plan, &name).await {
-                    Ok(id) => {
-                        log::info!("modpack instance {id} created; starting the install");
-                        let created_id = id.clone();
+                    Ok(created) => {
+                        log::info!("modpack instance {created} created; starting the install");
+                        completion.retarget(TaskTarget::Instance {
+                            instance_id: created.clone(),
+                        });
+                        let created_id = created.clone();
                         report::report(&weak, move |ui| {
                             ui.global::<GameState>()
                                 .invoke_refresh_selecting(created_id.into());
                         });
-                        let result =
-                            crate::usecases::modpack::install(id.clone(), plan, config).await;
+                        let result = crate::usecases::modpack::install(
+                            created.clone(),
+                            plan,
+                            config,
+                            completion.clone(),
+                        )
+                        .await;
                         match result {
                             Ok(()) => {
-                                log::info!("modpack install into {id} finished");
-                                notices(Notice::new(NoticeKind::TaskFinished));
+                                log::info!("modpack install into {created} finished");
+                                completion.succeed();
                             }
                             Err(error) => {
-                                log::error!("modpack install into {id} failed: {error}");
-                                notices(
-                                    Notice::new(NoticeKind::TaskFailed).with_arg(error.to_string()),
-                                );
+                                log::error!("modpack install into {created} failed: {error}");
+                                completion.fail(error.to_string());
                             }
                         }
                         report::report(&weak, |ui| {
@@ -141,11 +161,19 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
                     }
                     Err(error) => {
                         log::error!("could not create the modpack instance: {error}");
-                        notices(Notice::new(NoticeKind::TaskFailed).with_arg(error.to_string()));
+                        completion.fail(error.to_string());
                     }
                 }
                 busy_task.store(false, Ordering::SeqCst);
             });
+            let busy_cancel = Arc::clone(&busy);
+            service.attach_cancel(
+                id,
+                Arc::new(move || {
+                    busy_cancel.store(false, Ordering::SeqCst);
+                    handle.abort();
+                }),
+            );
         });
     }
 

@@ -3692,3 +3692,98 @@ msgstr "Yığın / RAM"
 msgctxt "CrashText"
 msgid "Java version"
 msgstr "Java sürümü"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{} downloaded. Click here to view"
+msgstr "{} indirildi. Görüntülemek için buraya tıklayın"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{} installed. Click here to view"
+msgstr "{} kuruldu. Görüntülemek için buraya tıklayın"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading {}"
+msgstr "{} indiriliyor"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing modpack {}"
+msgstr "{} mod paketi kuruluyor"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing {}"
+msgstr "{} kuruluyor"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading Conic Nexus"
+msgstr "Conic Nexus indiriliyor"
+
+#: ui
+msgctxt "TaskText"
+msgid "Preparing"
+msgstr "Hazırlanıyor"
+
+#: ui
+msgctxt "TaskText"
+msgid "Verifying files"
+msgstr "Dosyalar doğrulanıyor"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading"
+msgstr "İndiriliyor"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing game"
+msgstr "Oyun kuruluyor"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing Java"
+msgstr "Java kuruluyor"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing mod loader"
+msgstr "Mod yükleyici kuruluyor"
+
+#: ui
+msgctxt "TaskText"
+msgid "Extracting files"
+msgstr "Dosyalar çıkarılıyor"
+
+#: ui
+msgctxt "TaskText"
+msgid "Finishing"
+msgstr "Tamamlanıyor"
+
+#: ui
+msgctxt "TaskText"
+msgid "Stopping…"
+msgstr "Durduruluyor…"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Stop the task「{}」?"
+msgstr "\"{}\" görevi durdurulsun mu?"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "It has been running for a while. Stopping it may leave unfinished files or a half-created instance."
+msgstr "Görev bir süredir çalışıyor. Durdurmak, tamamlanmamış dosyalar veya yarım oluşturulmuş bir örnek bırakabilir."
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Keep waiting"
+msgstr "Beklemeye devam et"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Stop task"
+msgstr "Görevi durdur"

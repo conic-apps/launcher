@@ -3692,3 +3692,98 @@ msgstr "ヒープ / メモリ"
 msgctxt "CrashText"
 msgid "Java version"
 msgstr "Java バージョン"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{} downloaded. Click here to view"
+msgstr "{} をダウンロードしました。ここをクリックして表示"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{} installed. Click here to view"
+msgstr "{} をインストールしました。ここをクリックして表示"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading {}"
+msgstr "{} をダウンロード中"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing modpack {}"
+msgstr "MODパック {} をインストール中"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing {}"
+msgstr "{} をインストール中"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading Conic Nexus"
+msgstr "Conic Nexus をダウンロード中"
+
+#: ui
+msgctxt "TaskText"
+msgid "Preparing"
+msgstr "準備中"
+
+#: ui
+msgctxt "TaskText"
+msgid "Verifying files"
+msgstr "ファイルを検証中"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading"
+msgstr "ダウンロード中"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing game"
+msgstr "ゲームをインストール中"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing Java"
+msgstr "Java をインストール中"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing mod loader"
+msgstr "MODローダーをインストール中"
+
+#: ui
+msgctxt "TaskText"
+msgid "Extracting files"
+msgstr "ファイルを展開中"
+
+#: ui
+msgctxt "TaskText"
+msgid "Finishing"
+msgstr "まもなく完了"
+
+#: ui
+msgctxt "TaskText"
+msgid "Stopping…"
+msgstr "停止しています…"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Stop the task「{}」?"
+msgstr "タスク「{}」を停止しますか？"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "It has been running for a while. Stopping it may leave unfinished files or a half-created instance."
+msgstr "しばらく実行されています。停止すると、未完了のファイルや中途半端に作成されたインスタンスが残る可能性があります。"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Keep waiting"
+msgstr "待機を続ける"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Stop task"
+msgstr "タスクを停止"
