@@ -45,7 +45,7 @@ fn main() {
     //
     // `icons.slint` is generated first: it is a build product, and the compiler
     // reads it like any other `.slint` file.
-    check_embedded_font();
+    check_embedded_fonts();
     generate_icons();
     std::thread::Builder::new()
         .name("slint-compile".into())
@@ -67,19 +67,20 @@ fn compile_ui() {
 /// reporting an error, so a WOFF2 payload under a `.ttf` name drops the family
 /// and every text run falls back to the system font -- with the app still
 /// running and nothing logged. Failing the build is the only loud signal.
-fn check_embedded_font() {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("fonts/ComfortaaNunito.ttf");
-    let data = fs::read(&path)
-        .unwrap_or_else(|error| panic!("failed to read {}: {error}", path.display()));
-    // TrueType outlines, the Apple `true`/`typ1` variants, and `OTTO` (CFF).
-    let head = data.get(..4).unwrap_or_default();
-    if !matches!(head, b"\x00\x01\x00\x00" | b"true" | b"typ1" | b"OTTO") {
-        panic!(
-            "{} is not an sfnt font (first bytes: {head:02x?}). Slint cannot decode WOFF2 and \
-             silently falls back to the system font -- regenerate it with `python3 \
-             tools/merge-digit-font.py`.",
-            path.display()
-        );
+fn check_embedded_fonts() {
+    for file in ["fonts/ComfortaaNunito.ttf", "fonts/FiraCode-VF.ttf"] {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(file);
+        let data = fs::read(&path)
+            .unwrap_or_else(|error| panic!("failed to read {}: {error}", path.display()));
+        // TrueType outlines, the Apple `true`/`typ1` variants, and `OTTO` (CFF).
+        let head = data.get(..4).unwrap_or_default();
+        if !matches!(head, b"\x00\x01\x00\x00" | b"true" | b"typ1" | b"OTTO") {
+            panic!(
+                "{} is not an sfnt font (first bytes: {head:02x?}). Slint cannot decode WOFF2 and \
+                 silently falls back to the system font.",
+                path.display()
+            );
+        }
     }
 }
 
