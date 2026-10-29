@@ -133,7 +133,7 @@ fn show(ui: &App, crash: CrashReport) {
     state.set_keywords(crash.keywords.join(", ").into());
     state.set_report_path(crash.report_path.unwrap_or_default().into());
     state.set_detail_lines(detail_lines(&crash.details));
-    state.set_mono_family(crate::ui::overlays::content::italic_monospace_family().into());
+    state.set_mono_family(crate::ui::overlays::content::monospace_family().into());
     state.set_details(crash.details.into());
     state.set_game_console(crash.console_log.into());
     state.set_game_log(crash.game_log.into());

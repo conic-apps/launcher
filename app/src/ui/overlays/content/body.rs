@@ -142,27 +142,21 @@ thread_local! {
     static MONO_FAMILY: RefCell<String> = const { RefCell::new(String::new()) };
 }
 
-/// The monospace family, named the way *this* platform's font stack names it.
+/// The monospace family code is drawn in: the embedded Fira Code.
 ///
-/// CSS resolves the generic `monospace` itself. Slint's `font-family` is not
-/// CSS: it takes a family *name*, and the generic names mean nothing to it, so
-/// a view given `"monospace"` falls back to the window's default face. The
-/// engine, on the other hand, resolves `GenericFamily::Monospace` and shaped
-/// with a real monospace font — so the two
-/// halves measured and drew in *different faces*, which is the worst of both
-/// worlds: the code came out in the body typeface, and its advances were narrower
-/// than the box the engine had reserved for it, which showed as a band of empty
-/// space at the right of every inline-code capsule.
-///
-/// Asking fontique which family it registers as the generic monospace is portable
-/// and names a real family when it has an answer. On this machine it answers
-/// *Courier*, though, which is a monospace face from 1954 and looks like it next
-/// to a rounded sans — and a browser asked the same question on the same machine
-/// says Menlo or SF Mono. So a short preference list is tried first, and
-/// fontique's own answer is the fallback rather than the first choice.
+/// Slint's `font-family` is not CSS: it takes a family *name*, and `monospace`
+/// means nothing to it, so a view given `"monospace"` falls back to the window's
+/// default face. Naming the embedded family directly keeps the engine and the
+/// view in the same face. If it is not registered, a short platform preference
+/// list is tried and fontique's generic monospace is the fallback.
 pub(crate) fn monospace_family() -> String {
     use slint::fontique_011::fontique::GenericFamily;
     let mut collection = slint::fontique_011::shared_collection();
+
+    const EMBEDDED: &str = "Fira Code";
+    if collection.family_id(EMBEDDED).is_some() {
+        return EMBEDDED.to_string();
+    }
 
     // Best first, per platform. The names a system registers privately are
     // spelled with the leading dot they are registered under.
@@ -198,36 +192,6 @@ pub(crate) fn monospace_family() -> String {
             log::warn!("no monospace family is registered; code will draw in the body face");
             "monospace".to_string()
         })
-}
-
-/// A monospace family that has an italic face, for the crash log's stack
-/// frames.
-///
-/// `monospace_family` prefers the platform's UI mono (`.SF NS Mono` on macOS),
-/// which ships without an italic face — so `font-italic` has nothing to select
-/// and the frames draw upright. The log gets its own list whose members are
-/// known to ship an italic: Menlo, Consolas and DejaVu Sans Mono all do.
-pub(crate) fn italic_monospace_family() -> String {
-    let mut collection = slint::fontique_011::shared_collection();
-
-    #[cfg(target_os = "macos")]
-    const PREFERRED: &[&str] = &["Menlo", "Monaco", "Andale Mono", "Courier New"];
-    #[cfg(target_os = "windows")]
-    const PREFERRED: &[&str] = &["Consolas", "Cascadia Mono", "Lucida Console"];
-    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
-    const PREFERRED: &[&str] = &[
-        "DejaVu Sans Mono",
-        "Liberation Mono",
-        "Ubuntu Mono",
-        "Noto Sans Mono",
-    ];
-
-    for name in PREFERRED {
-        if collection.family_id(name).is_some() {
-            return (*name).to_string();
-        }
-    }
-    monospace_family()
 }
 
 /// The monospace family the body was laid out with, for the view to draw with.
