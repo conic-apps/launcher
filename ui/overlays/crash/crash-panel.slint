@@ -1,0 +1,110 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { CrashState } from "../../globals/crash.slint";
+import { Button } from "../../components/controls/button.slint";
+import { ScrollView } from "../../components/containers/scroll-view.slint";
+import { ContentTitleBar } from "../content/content-title-bar.slint";
+
+// The crash overlay's panel: the content shell's title bar over the crash
+// report body.
+//
+// The body is the crash page's, unchanged — the instance, the summary line, the
+// exit code, the matched rules, the raw crash text and the report path — so the
+// overlay shows what a helper needs without the page having to own the window.
+// Only the title moved into the shared `ContentTitleBar`; the raw text is not a
+// sentence Rust could translate, which is why it is drawn as-is.
+export component CrashPanel inherits Rectangle {
+    /// The overlay container's size, passed in rather than read off `parent`:
+    /// the container is inset from the page the elements are written in (see
+    /// `ContentOverlay`).
+    in property <length> panel-width: 0px;
+    in property <length> panel-height: 0px;
+
+    width: panel-width;
+    height: panel-height;
+    background: transparent;
+
+    VerticalLayout {
+        width: 100%;
+        height: 100%;
+
+        ContentTitleBar {
+            icon: "warning";
+            title: @tr("CrashView" => "Crash report");
+        }
+
+        body := VerticalLayout {
+            vertical-stretch: 1;
+            padding: 32px;
+            spacing: 12px;
+
+            Text {
+                height: 20px;
+                text: CrashState.instance-name;
+                font-size: 16px;
+                color: Theme.default-text-color;
+                vertical-alignment: center;
+            }
+
+            Text {
+                // Auto height: the summary wraps to as many lines as it needs.
+                text: CrashState.summary;
+                font-size: 14px;
+                wrap: word-wrap;
+                color: Theme.default-text-color.transparentize(0.1);
+            }
+
+            if CrashState.exit-code != "": Text {
+                height: 16px;
+                text: CrashState.exit-code;
+                font-size: 12px;
+                color: Theme.default-text-color.transparentize(0.4);
+                vertical-alignment: center;
+            }
+
+            if CrashState.reasons != "": Text {
+                text: CrashState.reasons;
+                font-size: 12px;
+                wrap: word-wrap;
+                color: Theme.peach;
+            }
+
+            if CrashState.keywords != "": Text {
+                text: @tr("CrashView" => "Possible mods:") + " " + CrashState.keywords;
+                font-size: 12px;
+                wrap: word-wrap;
+                color: Theme.peach;
+            }
+
+            ScrollView {
+                vertical-stretch: 1;
+                background: Theme.crust.with-alpha(0.6);
+
+                Text {
+                    width: 100%;
+                    text: CrashState.details;
+                    font-size: 12px;
+                    wrap: word-wrap;
+                    color: Theme.default-text-color.transparentize(0.1);
+                }
+            }
+
+            if CrashState.report-path != "": Text {
+                // Auto height: a long path may wrap, but usually does not.
+                text: CrashState.report-path;
+                font-size: 11px;
+                wrap: word-wrap;
+                color: Theme.default-text-color.transparentize(0.4);
+            }
+
+            Button {
+                width: 100%;
+                text: @tr("CrashView" => "Close");
+                clicked => { CrashState.close(); }
+            }
+        }
+    }
+}

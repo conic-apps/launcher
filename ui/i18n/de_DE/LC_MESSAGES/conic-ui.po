@@ -3160,11 +3160,6 @@ msgstr "Zum Kopieren klicken"
 
 #: ui
 msgctxt "CrashView"
-msgid "Game crashed"
-msgstr "Das Spiel ist abgestürzt"
-
-#: ui
-msgctxt "CrashView"
 msgid "Close"
 msgstr "Schließen"
 
@@ -3340,45 +3335,15 @@ msgstr "Hier klicken, um es erneut zu versuchen"
 
 #: ui
 msgctxt "CrashView"
-msgid "Open error report"
-msgstr "Fehlerbericht öffnen"
+msgid "Crash report"
+msgstr "Absturzbericht"
 
 #: ui
-msgctxt "CrashView"
-msgid "Close window"
-msgstr "Fenster schließen"
+msgctxt "NotificationText"
+msgid "Game did not exit normally"
+msgstr "Das Spiel wurde nicht ordnungsgemäß beendet"
 
 #: ui
-msgctxt "CrashView"
-msgid "If you need help from others, send them the error report instead of just a screenshot of this window."
-msgstr "Wenn du Hilfe von anderen brauchst, sende ihnen den Fehlerbericht und nicht nur einen Screenshot dieses Fensters."
-
-#: ui
-msgctxt "CrashText"
-msgid "Minecraft ran out of memory. Close other programs, or allocate more memory to this instance."
-msgstr "Minecraft hatte zu wenig Arbeitsspeicher. Schließe andere Programme oder weise dieser Instanz mehr Speicher zu."
-
-#: ui
-msgctxt "CrashText"
-msgid "The Java version does not match this Minecraft version. Check the Java settings for this instance."
-msgstr "Die Java-Version passt nicht zu dieser Minecraft-Version. Prüfe die Java-Einstellungen dieser Instanz."
-
-#: ui
-msgctxt "CrashText"
-msgid "A mod is missing a dependency, conflicts with another mod, or failed to load. Check the mod list and the error report."
-msgstr "Einem Mod fehlt eine Abhängigkeit, er steht im Konflikt mit einem anderen Mod oder konnte nicht geladen werden. Prüfe die Mod-Liste und den Fehlerbericht."
-
-#: ui
-msgctxt "CrashText"
-msgid "The graphics driver or OpenGL could not start Minecraft. Update the graphics driver and check the game settings."
-msgstr "Der Grafiktreiber oder die OpenGL-Einrichtung konnte Minecraft nicht starten. Aktualisiere den Grafiktreiber und prüfe die Spieleinstellungen."
-
-#: ui
-msgctxt "CrashText"
-msgid "Some game or loader files are missing or damaged. Repair the instance or reinstall it."
-msgstr "Einige Spiel- oder Loader-Dateien fehlen oder sind beschädigt. Repariere die Instanz oder installiere sie neu."
-
-#: ui
-msgctxt "CrashText"
-msgid "Minecraft crashed and the cause could not be determined. Open the error report for details."
-msgstr "Minecraft ist abgestürzt, die Ursache konnte nicht ermittelt werden. Öffne den Fehlerbericht für Details."
+msgctxt "NotificationText"
+msgid "{} seems to have crashed. Click here to view the crash report"
+msgstr "{} ist vermutlich abgestürzt. Klicke hier, um den Absturzbericht anzuzeigen"

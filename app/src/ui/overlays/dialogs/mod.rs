@@ -5,7 +5,6 @@
 //! The dialog flows, mirroring `ui/overlays/dialogs/` one flow per folder.
 
 pub(crate) mod account_add;
-pub(crate) mod crash;
 pub(crate) mod create_instance;
 pub(crate) mod modpack_import;
 pub(crate) mod multiplayer;

@@ -3250,11 +3250,6 @@ msgstr "点击复制"
 
 #: ui
 msgctxt "CrashView"
-msgid "Game crashed"
-msgstr "游戏崩溃了"
-
-#: ui
-msgctxt "CrashView"
 msgid "Close"
 msgstr "关闭"
 
@@ -3340,45 +3335,15 @@ msgstr "点击此处重试"
 
 #: ui
 msgctxt "CrashView"
-msgid "Open error report"
-msgstr "打开错误报告"
+msgid "Crash report"
+msgstr "崩溃报告"
 
 #: ui
-msgctxt "CrashView"
-msgid "Close window"
-msgstr "关闭窗口"
+msgctxt "NotificationText"
+msgid "Game did not exit normally"
+msgstr "游戏未正常退出"
 
 #: ui
-msgctxt "CrashView"
-msgid "If you need help from others, send them the error report instead of just a screenshot of this window."
-msgstr "如果你需要寻求他人的帮助，请将错误报告发送给ta，而不是仅发送该窗口的截图"
-
-#: ui
-msgctxt "CrashText"
-msgid "Minecraft ran out of memory. Close other programs, or allocate more memory to this instance."
-msgstr "Minecraft 内存不足，导致游戏崩溃。请关闭其他程序，或在实例设置中分配更多内存。"
-
-#: ui
-msgctxt "CrashText"
-msgid "The Java version does not match this Minecraft version. Check the Java settings for this instance."
-msgstr "Java 版本与这个 Minecraft 版本不匹配。请检查该实例的 Java 设置。"
-
-#: ui
-msgctxt "CrashText"
-msgid "A mod is missing a dependency, conflicts with another mod, or failed to load. Check the mod list and the error report."
-msgstr "某个 mod 缺少依赖、与其他 mod 冲突，或加载失败。请检查 mod 列表和错误报告。"
-
-#: ui
-msgctxt "CrashText"
-msgid "The graphics driver or OpenGL could not start Minecraft. Update the graphics driver and check the game settings."
-msgstr "显卡驱动或 OpenGL 初始化失败，导致 Minecraft 无法启动。请更新显卡驱动并检查游戏设置。"
-
-#: ui
-msgctxt "CrashText"
-msgid "Some game or loader files are missing or damaged. Repair the instance or reinstall it."
-msgstr "游戏或加载器的文件缺失或损坏。请修复实例或重新安装。"
-
-#: ui
-msgctxt "CrashText"
-msgid "Minecraft crashed and the cause could not be determined. Open the error report for details."
-msgstr "Minecraft 崩溃了，未能判断具体原因。请打开错误报告查看详细信息。"
+msgctxt "NotificationText"
+msgid "{} seems to have crashed. Click here to view the crash report"
+msgstr "{} 似乎发生了崩溃，点击此处查看崩溃报告"

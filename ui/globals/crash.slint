@@ -2,33 +2,27 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// The crash dialog's state.
+// The crash overlay's state.
 //
 // Rust raises it from the launch crate's session events
-// (`app/src/ui/overlays/dialogs/crash.rs`): when a game exits abnormally the
-// collected `CrashReport` is pushed here and the dialog opens over whatever
-// page the user is on.
-// The strings are the crate's own output; the report keeps the raw summary,
-// exit code and rules, while the dialog shows the plain-language
-// `reason-categories`. The full crash report is opened from the dialog rather
-// than drawn in it.
+// (`app/src/ui/overlays/crash/`): when a game exits abnormally the collected
+// `CrashReport` is pushed here and the overlay slides up over whatever page the
+// user is on. The strings are the crate's own output, unformatted — Slint
+// cannot format them — so the panel shows the raw summary, exit code, report
+// path and crash text.
 export global CrashState {
-    /// Whether the crash dialog is up.
+    /// Whether the crash overlay is up.
     in-out property <bool> visible: false;
     /// The crashed instance's display name.
     in-out property <string> instance-name: "";
     /// One line naming the crash, from the crash report or the exit code.
     in-out property <string> summary: "";
-    /// A pre-formatted line such as "exit code: 1 — APPLICATION_ERROR", or just
+    /// A pre-formatted line such as "exit code: 1 · APPLICATION_ERROR", or just
     /// the exit kind when the platform reported no code.
     in-out property <string> exit-code: "";
     /// The crash-analysis rules the output matched, one per line, each with the
-    /// fields it captured. Raw rule names, not translated; the report keeps
-    /// them, while the dialog shows `reason-categories` instead.
+    /// fields it captured. Raw rule names, not translated.
     in-out property <string> reasons: "";
-    /// The user-facing reason kinds, deduplicated and in the analyzer's order.
-    /// Each is a key for `CrashText.reason`.
-    in-out property <[string]> reason-categories: [];
     /// Likely offending mods, comma-separated, from the report's stack trace.
     in-out property <string> keywords: "";
     /// The crash report file the details came from, empty when the game wrote
@@ -36,41 +30,15 @@ export global CrashState {
     in-out property <string> report-path: "";
     /// The raw crash report, or the tail of the game log.
     in-out property <string> details: "";
-    /// The tail of the game's captured stdout and stderr, for the report.
+    /// The tail of the game's captured stdout and stderr. Not drawn by the
+    /// panel; the combined report reads it.
     in-out property <string> game-console: "";
-    /// The tail of the instance's logs/latest.log, for the report.
+    /// The tail of the instance's logs/latest.log. Not drawn by the panel; the
+    /// combined report reads it.
     in-out property <string> game-log: "";
 
-    /// Opens the game's crash report, or writes one from `details` when the
-    /// game did not leave a file.
+    /// Opens the combined crash report the adapter writes.
     callback open-report();
-    /// Hides the dialog and returns to the page the crash interrupted.
+    /// Hides the overlay.
     callback close();
-}
-
-/// The dialog's plain-language crash reasons.
-///
-/// The analyzer names rules, not causes: `OUT_OF_MEMORY` means the game needed
-/// more memory, `MOD_RESOLUTION` means a mod could not be resolved. Those rule
-/// names (and the raw crash text) are for the report; this maps the rule family
-/// to one sentence a player can act on.
-export global CrashText {
-    public pure function reason(kind: string) -> string {
-        if kind == "memory" {
-            return @tr("CrashText" => "Minecraft ran out of memory. Close other programs, or allocate more memory to this instance.");
-        }
-        if kind == "java" {
-            return @tr("CrashText" => "The Java version does not match this Minecraft version. Check the Java settings for this instance.");
-        }
-        if kind == "mods" {
-            return @tr("CrashText" => "A mod is missing a dependency, conflicts with another mod, or failed to load. Check the mod list and the error report.");
-        }
-        if kind == "graphics" {
-            return @tr("CrashText" => "The graphics driver or OpenGL could not start Minecraft. Update the graphics driver and check the game settings.");
-        }
-        if kind == "files" {
-            return @tr("CrashText" => "Some game or loader files are missing or damaged. Repair the instance or reinstall it.");
-        }
-        return @tr("CrashText" => "Minecraft crashed and the cause could not be determined. Open the error report for details.");
-    }
 }

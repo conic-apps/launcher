@@ -3160,11 +3160,6 @@ msgstr "클릭하여 복사"
 
 #: ui
 msgctxt "CrashView"
-msgid "Game crashed"
-msgstr "게임이 충돌했습니다"
-
-#: ui
-msgctxt "CrashView"
 msgid "Close"
 msgstr "닫기"
 
@@ -3340,45 +3335,15 @@ msgstr "여기를 클릭하여 다시 시도"
 
 #: ui
 msgctxt "CrashView"
-msgid "Open error report"
-msgstr "오류 보고서 열기"
+msgid "Crash report"
+msgstr "충돌 보고서"
 
 #: ui
-msgctxt "CrashView"
-msgid "Close window"
-msgstr "창 닫기"
+msgctxt "NotificationText"
+msgid "Game did not exit normally"
+msgstr "게임이 정상적으로 종료되지 않았습니다"
 
 #: ui
-msgctxt "CrashView"
-msgid "If you need help from others, send them the error report instead of just a screenshot of this window."
-msgstr "다른 사람의 도움이 필요하면 이 창의 스크린샷만 보내지 말고 오류 보고서를 보내세요."
-
-#: ui
-msgctxt "CrashText"
-msgid "Minecraft ran out of memory. Close other programs, or allocate more memory to this instance."
-msgstr "Minecraft의 메모리가 부족하여 게임이 충돌했습니다. 다른 프로그램을 닫거나 인스턴스 설정에서 메모리를 늘리세요."
-
-#: ui
-msgctxt "CrashText"
-msgid "The Java version does not match this Minecraft version. Check the Java settings for this instance."
-msgstr "Java 버전이 이 Minecraft 버전과 맞지 않습니다. 이 인스턴스의 Java 설정을 확인하세요."
-
-#: ui
-msgctxt "CrashText"
-msgid "A mod is missing a dependency, conflicts with another mod, or failed to load. Check the mod list and the error report."
-msgstr "모드에 필요한 의존성이 없거나 다른 모드와 충돌했거나 로드에 실패했습니다. 모드 목록과 오류 보고서를 확인하세요."
-
-#: ui
-msgctxt "CrashText"
-msgid "The graphics driver or OpenGL could not start Minecraft. Update the graphics driver and check the game settings."
-msgstr "그래픽 드라이버 또는 OpenGL 초기화에 실패하여 Minecraft를 시작할 수 없습니다. 그래픽 드라이버를 업데이트하고 게임 설정을 확인하세요."
-
-#: ui
-msgctxt "CrashText"
-msgid "Some game or loader files are missing or damaged. Repair the instance or reinstall it."
-msgstr "게임 또는 로더 파일이 누락되었거나 손상되었습니다. 인스턴스를 복구하거나 다시 설치하세요."
-
-#: ui
-msgctxt "CrashText"
-msgid "Minecraft crashed and the cause could not be determined. Open the error report for details."
-msgstr "Minecraft가 충돌했지만 원인을 확인할 수 없습니다. 자세한 내용은 오류 보고서를 여세요."
+msgctxt "NotificationText"
+msgid "{} seems to have crashed. Click here to view the crash report"
+msgstr "{}이(가) 충돌한 것 같습니다. 여기를 클릭하여 충돌 보고서 보기"

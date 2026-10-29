@@ -16,6 +16,7 @@ import { DialogRoot } from "overlays/dialog-root.slint";
 import { CommandPaletteOverlay } from "overlays/command-palette.slint";
 import { MusicPlayerOverlay } from "overlays/music-player.slint";
 import { NewsRoot } from "overlays/news/news-root.slint";
+import { CrashRoot } from "overlays/crash/crash-root.slint";
 import {
     NotificationOverlay,
     NotificationToasts,
@@ -427,6 +428,16 @@ export component App inherits Window {
                 y: root.title-bar-height;
                 height: root.height - root.title-bar-height;
                 z: 1150;
+            }
+
+            // The crash prompt: a content-style overlay above the notification
+            // layers, because a crash is the message the player must act on. It
+            // stays below the title bar and the dialogs so the window controls
+            // and a dialog already in flight keep their place.
+            CrashRoot {
+                y: root.title-bar-height;
+                height: root.height - root.title-bar-height;
+                z: 1180;
             }
 
             // Mounted outside the page layout so the bar stays above the

@@ -32,6 +32,8 @@ pub enum NoticeKind {
     /// `args[0]` is the failure detail.
     TaskFailed,
     TaskCancelled,
+    /// `args[0]` is the crashed instance's display name.
+    GameCrashed,
     SetupSkipped,
     /// The caller supplies the body; the frontend adds no copy.
     Custom,
@@ -59,6 +61,13 @@ pub type NoticeSink = Sink<Notice>;
 /// it has no default copy. Literal text is shown as-is and is not translated.
 pub struct Notice {
     pub kind: NoticeKind,
+    /// Literal title shown above the body, or `None` for a body-only notice.
+    ///
+    /// A known kind may already have a translated title in the frontend; this
+    /// overrides it. Like [`Self::body`], the text is shown as-is and is not
+    /// translated, so a crate with localizable copy should leave it unset and
+    /// let the frontend own the title.
+    pub title: Option<String>,
     /// Literal body, or `None` for the kind's translated template.
     pub body: Option<String>,
     /// Values for the kind's template placeholders, in order.
@@ -80,6 +89,7 @@ impl Notice {
     pub fn new(kind: NoticeKind) -> Self {
         Self {
             kind,
+            title: None,
             body: None,
             args: Vec::new(),
             icon: None,
@@ -99,6 +109,15 @@ impl Notice {
     /// Appends one template argument.
     pub fn with_arg(mut self, arg: impl Into<String>) -> Self {
         self.args.push(arg.into());
+        self
+    }
+
+    /// Adds a literal title above the body.
+    ///
+    /// Optional: without it the card keeps the single-body layout. The text is
+    /// not translated; leave it unset for localizable copy.
+    pub fn with_title(mut self, title: impl Into<String>) -> Self {
+        self.title = Some(title.into());
         self
     }
 
@@ -153,6 +172,7 @@ mod tests {
         let hits = Arc::new(AtomicUsize::new(0));
         let hit = Arc::clone(&hits);
         let notice = Notice::new(NoticeKind::TaskFailed)
+            .with_title("Network error")
             .with_arg("network")
             .with_icon("warning")
             .on_click(move || {
@@ -160,6 +180,7 @@ mod tests {
             });
 
         assert_eq!(notice.kind, NoticeKind::TaskFailed);
+        assert_eq!(notice.title.as_deref(), Some("Network error"));
         assert_eq!(notice.args, ["network"]);
         assert!(notice.body.is_none());
         assert_eq!(notice.icon.as_deref(), Some("warning"));
@@ -174,6 +195,7 @@ mod tests {
         let notice = Notice::custom("body");
         assert_eq!(notice.kind, NoticeKind::Custom);
         assert_eq!(notice.body.as_deref(), Some("body"));
+        assert!(notice.title.is_none());
         assert!(notice.args.is_empty());
         assert!(notice.dismiss_on_click);
     }

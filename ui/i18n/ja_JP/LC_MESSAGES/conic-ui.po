@@ -3160,11 +3160,6 @@ msgstr "クリックしてコピー"
 
 #: ui
 msgctxt "CrashView"
-msgid "Game crashed"
-msgstr "ゲームがクラッシュしました"
-
-#: ui
-msgctxt "CrashView"
 msgid "Close"
 msgstr "閉じる"
 
@@ -3340,45 +3335,15 @@ msgstr "ここをクリックして再試行"
 
 #: ui
 msgctxt "CrashView"
-msgid "Open error report"
-msgstr "エラーレポートを開く"
+msgid "Crash report"
+msgstr "クラッシュレポート"
 
 #: ui
-msgctxt "CrashView"
-msgid "Close window"
-msgstr "ウィンドウを閉じる"
+msgctxt "NotificationText"
+msgid "Game did not exit normally"
+msgstr "ゲームが正常に終了しませんでした"
 
 #: ui
-msgctxt "CrashView"
-msgid "If you need help from others, send them the error report instead of just a screenshot of this window."
-msgstr "他の人に助けを求める場合は、このウィンドウのスクリーンショットだけではなく、エラーレポートを送ってください。"
-
-#: ui
-msgctxt "CrashText"
-msgid "Minecraft ran out of memory. Close other programs, or allocate more memory to this instance."
-msgstr "Minecraft のメモリが不足したため、ゲームがクラッシュしました。他のプログラムを閉じるか、インスタンスの設定でメモリを増やしてください。"
-
-#: ui
-msgctxt "CrashText"
-msgid "The Java version does not match this Minecraft version. Check the Java settings for this instance."
-msgstr "Java のバージョンがこの Minecraft のバージョンと一致しません。このインスタンスの Java 設定を確認してください。"
-
-#: ui
-msgctxt "CrashText"
-msgid "A mod is missing a dependency, conflicts with another mod, or failed to load. Check the mod list and the error report."
-msgstr "MOD の依存関係が不足しているか、他の MOD と競合しているか、読み込みに失敗しました。MOD 一覧とエラーレポートを確認してください。"
-
-#: ui
-msgctxt "CrashText"
-msgid "The graphics driver or OpenGL could not start Minecraft. Update the graphics driver and check the game settings."
-msgstr "グラフィックドライバーまたは OpenGL の初期化に失敗し、Minecraft を起動できませんでした。ドライバーを更新し、ゲーム設定を確認してください。"
-
-#: ui
-msgctxt "CrashText"
-msgid "Some game or loader files are missing or damaged. Repair the instance or reinstall it."
-msgstr "ゲームまたはローダーのファイルが欠落しているか破損しています。インスタンスを修復するか、再インストールしてください。"
-
-#: ui
-msgctxt "CrashText"
-msgid "Minecraft crashed and the cause could not be determined. Open the error report for details."
-msgstr "Minecraft がクラッシュしましたが、原因を特定できませんでした。詳細はエラーレポートを開いて確認してください。"
+msgctxt "NotificationText"
+msgid "{} seems to have crashed. Click here to view the crash report"
+msgstr "{} がクラッシュしたようです。ここをクリックしてクラッシュレポートを表示"

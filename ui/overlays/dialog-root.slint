@@ -14,7 +14,6 @@ import { ConfirmDeleteAccount } from "dialogs/confirm-delete-account.slint";
 import { ConfirmQuitApp } from "dialogs/confirm-quit-app.slint";
 import { RestartRequired } from "dialogs/restart-required.slint";
 import { ModpackImportDialog } from "dialogs/modpack-import.slint";
-import { CrashDialog } from "dialogs/crash.slint";
 
 // The overlay layer: one instance per dialog, mounted once above the whole app.
 // Each dialog stays hidden until its flag in `Dialogs` is set, and draws its own
@@ -66,8 +65,4 @@ export component DialogRoot inherits Rectangle {
     // A pack dropped on the window can arrive at any time, so its list is the
     // topmost layer: it is the answer the import is waiting on.
     ModpackImportDialog { }
-
-    // A game can crash while any of the above is open; the crash prompt is the
-    // topmost layer because it is the message the user must act on.
-    CrashDialog { }
 }
