@@ -3697,3 +3697,98 @@ msgstr "Heap / RAM"
 msgctxt "CrashText"
 msgid "Java version"
 msgstr "Java version"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{} downloaded. Click here to view"
+msgstr "{} downloaded. Click here to view"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{} installed. Click here to view"
+msgstr "{} installed. Click here to view"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading {}"
+msgstr "Downloading {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing modpack {}"
+msgstr "Installing modpack {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing {}"
+msgstr "Installing {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading Conic Nexus"
+msgstr "Downloading Conic Nexus"
+
+#: ui
+msgctxt "TaskText"
+msgid "Preparing"
+msgstr "Preparing"
+
+#: ui
+msgctxt "TaskText"
+msgid "Verifying files"
+msgstr "Verifying files"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading"
+msgstr "Downloading"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing game"
+msgstr "Installing game"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing Java"
+msgstr "Installing Java"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing mod loader"
+msgstr "Installing mod loader"
+
+#: ui
+msgctxt "TaskText"
+msgid "Extracting files"
+msgstr "Extracting files"
+
+#: ui
+msgctxt "TaskText"
+msgid "Finishing"
+msgstr "Finishing"
+
+#: ui
+msgctxt "TaskText"
+msgid "Stopping…"
+msgstr "Stopping…"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Stop the task「{}」?"
+msgstr "Stop the task「{}」?"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "It has been running for a while. Stopping it may leave unfinished files or a half-created instance."
+msgstr "It has been running for a while. Stopping it may leave unfinished files or a half-created instance."
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Keep waiting"
+msgstr "Keep waiting"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Stop task"
+msgstr "Stop task"

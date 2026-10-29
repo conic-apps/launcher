@@ -3692,3 +3692,98 @@ msgstr "Sterta / RAM"
 msgctxt "CrashText"
 msgid "Java version"
 msgstr "Wersja Javy"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{} downloaded. Click here to view"
+msgstr "{} zostało pobrane. Kliknij tutaj, aby wyświetlić"
+
+#: ui
+msgctxt "NotificationText"
+msgid "{} installed. Click here to view"
+msgstr "{} zostało zainstalowane. Kliknij tutaj, aby wyświetlić"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading {}"
+msgstr "Pobieranie {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing modpack {}"
+msgstr "Instalowanie modpacka {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing {}"
+msgstr "Instalowanie {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading Conic Nexus"
+msgstr "Pobieranie Conic Nexus"
+
+#: ui
+msgctxt "TaskText"
+msgid "Preparing"
+msgstr "Przygotowywanie"
+
+#: ui
+msgctxt "TaskText"
+msgid "Verifying files"
+msgstr "Sprawdzanie plików"
+
+#: ui
+msgctxt "TaskText"
+msgid "Downloading"
+msgstr "Pobieranie"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing game"
+msgstr "Instalowanie gry"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing Java"
+msgstr "Instalowanie Java"
+
+#: ui
+msgctxt "TaskText"
+msgid "Installing mod loader"
+msgstr "Instalowanie loadera modów"
+
+#: ui
+msgctxt "TaskText"
+msgid "Extracting files"
+msgstr "Wypakowywanie plików"
+
+#: ui
+msgctxt "TaskText"
+msgid "Finishing"
+msgstr "Kończenie"
+
+#: ui
+msgctxt "TaskText"
+msgid "Stopping…"
+msgstr "Zatrzymywanie…"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Stop the task「{}」?"
+msgstr "Zatrzymać zadanie „{}”?"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "It has been running for a while. Stopping it may leave unfinished files or a half-created instance."
+msgstr "Zadanie działa już od pewnego czasu. Zatrzymanie go może pozostawić nieukończone pliki lub częściowo utworzoną instancję."
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Keep waiting"
+msgstr "Czekaj dalej"
+
+#: ui
+msgctxt "ConfirmCancelTask"
+msgid "Stop task"
+msgstr "Zatrzymaj zadanie"

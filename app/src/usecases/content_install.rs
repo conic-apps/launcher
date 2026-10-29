@@ -2,22 +2,30 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Choosing and downloading a project's file.
+//! Resolving and downloading one project into an instance.
+//!
+//! UI-neutral: the caller owns the task card, the spawned future and the
+//! post-install refresh. This module only chooses the best file, downloads it
+//! and records the installed version.
 
-use super::*;
+use std::path::Path;
 
-/// Resolves the project's best file for the instance's runtime and downloads
-/// it.
-///
-/// The download's progress is reported into the detail panel through `weak` and
-/// `token`, sampled by [`download::progress::watch`] rather than by this
-/// function.
+use serde_json::{Value, json};
+
+use download::progress::{DownloadSnapshot, DownloadState};
+use shared::task::{TaskProgress, TaskStage};
+
+use crate::usecases::content::{OpenDetail, Platform, RemoteKind};
+use crate::usecases::tasks::TaskHandle;
+
+/// Resolves the project's best file for the instance's runtime and downloads it.
 pub(crate) async fn install(
     instance_id: &str,
     detail: &OpenDetail,
-    weak: Weak<App>,
-    token: Token,
+    task: TaskHandle,
 ) -> Result<(), String> {
+    task.update(TaskStage::Preparing, TaskProgress::Indeterminate);
+
     let runtime = instance::get_instance_by_id(instance_id)
         .await
         .map(|instance| instance.config.runtime);
@@ -42,7 +50,7 @@ pub(crate) async fn install(
             .join(detail.kind.folder())
     };
 
-    let (task, version_id) = match detail.platform {
+    let (download_task, version_id) = match detail.platform {
         Platform::Modrinth => {
             modrinth_install_task(detail, minecraft.as_deref(), loader.as_deref(), &target_dir)
                 .await?
@@ -54,26 +62,24 @@ pub(crate) async fn install(
     };
 
     std::fs::create_dir_all(&target_dir).map_err(|error| error.to_string())?;
-    let progress = download::progress::DownloadState::default();
-    // The change-detecting reporter drops the 100ms ticks where nothing moved,
-    // so the event loop is only woken for a real byte count.
+    let progress = DownloadState::default();
     let reporter = shared::ChangeReporter::new({
-        let weak = weak.clone();
-        let token = token.clone();
-        std::sync::Arc::new(move |snapshot| {
-            let view = download_view(&snapshot);
-            deliver(&weak, &token, move |ui| {
-                view.apply(&ui.global::<ContentState>())
-            });
-        })
+        let task = task.clone();
+        let sink: shared::Sink<DownloadSnapshot> = std::sync::Arc::new(move |snapshot| {
+            let (stage, progress) = crate::usecases::progress::download(&snapshot);
+            task.update(stage, progress);
+        });
+        sink
     });
     download::progress::watch(
         &progress,
         |snapshot| reporter.report(snapshot),
-        download::download(&task, &progress),
+        download::download(&download_task, &progress),
     )
     .await
     .map_err(|error| error.to_string())?;
+
+    task.update(TaskStage::Finalizing, TaskProgress::Indeterminate);
 
     // The download knows the exact version it chose. Recording it now means the
     // detail panel can name it before the next folder scan, and an offline
@@ -85,7 +91,7 @@ pub(crate) async fn install(
             detail.platform.api(),
             &detail.id,
             version_id.as_deref(),
-            &task.file,
+            &download_task.file,
         )
         .await;
     }
@@ -102,7 +108,7 @@ pub(crate) async fn modrinth_install_task(
     detail: &OpenDetail,
     minecraft: Option<&str>,
     loader: Option<&str>,
-    target_dir: &std::path::Path,
+    target_dir: &Path,
 ) -> Result<(download::DownloadTask, Option<String>), String> {
     let params = modrinth::ListProjectVersionsParams {
         loaders: (detail.kind.has_loaders() && loader.is_some())
@@ -157,7 +163,7 @@ pub(crate) async fn curseforge_install_task(
     detail: &OpenDetail,
     minecraft: Option<&str>,
     loader: Option<&str>,
-    target_dir: &std::path::Path,
+    target_dir: &Path,
 ) -> Result<(download::DownloadTask, Option<String>), String> {
     let mod_id: i64 = detail
         .id
@@ -225,9 +231,19 @@ pub(crate) async fn curseforge_install_task(
     ))
 }
 
+fn curseforge_loader_type(loader: &str) -> Option<i64> {
+    match loader {
+        "forge" => Some(1),
+        "fabric" => Some(4),
+        "quilt" => Some(5),
+        "neoforge" => Some(6),
+        _ => None,
+    }
+}
+
 pub(crate) fn make_task(
     url: &str,
-    file: &std::path::Path,
+    file: &Path,
     size_bytes: Option<u64>,
     sha: Option<String>,
     task_type: download::DownloadTaskType,

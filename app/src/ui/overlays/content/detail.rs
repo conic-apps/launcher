@@ -31,6 +31,43 @@ pub(crate) fn open_project_detail(ui: &App, platform: &str, id: &str) {
     open_detail(ui, platform, id.to_string());
 }
 
+/// Opens the detail panel a running content task points at.
+///
+/// The instance is selected first because the content session reads
+/// `GameState.current-id` when it opens; the panel then uses the same
+/// `open_detail` path as a card click.
+pub(crate) fn open_task_target(
+    ui: &App,
+    instance_id: &str,
+    kind: &str,
+    platform: &str,
+    project_id: &str,
+) {
+    ui.global::<GameState>()
+        .invoke_select_instance(instance_id.into());
+    if ui.global::<Navigation>().get_current_page() != "game" {
+        ui.global::<Navigation>().invoke_navigate("game".into());
+    }
+
+    let platform = if platform == "curseforge" {
+        Platform::CurseForge
+    } else {
+        Platform::Modrinth
+    };
+    let kind = RemoteKind::from_key(kind);
+    {
+        let state = controller();
+        let mut state = state.borrow_mut();
+        state.sync_instance(ui);
+        state.kind = kind;
+        state.platform = platform;
+    }
+    let ui_state = ui.global::<ContentState>();
+    ui_state.set_open_panel(SharedString::from(kind.key()));
+    ui_state.set_remote_kind(SharedString::from(kind.key()));
+    open_detail(ui, platform, project_id.to_string());
+}
+
 pub(crate) fn open_detail(ui: &App, platform: Platform, id: String) {
     let (seq, kind) = {
         let state = controller();

@@ -12,6 +12,7 @@ import { ConfirmDeleteInstance } from "dialogs/confirm-delete-instance.slint";
 import { ConfirmDeleteSave } from "dialogs/confirm-delete-save.slint";
 import { ConfirmDeleteAccount } from "dialogs/confirm-delete-account.slint";
 import { ConfirmQuitApp } from "dialogs/confirm-quit-app.slint";
+import { ConfirmCancelTask } from "dialogs/confirm-cancel-task.slint";
 import { RestartRequired } from "dialogs/restart-required.slint";
 import { ModpackImportDialog } from "dialogs/modpack-import.slint";
 
@@ -52,6 +53,9 @@ export component DialogRoot inherits Rectangle {
     ConfirmDeleteSave { }
 
     ConfirmDeleteAccount { }
+
+    // The task centre asks before stopping work that has run for ten seconds.
+    ConfirmCancelTask { }
 
     ConfirmQuitApp {
         confirm => { root.confirm-quit(); }

@@ -14,8 +14,6 @@ use std::collections::{HashMap, HashSet};
 
 use content::remote::{ContentKind, InstalledFile, RemotePlatform};
 
-use crate::usecases::generation::Gate;
-
 /// The kind of remote list showing; only one list is ever open.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum RemoteKind {
@@ -283,8 +281,6 @@ pub(crate) struct ContentSession {
     /// Bumped on every open, so a slow detail response cannot overwrite a newer
     /// panel.
     pub(crate) detail_seq: u64,
-    /// Issues the detail download's token and invalidates it on a newer one.
-    pub(crate) detail_download_gate: Gate,
 }
 
 impl Default for ContentSession {
@@ -304,7 +300,6 @@ impl Default for ContentSession {
             translations: HashMap::new(),
             detail: None,
             detail_seq: 0,
-            detail_download_gate: Gate::new(),
         }
     }
 }
