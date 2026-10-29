@@ -819,7 +819,7 @@ export component InstancesList inherits Rectangle {
                             // the motion, so the list goes exactly where they put it
                             // (writing the target too drops a glide in flight). Its
                             // momentum is macOS' own, derived from the velocity the
-                            // gesture ended at �� easing it would stall the list on
+                            // gesture ended at — easing it would stall the list on
                             // release and ramp back up, see `scroll-view.slint`.
                             root.scroll-y = clamp(
                                 root.scroll-y - event.delta-y,

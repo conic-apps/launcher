@@ -16,7 +16,7 @@
 //! folder shared across versions looks the same.
 //!
 //! Every record is also kept in a bounded in-memory buffer. The crash report
-//! embeds that buffer, so a debug build �� which writes no log file �� still
+//! embeds that buffer, so a debug build — which writes no log file — still
 //! carries the launcher log, and a release build gets the run up to the crash
 //! without racing the file's rotation.
 //!
