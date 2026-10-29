@@ -603,11 +603,11 @@ export component InstancesList inherits Rectangle {
     background: transparent;
 
     // The scrollbar is pinned against the *window*: 8px from its right edge,
-    // 6px wide, spanning from 55px below the title bar (below the compact
-    // sort/group pill) to 60px above the bottom.
+    // 6px wide, spanning from 126px below the title bar (below the toolbar) to
+    // 60px above the bottom.
     private property <length> scrollbar-right: 8px;
     private property <length> scrollbar-width: 6px;
-    private property <length> scrollbar-top: 8px + 41px + 6px;
+    private property <length> scrollbar-top: 8px + 112px + 6px;
     private property <length> scrollbar-bottom: 56px + 4px;
 
     /// Smoothed scroll offset: 0 at the top, growing as the list scrolls down.
@@ -702,9 +702,9 @@ export component InstancesList inherits Rectangle {
     }
 
     // A newly opened group keeps its header just below the floating
-    // sort/group bar (8px top + 41px bar + 6px gap), rather than at the
+    // sort/group bar (8px top + 112px bar + 6px gap), rather than at the
     // viewport's top edge where the bar would cover it.
-    private property <length> group-scroll-top: 8px + 41px + 6px;
+    private property <length> group-scroll-top: 8px + 112px + 6px;
     private property <int> group-scroll-serial: GameState.group-scroll-serial;
     changed group-scroll-serial => {
         root.target-y = clamp(GameState.group-scroll-y - root.group-scroll-top, 0px, root.max-scroll);
