@@ -3164,11 +3164,6 @@ msgid "Close"
 msgstr "Cerrar"
 
 #: ui
-msgctxt "CrashView"
-msgid "Possible mods:"
-msgstr "Mods posibles:"
-
-#: ui
 msgctxt "TitleBar"
 msgid "Notifications"
 msgstr "Notificaciones"
@@ -3347,3 +3342,353 @@ msgstr "El juego no se cerró correctamente"
 msgctxt "NotificationText"
 msgid "{} seems to have crashed. Click here to view the crash report"
 msgstr "{} parece haberse bloqueado. Haz clic aquí para ver el informe de bloqueo"
+
+#: ui
+msgctxt "CrashView"
+msgid "Suspicious keywords:"
+msgstr "Palabras clave sospechosas:"
+
+#: ui
+msgctxt "CrashText"
+msgid "Manually triggered debug crash"
+msgstr "Bloqueo de depuración provocado manualmente"
+
+#: ui
+msgctxt "CrashText"
+msgid "OpenJ9 is not supported"
+msgstr "OpenJ9 no es compatible"
+
+#: ui
+msgctxt "CrashText"
+msgid "Java 11 is required"
+msgstr "Se requiere Java 11"
+
+#: ui
+msgctxt "CrashText"
+msgid "Java is too old"
+msgstr "Java es demasiado antiguo"
+
+#: ui
+msgctxt "CrashText"
+msgid "32-bit Java memory limit"
+msgstr "Límite de memoria de Java de 32 bits"
+
+#: ui
+msgctxt "CrashText"
+msgid "OpenGL operation failed"
+msgstr "Error en una operación de OpenGL"
+
+#: ui
+msgctxt "CrashText"
+msgid "OpenGL is not supported"
+msgstr "OpenGL no es compatible"
+
+#: ui
+msgctxt "CrashText"
+msgid "Graphics driver problem"
+msgstr "Problema con el controlador gráfico"
+
+#: ui
+msgctxt "CrashText"
+msgid "OpenGL window failed to start"
+msgstr "No se pudo iniciar la ventana de OpenGL"
+
+#: ui
+msgctxt "CrashText"
+msgid "Out of memory"
+msgstr "Memoria insuficiente"
+
+#: ui
+msgctxt "CrashText"
+msgid "Memory exhausted"
+msgstr "Memoria agotada"
+
+#: ui
+msgctxt "CrashText"
+msgid "Texture pack resolution too high"
+msgstr "Resolución del paquete de texturas demasiado alta"
+
+#: ui
+msgctxt "CrashText"
+msgid "Java version is too new"
+msgstr "La versión de Java es demasiado reciente"
+
+#: ui
+msgctxt "CrashText"
+msgid "macOS Java incompatibility"
+msgstr "Incompatibilidad entre macOS y Java"
+
+#: ui
+msgctxt "CrashText"
+msgid "Game files changed"
+msgstr "Se han modificado archivos del juego"
+
+#: ui
+msgctxt "CrashText"
+msgid "Missing method in a mod"
+msgstr "Falta un método en un mod"
+
+#: ui
+msgctxt "CrashText"
+msgid "Missing class in a mod"
+msgstr "Falta una clase en un mod"
+
+#: ui
+msgctxt "CrashText"
+msgid "Illegal access in a mod"
+msgstr "Acceso ilegal en un mod"
+
+#: ui
+msgctxt "CrashText"
+msgid "Duplicate mods"
+msgstr "Mods duplicados"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod dependency problem"
+msgstr "Problema de dependencia de mods"
+
+#: ui
+msgctxt "CrashText"
+msgid "Forge mod dependency problem"
+msgstr "Problema de dependencia de mods de Forge"
+
+#: ui
+msgctxt "CrashText"
+msgid "Duplicate Forge mods"
+msgstr "Mods de Forge duplicados"
+
+#: ui
+msgctxt "CrashText"
+msgid "Conflicting mods"
+msgstr "Mods en conflicto"
+
+#: ui
+msgctxt "CrashText"
+msgid "Missing mod dependency"
+msgstr "Falta una dependencia de mod"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod needs another Minecraft version"
+msgstr "El mod necesita otra versión de Minecraft"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod collection cannot be resolved"
+msgstr "No se puede resolver la colección de mods"
+
+#: ui
+msgctxt "CrashText"
+msgid "File already exists"
+msgstr "El archivo ya existe"
+
+#: ui
+msgctxt "CrashText"
+msgid "Forge mod failed to load"
+msgstr "No se pudo cargar un mod de Forge"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod failed to start"
+msgstr "No se pudo iniciar el mod"
+
+#: ui
+msgctxt "CrashText"
+msgid "Fabric mod failed to load"
+msgstr "No se pudo cargar un mod de Fabric"
+
+#: ui
+msgctxt "CrashText"
+msgid "Fabric Loader 0.12 incompatibility"
+msgstr "Fabric Loader 0.12 no es compatible"
+
+#: ui
+msgctxt "CrashText"
+msgid "Forge and Java incompatibility"
+msgstr "Incompatibilidad entre Forge y Java"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod config could not be read"
+msgstr "No se pudo leer la configuración del mod"
+
+#: ui
+msgctxt "CrashText"
+msgid "Fabric mod warnings"
+msgstr "Advertencias de mods de Fabric"
+
+#: ui
+msgctxt "CrashText"
+msgid "Entity caused the crash"
+msgstr "Una entidad provocó el bloqueo"
+
+#: ui
+msgctxt "CrashText"
+msgid "Block caused the crash"
+msgstr "Un bloque provocó el bloqueo"
+
+#: ui
+msgctxt "CrashText"
+msgid "Missing native library"
+msgstr "Falta una biblioteca nativa"
+
+#: ui
+msgctxt "CrashText"
+msgid "OptiFine is incompatible with Forge"
+msgstr "OptiFine no es compatible con Forge"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod jar was extracted"
+msgstr "Se ha extraído el JAR del mod"
+
+#: ui
+msgctxt "CrashText"
+msgid "OptiFine prevents world loading"
+msgstr "OptiFine impide cargar el mundo"
+
+#: ui
+msgctxt "CrashText"
+msgid "Too many mods (ID limit)"
+msgstr "Demasiados mods (límite de ID)"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mixin injection failed"
+msgstr "Error en la inyección de Mixin"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mixin could not be applied"
+msgstr "No se pudo aplicar el Mixin"
+
+#: ui
+msgctxt "CrashText"
+msgid "Forge reported an error"
+msgstr "Forge informó de un error"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod loading problem"
+msgstr "Problema al cargar mods"
+
+#: ui
+msgctxt "CrashText"
+msgid "Forge installed twice"
+msgstr "Forge está instalado dos veces"
+
+#: ui
+msgctxt "CrashText"
+msgid "OptiFine installed twice"
+msgstr "OptiFine está instalado dos veces"
+
+#: ui
+msgctxt "CrashText"
+msgid "Java is too new"
+msgstr "Java es demasiado reciente"
+
+#: ui
+msgctxt "CrashText"
+msgid "MixinBootstrap is missing"
+msgstr "Falta MixinBootstrap"
+
+#: ui
+msgctxt "CrashText"
+msgid "Invalid mod filename"
+msgstr "Nombre de archivo de mod no válido"
+
+#: ui
+msgctxt "CrashText"
+msgid "Incomplete Forge installation"
+msgstr "Instalación de Forge incompleta"
+
+#: ui
+msgctxt "CrashText"
+msgid "Night Config error"
+msgstr "Error de Night Config"
+
+#: ui
+msgctxt "CrashText"
+msgid "Shaders Mod conflicts with OptiFine"
+msgstr "Shaders Mod entra en conflicto con OptiFine"
+
+#: ui
+msgctxt "CrashText"
+msgid "Forest mod conflicts with OptiFine"
+msgstr "El mod Forest entra en conflicto con OptiFine"
+
+#: ui
+msgctxt "CrashText"
+msgid "Performant conflicts with OptiFine"
+msgstr "Performant entra en conflicto con OptiFine"
+
+#: ui
+msgctxt "CrashText"
+msgid "Twilight Forest conflicts with OptiFine"
+msgstr "Twilight Forest entra en conflicto con OptiFine"
+
+#: ui
+msgctxt "CrashText"
+msgid "Jade conflicts with OptiFine"
+msgstr "Jade entra en conflicto con OptiFine"
+
+#: ui
+msgctxt "CrashText"
+msgid "NeoForge rejects OptiFine"
+msgstr "NeoForge rechaza OptiFine"
+
+#: ui
+msgctxt "CrashText"
+msgid "RTSS conflicts with Sodium"
+msgstr "RTSS entra en conflicto con Sodium"
+
+#: ui
+msgctxt "CrashText"
+msgid "Exit code: {} ({})"
+msgstr "Código de salida: {} ({})"
+
+#: ui
+msgctxt "CrashText"
+msgid "Exit: {}"
+msgstr "Salida: {}"
+
+#: ui
+msgctxt "CrashText"
+msgid "JVM error"
+msgstr "Error de JVM"
+
+#: ui
+msgctxt "CrashText"
+msgid "application error"
+msgstr "Error de la aplicación"
+
+#: ui
+msgctxt "CrashText"
+msgid "killed by the system"
+msgstr "Terminado por el sistema"
+
+#: ui
+msgctxt "CrashText"
+msgid "interrupted"
+msgstr "Interrumpido"
+
+#: ui
+msgctxt "CrashText"
+msgid "normal exit"
+msgstr "Salida normal"
+
+#: ui
+msgctxt "CrashText"
+msgid "Launcher version"
+msgstr "Versión del lanzador"
+
+#: ui
+msgctxt "CrashText"
+msgid "Heap / RAM"
+msgstr "Montón / RAM"
+
+#: ui
+msgctxt "CrashText"
+msgid "Java version"
+msgstr "Versión de Java"

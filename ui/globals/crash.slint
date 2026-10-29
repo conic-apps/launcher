@@ -2,6 +2,201 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+import { Theme } from "../theme.slint";
+
+// The crash overlay's labels.
+//
+// Rust only sends raw rule names and the game's own English text, so the
+// translation happens here: an `@tr` binding follows a language change, where a
+// string built on the Rust side would be frozen in the language it was written
+// in.
+export global CrashText {
+    /// The game's own description, translated when it names a cause we know.
+    public pure function summary(text: string) -> string {
+        if text == "Manually triggered debug crash" {
+            return @tr("CrashText" => "Manually triggered debug crash");
+        }
+        return text;
+    }
+
+    /// One crash-analysis rule, named the way a reader can act on.
+    public pure function reason(rule: string) -> string {
+        if rule == "OPENJ9" { return @tr("CrashText" => "OpenJ9 is not supported"); }
+        if rule == "NEED_JDK11" { return @tr("CrashText" => "Java 11 is required"); }
+        if rule == "TOO_OLD_JAVA" { return @tr("CrashText" => "Java is too old"); }
+        if rule == "JVM_32BIT" { return @tr("CrashText" => "32-bit Java memory limit"); }
+        if rule == "GL_OPERATION_FAILURE" { return @tr("CrashText" => "OpenGL operation failed"); }
+        if rule == "OPENGL_NOT_SUPPORTED" { return @tr("CrashText" => "OpenGL is not supported"); }
+        if rule == "GRAPHICS_DRIVER" { return @tr("CrashText" => "Graphics driver problem"); }
+        if rule == "MACOS_FAILED_TO_FIND_SERVICE_PORT_FOR_DISPLAY" {
+            return @tr("CrashText" => "OpenGL window failed to start");
+        }
+        if rule == "OUT_OF_MEMORY" { return @tr("CrashText" => "Out of memory"); }
+        if rule == "MEMORY_EXCEEDED" { return @tr("CrashText" => "Memory exhausted"); }
+        if rule == "RESOLUTION_TOO_HIGH" {
+            return @tr("CrashText" => "Texture pack resolution too high");
+        }
+        if rule == "JDK_9" { return @tr("CrashText" => "Java version is too new"); }
+        if rule == "MAC_JDK_8U261" { return @tr("CrashText" => "macOS Java incompatibility"); }
+        if rule == "FILE_CHANGED" { return @tr("CrashText" => "Game files changed"); }
+        if rule == "NO_SUCH_METHOD_ERROR" { return @tr("CrashText" => "Missing method in a mod"); }
+        if rule == "NO_CLASS_DEF_FOUND_ERROR" {
+            return @tr("CrashText" => "Missing class in a mod");
+        }
+        if rule == "ILLEGAL_ACCESS_ERROR" { return @tr("CrashText" => "Illegal access in a mod"); }
+        if rule == "DUPLICATED_MOD" { return @tr("CrashText" => "Duplicate mods"); }
+        if rule == "MOD_RESOLUTION" { return @tr("CrashText" => "Mod dependency problem"); }
+        if rule == "FORGEMOD_RESOLUTION" {
+            return @tr("CrashText" => "Forge mod dependency problem");
+        }
+        if rule == "FORGE_FOUND_DUPLICATE_MODS" {
+            return @tr("CrashText" => "Duplicate Forge mods");
+        }
+        if rule == "MOD_RESOLUTION_CONFLICT" { return @tr("CrashText" => "Conflicting mods"); }
+        if rule == "MOD_RESOLUTION_MISSING" {
+            return @tr("CrashText" => "Missing mod dependency");
+        }
+        if rule == "MOD_RESOLUTION_MISSING_MINECRAFT" {
+            return @tr("CrashText" => "Mod needs another Minecraft version");
+        }
+        if rule == "MOD_RESOLUTION_COLLECTION" {
+            return @tr("CrashText" => "Mod collection cannot be resolved");
+        }
+        if rule == "FILE_ALREADY_EXISTS" { return @tr("CrashText" => "File already exists"); }
+        if rule == "LOADING_CRASHED_FORGE" {
+            return @tr("CrashText" => "Forge mod failed to load");
+        }
+        if rule == "BOOTSTRAP_FAILED" { return @tr("CrashText" => "Mod failed to start"); }
+        if rule == "LOADING_CRASHED_FABRIC" {
+            return @tr("CrashText" => "Fabric mod failed to load");
+        }
+        if rule == "FABRIC_VERSION_0_12" {
+            return @tr("CrashText" => "Fabric Loader 0.12 incompatibility");
+        }
+        if rule == "MODLAUNCHER_8" {
+            return @tr("CrashText" => "Forge and Java incompatibility");
+        }
+        if rule == "DEBUG_CRASH" {
+            return @tr("CrashText" => "Manually triggered debug crash");
+        }
+        if rule == "CONFIG" { return @tr("CrashText" => "Mod config could not be read"); }
+        if rule == "FABRIC_WARNINGS" { return @tr("CrashText" => "Fabric mod warnings"); }
+        if rule == "ENTITY" { return @tr("CrashText" => "Entity caused the crash"); }
+        if rule == "BLOCK" { return @tr("CrashText" => "Block caused the crash"); }
+        if rule == "UNSATISFIED_LINK_ERROR" {
+            return @tr("CrashText" => "Missing native library");
+        }
+        if rule == "OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE" {
+            return @tr("CrashText" => "OptiFine is incompatible with Forge");
+        }
+        if rule == "MOD_FILES_ARE_DECOMPRESSED" {
+            return @tr("CrashText" => "Mod jar was extracted");
+        }
+        if rule == "OPTIFINE_CAUSES_THE_WORLD_TO_FAIL_TO_LOAD" {
+            return @tr("CrashText" => "OptiFine prevents world loading");
+        }
+        if rule == "TOO_MANY_MODS_LEAD_TO_EXCEEDING_THE_ID_LIMIT" {
+            return @tr("CrashText" => "Too many mods (ID limit)");
+        }
+        if rule == "MODMIXIN_FAILURE" { return @tr("CrashText" => "Mixin injection failed"); }
+        if rule == "MIXIN_APPLY_MOD_FAILED" {
+            return @tr("CrashText" => "Mixin could not be applied");
+        }
+        if rule == "FORGE_ERROR" { return @tr("CrashText" => "Forge reported an error"); }
+        if rule == "MOD_RESOLUTION0" { return @tr("CrashText" => "Mod loading problem"); }
+        if rule == "FORGE_REPEAT_INSTALLATION" {
+            return @tr("CrashText" => "Forge installed twice");
+        }
+        if rule == "OPTIFINE_REPEAT_INSTALLATION" {
+            return @tr("CrashText" => "OptiFine installed twice");
+        }
+        if rule == "JAVA_VERSION_IS_TOO_HIGH" { return @tr("CrashText" => "Java is too new"); }
+        if rule == "INSTALL_MIXINBOOTSTRAP" {
+            return @tr("CrashText" => "MixinBootstrap is missing");
+        }
+        if rule == "MOD_NAME" { return @tr("CrashText" => "Invalid mod filename"); }
+        if rule == "INCOMPLETE_FORGE_INSTALLATION" {
+            return @tr("CrashText" => "Incomplete Forge installation");
+        }
+        if rule == "NIGHT_CONFIG_FIXES" { return @tr("CrashText" => "Night Config error"); }
+        if rule == "SHADERS_MOD" {
+            return @tr("CrashText" => "Shaders Mod conflicts with OptiFine");
+        }
+        if rule == "MOD_FOREST_OPTIFINE" {
+            return @tr("CrashText" => "Forest mod conflicts with OptiFine");
+        }
+        if rule == "PERFORMANT_FOREST_OPTIFINE" {
+            return @tr("CrashText" => "Performant conflicts with OptiFine");
+        }
+        if rule == "TWILIGHT_FOREST_OPTIFINE" {
+            return @tr("CrashText" => "Twilight Forest conflicts with OptiFine");
+        }
+        if rule == "JADE_FOREST_OPTIFINE" {
+            return @tr("CrashText" => "Jade conflicts with OptiFine");
+        }
+        if rule == "NEOFORGE_FOREST_OPTIFINE" {
+            return @tr("CrashText" => "NeoForge rejects OptiFine");
+        }
+        if rule == "RTSS_FOREST_SODIUM" {
+            return @tr("CrashText" => "RTSS conflicts with Sodium");
+        }
+        return rule;
+    }
+
+    /// A matched rule with the fields it captured, when it has any.
+    public pure function reason-line(rule: string, fields: string) -> string {
+        if fields == "" {
+            return self.reason(rule);
+        }
+        return self.reason(rule) + ": " + fields;
+    }
+
+    /// The exit line. The kind is kept apart from the code so the sentence and
+    /// the kind's name can both be translated.
+    public pure function exit-line(code: string, kind: string) -> string {
+        if code == "" {
+            return @tr("CrashText" => "Exit: {}", self.exit-kind(kind));
+        }
+        return @tr("CrashText" => "Exit code: {} ({})", code, self.exit-kind(kind));
+    }
+
+    public pure function exit-kind(kind: string) -> string {
+        if kind == "JVM_ERROR" { return @tr("CrashText" => "JVM error"); }
+        if kind == "APPLICATION_ERROR" { return @tr("CrashText" => "application error"); }
+        if kind == "SIGKILL" { return @tr("CrashText" => "killed by the system"); }
+        if kind == "INTERRUPTED" { return @tr("CrashText" => "interrupted"); }
+        if kind == "NORMAL" { return @tr("CrashText" => "normal exit"); }
+        return kind;
+    }
+
+    public pure function line-color(kind: string) -> color {
+        if kind == "error" { return Theme.red; }
+        if kind == "warning" { return Theme.yellow; }
+        if kind == "info" { return Theme.blue; }
+        if kind == "debug" { return Theme.overlay-2; }
+        if kind == "trace" { return Theme.overlay-1; }
+        if kind == "stack" { return Theme.overlay-1; }
+        if kind == "caused" { return Theme.peach; }
+        if kind == "header" { return Theme.mauve; }
+        if kind == "muted" { return Theme.overlay-0; }
+        return Theme.default-text-color.transparentize(0.1);
+    }
+
+    public pure function line-italic(kind: string) -> bool {
+        return kind == "stack";
+    }
+}
+
+export struct CrashReason {
+    rule: string,
+    fields: string,
+}
+
+export struct CrashLogLine {
+    text: string,
+    kind: string,
+}
+
 // The crash overlay's state.
 //
 // Rust raises it from the launch crate's session events
@@ -9,27 +204,48 @@
 // `CrashReport` is pushed here and the overlay slides up over whatever page the
 // user is on. The strings are the crate's own output, unformatted — Slint
 // cannot format them — so the panel shows the raw summary, exit code, report
-// path and crash text.
+// path and crash text; the labels are resolved through `CrashText`.
 export global CrashState {
     /// Whether the crash overlay is up.
     in-out property <bool> visible: false;
     /// The crashed instance's display name.
     in-out property <string> instance-name: "";
+    /// The instance's mod loader, empty for vanilla.
+    in-out property <string> loader: "";
+    in-out property <string> minecraft-version: "";
+    /// The runtime facts under the card, already formatted for display.
+    in-out property <string> launcher-version: "";
+    in-out property <string> allocated-memory: "";
+    in-out property <string> total-memory: "";
+    in-out property <string> java-version: "";
     /// One line naming the crash, from the crash report or the exit code.
     in-out property <string> summary: "";
-    /// A pre-formatted line such as "exit code: 1 · APPLICATION_ERROR", or just
-    /// the exit kind when the platform reported no code.
+    /// The raw exit line used by the combined report.
     in-out property <string> exit-code: "";
+    /// The numeric exit code, empty when the platform reported none.
+    in-out property <string> exit-code-number: "";
+    /// The exit kind, e.g. `APPLICATION_ERROR`; translated by `CrashText`.
+    in-out property <string> exit-kind: "";
     /// The crash-analysis rules the output matched, one per line, each with the
-    /// fields it captured. Raw rule names, not translated.
+    /// fields it captured.
     in-out property <string> reasons: "";
-    /// Likely offending mods, comma-separated, from the report's stack trace.
+    /// The same matches as structured rows, so the panel can translate the rule
+    /// names without parsing the line back apart.
+    in-out property <[CrashReason]> reason-items: [];
+    /// Suspicious keywords, comma-separated, from the report's stack trace.
     in-out property <string> keywords: "";
     /// The crash report file the details came from, empty when the game wrote
     /// none and the details are the log tail.
     in-out property <string> report-path: "";
-    /// The raw crash report, or the tail of the game log.
+    /// The raw crash report, or the tail of the game log. Kept for the combined
+    /// report; the panel draws `detail-lines` instead.
     in-out property <string> details: "";
+    /// The crash text split into rows, each tagged with the colour its line
+    /// deserves (`error`, `warning`, `stack`, …).
+    in-out property <[CrashLogLine]> detail-lines: [];
+    /// The platform's monospace family, resolved by Rust because Slint does not
+    /// treat `monospace` as a generic family.
+    in-out property <string> mono-family: "monospace";
     /// The tail of the game's captured stdout and stderr. Not drawn by the
     /// panel; the combined report reads it.
     in-out property <string> game-console: "";

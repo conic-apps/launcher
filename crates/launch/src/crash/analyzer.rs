@@ -117,7 +117,7 @@ pub fn extract_crash_report(log: &str) -> Option<String> {
     (begin < end).then(|| log[begin..end].to_string())
 }
 
-/// Likely offending mods, inferred from a crash report's stack trace.
+/// Suspicious keywords, inferred from a crash report's stack trace.
 ///
 /// Each `at package.Class.method(…)` line contributes its package segments,
 /// minus the ones every crash shares (Java, Minecraft, the loaders).

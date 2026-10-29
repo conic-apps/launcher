@@ -124,6 +124,15 @@ pub fn classify_exit(
     ExitType::Normal
 }
 
+/// What the launch knew about the process, for the crash screen's summary row.
+#[derive(Clone, Debug, Default)]
+pub struct LaunchInfo {
+    /// The `-Xmx` heap size the launch used, in MiB.
+    pub max_memory_mb: usize,
+    /// The selected runtime's full version, when the scan knew it.
+    pub java_version: String,
+}
+
 /// A crash, reduced to what a screen can render.
 ///
 /// Every field is a plain `String` (or an `Option` thereof) so the report
@@ -132,6 +141,13 @@ pub fn classify_exit(
 pub struct CrashReport {
     pub instance_id: String,
     pub instance_name: String,
+    /// The mod loader's display name, empty for a vanilla instance.
+    pub loader: String,
+    pub minecraft_version: String,
+    pub launcher_version: String,
+    pub allocated_memory_mb: usize,
+    pub total_memory_bytes: u64,
+    pub java_version: String,
     pub exit_type: ExitType,
     /// The process's exit code, when the platform reported one. A Unix signal
     /// death has none.
@@ -152,7 +168,7 @@ pub struct CrashReport {
     pub report_path: Option<String>,
     /// The rules the output matched, in the table's order.
     pub reasons: Vec<Reason>,
-    /// Likely offending mods, inferred from the report's stack trace.
+    /// Suspicious keywords, inferred from the report's stack trace.
     pub keywords: Vec<String>,
 }
 
@@ -167,6 +183,7 @@ pub fn analyze(
     exit_type: ExitType,
     exit_code: Option<i32>,
     console_log: &str,
+    launch: &LaunchInfo,
 ) -> CrashReport {
     let root = LOCATIONS.instances.get_instance_root(&instance.id);
     let latest_log_path = root.join("logs").join("latest.log");
@@ -213,6 +230,14 @@ pub fn analyze(
     }
 
     let summary = description(&contents).unwrap_or_else(|| fallback_summary(exit_type, exit_code));
+    let java_version = if launch.java_version.is_empty() {
+        system_java_version(&contents)
+            .or_else(|| system_java_version(&latest_log))
+            .or_else(|| system_java_version(console_log))
+            .unwrap_or_default()
+    } else {
+        launch.java_version.clone()
+    };
     let details = if contents.trim().is_empty() {
         truncate(console_log, DETAILS_LIMIT)
     } else {
@@ -234,6 +259,18 @@ pub fn analyze(
     CrashReport {
         instance_id: instance.id.clone(),
         instance_name: instance.config.name.clone(),
+        loader: instance
+            .config
+            .runtime
+            .mod_loader_type
+            .as_ref()
+            .map(ToString::to_string)
+            .unwrap_or_default(),
+        minecraft_version: instance.config.runtime.minecraft.clone(),
+        launcher_version: shared::app_version().to_string(),
+        allocated_memory_mb: launch.max_memory_mb,
+        total_memory_bytes: platform::get_total_memory_bytes(),
+        java_version,
         exit_type,
         exit_code,
         summary,
@@ -244,6 +281,18 @@ pub fn analyze(
         reasons,
         keywords: analyzer::find_keywords(&contents),
     }
+}
+
+/// The crash report's `-- System Details --` Java line, when the game wrote
+/// one. Used when the launch did not probe the selected runtime's version.
+fn system_java_version(contents: &str) -> Option<String> {
+    contents.lines().find_map(|line| {
+        line.trim()
+            .strip_prefix("Java Version:")
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .map(ToString::to_string)
+    })
 }
 
 fn fallback_summary(exit_type: ExitType, exit_code: Option<i32>) -> String {
@@ -414,5 +463,15 @@ mod tests {
         let truncated = truncate(text, 3);
         assert!(truncated.starts_with('ä'));
         assert!(truncated.ends_with("… (truncated)"));
+    }
+
+    #[test]
+    fn java_version_is_read_from_the_system_details() {
+        let report = "---- Minecraft Crash Report ----\n\n-- System Details --\nJava Version: 17.0.8, Eclipse Adoptium\n";
+        assert_eq!(
+            system_java_version(report),
+            Some("17.0.8, Eclipse Adoptium".to_string())
+        );
+        assert_eq!(system_java_version("no details"), None);
     }
 }

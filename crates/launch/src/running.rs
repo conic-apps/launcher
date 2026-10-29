@@ -44,7 +44,7 @@ use shared::Sink;
 
 use instance::Instance;
 
-use crate::crash::CrashReport;
+use crate::crash::{CrashReport, LaunchInfo};
 
 /// Every session currently running, keyed by instance id. An instance can have
 /// more than one live process, so each key holds a list.
@@ -87,6 +87,12 @@ pub type SessionSink = Sink<SessionEvent>;
 struct Pipes {
     stdout: Option<ChildStdout>,
     stderr: Option<ChildStderr>,
+}
+
+/// The instance and launch facts the watcher needs when the process exits.
+struct CrashContext {
+    instance: Instance,
+    launch: LaunchInfo,
 }
 
 /// One launched, still-running Minecraft session.
@@ -266,6 +272,7 @@ pub fn shutdown() {
 /// It is `pub(crate)`: only the launch pipeline spawns processes to track.
 pub(crate) fn register(
     instance: Instance,
+    launch: LaunchInfo,
     mut process: Child,
     on_line: impl FnMut(&str) + Send + 'static,
 ) {
@@ -279,7 +286,10 @@ pub(crate) fn register(
     let pid = process.id();
     let process = Arc::new(Mutex::new(process));
     let stop_requested = Arc::new(AtomicBool::new(false));
-    let watch_instance = instance.clone();
+    let watch_context = CrashContext {
+        instance: instance.clone(),
+        launch,
+    };
     let watch_stop = Arc::clone(&stop_requested);
     // The entry goes in before the watcher starts: a process that exits at once
     // must find its own entry to clean up, rather than race the insert and
@@ -303,7 +313,7 @@ pub(crate) fn register(
         watch(
             watcher_id,
             token,
-            watch_instance,
+            watch_context,
             watch_stop,
             process,
             pipes,
@@ -340,12 +350,13 @@ pub(crate) fn register(
 fn watch(
     id: String,
     token: u64,
-    instance: Instance,
+    context: CrashContext,
     stop_requested: Arc<AtomicBool>,
     process: Arc<Mutex<Child>>,
     pipes: Pipes,
     on_line: impl FnMut(&str) + Send + 'static,
 ) {
+    let CrashContext { instance, launch } = context;
     let Pipes { stdout, stderr } = pipes;
     let pid = process.lock().unwrap_or_else(PoisonError::into_inner).id();
     let console = Arc::new(Mutex::new(VecDeque::new()));
@@ -379,7 +390,7 @@ fn watch(
             warn!("could not mark instance {id} as crashed: {error}");
         }
         Some(Box::new(crate::crash::analyze(
-            &instance, exit_type, exit_code, &console,
+            &instance, exit_type, exit_code, &console, &launch,
         )))
     } else {
         if let Err(error) = instance::clear_last_exit_abnormal(&id) {
@@ -570,7 +581,7 @@ mod tests {
         subscribe(Arc::new(move |event| {
             let _ = sender.send(event);
         }));
-        register(instance, child, |_| {});
+        register(instance, LaunchInfo::default(), child, |_| {});
 
         let exited = loop {
             let event = receiver

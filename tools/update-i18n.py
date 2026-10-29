@@ -125,6 +125,14 @@ DROP = {
     # The crash overlay's title now names the surface ("Crash report"), since
     # the notification carries the "did not exit normally" message.
     ("CrashView", "Game crashed"),
+    # "Possible mods" framed stack-trace tokens as culprits; they are only
+    # keywords worth checking.
+    ("CrashView", "Possible mods:"),
+    # The crash panel no longer draws a heading for the matched rules, and the
+    # manual-debug rule is hidden when its label repeats the summary above.
+    ("CrashText", "Detected issues"),
+    ("CrashText", "Debug crash"),
+    ("CrashText", "Launcher {} · Heap {} / RAM {} · Java {}"),
 }
 
 # ---------------------------------------------------------------------------
@@ -1161,18 +1169,18 @@ SAVE_TAGS = {
             "tr_TR": "Kapat",
             "pl_PL": "Zamknij",
         },
-        "Possible mods:": {
-            "zh_CN": "可能的模组：",
-            "zh_TW": "可能的模組：",
-            "ja_JP": "原因の可能性があるMOD：",
-            "ko_KR": "가능성 있는 모드:",
-            "de_DE": "Mögliche Mods:",
-            "fr_FR": "Mods possibles :",
-            "es_ES": "Mods posibles:",
-            "pt_BR": "Mods possíveis:",
-            "ru_RU": "Возможные моды:",
-            "tr_TR": "Olası modlar:",
-            "pl_PL": "Możliwe mody:",
+        "Suspicious keywords:": {
+            "zh_CN": "可疑的关键词：",
+            "zh_TW": "可疑的關鍵字：",
+            "ja_JP": "疑わしいキーワード：",
+            "ko_KR": "의심되는 키워드:",
+            "de_DE": "Verdächtige Schlüsselwörter:",
+            "fr_FR": "Mots-clés suspects :",
+            "es_ES": "Palabras clave sospechosas:",
+            "pt_BR": "Palavras-chave suspeitas:",
+            "ru_RU": "Подозрительные ключевые слова:",
+            "tr_TR": "Şüpheli anahtar kelimeler:",
+            "pl_PL": "Podejrzane słowa kluczowe:",
         },
     },
     # The title bar's newspaper button, and the news overlay it opens.
@@ -1735,6 +1743,24 @@ SAVE_TAGS = {
         },
     },
 }
+
+# The crash reasons' labels live in a TSV: there are sixty-one of them, and a
+# dict of twelve nested dicts per label would bury the rest of the table. The
+# first column is the English msgid, the rest follow `LANGUAGES` without `en_US`.
+CRASH_TEXT_TSV = Path(__file__).with_name("crash-i18n.tsv")
+CRASH_LANGUAGES = LANGUAGES[:-1]
+CRASH_TEXT: dict[str, dict[str, str]] = {}
+for line in CRASH_TEXT_TSV.read_text(encoding="utf-8").splitlines():
+    if not line or line.startswith("#"):
+        continue
+    msgid, *values = line.split("\t")
+    if len(values) != len(CRASH_LANGUAGES):
+        raise SystemExit(
+            f"{CRASH_TEXT_TSV.name}: {msgid!r} has {len(values)} translations, "
+            f"expected {len(CRASH_LANGUAGES)}"
+        )
+    CRASH_TEXT[msgid] = dict(zip(CRASH_LANGUAGES, values))
+SAVE_TAGS["CrashText"] = CRASH_TEXT
 
 # The empty state each remote list draws. The translations were already in every
 # catalogue, under `RemoteListView`.

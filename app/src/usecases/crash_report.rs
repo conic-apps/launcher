@@ -64,7 +64,7 @@ fn text(source: &Source, directory: &Path) -> String {
         report.push_str(&format!("Reasons:\n{}\n", source.reasons));
     }
     if !source.keywords.is_empty() {
-        report.push_str(&format!("Possible mods: {}\n", source.keywords));
+        report.push_str(&format!("Suspicious keywords: {}\n", source.keywords));
     }
 
     if !source.game_console.is_empty() {

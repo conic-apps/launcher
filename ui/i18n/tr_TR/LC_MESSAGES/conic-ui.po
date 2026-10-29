@@ -3164,11 +3164,6 @@ msgid "Close"
 msgstr "Kapat"
 
 #: ui
-msgctxt "CrashView"
-msgid "Possible mods:"
-msgstr "Olası modlar:"
-
-#: ui
 msgctxt "TitleBar"
 msgid "Notifications"
 msgstr "Bildirimler"
@@ -3347,3 +3342,353 @@ msgstr "Oyun düzgün kapanmadı"
 msgctxt "NotificationText"
 msgid "{} seems to have crashed. Click here to view the crash report"
 msgstr "{} çökmüş görünüyor. Çökme raporunu görüntülemek için buraya tıklayın"
+
+#: ui
+msgctxt "CrashView"
+msgid "Suspicious keywords:"
+msgstr "Şüpheli anahtar kelimeler:"
+
+#: ui
+msgctxt "CrashText"
+msgid "Manually triggered debug crash"
+msgstr "Elle tetiklenen hata ayıklama çökmesi"
+
+#: ui
+msgctxt "CrashText"
+msgid "OpenJ9 is not supported"
+msgstr "OpenJ9 desteklenmiyor"
+
+#: ui
+msgctxt "CrashText"
+msgid "Java 11 is required"
+msgstr "Java 11 gerekli"
+
+#: ui
+msgctxt "CrashText"
+msgid "Java is too old"
+msgstr "Java çok eski"
+
+#: ui
+msgctxt "CrashText"
+msgid "32-bit Java memory limit"
+msgstr "32 bit Java bellek sınırı"
+
+#: ui
+msgctxt "CrashText"
+msgid "OpenGL operation failed"
+msgstr "OpenGL işlemi başarısız"
+
+#: ui
+msgctxt "CrashText"
+msgid "OpenGL is not supported"
+msgstr "OpenGL desteklenmiyor"
+
+#: ui
+msgctxt "CrashText"
+msgid "Graphics driver problem"
+msgstr "Grafik sürücüsü sorunu"
+
+#: ui
+msgctxt "CrashText"
+msgid "OpenGL window failed to start"
+msgstr "OpenGL penceresi başlatılamadı"
+
+#: ui
+msgctxt "CrashText"
+msgid "Out of memory"
+msgstr "Bellek yetersiz"
+
+#: ui
+msgctxt "CrashText"
+msgid "Memory exhausted"
+msgstr "Bellek tükendi"
+
+#: ui
+msgctxt "CrashText"
+msgid "Texture pack resolution too high"
+msgstr "Doku paketi çözünürlüğü çok yüksek"
+
+#: ui
+msgctxt "CrashText"
+msgid "Java version is too new"
+msgstr "Java sürümü çok yeni"
+
+#: ui
+msgctxt "CrashText"
+msgid "macOS Java incompatibility"
+msgstr "macOS ve Java uyumsuzluğu"
+
+#: ui
+msgctxt "CrashText"
+msgid "Game files changed"
+msgstr "Oyun dosyaları değişti"
+
+#: ui
+msgctxt "CrashText"
+msgid "Missing method in a mod"
+msgstr "Bir modda eksik yöntem"
+
+#: ui
+msgctxt "CrashText"
+msgid "Missing class in a mod"
+msgstr "Bir modda eksik sınıf"
+
+#: ui
+msgctxt "CrashText"
+msgid "Illegal access in a mod"
+msgstr "Bir modda geçersiz erişim"
+
+#: ui
+msgctxt "CrashText"
+msgid "Duplicate mods"
+msgstr "Yinelenen modlar"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod dependency problem"
+msgstr "Mod bağımlılığı sorunu"
+
+#: ui
+msgctxt "CrashText"
+msgid "Forge mod dependency problem"
+msgstr "Forge mod bağımlılığı sorunu"
+
+#: ui
+msgctxt "CrashText"
+msgid "Duplicate Forge mods"
+msgstr "Yinelenen Forge modları"
+
+#: ui
+msgctxt "CrashText"
+msgid "Conflicting mods"
+msgstr "Çakışan modlar"
+
+#: ui
+msgctxt "CrashText"
+msgid "Missing mod dependency"
+msgstr "Eksik mod bağımlılığı"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod needs another Minecraft version"
+msgstr "Mod farklı bir Minecraft sürümü gerektiriyor"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod collection cannot be resolved"
+msgstr "Mod koleksiyonu çözümlenemiyor"
+
+#: ui
+msgctxt "CrashText"
+msgid "File already exists"
+msgstr "Dosya zaten var"
+
+#: ui
+msgctxt "CrashText"
+msgid "Forge mod failed to load"
+msgstr "Forge modu yüklenemedi"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod failed to start"
+msgstr "Mod başlatılamadı"
+
+#: ui
+msgctxt "CrashText"
+msgid "Fabric mod failed to load"
+msgstr "Fabric modu yüklenemedi"
+
+#: ui
+msgctxt "CrashText"
+msgid "Fabric Loader 0.12 incompatibility"
+msgstr "Fabric Loader 0.12 uyumsuz"
+
+#: ui
+msgctxt "CrashText"
+msgid "Forge and Java incompatibility"
+msgstr "Forge ve Java uyumsuz"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod config could not be read"
+msgstr "Mod yapılandırması okunamadı"
+
+#: ui
+msgctxt "CrashText"
+msgid "Fabric mod warnings"
+msgstr "Fabric mod uyarıları"
+
+#: ui
+msgctxt "CrashText"
+msgid "Entity caused the crash"
+msgstr "Çökmeye bir varlık neden oldu"
+
+#: ui
+msgctxt "CrashText"
+msgid "Block caused the crash"
+msgstr "Çökmeye bir blok neden oldu"
+
+#: ui
+msgctxt "CrashText"
+msgid "Missing native library"
+msgstr "Eksik yerel kitaplık"
+
+#: ui
+msgctxt "CrashText"
+msgid "OptiFine is incompatible with Forge"
+msgstr "OptiFine, Forge ile uyumlu değil"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod jar was extracted"
+msgstr "Mod JAR'ı çıkarılmış"
+
+#: ui
+msgctxt "CrashText"
+msgid "OptiFine prevents world loading"
+msgstr "OptiFine dünyanın yüklenmesini engelliyor"
+
+#: ui
+msgctxt "CrashText"
+msgid "Too many mods (ID limit)"
+msgstr "Çok fazla mod (ID sınırı)"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mixin injection failed"
+msgstr "Mixin enjeksiyonu başarısız"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mixin could not be applied"
+msgstr "Mixin uygulanamadı"
+
+#: ui
+msgctxt "CrashText"
+msgid "Forge reported an error"
+msgstr "Forge bir hata bildirdi"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod loading problem"
+msgstr "Mod yükleme sorunu"
+
+#: ui
+msgctxt "CrashText"
+msgid "Forge installed twice"
+msgstr "Forge iki kez kurulmuş"
+
+#: ui
+msgctxt "CrashText"
+msgid "OptiFine installed twice"
+msgstr "OptiFine iki kez kurulmuş"
+
+#: ui
+msgctxt "CrashText"
+msgid "Java is too new"
+msgstr "Java çok yeni"
+
+#: ui
+msgctxt "CrashText"
+msgid "MixinBootstrap is missing"
+msgstr "MixinBootstrap eksik"
+
+#: ui
+msgctxt "CrashText"
+msgid "Invalid mod filename"
+msgstr "Geçersiz mod dosya adı"
+
+#: ui
+msgctxt "CrashText"
+msgid "Incomplete Forge installation"
+msgstr "Forge kurulumu eksik"
+
+#: ui
+msgctxt "CrashText"
+msgid "Night Config error"
+msgstr "Night Config hatası"
+
+#: ui
+msgctxt "CrashText"
+msgid "Shaders Mod conflicts with OptiFine"
+msgstr "Shaders Mod, OptiFine ile çakışıyor"
+
+#: ui
+msgctxt "CrashText"
+msgid "Forest mod conflicts with OptiFine"
+msgstr "Forest modu OptiFine ile çakışıyor"
+
+#: ui
+msgctxt "CrashText"
+msgid "Performant conflicts with OptiFine"
+msgstr "Performant, OptiFine ile çakışıyor"
+
+#: ui
+msgctxt "CrashText"
+msgid "Twilight Forest conflicts with OptiFine"
+msgstr "Twilight Forest, OptiFine ile çakışıyor"
+
+#: ui
+msgctxt "CrashText"
+msgid "Jade conflicts with OptiFine"
+msgstr "Jade, OptiFine ile çakışıyor"
+
+#: ui
+msgctxt "CrashText"
+msgid "NeoForge rejects OptiFine"
+msgstr "NeoForge, OptiFine'ı reddediyor"
+
+#: ui
+msgctxt "CrashText"
+msgid "RTSS conflicts with Sodium"
+msgstr "RTSS, Sodium ile çakışıyor"
+
+#: ui
+msgctxt "CrashText"
+msgid "Exit code: {} ({})"
+msgstr "Çıkış kodu: {} ({})"
+
+#: ui
+msgctxt "CrashText"
+msgid "Exit: {}"
+msgstr "Çıkış: {}"
+
+#: ui
+msgctxt "CrashText"
+msgid "JVM error"
+msgstr "JVM hatası"
+
+#: ui
+msgctxt "CrashText"
+msgid "application error"
+msgstr "Uygulama hatası"
+
+#: ui
+msgctxt "CrashText"
+msgid "killed by the system"
+msgstr "Sistem tarafından sonlandırıldı"
+
+#: ui
+msgctxt "CrashText"
+msgid "interrupted"
+msgstr "Kesildi"
+
+#: ui
+msgctxt "CrashText"
+msgid "normal exit"
+msgstr "Normal çıkış"
+
+#: ui
+msgctxt "CrashText"
+msgid "Launcher version"
+msgstr "Başlatıcı sürümü"
+
+#: ui
+msgctxt "CrashText"
+msgid "Heap / RAM"
+msgstr "Yığın / RAM"
+
+#: ui
+msgctxt "CrashText"
+msgid "Java version"
+msgstr "Java sürümü"

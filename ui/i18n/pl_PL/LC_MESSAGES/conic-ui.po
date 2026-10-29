@@ -3164,11 +3164,6 @@ msgid "Close"
 msgstr "Zamknij"
 
 #: ui
-msgctxt "CrashView"
-msgid "Possible mods:"
-msgstr "Możliwe mody:"
-
-#: ui
 msgctxt "TitleBar"
 msgid "Notifications"
 msgstr "Powiadomienia"
@@ -3347,3 +3342,353 @@ msgstr "Gra nie zakończyła się prawidłowo"
 msgctxt "NotificationText"
 msgid "{} seems to have crashed. Click here to view the crash report"
 msgstr "Wygląda na to, że {} uległa awarii. Kliknij tutaj, aby zobaczyć raport o awarii"
+
+#: ui
+msgctxt "CrashView"
+msgid "Suspicious keywords:"
+msgstr "Podejrzane słowa kluczowe:"
+
+#: ui
+msgctxt "CrashText"
+msgid "Manually triggered debug crash"
+msgstr "Ręcznie wywołana awaria debugowania"
+
+#: ui
+msgctxt "CrashText"
+msgid "OpenJ9 is not supported"
+msgstr "OpenJ9 nie jest obsługiwany"
+
+#: ui
+msgctxt "CrashText"
+msgid "Java 11 is required"
+msgstr "Wymagana jest Java 11"
+
+#: ui
+msgctxt "CrashText"
+msgid "Java is too old"
+msgstr "Java jest zbyt stara"
+
+#: ui
+msgctxt "CrashText"
+msgid "32-bit Java memory limit"
+msgstr "Limit pamięci 32-bitowej Javy"
+
+#: ui
+msgctxt "CrashText"
+msgid "OpenGL operation failed"
+msgstr "Operacja OpenGL nie powiodła się"
+
+#: ui
+msgctxt "CrashText"
+msgid "OpenGL is not supported"
+msgstr "OpenGL nie jest obsługiwany"
+
+#: ui
+msgctxt "CrashText"
+msgid "Graphics driver problem"
+msgstr "Problem ze sterownikiem grafiki"
+
+#: ui
+msgctxt "CrashText"
+msgid "OpenGL window failed to start"
+msgstr "Nie udało się uruchomić okna OpenGL"
+
+#: ui
+msgctxt "CrashText"
+msgid "Out of memory"
+msgstr "Brak pamięci"
+
+#: ui
+msgctxt "CrashText"
+msgid "Memory exhausted"
+msgstr "Pamięć wyczerpana"
+
+#: ui
+msgctxt "CrashText"
+msgid "Texture pack resolution too high"
+msgstr "Zbyt wysoka rozdzielczość paczki tekstur"
+
+#: ui
+msgctxt "CrashText"
+msgid "Java version is too new"
+msgstr "Wersja Javy jest zbyt nowa"
+
+#: ui
+msgctxt "CrashText"
+msgid "macOS Java incompatibility"
+msgstr "Niezgodność Javy z macOS"
+
+#: ui
+msgctxt "CrashText"
+msgid "Game files changed"
+msgstr "Pliki gry zostały zmienione"
+
+#: ui
+msgctxt "CrashText"
+msgid "Missing method in a mod"
+msgstr "Brak metody w modzie"
+
+#: ui
+msgctxt "CrashText"
+msgid "Missing class in a mod"
+msgstr "Brak klasy w modzie"
+
+#: ui
+msgctxt "CrashText"
+msgid "Illegal access in a mod"
+msgstr "Nielegalny dostęp w modzie"
+
+#: ui
+msgctxt "CrashText"
+msgid "Duplicate mods"
+msgstr "Zduplikowane mody"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod dependency problem"
+msgstr "Problem z zależnościami modów"
+
+#: ui
+msgctxt "CrashText"
+msgid "Forge mod dependency problem"
+msgstr "Problem z zależnościami modów Forge"
+
+#: ui
+msgctxt "CrashText"
+msgid "Duplicate Forge mods"
+msgstr "Zduplikowane mody Forge"
+
+#: ui
+msgctxt "CrashText"
+msgid "Conflicting mods"
+msgstr "Konflikt modów"
+
+#: ui
+msgctxt "CrashText"
+msgid "Missing mod dependency"
+msgstr "Brak zależności moda"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod needs another Minecraft version"
+msgstr "Mod wymaga innej wersji Minecrafta"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod collection cannot be resolved"
+msgstr "Nie można rozwiązać kolekcji modów"
+
+#: ui
+msgctxt "CrashText"
+msgid "File already exists"
+msgstr "Plik już istnieje"
+
+#: ui
+msgctxt "CrashText"
+msgid "Forge mod failed to load"
+msgstr "Nie udało się załadować moda Forge"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod failed to start"
+msgstr "Nie udało się uruchomić moda"
+
+#: ui
+msgctxt "CrashText"
+msgid "Fabric mod failed to load"
+msgstr "Nie udało się załadować moda Fabric"
+
+#: ui
+msgctxt "CrashText"
+msgid "Fabric Loader 0.12 incompatibility"
+msgstr "Fabric Loader 0.12 jest niezgodny"
+
+#: ui
+msgctxt "CrashText"
+msgid "Forge and Java incompatibility"
+msgstr "Niezgodność Forge z Javą"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod config could not be read"
+msgstr "Nie udało się odczytać konfiguracji moda"
+
+#: ui
+msgctxt "CrashText"
+msgid "Fabric mod warnings"
+msgstr "Ostrzeżenia modów Fabric"
+
+#: ui
+msgctxt "CrashText"
+msgid "Entity caused the crash"
+msgstr "Awarię spowodowała encja"
+
+#: ui
+msgctxt "CrashText"
+msgid "Block caused the crash"
+msgstr "Awarię spowodował blok"
+
+#: ui
+msgctxt "CrashText"
+msgid "Missing native library"
+msgstr "Brak biblioteki natywnej"
+
+#: ui
+msgctxt "CrashText"
+msgid "OptiFine is incompatible with Forge"
+msgstr "OptiFine jest niezgodny z Forge"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod jar was extracted"
+msgstr "Plik JAR moda został rozpakowany"
+
+#: ui
+msgctxt "CrashText"
+msgid "OptiFine prevents world loading"
+msgstr "OptiFine uniemożliwia wczytanie świata"
+
+#: ui
+msgctxt "CrashText"
+msgid "Too many mods (ID limit)"
+msgstr "Zbyt wiele modów (limit ID)"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mixin injection failed"
+msgstr "Wstrzyknięcie Mixin nie powiodło się"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mixin could not be applied"
+msgstr "Nie udało się zastosować Mixin"
+
+#: ui
+msgctxt "CrashText"
+msgid "Forge reported an error"
+msgstr "Forge zgłosił błąd"
+
+#: ui
+msgctxt "CrashText"
+msgid "Mod loading problem"
+msgstr "Problem z ładowaniem modów"
+
+#: ui
+msgctxt "CrashText"
+msgid "Forge installed twice"
+msgstr "Forge jest zainstalowany dwukrotnie"
+
+#: ui
+msgctxt "CrashText"
+msgid "OptiFine installed twice"
+msgstr "OptiFine jest zainstalowany dwukrotnie"
+
+#: ui
+msgctxt "CrashText"
+msgid "Java is too new"
+msgstr "Java jest zbyt nowa"
+
+#: ui
+msgctxt "CrashText"
+msgid "MixinBootstrap is missing"
+msgstr "Brak MixinBootstrap"
+
+#: ui
+msgctxt "CrashText"
+msgid "Invalid mod filename"
+msgstr "Nieprawidłowa nazwa pliku moda"
+
+#: ui
+msgctxt "CrashText"
+msgid "Incomplete Forge installation"
+msgstr "Niekompletna instalacja Forge"
+
+#: ui
+msgctxt "CrashText"
+msgid "Night Config error"
+msgstr "Błąd Night Config"
+
+#: ui
+msgctxt "CrashText"
+msgid "Shaders Mod conflicts with OptiFine"
+msgstr "Shaders Mod koliduje z OptiFine"
+
+#: ui
+msgctxt "CrashText"
+msgid "Forest mod conflicts with OptiFine"
+msgstr "Mod Forest koliduje z OptiFine"
+
+#: ui
+msgctxt "CrashText"
+msgid "Performant conflicts with OptiFine"
+msgstr "Performant koliduje z OptiFine"
+
+#: ui
+msgctxt "CrashText"
+msgid "Twilight Forest conflicts with OptiFine"
+msgstr "Twilight Forest koliduje z OptiFine"
+
+#: ui
+msgctxt "CrashText"
+msgid "Jade conflicts with OptiFine"
+msgstr "Jade koliduje z OptiFine"
+
+#: ui
+msgctxt "CrashText"
+msgid "NeoForge rejects OptiFine"
+msgstr "NeoForge odrzuca OptiFine"
+
+#: ui
+msgctxt "CrashText"
+msgid "RTSS conflicts with Sodium"
+msgstr "RTSS koliduje z Sodium"
+
+#: ui
+msgctxt "CrashText"
+msgid "Exit code: {} ({})"
+msgstr "Kod wyjścia: {} ({})"
+
+#: ui
+msgctxt "CrashText"
+msgid "Exit: {}"
+msgstr "Zakończenie: {}"
+
+#: ui
+msgctxt "CrashText"
+msgid "JVM error"
+msgstr "Błąd JVM"
+
+#: ui
+msgctxt "CrashText"
+msgid "application error"
+msgstr "Błąd aplikacji"
+
+#: ui
+msgctxt "CrashText"
+msgid "killed by the system"
+msgstr "Zakończony przez system"
+
+#: ui
+msgctxt "CrashText"
+msgid "interrupted"
+msgstr "Przerwano"
+
+#: ui
+msgctxt "CrashText"
+msgid "normal exit"
+msgstr "Normalne zakończenie"
+
+#: ui
+msgctxt "CrashText"
+msgid "Launcher version"
+msgstr "Wersja launchera"
+
+#: ui
+msgctxt "CrashText"
+msgid "Heap / RAM"
+msgstr "Sterta / RAM"
+
+#: ui
+msgctxt "CrashText"
+msgid "Java version"
+msgstr "Wersja Javy"
