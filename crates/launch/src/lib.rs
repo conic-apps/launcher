@@ -187,6 +187,7 @@ pub async fn launch(config: Config, instance: Instance, sink: LaunchSink) -> Res
         launch_options,
         instance,
         resolved_java.path,
+        resolved_java.version,
         reporter,
     )
     .await;
@@ -263,6 +264,7 @@ async fn spawn_minecraft_process(
     launch_options: LaunchOptions,
     instance: Instance,
     java_path: PathBuf,
+    java_version: Option<String>,
     reporter: Arc<ChangeReporter<LaunchProgress>>,
 ) -> Result<u32> {
     // TODO: ask Java to use the high-performance GPU.
@@ -366,32 +368,40 @@ async fn spawn_minecraft_process(
     // The process outlives this call. `running::register` owns it from here:
     // it takes the stdout and stderr pipes, watches them to EOF, and reaps and
     // forgets the session on exit.
-    running::register(instance.clone(), minecraft_process, move |line| {
-        debug!("[{pid}] {line}");
-        if line.contains("Setting user:") {
-            info!("The game reported {line}");
-            watcher_reporter.report(LaunchProgress::LogSettingUser);
-        }
-        if line.to_lowercase().contains("lwjgl version") {
-            info!("Found LWJGL version, the game seems to have started successfully.");
-            watcher_reporter.report(LaunchProgress::LogLwjglVersion);
-            watcher_game_up.store(true, Ordering::SeqCst);
-        }
-        if line.contains("OpenAL initialized") {
-            // Logged at `info` like the LWJGL marker: it latches `game_up` and
-            // ends the 20-second wait, so it is a launch milestone.
-            info!("The game reported {line}");
-            watcher_reporter.report(LaunchProgress::LogOpenALLoaded);
-            watcher_game_up.store(true, Ordering::SeqCst);
-        }
-        if (line.contains("Created") && line.contains("textures") && line.contains("-atlas"))
-            || line.contains("Found animation info")
-        {
-            info!("The game reported {line}");
-            watcher_reporter.report(LaunchProgress::LogTextureLoaded);
-            watcher_game_up.store(true, Ordering::SeqCst);
-        }
-    });
+    running::register(
+        instance.clone(),
+        crash::LaunchInfo {
+            max_memory_mb: launch_options.max_memory,
+            java_version: java_version.unwrap_or_default(),
+        },
+        minecraft_process,
+        move |line| {
+            debug!("[{pid}] {line}");
+            if line.contains("Setting user:") {
+                info!("The game reported {line}");
+                watcher_reporter.report(LaunchProgress::LogSettingUser);
+            }
+            if line.to_lowercase().contains("lwjgl version") {
+                info!("Found LWJGL version, the game seems to have started successfully.");
+                watcher_reporter.report(LaunchProgress::LogLwjglVersion);
+                watcher_game_up.store(true, Ordering::SeqCst);
+            }
+            if line.contains("OpenAL initialized") {
+                // Logged at `info` like the LWJGL marker: it latches `game_up` and
+                // ends the 20-second wait, so it is a launch milestone.
+                info!("The game reported {line}");
+                watcher_reporter.report(LaunchProgress::LogOpenALLoaded);
+                watcher_game_up.store(true, Ordering::SeqCst);
+            }
+            if (line.contains("Created") && line.contains("textures") && line.contains("-atlas"))
+                || line.contains("Found animation info")
+            {
+                info!("The game reported {line}");
+                watcher_reporter.report(LaunchProgress::LogTextureLoaded);
+                watcher_game_up.store(true, Ordering::SeqCst);
+            }
+        },
+    );
     info!("Waiting up to 20 seconds for the game to report that it started");
     let start = Instant::now();
     while start.elapsed().as_secs() < 20 {

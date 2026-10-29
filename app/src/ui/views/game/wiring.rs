@@ -54,6 +54,23 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     {
         let controller = Rc::clone(&controller);
         let weak = ui.as_weak();
+        state.on_move_selection(move |direction| {
+            let Some(ui) = weak.upgrade() else {
+                return;
+            };
+            let mut controller = controller.borrow_mut();
+            if !controller.move_selection(direction) {
+                return;
+            }
+            controller.apply(&ui);
+            // The list watches this serial and centres the new current row.
+            let state = ui.global::<GameState>();
+            state.set_selection_serial(state.get_selection_serial() + 1);
+        });
+    }
+    {
+        let controller = Rc::clone(&controller);
+        let weak = ui.as_weak();
         state.on_toggle_group(move |key| {
             let key = key.to_string();
             let mut controller = controller.borrow_mut();
@@ -62,10 +79,34 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
             // is a FLIP, like every other layout change. `expanded` is the state
             // before the toggle, so the curve is keyed off its negation.
             controller.flip = !expanded;
-            controller.expanded.insert(key, !expanded);
+            if expanded {
+                controller.expanded.insert(key.clone(), false);
+            } else {
+                // Accordion: opening a group closes every other one. The list
+                // is then a sequence of one open page between collapsed headers,
+                // which is what keeps the arrow/Alt-wheel step unambiguous.
+                let keys: Vec<String> = controller
+                    .groups
+                    .iter()
+                    .map(|group| group.key.clone())
+                    .collect();
+                for group in keys {
+                    controller.expanded.insert(group, false);
+                }
+                controller.expanded.insert(key.clone(), true);
+            }
             controller.persist();
             if let Some(ui) = weak.upgrade() {
                 controller.apply(&ui);
+                if !expanded {
+                    // The group name is now a row; bring it under the floating
+                    // sort/group bar so the newly opened group starts in view.
+                    if let Some(y) = controller.group_header_y(&key) {
+                        let state = ui.global::<GameState>();
+                        state.set_group_scroll_y(y);
+                        state.set_group_scroll_serial(state.get_group_scroll_serial() + 1);
+                    }
+                }
             }
         });
     }

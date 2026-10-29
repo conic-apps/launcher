@@ -18,9 +18,10 @@
 use slint::ComponentHandle;
 
 use crate::slint_backend::{
-    AccountAddState, AccountViewState, App, CommandPaletteState, ContentState, DeleteAccountState,
-    DeleteInstanceState, DeleteSaveState, Dialogs, Dropdown, FocusManager, InstanceSettingsState,
-    ModpackImportState, MultiplayerState, MusicState, Navigation, NewsState, NotificationState,
+    AccountAddState, AccountViewState, App, CommandPaletteState, ContentState, CrashState,
+    DeleteAccountState, DeleteInstanceState, DeleteSaveState, Dialogs, Dropdown, FocusManager,
+    InstanceSettingsState, ModpackImportState, MultiplayerState, MusicState, Navigation, NewsState,
+    NotificationState,
 };
 
 /// Registers the Escape handler on the app.
@@ -42,6 +43,7 @@ fn close(ui: &App) {
     ui.global::<AccountAddState>().invoke_close();
     ui.global::<NewsState>().invoke_close();
     ui.global::<ContentState>().invoke_close();
+    ui.global::<CrashState>().set_visible(false);
     ui.global::<NotificationState>().invoke_close();
     // Previews are a second, independent layer: close the centre's cards and
     // drop the floating previews.

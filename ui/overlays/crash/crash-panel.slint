@@ -1,0 +1,198 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { CrashState, CrashText } from "../../globals/crash.slint";
+import { InstanceCard } from "../../components/display/instance-card.slint";
+import { ScrollView } from "../../components/containers/scroll-view.slint";
+import { ContentTitleBar } from "../content/content-title-bar.slint";
+
+// The runtime facts' label/value pair, matching the game view's summary row.
+component MetaColumn inherits Rectangle {
+    in property <string> label;
+    in property <string> value;
+
+    width: layout.preferred-width;
+    height: layout.preferred-height;
+    background: transparent;
+
+    layout := VerticalLayout {
+        padding-top: 2px;
+        padding-bottom: 2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        spacing: 2px;
+        alignment: start;
+
+        Text {
+            text: root.label;
+            font-size: 12px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.default-text-color.with-alpha(0.8);
+        }
+
+        Text {
+            text: root.value;
+            font-size: 15px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.default-text-color.transparentize(0.1);
+        }
+    }
+}
+
+component MetaSeparator inherits Rectangle {
+    width: 17px;
+    height: 26px;
+    background: transparent;
+
+    Rectangle {
+        x: 8px;
+        width: 1px;
+        height: 26px;
+        background: Theme.surface-2;
+    }
+}
+
+component LogLine inherits Rectangle {
+    in property <string> line-text;
+    in property <string> line-kind;
+
+    width: 100%;
+    height: text.preferred-height;
+    background: transparent;
+
+    text := Text {
+        width: 100%;
+        text: root.line-text == "" ? " " : root.line-text;
+        font-family: CrashState.mono-family;
+        font-size: 11px;
+        font-italic: CrashText.line-italic(root.line-kind);
+        color: CrashText.line-color(root.line-kind);
+        wrap: word-wrap;
+    }
+}
+
+// The crash overlay's panel: the content shell's title bar over the crash
+// report body.
+//
+// The crashed instance is drawn as the same card the game view uses, so its
+// loader and Minecraft version come along without the panel inventing a
+// summary row. The report itself is split on the Rust side into tagged lines:
+// Slint's `Text` has one colour, so the log's syntax highlighting is one `Text`
+// per line. The whole body scrolls; the log is a card sized by its own content,
+// not a nested scroller.
+export component CrashPanel inherits Rectangle {
+    /// The overlay container's size, passed in rather than read off `parent`:
+    /// the container is inset from the page the elements are written in (see
+    /// `ContentOverlay`).
+    in property <length> panel-width: 0px;
+    in property <length> panel-height: 0px;
+
+    width: panel-width;
+    height: panel-height;
+    background: transparent;
+
+    ScrollView {
+        content := VerticalLayout {
+            width: 100%;
+            spacing: 0;
+
+            ContentTitleBar {
+                icon: "warning";
+                title: @tr("CrashView" => "Crash report");
+            }
+
+            body := VerticalLayout {
+                padding: 32px;
+                spacing: 14px;
+
+                InstanceCard {
+                    name: CrashState.instance-name;
+                    loader: CrashState.loader;
+                    minecraft-version: CrashState.minecraft-version;
+                    version-always: true;
+                }
+
+                HorizontalLayout {
+                    cross-axis-alignment: center;
+                    vertical-stretch: 0;
+                    horizontal-stretch: 0;
+
+                    MetaColumn {
+                        label: @tr("CrashText" => "Launcher version");
+                        value: CrashState.launcher-version;
+                    }
+
+                    MetaSeparator { }
+
+                    MetaColumn {
+                        label: @tr("CrashText" => "Heap / RAM");
+                        value: CrashState.allocated-memory + " / " + CrashState.total-memory;
+                    }
+
+                    MetaSeparator { }
+
+                    MetaColumn {
+                        label: @tr("CrashText" => "Java version");
+                        value: CrashState.java-version;
+                    }
+                }
+
+                Text {
+                    // Auto height: the summary wraps to as many lines as it needs.
+                    text: CrashText.summary(CrashState.summary);
+                    font-size: 15px;
+                    wrap: word-wrap;
+                    color: Theme.default-text-color.transparentize(0.1);
+                }
+
+                if CrashState.exit-kind != "": Text {
+                    height: 16px;
+                    text: CrashText.exit-line(CrashState.exit-code-number, CrashState.exit-kind);
+                    font-size: 12px;
+                    color: Theme.default-text-color.transparentize(0.4);
+                    vertical-alignment: center;
+                }
+
+                if CrashState.reason-items.length > 0: VerticalLayout {
+                    spacing: 3px;
+
+                    for item in CrashState.reason-items: Text {
+                        text: CrashText.reason-line(item.rule, item.fields);
+                        font-size: 12px;
+                        wrap: word-wrap;
+                        color: Theme.peach;
+                    }
+                }
+
+                if CrashState.keywords != "": Text {
+                    text: @tr("CrashView" => "Suspicious keywords:") + " " + CrashState.keywords;
+                    font-size: 12px;
+                    wrap: word-wrap;
+                    color: Theme.default-text-color;
+                }
+
+                log-card := Rectangle {
+                    height: lines.preferred-height;
+                    border-radius: 8px;
+                    border-width: 1px;
+                    border-color: Theme.surface-0.with-alpha(0.55);
+                    background: Theme.crust.with-alpha(0.72);
+                    clip: true;
+
+                    lines := VerticalLayout {
+                        width: 100%;
+                        padding: 12px;
+                        spacing: 0px;
+
+                        for line in CrashState.detail-lines: LogLine {
+                            line-text: line.text;
+                            line-kind: line.kind;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -64,10 +64,7 @@ pub(crate) fn update_sink(weak: Weak<App>, token: Token, loader: String) -> Sink
             if quit_app {
                 let _ = ui.hide();
                 let _ = slint::quit_event_loop();
-            } else if ui.global::<Navigation>().get_current_page() != "crash" {
-                // A game that crashed before the 20s "wait for launch" ends
-                // raises the crash page while this flow is still finishing; it
-                // must not be navigated away from when the flow reports back.
+            } else {
                 ui.global::<Navigation>().invoke_back();
             }
         }),

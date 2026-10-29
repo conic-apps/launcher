@@ -7,6 +7,7 @@
 pub(crate) mod account_view;
 pub(crate) mod command_palette;
 pub(crate) mod content;
+pub(crate) mod crash;
 pub(crate) mod dialogs;
 pub(crate) mod instance_settings;
 pub(crate) mod music_player;

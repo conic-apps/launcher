@@ -27,6 +27,9 @@ use crate::scan_java_runtimes;
 pub struct ResolvedJava {
     pub path: PathBuf,
     pub arch: JavaArch,
+    /// The runtime's full version, when it came from the system scan. The
+    /// instance-path and Mojang-runtime branches do not probe it again.
+    pub version: Option<String>,
 }
 
 /// Inputs for [`resolve_java_executable`].
@@ -59,6 +62,7 @@ pub async fn resolve_java_executable(options: &ResolveJavaOptions) -> Result<Res
         return Ok(ResolvedJava {
             path: PathBuf::from(java_path),
             arch: JavaArch::Unknown,
+            version: None,
         });
     }
 
@@ -70,6 +74,7 @@ pub async fn resolve_java_executable(options: &ResolveJavaOptions) -> Result<Res
             return Ok(ResolvedJava {
                 path: mojang_path,
                 arch: mojang::host_java_arch(),
+                version: None,
             });
         }
         info!(
@@ -104,6 +109,7 @@ pub async fn resolve_java_executable(options: &ResolveJavaOptions) -> Result<Res
         return Ok(ResolvedJava {
             path: runtime.path,
             arch: runtime.arch,
+            version: Some(runtime.version),
         });
     }
     // The inventory distinguishes "nothing is installed" from "Java 21 is

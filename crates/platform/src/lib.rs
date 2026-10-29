@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 mod memory;
 
-pub use memory::get_available_memory_bytes;
+pub use memory::{get_available_memory_bytes, get_total_memory_bytes};
 
 /// The host platform, detected once on first use.
 pub static PLATFORM_INFO: Lazy<PlatformInfo> = Lazy::new(PlatformInfo::new);

@@ -35,6 +35,11 @@ use storage::LOCATIONS;
 /// kilobytes of stack trace; the crude viewer shows a head of it.
 const DETAILS_LIMIT: usize = 16 * 1024;
 
+/// How many trailing lines of the captured console and of `logs/latest.log`
+/// the opened report keeps. Both are there for a helper to read, not for the
+/// dialog.
+const REPORT_LOG_LINES: usize = 500;
+
 /// How many trailing lines of `logs/latest.log` are kept when the game wrote no
 /// crash report.
 const LOG_TAIL_LINES: usize = 100;
@@ -119,6 +124,15 @@ pub fn classify_exit(
     ExitType::Normal
 }
 
+/// What the launch knew about the process, for the crash screen's summary row.
+#[derive(Clone, Debug, Default)]
+pub struct LaunchInfo {
+    /// The `-Xmx` heap size the launch used, in MiB.
+    pub max_memory_mb: usize,
+    /// The selected runtime's full version, when the scan knew it.
+    pub java_version: String,
+}
+
 /// A crash, reduced to what a screen can render.
 ///
 /// Every field is a plain `String` (or an `Option` thereof) so the report
@@ -127,6 +141,13 @@ pub fn classify_exit(
 pub struct CrashReport {
     pub instance_id: String,
     pub instance_name: String,
+    /// The mod loader's display name, empty for a vanilla instance.
+    pub loader: String,
+    pub minecraft_version: String,
+    pub launcher_version: String,
+    pub allocated_memory_mb: usize,
+    pub total_memory_bytes: u64,
+    pub java_version: String,
     pub exit_type: ExitType,
     /// The process's exit code, when the platform reported one. A Unix signal
     /// death has none.
@@ -137,11 +158,17 @@ pub struct CrashReport {
     /// The raw crash report, or the tail of the console, capped to a bounded
     /// head.
     pub details: String,
+    /// The tail of the process's captured stdout and stderr. This is the
+    /// output before the crash; the dialog does not show it, the report does.
+    pub console_log: String,
+    /// The tail of `<instance>/logs/latest.log`, or empty when the game wrote
+    /// none. The report includes it beside the captured console.
+    pub game_log: String,
     /// The crash report file the details came from, when one was found.
     pub report_path: Option<String>,
     /// The rules the output matched, in the table's order.
     pub reasons: Vec<Reason>,
-    /// Likely offending mods, inferred from the report's stack trace.
+    /// Suspicious keywords, inferred from the report's stack trace.
     pub keywords: Vec<String>,
 }
 
@@ -156,6 +183,7 @@ pub fn analyze(
     exit_type: ExitType,
     exit_code: Option<i32>,
     console_log: &str,
+    launch: &LaunchInfo,
 ) -> CrashReport {
     let root = LOCATIONS.instances.get_instance_root(&instance.id);
     let latest_log_path = root.join("logs").join("latest.log");
@@ -202,6 +230,14 @@ pub fn analyze(
     }
 
     let summary = description(&contents).unwrap_or_else(|| fallback_summary(exit_type, exit_code));
+    let java_version = if launch.java_version.is_empty() {
+        system_java_version(&contents)
+            .or_else(|| system_java_version(&latest_log))
+            .or_else(|| system_java_version(console_log))
+            .unwrap_or_default()
+    } else {
+        launch.java_version.clone()
+    };
     let details = if contents.trim().is_empty() {
         truncate(console_log, DETAILS_LIMIT)
     } else {
@@ -223,14 +259,40 @@ pub fn analyze(
     CrashReport {
         instance_id: instance.id.clone(),
         instance_name: instance.config.name.clone(),
+        loader: instance
+            .config
+            .runtime
+            .mod_loader_type
+            .as_ref()
+            .map(ToString::to_string)
+            .unwrap_or_default(),
+        minecraft_version: instance.config.runtime.minecraft.clone(),
+        launcher_version: shared::app_version().to_string(),
+        allocated_memory_mb: launch.max_memory_mb,
+        total_memory_bytes: platform::get_total_memory_bytes(),
+        java_version,
         exit_type,
         exit_code,
         summary,
         details,
+        console_log: tail_lines(console_log, REPORT_LOG_LINES),
+        game_log: tail_lines(&latest_log, REPORT_LOG_LINES),
         report_path: report_path.map(|path| path.to_string_lossy().into_owned()),
         reasons,
         keywords: analyzer::find_keywords(&contents),
     }
+}
+
+/// The crash report's `-- System Details --` Java line, when the game wrote
+/// one. Used when the launch did not probe the selected runtime's version.
+fn system_java_version(contents: &str) -> Option<String> {
+    contents.lines().find_map(|line| {
+        line.trim()
+            .strip_prefix("Java Version:")
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .map(ToString::to_string)
+    })
 }
 
 fn fallback_summary(exit_type: ExitType, exit_code: Option<i32>) -> String {
@@ -308,6 +370,12 @@ pub(crate) fn log_tail(root: &Path) -> Vec<String> {
     tail
 }
 
+/// The last `lines` lines of `text`, oldest first, without a trailing newline.
+fn tail_lines(text: &str, lines: usize) -> String {
+    let all: Vec<&str> = text.lines().collect();
+    all[all.len().saturating_sub(lines)..].join("\n")
+}
+
 fn truncate(text: &str, limit: usize) -> String {
     if text.len() <= limit {
         return text.to_string();
@@ -381,6 +449,13 @@ mod tests {
     }
 
     #[test]
+    fn a_report_keeps_the_newest_log_lines() {
+        assert_eq!(tail_lines("1\n2\n3\n4\n", 2), "3\n4");
+        assert_eq!(tail_lines("only\n", 500), "only");
+        assert_eq!(tail_lines("", 500), "");
+    }
+
+    #[test]
     fn truncation_keeps_character_boundaries() {
         let text = "äöü";
         // Cut mid-'ö' (after the first byte of the second character) must back
@@ -388,5 +463,15 @@ mod tests {
         let truncated = truncate(text, 3);
         assert!(truncated.starts_with('ä'));
         assert!(truncated.ends_with("… (truncated)"));
+    }
+
+    #[test]
+    fn java_version_is_read_from_the_system_details() {
+        let report = "---- Minecraft Crash Report ----\n\n-- System Details --\nJava Version: 17.0.8, Eclipse Adoptium\n";
+        assert_eq!(
+            system_java_version(report),
+            Some("17.0.8, Eclipse Adoptium".to_string())
+        );
+        assert_eq!(system_java_version("no details"), None);
     }
 }
