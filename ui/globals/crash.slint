@@ -243,8 +243,8 @@ export global CrashState {
     /// The crash text split into rows, each tagged with the colour its line
     /// deserves (`error`, `warning`, `stack`, …).
     in-out property <[CrashLogLine]> detail-lines: [];
-    /// The platform's monospace family, resolved by Rust because Slint does not
-    /// treat `monospace` as a generic family.
+    /// The monospace family, resolved by Rust because Slint does not treat
+    /// `monospace` as a generic family. It names the embedded Fira Code.
     in-out property <string> mono-family: "monospace";
     /// The tail of the game's captured stdout and stderr. Not drawn by the
     /// panel; the combined report reads it.

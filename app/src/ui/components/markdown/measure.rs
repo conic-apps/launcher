@@ -40,11 +40,12 @@ type Brush = ();
 const FALLBACK_FAMILIES: [GenericFamily; 2] = [GenericFamily::SansSerif, GenericFamily::SystemUi];
 
 /// The same, for a run set in the monospace face. CSS resolves
-/// `font-family: monospace` to the platform's monospace face, and the launcher's
+/// `font-family: monospace` to a generic monospace face, and the launcher's
 /// stylesheet asks for exactly that (`.markdown-body code { font-family:
-/// monospace }`), so the generic has to be in the chain: without it the name
-/// resolves to nothing and the run falls through to the sans-serif face, which
-/// renders code in the body typeface and measures it at the wrong advances.
+/// monospace }`), so the generic has to be in the chain behind the embedded
+/// Fira Code: without it an unresolved name falls through to the sans-serif
+/// face, which renders code in the body typeface and measures it at the wrong
+/// advances.
 const MONO_FALLBACK_FAMILIES: [GenericFamily; 3] = [
     GenericFamily::Monospace,
     GenericFamily::SansSerif,

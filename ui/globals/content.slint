@@ -280,8 +280,8 @@ export global ContentState {
     /// The monospace family code is drawn in, which the panel's font style does
     /// not know: Slint's `font-family` takes a name rather than a generic, so
     /// "monospace" would mean "no such family" and the view would fall back to
-    /// the body face. Rust resolves it (see `monospace_family` in
-    /// `content/body.rs`) and puts the answer here.
+    /// the body face. Rust names the embedded Fira Code (see `monospace_family`
+    /// in `content/body.rs`) and puts the answer here.
     in-out property <string> detail-body-mono-family: "";
     /// The body needs laying out for this width, in logical pixels. The view
     /// reports it because a document is a function of its width, and a width
