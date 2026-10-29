@@ -162,17 +162,43 @@ fn reason_items(reasons: &[Reason]) -> Vec<CrashReason> {
         .collect()
 }
 
+/// The width of a tab stop in the crash log's monospace font.
+const TAB_WIDTH: usize = 4;
+
 /// Splits the crash text into lines and tags each with the colour the panel
 /// should draw it in.
 fn detail_lines(details: &str) -> ModelRc<CrashLogLine> {
     let lines = details
         .lines()
         .map(|line| CrashLogLine {
-            text: SharedString::from(line),
+            // Slint draws a tab as a missing glyph, so expand it before the
+            // `Text` element sees it.
+            text: SharedString::from(expand_tabs(line)),
             kind: SharedString::from(log_line_kind(line)),
         })
         .collect::<Vec<_>>();
     ModelRc::new(VecModel::from(lines))
+}
+
+/// Expands tabs to the next [`TAB_WIDTH`] column, so indentations in a crash
+/// report stay aligned in the panel.
+fn expand_tabs(line: &str) -> String {
+    if !line.contains('\t') {
+        return line.to_string();
+    }
+    let mut expanded = String::with_capacity(line.len());
+    let mut column = 0;
+    for character in line.chars() {
+        if character == '\t' {
+            let spaces = TAB_WIDTH - column % TAB_WIDTH;
+            expanded.extend(std::iter::repeat_n(' ', spaces));
+            column += spaces;
+        } else {
+            expanded.push(character);
+            column += 1;
+        }
+    }
+    expanded
 }
 
 /// The syntax class of one line of a Minecraft log or crash report.
@@ -314,6 +340,17 @@ mod tests {
             "header"
         );
         assert_eq!(log_line_kind("ordinary message"), "plain");
+    }
+
+    #[test]
+    fn tabs_are_expanded_to_the_next_tab_stop() {
+        assert_eq!(
+            expand_tabs("\tat net.minecraft.Main.main"),
+            "    at net.minecraft.Main.main"
+        );
+        assert_eq!(expand_tabs("ab\tcd"), "ab  cd");
+        assert_eq!(expand_tabs("abcd\te"), "abcd    e");
+        assert_eq!(expand_tabs("plain"), "plain");
     }
 
     #[test]
