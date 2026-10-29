@@ -55,6 +55,7 @@ impl GameController {
             playtime: HashMap::new(),
             avatars: HashMap::new(),
             backgrounds: RefCell::new(HashMap::new()),
+            groups: Vec::new(),
             rows_model,
             reveal_timer,
             synced: false,
@@ -322,6 +323,133 @@ impl GameController {
         (rows, row_y + GAP_BOTTOM, current_row)
     }
 
+    /// The instance ids in the order the list displays them, paired with the
+    /// group each belongs to. Favorites come first; a starred instance that also
+    /// belongs to a loader group is listed once, with its first group.
+    fn ordered_ids(&self) -> Vec<(String, String)> {
+        let filtered = self.filtered();
+        let favorites: Vec<&Instance> = filtered
+            .iter()
+            .copied()
+            .filter(|instance| instance.is_starred())
+            .collect();
+        let mut groups: Vec<(&str, Vec<&Instance>)> = Vec::new();
+        if !favorites.is_empty() {
+            groups.push(("starred", favorites));
+        }
+        if self.group_mode == "loader" {
+            for key in ["quilt", "fabric", "neoforge", "forge", "vanilla"] {
+                let members: Vec<&Instance> = filtered
+                    .iter()
+                    .copied()
+                    .filter(|instance| Self::loader(instance).1 == key)
+                    .collect();
+                if !members.is_empty() {
+                    groups.push((key, members));
+                }
+            }
+        } else if !filtered.is_empty() {
+            groups.push(("all", filtered));
+        }
+
+        let mut seen = HashSet::new();
+        let mut ordered = Vec::new();
+        for (group, members) in groups {
+            for instance in members {
+                if seen.insert(instance.id.as_str()) {
+                    ordered.push((group.to_string(), instance.id.clone()));
+                }
+            }
+        }
+        ordered
+    }
+
+    /// Moves the current instance one place in the displayed order. Up (-1) and
+    /// Down (1) use this, and so does Alt/Option + a wheel notch. Crossing into
+    /// a loader group opens that group in the accordion before the row is
+    /// scrolled into view.
+    ///
+    /// Returns whether the selection moved. The ends do not wrap: at the first
+    /// or last instance another gesture in the same direction is a no-op.
+    pub(crate) fn move_selection(&mut self, direction: i32) -> bool {
+        if direction == 0 {
+            return false;
+        }
+        let ordered = self.ordered_ids();
+        if ordered.is_empty() {
+            return false;
+        }
+        let current = self
+            .current_id
+            .as_deref()
+            .and_then(|id| ordered.iter().position(|(_, instance)| instance == id))
+            .or_else(|| {
+                // The persisted id and the row model can briefly disagree (a
+                // listing that landed while the old selection was still being
+                // restored). The row marked current is the card the player is
+                // looking at, so use it before falling back to an end.
+                (0..self.rows_model.row_count())
+                    .filter_map(|index| self.rows_model.row_data(index))
+                    .find(|row| row.current && row.kind.as_str() == "instance")
+                    .and_then(|row| {
+                        ordered
+                            .iter()
+                            .position(|(_, instance)| instance.as_str() == row.key.as_str())
+                    })
+            });
+        let next = match current {
+            Some(index) => index as i32 + direction,
+            None if direction < 0 => (ordered.len() - 1) as i32,
+            None => 0,
+        };
+        if next < 0 || next >= ordered.len() as i32 {
+            return false;
+        }
+        let (group, id) = ordered[next as usize].clone();
+        self.adopt_selection(group, id)
+    }
+
+    /// The laid-out y of a group header. The toggle callback uses it to bring
+    /// the newly opened group's name under the sort/group bar.
+    pub(crate) fn group_header_y(&self, key: &str) -> Option<f32> {
+        (0..self.rows_model.row_count())
+            .filter_map(|index| self.rows_model.row_data(index))
+            .find(|row| row.kind.as_str() == "group" && row.key.as_str() == key)
+            .map(|row| row.row_y)
+    }
+
+    fn adopt_selection(&mut self, group: String, id: String) -> bool {
+        if self.current_id.as_deref() == Some(id.as_str()) {
+            return false;
+        }
+        if self.group_mode == "loader" {
+            // The target group opens; every other group closes. This is the
+            // same accordion rule the group header and the Alt-wheel/arrow
+            // stepper use.
+            let keys: Vec<String> = self.groups.iter().map(|group| group.key.clone()).collect();
+            for key in keys {
+                self.expanded.insert(key.clone(), key == group);
+            }
+            self.expanded.insert(group, true);
+            self.flip = true;
+        }
+        self.current_id = Some(id);
+        self.persist();
+        true
+    }
+    /// The group keys in display order and whether each is open. The row list
+    /// already carries this, but the accordion normalisation and the stepper
+    /// need a compact list that does not depend on a row's height.
+    fn group_ranges(rows: &[GameRow]) -> Vec<GroupRange> {
+        rows.iter()
+            .filter(|row| row.kind.as_str() == "group")
+            .map(|row| GroupRange {
+                key: row.key.to_string(),
+                expanded: !row.collapsed,
+            })
+            .collect()
+    }
+
     pub(crate) fn instance_row(
         &self,
         instance: &Instance,
@@ -459,7 +587,40 @@ impl GameController {
         let filtered = self.filtered();
         let show_placeholder =
             self.instances.is_empty() || (!self.search.trim().is_empty() && filtered.is_empty());
-        let (rows, content_height, current_row) = self.build_rows();
+        let (mut rows, mut content_height, mut current_row) = self.build_rows();
+        self.groups = Self::group_ranges(&rows);
+        // Grouping is an accordion: one open page, the others collapsed. A
+        // saved state from before this was a rule can carry several open groups;
+        // keep the one holding the current instance, so the selected instance
+        // stays visible, and close the rest.
+        if self.group_mode == "loader" {
+            let open: Vec<String> = self
+                .groups
+                .iter()
+                .filter(|group| group.expanded)
+                .map(|group| group.key.clone())
+                .collect();
+            if open.len() > 1 {
+                let current_group = rows
+                    .iter()
+                    .find(|row| row.kind.as_str() == "instance" && row.current)
+                    .and_then(|row| row.uid.as_str().split(':').next())
+                    .map(str::to_string);
+                let keep = current_group
+                    .filter(|key| open.contains(key))
+                    .unwrap_or_else(|| open[0].clone());
+                let keys: Vec<String> = self.groups.iter().map(|group| group.key.clone()).collect();
+                for key in keys {
+                    self.expanded.insert(key.clone(), key == keep);
+                }
+                self.flip = true;
+                let rebuilt = self.build_rows();
+                rows = rebuilt.0;
+                content_height = rebuilt.1;
+                current_row = rebuilt.2;
+                self.groups = Self::group_ranges(&rows);
+            }
+        }
         // The motion kind has been baked into those rows; reset the flag so the
         // next layout defaults to the FLIP.
         self.flip = true;
@@ -653,4 +814,36 @@ fn apply_background(ui: &App, instance: Option<&(String, bool, bool, u8)>) {
             (id.as_str(), *use_as_launcher, *has_background, *darkness)
         }),
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn row(kind: &str, key: &str, y: f32, height: f32, collapsed: bool) -> GameRow {
+        GameRow {
+            kind: kind.into(),
+            key: key.into(),
+            row_y: y,
+            height,
+            collapsed,
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn group_ranges_report_the_groups_and_whether_they_are_open() {
+        let rows = vec![
+            row("group", "forge", 132.0, 42.0, true),
+            row("instance", "a", 174.0, 58.0, false),
+            row("group", "vanilla", 174.0, 42.0, false),
+            row("instance", "b", 216.0, 58.0, false),
+        ];
+        let ranges = GameController::group_ranges(&rows);
+        assert_eq!(ranges.len(), 2);
+        assert_eq!(ranges[0].key, "forge");
+        assert!(!ranges[0].expanded);
+        assert_eq!(ranges[1].key, "vanilla");
+        assert!(ranges[1].expanded);
+    }
 }

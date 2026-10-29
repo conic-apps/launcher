@@ -111,6 +111,8 @@ DROP = {
     ),
     # The notification centre now draws one body line instead of a title and a
     # message, so the per-kind titles and the old generic fallbacks are gone.
+    # The crash notice is the one exception: it adds a title above its body (see
+    # `NotificationText.notification-title`).
     ("NotificationText", "Launcher update ready"),
     ("NotificationText", "Task failed"),
     ("NotificationText", "Task cancelled"),
@@ -120,6 +122,17 @@ DROP = {
     ("NotificationText", "You can reopen the setup wizard from Settings."),
     # The modpack confirm dialog's button now says "Install anyway".
     ("ModpackImport", "Continue without them"),
+    # The crash overlay's title now names the surface ("Crash report"), since
+    # the notification carries the "did not exit normally" message.
+    ("CrashView", "Game crashed"),
+    # "Possible mods" framed stack-trace tokens as culprits; they are only
+    # keywords worth checking.
+    ("CrashView", "Possible mods:"),
+    # The crash panel no longer draws a heading for the matched rules, and the
+    # manual-debug rule is hidden when its label repeats the summary above.
+    ("CrashText", "Detected issues"),
+    ("CrashText", "Debug crash"),
+    ("CrashText", "Launcher {} · Heap {} / RAM {} · Java {}"),
 }
 
 # ---------------------------------------------------------------------------
@@ -1130,18 +1143,18 @@ SAVE_TAGS = {
     # The crash report screen. There is no `en_US` row: an ASCII msgid is its
     # own English translation.
     "CrashView": {
-        "Game crashed": {
-            "zh_CN": "游戏崩溃了",
-            "zh_TW": "遊戲崩潰了",
-            "ja_JP": "ゲームがクラッシュしました",
-            "ko_KR": "게임이 충돌했습니다",
-            "de_DE": "Das Spiel ist abgestürzt",
-            "fr_FR": "Le jeu a planté",
-            "es_ES": "El juego se bloqueó",
-            "pt_BR": "O jogo travou",
-            "ru_RU": "Игра завершилась сбоем",
-            "tr_TR": "Oyun çöktü",
-            "pl_PL": "Gra uległa awarii",
+        "Crash report": {
+            "zh_CN": "崩溃报告",
+            "zh_TW": "崩潰報告",
+            "ja_JP": "クラッシュレポート",
+            "ko_KR": "충돌 보고서",
+            "de_DE": "Absturzbericht",
+            "fr_FR": "Rapport de plantage",
+            "es_ES": "Informe de bloqueo",
+            "pt_BR": "Relatório de falha",
+            "ru_RU": "Отчёт о сбое",
+            "tr_TR": "Çökme raporu",
+            "pl_PL": "Raport o awarii",
         },
         "Close": {
             "zh_CN": "关闭",
@@ -1156,18 +1169,18 @@ SAVE_TAGS = {
             "tr_TR": "Kapat",
             "pl_PL": "Zamknij",
         },
-        "Possible mods:": {
-            "zh_CN": "可能的模组：",
-            "zh_TW": "可能的模組：",
-            "ja_JP": "原因の可能性があるMOD：",
-            "ko_KR": "가능성 있는 모드:",
-            "de_DE": "Mögliche Mods:",
-            "fr_FR": "Mods possibles :",
-            "es_ES": "Mods posibles:",
-            "pt_BR": "Mods possíveis:",
-            "ru_RU": "Возможные моды:",
-            "tr_TR": "Olası modlar:",
-            "pl_PL": "Możliwe mody:",
+        "Suspicious keywords:": {
+            "zh_CN": "可疑的关键词：",
+            "zh_TW": "可疑的關鍵字：",
+            "ja_JP": "疑わしいキーワード：",
+            "ko_KR": "의심되는 키워드:",
+            "de_DE": "Verdächtige Schlüsselwörter:",
+            "fr_FR": "Mots-clés suspects :",
+            "es_ES": "Palabras clave sospechosas:",
+            "pt_BR": "Palavras-chave suspeitas:",
+            "ru_RU": "Подозрительные ключевые слова:",
+            "tr_TR": "Şüpheli anahtar kelimeler:",
+            "pl_PL": "Podejrzane słowa kluczowe:",
         },
     },
     # The title bar's newspaper button, and the news overlay it opens.
@@ -1544,6 +1557,32 @@ SAVE_TAGS = {
     # The notification centre's only fixed body. The other bodies are the
     # version, task and error templates already catalogued by hand.
     "NotificationText": {
+        "Game did not exit normally": {
+            "zh_CN": "游戏未正常退出",
+            "zh_TW": "遊戲未正常結束",
+            "ja_JP": "ゲームが正常に終了しませんでした",
+            "ko_KR": "게임이 정상적으로 종료되지 않았습니다",
+            "de_DE": "Das Spiel wurde nicht ordnungsgemäß beendet",
+            "fr_FR": "Le jeu ne s'est pas fermé correctement",
+            "es_ES": "El juego no se cerró correctamente",
+            "pt_BR": "O jogo não foi encerrado corretamente",
+            "ru_RU": "Игра завершилась неправильно",
+            "tr_TR": "Oyun düzgün kapanmadı",
+            "pl_PL": "Gra nie zakończyła się prawidłowo",
+        },
+        "{} seems to have crashed. Click here to view the crash report": {
+            "zh_CN": "{} 似乎发生了崩溃，点击此处查看崩溃报告",
+            "zh_TW": "{} 似乎發生了崩潰，點擊此處查看崩潰報告",
+            "ja_JP": "{} がクラッシュしたようです。ここをクリックしてクラッシュレポートを表示",
+            "ko_KR": "{}이(가) 충돌한 것 같습니다. 여기를 클릭하여 충돌 보고서 보기",
+            "de_DE": "{} ist vermutlich abgestürzt. Klicke hier, um den Absturzbericht anzuzeigen",
+            "fr_FR": "{} semble avoir planté. Cliquez ici pour afficher le rapport de plantage",
+            "es_ES": "{} parece haberse bloqueado. Haz clic aquí para ver el informe de bloqueo",
+            "pt_BR": "{} parece ter travado. Clique aqui para ver o relatório de falha",
+            "ru_RU": "{}, похоже, завершилась сбоем. Нажмите здесь, чтобы открыть отчёт о сбое",
+            "tr_TR": "{} çökmüş görünüyor. Çökme raporunu görüntülemek için buraya tıklayın",
+            "pl_PL": "Wygląda na to, że {} uległa awarii. Kliknij tutaj, aby zobaczyć raport o awarii",
+        },
         "Click here to return to first-run setup": {
             "zh_CN": "点击这里回到首次启动设置",
             "zh_TW": "點擊這裡回到首次啟動設定",
@@ -1704,6 +1743,24 @@ SAVE_TAGS = {
         },
     },
 }
+
+# The crash reasons' labels live in a TSV: there are sixty-one of them, and a
+# dict of twelve nested dicts per label would bury the rest of the table. The
+# first column is the English msgid, the rest follow `LANGUAGES` without `en_US`.
+CRASH_TEXT_TSV = Path(__file__).with_name("crash-i18n.tsv")
+CRASH_LANGUAGES = LANGUAGES[:-1]
+CRASH_TEXT: dict[str, dict[str, str]] = {}
+for line in CRASH_TEXT_TSV.read_text(encoding="utf-8").splitlines():
+    if not line or line.startswith("#"):
+        continue
+    msgid, *values = line.split("\t")
+    if len(values) != len(CRASH_LANGUAGES):
+        raise SystemExit(
+            f"{CRASH_TEXT_TSV.name}: {msgid!r} has {len(values)} translations, "
+            f"expected {len(CRASH_LANGUAGES)}"
+        )
+    CRASH_TEXT[msgid] = dict(zip(CRASH_LANGUAGES, values))
+SAVE_TAGS["CrashText"] = CRASH_TEXT
 
 # The empty state each remote list draws. The translations were already in every
 # catalogue, under `RemoteListView`.

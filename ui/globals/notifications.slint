@@ -6,6 +6,9 @@
 export struct NotificationItem {
     id: int,
     kind: string,
+    /// Literal title, empty when the kind's translated title is used or the
+    /// notice has no title at all.
+    title: string,
     /// Literal body, empty when the kind's translated template is used.
     body: string,
     /// Values for the kind's template placeholders, in order.
@@ -38,9 +41,27 @@ export global NotificationText {
         return index < item.args.length ? item.args[index] : "";
     }
 
+    /// The card's optional heading.
+    ///
+    /// A literal title on the notice wins; otherwise a known kind supplies its
+    /// translated one. Empty means no title, and the card keeps the single-body
+    /// layout every notice had before titles were optional.
+    public pure function notification-title(item: NotificationItem) -> string {
+        if item.title != "" {
+            return item.title;
+        }
+        if item.kind == "game-crashed" {
+            return @tr("NotificationText" => "Game did not exit normally");
+        }
+        return "";
+    }
+
     public pure function notification-body(item: NotificationItem) -> string {
         if item.body != "" {
             return item.body;
+        }
+        if item.kind == "game-crashed" {
+            return @tr("NotificationText" => "{} seems to have crashed. Click here to view the crash report", arg(item, 0));
         }
         if item.kind == "update-ready" {
             return @tr("NotificationText" => "Version {} will be applied when the launcher exits", arg(item, 0));

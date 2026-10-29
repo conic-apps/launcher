@@ -142,6 +142,13 @@ export global GameState {
     /// Total scrollable height of the instance list content (gap top + rows +
     /// gap bottom).
     in-out property <length> list-content-height: 0px;
+    /// Bumped after the current instance changes from the keyboard or
+    /// Alt/Option + the wheel, so the list can glide to its row.
+    in-out property <int> selection-serial: 0;
+    /// A group header's content position and the serial that asks the list to
+    /// put it just below the sort/group bar after the group is expanded.
+    in-out property <length> group-scroll-y: 0px;
+    in-out property <int> group-scroll-serial: 0;
     /// Position/size of the current instance's row, used to center it on open.
     in-out property <length> current-row-y: -1px;
     in-out property <length> current-row-height: 0px;
@@ -221,6 +228,9 @@ export global GameState {
     callback select-first-account();
     // An instance card was clicked.
     callback select-instance(string);
+    /// Moves the current instance by one in the displayed order: -1 previous,
+    /// 1 next. Used by Up/Down and by Alt/Option + a mouse wheel notch.
+    callback move-selection(int);
     // A group header was clicked.
     callback toggle-group(string);
     callback set-sort(string);

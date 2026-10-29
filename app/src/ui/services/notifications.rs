@@ -58,6 +58,7 @@ impl NotificationController {
         let item = NotificationItem {
             id,
             kind: kind_key(notice.kind).into(),
+            title: notice.title.unwrap_or_default().into(),
             body: notice.body.unwrap_or_default().into(),
             args: ModelRc::from(Rc::new(VecModel::from(
                 notice
@@ -274,6 +275,7 @@ fn kind_key(kind: NoticeKind) -> &'static str {
         NoticeKind::TaskFinished => "task-finished",
         NoticeKind::TaskFailed => "task-error",
         NoticeKind::TaskCancelled => "task-cancelled",
+        NoticeKind::GameCrashed => "game-crashed",
         NoticeKind::SetupSkipped => "setup-skipped",
         NoticeKind::Custom => "custom",
     }
@@ -285,6 +287,7 @@ fn kind_icon(kind: NoticeKind) -> &'static str {
         NoticeKind::TaskFinished => "checkmark-outline",
         NoticeKind::TaskFailed => "warning",
         NoticeKind::TaskCancelled => "ban",
+        NoticeKind::GameCrashed => "warning",
         NoticeKind::SetupSkipped => "refresh",
         NoticeKind::Custom => "bell",
     }
@@ -407,8 +410,18 @@ mod tests {
 
         let item = controller.notifications.row_data(0).expect("one notice");
         assert!(!item.has_action);
+        assert!(item.title.is_empty());
         assert!(controller.take_action(item.id).is_none());
         assert_eq!(controller.notifications.row_count(), 1);
+    }
+
+    #[test]
+    fn an_optional_title_reaches_the_view_model() {
+        let controller = NotificationController::new();
+        controller.send(Notice::new(NoticeKind::TaskFailed).with_title("Network error"));
+
+        let item = controller.notifications.row_data(0).expect("one notice");
+        assert_eq!(item.title.as_str(), "Network error");
     }
 
     #[test]

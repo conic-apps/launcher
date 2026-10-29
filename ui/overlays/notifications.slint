@@ -61,6 +61,8 @@ component NotificationRow inherits Rectangle {
     private property <float> fall-alpha: max(0.0, 1.0 - root.fall-t / 0.45);
     private property <bool> body-fading: false;
     private property <float> body-alpha: root.body-fading ? 0.0 : 1.0;
+    private property <string> title: NotificationText.notification-title(root.item);
+    private property <bool> has-title: root.title != "";
 
     width: 100%;
     height: 68px;
@@ -138,16 +140,33 @@ component NotificationRow inherits Rectangle {
 
         Text {
             x: 52px;
-            y: 10px;
+            y: 11px;
             width: root.width - 92px;
-            height: root.height - 20px;
+            height: 16px;
+            visible: root.has-title;
+            text: root.title;
+            color: Theme.text;
+            font-size: 12px;
+            font-weight: 600;
+            overflow: elide;
+            vertical-alignment: center;
+        }
+
+        Text {
+            x: 52px;
+            y: root.has-title ? 28px : 10px;
+            width: root.width - 92px;
+            height: root.has-title ? root.height - 34px : root.height - 20px;
             text: NotificationText.notification-body(root.item);
             color: Theme.text;
             font-size: 12px;
             wrap: word-wrap;
-            max-lines: 3;
-            overflow: elide;
-            vertical-alignment: center;
+            // `max-lines` with `elide` drops the first wrapped line in this
+            // layout, so a titled card clips instead: the player must see the
+            // instance name that starts the sentence.
+            max-lines: root.has-title ? 2 : 3;
+            overflow: root.has-title ? clip : elide;
+            vertical-alignment: root.has-title ? top : center;
         }
 
         dismiss-button := Rectangle {

@@ -200,6 +200,36 @@ pub(crate) fn monospace_family() -> String {
         })
 }
 
+/// A monospace family that has an italic face, for the crash log's stack
+/// frames.
+///
+/// `monospace_family` prefers the platform's UI mono (`.SF NS Mono` on macOS),
+/// which ships without an italic face — so `font-italic` has nothing to select
+/// and the frames draw upright. The log gets its own list whose members are
+/// known to ship an italic: Menlo, Consolas and DejaVu Sans Mono all do.
+pub(crate) fn italic_monospace_family() -> String {
+    let mut collection = slint::fontique_011::shared_collection();
+
+    #[cfg(target_os = "macos")]
+    const PREFERRED: &[&str] = &["Menlo", "Monaco", "Andale Mono", "Courier New"];
+    #[cfg(target_os = "windows")]
+    const PREFERRED: &[&str] = &["Consolas", "Cascadia Mono", "Lucida Console"];
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    const PREFERRED: &[&str] = &[
+        "DejaVu Sans Mono",
+        "Liberation Mono",
+        "Ubuntu Mono",
+        "Noto Sans Mono",
+    ];
+
+    for name in PREFERRED {
+        if collection.family_id(name).is_some() {
+            return (*name).to_string();
+        }
+    }
+    monospace_family()
+}
+
 /// The monospace family the body was laid out with, for the view to draw with.
 pub(crate) fn body_mono_family() -> String {
     MONO_FAMILY.with(|family| family.borrow().clone())

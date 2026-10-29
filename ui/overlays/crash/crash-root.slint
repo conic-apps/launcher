@@ -1,0 +1,29 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { CrashState } from "../../globals/crash.slint";
+import { ContentOverlay } from "../content/content-overlay.slint";
+import { CrashPanel } from "crash-panel.slint";
+
+// The crash overlay layer.
+//
+// It uses the content shell: the same 52px title bar, the same scrim and the
+// same slide-in/out, so a crash interrupts the launcher the way opening a
+// content panel does rather than replacing the window. A game outlives the
+// launch flow that started it, so the overlay can rise over any page.
+export component CrashRoot inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    overlay := ContentOverlay {
+        overlay-visible: CrashState.visible;
+        closed => { CrashState.close(); }
+
+        CrashPanel {
+            panel-width: overlay.panel-width;
+            panel-height: overlay.panel-height;
+        }
+    }
+}

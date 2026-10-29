@@ -20,3 +20,14 @@ pub fn get_available_memory_bytes() -> u64 {
     }
     available
 }
+
+/// Returns the host's total physical memory in bytes.
+pub fn get_total_memory_bytes() -> u64 {
+    let mut system = System::new();
+    system.refresh_memory();
+    let total = system.total_memory();
+    if total == 0 {
+        log::warn!("the total system memory could not be read (reported as 0 bytes)");
+    }
+    total
+}
