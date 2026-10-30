@@ -1675,6 +1675,19 @@ SAVE_TAGS = {
             "tr_TR": "İlk kuruluma dönmek için buraya tıklayın",
             "pl_PL": "Kliknij tutaj, aby wrócić do konfiguracji początkowej",
         },
+        "Conic Launcher has been updated to version {}. Click here to view the release notes": {
+            "zh_CN": "Conic Launcher 已更新至 {}，点击此处查看更新日志",
+            "zh_TW": "Conic Launcher 已更新至 {}，點擊此處查看更新日誌",
+            "ja_JP": "Conic Launcher がバージョン {} に更新されました。ここをクリックしてリリースノートを表示",
+            "ko_KR": "Conic Launcher가 버전 {}(으)로 업데이트되었습니다. 여기를 클릭하여 릴리스 노트 보기",
+            "de_DE": "Conic Launcher wurde auf Version {} aktualisiert. Klicke hier, um die Versionshinweise anzuzeigen",
+            "fr_FR": "Conic Launcher a été mis à jour vers la version {}. Cliquez ici pour afficher les notes de version",
+            "es_ES": "Conic Launcher se ha actualizado a la versión {}. Haz clic aquí para ver las notas de la versión",
+            "pt_BR": "O Conic Launcher foi atualizado para a versão {}. Clique aqui para ver as notas da versão",
+            "ru_RU": "Conic Launcher обновлён до версии {}. Нажмите здесь, чтобы посмотреть примечания к выпуску",
+            "tr_TR": "Conic Launcher {} sürümüne güncellendi. Sürüm notlarını görüntülemek için buraya tıklayın",
+            "pl_PL": "Conic Launcher został zaktualizowany do wersji {}. Kliknij tutaj, aby zobaczyć informacje o wydaniu",
+        },
     },
     "ModpackImport": {
         "Some modpack files cannot be downloaded automatically": {

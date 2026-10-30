@@ -3792,3 +3792,8 @@ msgstr "Показывать уведомление при выходе снап
 msgctxt "NotificationText"
 msgid "Minecraft {} has been released. Click here for details"
 msgstr "Minecraft {} вышел. Нажмите здесь, чтобы узнать подробности"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Conic Launcher has been updated to version {}. Click here to view the release notes"
+msgstr "Conic Launcher обновлён до версии {}. Нажмите здесь, чтобы посмотреть примечания к выпуску"

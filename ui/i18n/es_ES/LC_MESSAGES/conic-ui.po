@@ -3792,3 +3792,8 @@ msgstr "Mostrar una notificación cuando se publique una instantánea de Minecra
 msgctxt "NotificationText"
 msgid "Minecraft {} has been released. Click here for details"
 msgstr "Minecraft {} se ha publicado. Haz clic aquí para ver los detalles"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Conic Launcher has been updated to version {}. Click here to view the release notes"
+msgstr "Conic Launcher se ha actualizado a la versión {}. Haz clic aquí para ver las notas de la versión"
