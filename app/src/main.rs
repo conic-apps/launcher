@@ -161,6 +161,9 @@ fn main() {
     // fetches the feeds itself the first time it does.
     ui::overlays::news::setup(&ui);
     let notices = ui::services::notifications::setup(&ui);
+    // The previous session applied a staged update as it exited; this launch is
+    // the new build, so this is the first moment it can be announced.
+    ui::services::update::notify_applied(notices.clone());
     // The Minecraft version reminder shares the self-update check's startup
     // shape: it runs once in the background and only reports through a notice.
     ui::services::minecraft_update::setup(Rc::clone(&shared), notices.clone());

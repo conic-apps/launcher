@@ -13,12 +13,14 @@
 //! progress, and whether the user opted in. Those are the use case's and the
 //! interface's, so this crate only exposes the mechanism.
 
+pub mod applied;
 pub mod apply;
 pub mod error;
 pub mod install;
 pub mod manifest;
 pub mod staged;
 
+pub use applied::{Applied, record as record_applied, take as take_applied};
 pub use apply::apply_pending;
 pub use error::{Error, Result};
 pub use install::{InstallForm, InstallKind, detect};

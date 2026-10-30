@@ -3792,3 +3792,8 @@ msgstr "Mostrar uma notificação quando um snapshot do Minecraft for publicado"
 msgctxt "NotificationText"
 msgid "Minecraft {} has been released. Click here for details"
 msgstr "Minecraft {} foi lançado. Clique aqui para ver os detalhes"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Conic Launcher has been updated to version {}. Click here to view the release notes"
+msgstr "O Conic Launcher foi atualizado para a versão {}. Clique aqui para ver as notas da versão"

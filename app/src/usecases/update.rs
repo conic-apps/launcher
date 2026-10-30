@@ -8,7 +8,9 @@
 //! It runs once at startup and reports every step to the log. Once a bundle is
 //! staged it posts one notice; the swap itself happens as the process exits
 //! (`update::apply_pending`), so the notice is informational rather than a
-//! prompt to restart. Failures stay in the log: a background check that found
+//! prompt to restart. The next launch with the new build posts the matching
+//! "updated" notice, because the session that staged the bundle cannot know the
+//! swap succeeded. Failures stay in the log: a background check that found
 //! nothing must not interrupt the user.
 
 use std::sync::OnceLock;
@@ -36,6 +38,29 @@ pub(crate) fn channel(configured: &config::UpdateChannel) -> Channel {
     match configured {
         config::UpdateChannel::Beta => Channel::Beta,
         _ => Channel::Stable,
+    }
+}
+
+/// The version the previous session applied, when this build is that version.
+///
+/// This is the first process that can verify the swap took effect, so a record
+/// naming another version is dropped rather than reported.
+pub(crate) fn applied_version() -> Option<String> {
+    match update::take_applied() {
+        Ok(Some(applied)) if applied.matches_current() => Some(applied.version),
+        Ok(Some(applied)) => {
+            log::warn!(
+                "an update to {} was recorded, but this is {}; dropping the record",
+                applied.version,
+                shared::app_version()
+            );
+            None
+        }
+        Ok(None) => None,
+        Err(error) => {
+            log::warn!("could not read the applied-update record: {error}");
+            None
+        }
     }
 }
 
