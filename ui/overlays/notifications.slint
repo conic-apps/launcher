@@ -329,10 +329,14 @@ component NotificationRow inherits Rectangle {
         ? root.slide-distance : 0px;
     private property <float> clear-alpha: root.clearing ? 0.0 : 1.0;
     // The fall is simulated rather than eased: a real toss needs the vertical
-    // speed to reverse, which no single cubic-bezier can express.
+    // speed to reverse, which no single cubic-bezier can express. Drive it from
+    // `animation-tick()` so it advances per rendered frame, not per timer tick.
     private property <bool> falling: false;
-    private property <int> fall-ms: 0;
-    private property <float> fall-t: root.fall-ms / 1000.0;
+    private property <bool> fall-ticking: false;
+    private property <duration> fall-start: 0ms;
+    private property <float> fall-t: root.fall-ticking
+        ? min((animation-tick() - root.fall-start) / 1s, 1.0)
+        : 0.0;
     private property <length> fall-dx: root.fall-t * -620px;
     private property <length> fall-dy: root.fall-t * -110px + root.fall-t * root.fall-t * 2400px;
     private property <angle> fall-rotation: root.fall-t * -50deg;
@@ -495,6 +499,14 @@ component NotificationRow inherits Rectangle {
 
     private property <bool> dismiss-on-finish: false;
 
+    // A reused row must start a fresh notice with no fall in flight, or the
+    // previous toast's latched time base leaves the new one off screen.
+    changed item => {
+        root.falling = false;
+        root.fall-ticking = false;
+        root.fall-start = 0ms;
+    }
+
     public function leave() {
         if root.phase != "leaving" {
             root.phase = "leaving";
@@ -503,7 +515,8 @@ component NotificationRow inherits Rectangle {
 
     function start-fall() {
         if !root.falling {
-            root.fall-ms = 0;
+            root.fall-start = animation-tick();
+            root.fall-ticking = true;
             root.falling = true;
         }
     }
@@ -533,14 +546,11 @@ component NotificationRow inherits Rectangle {
     }
 
     fall-timer := Timer {
-        interval: 16ms;
+        interval: 450ms;
         running: root.falling;
         triggered => {
-            root.fall-ms += 16;
-            if root.fall-ms >= 450 {
-                root.falling = false;
-                root.dismiss-requested();
-            }
+            root.falling = false;
+            root.dismiss-requested();
         }
     }
 
