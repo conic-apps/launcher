@@ -15,6 +15,7 @@ pub(crate) mod crash_report;
 pub(crate) mod game;
 pub(crate) mod generation;
 pub(crate) mod launch;
+pub(crate) mod minecraft_update;
 pub(crate) mod modpack;
 pub(crate) mod multiplayer;
 pub(crate) mod news;

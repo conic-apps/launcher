@@ -277,6 +277,7 @@ fn kind_key(kind: NoticeKind) -> &'static str {
         NoticeKind::TaskCancelled => "task-cancelled",
         NoticeKind::GameCrashed => "game-crashed",
         NoticeKind::SetupSkipped => "setup-skipped",
+        NoticeKind::MinecraftReleased => "minecraft-released",
         NoticeKind::Custom => "custom",
     }
 }
@@ -289,6 +290,7 @@ fn kind_icon(kind: NoticeKind) -> &'static str {
         NoticeKind::TaskCancelled => "ban",
         NoticeKind::GameCrashed => "warning",
         NoticeKind::SetupSkipped => "refresh",
+        NoticeKind::MinecraftReleased => "minecraft",
         NoticeKind::Custom => "bell",
     }
 }
