@@ -3792,3 +3792,8 @@ msgstr "Minecraft 스냅샷이 공개되면 알림 표시"
 msgctxt "NotificationText"
 msgid "Minecraft {} has been released. Click here for details"
 msgstr "Minecraft {}이(가) 출시되었습니다. 여기를 클릭하여 자세히 보기"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Conic Launcher has been updated to version {}. Click here to view the release notes"
+msgstr "Conic Launcher가 버전 {}(으)로 업데이트되었습니다. 여기를 클릭하여 릴리스 노트 보기"

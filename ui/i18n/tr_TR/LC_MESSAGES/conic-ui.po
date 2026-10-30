@@ -3792,3 +3792,8 @@ msgstr "Bir Minecraft anlık görüntüsü yayınlandığında bildirim göster"
 msgctxt "NotificationText"
 msgid "Minecraft {} has been released. Click here for details"
 msgstr "Minecraft {} yayınlandı. Ayrıntılar için buraya tıklayın"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Conic Launcher has been updated to version {}. Click here to view the release notes"
+msgstr "Conic Launcher {} sürümüne güncellendi. Sürüm notlarını görüntülemek için buraya tıklayın"

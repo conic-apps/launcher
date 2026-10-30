@@ -16,6 +16,7 @@
 #[cfg(not(windows))]
 use std::path::{Path, PathBuf};
 
+use crate::applied;
 use crate::error::{Error, Result};
 use crate::install::InstallKind;
 #[cfg(not(windows))]
@@ -51,6 +52,15 @@ pub fn apply_pending() -> Result<bool> {
         InstallKind::Portable => apply_portable(&staged)?,
         InstallKind::Msi => apply_msi(&staged)?,
         InstallKind::Nsis => apply_nsis(&staged)?,
+    }
+    // The next launch is the first process that can tell whether the swap took
+    // effect; the record names the version it should be running. On Windows the
+    // detached script may still fail, which the version check there covers.
+    if let Err(error) = applied::record(&staged.version) {
+        log::warn!(
+            "could not record the applied update {} for the next launch: {error}",
+            staged.version
+        );
     }
     Ok(true)
 }

@@ -16,3 +16,4 @@ pub(crate) mod report;
 pub(crate) mod scroll;
 pub(crate) mod tasks;
 pub(crate) mod tooltip;
+pub(crate) mod update;

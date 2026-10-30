@@ -66,6 +66,9 @@ export global NotificationText {
         if item.kind == "update-ready" {
             return @tr("NotificationText" => "Version {} will be applied when the launcher exits", arg(item, 0));
         }
+        if item.kind == "update-applied" {
+            return @tr("NotificationText" => "Conic Launcher has been updated to version {}. Click here to view the release notes", arg(item, 0));
+        }
         if item.kind == "task-error" {
             return @tr("NotificationText" => "{}", arg(item, 0));
         }

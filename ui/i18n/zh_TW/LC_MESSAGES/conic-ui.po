@@ -3792,3 +3792,8 @@ msgstr "當 Minecraft 快照發布時顯示通知"
 msgctxt "NotificationText"
 msgid "Minecraft {} has been released. Click here for details"
 msgstr "Minecraft {} 已發布，點擊此處查看詳細資訊"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Conic Launcher has been updated to version {}. Click here to view the release notes"
+msgstr "Conic Launcher 已更新至 {}，點擊此處查看更新日誌"
