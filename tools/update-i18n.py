@@ -120,6 +120,15 @@ DROP = {
     ("NotificationText", "Notification"),
     ("NotificationText", "Setup skipped"),
     ("NotificationText", "You can reopen the setup wizard from Settings."),
+    # The Minecraft version reminder is a notification now, not a dialog.
+    (
+        "SettingsAccessibility",
+        "Show a reminder dialog when a Minecraft release is published",
+    ),
+    (
+        "SettingsAccessibility",
+        "Show a reminder dialog when a Minecraft snapshot is published",
+    ),
     # The modpack confirm dialog's button now says "Install anyway".
     ("ModpackImport", "Continue without them"),
     # The crash overlay's title now names the surface ("Crash report"), since
@@ -1554,8 +1563,39 @@ SAVE_TAGS = {
             "pl_PL": "Kliknij tutaj, aby spróbować ponownie",
         },
     },
-    # The notification centre's only fixed body. The other bodies are the
-    # version, task and error templates already catalogued by hand.
+    # The two Minecraft version reminders, which now report through the
+    # notification centre rather than a dialog.
+    "SettingsAccessibility": {
+        "Show a notification when a Minecraft release is published": {
+            "zh_CN": "当 Minecraft 正式版发布时显示通知",
+            "zh_TW": "當 Minecraft 正式版發布時顯示通知",
+            "ja_JP": "Minecraft の正式版がリリースされたときに通知を表示",
+            "ko_KR": "Minecraft 정식 버전이 출시되면 알림 표시",
+            "de_DE": "Eine Benachrichtigung anzeigen, wenn eine Minecraft-Version veröffentlicht wird",
+            "fr_FR": "Afficher une notification lorsqu'une version de Minecraft est publiée",
+            "es_ES": "Mostrar una notificación cuando se publique una versión de Minecraft",
+            "pt_BR": "Mostrar uma notificação quando uma versão do Minecraft for publicada",
+            "ru_RU": "Показывать уведомление при выходе версии Minecraft",
+            "tr_TR": "Bir Minecraft sürümü yayınlandığında bildirim göster",
+            "pl_PL": "Pokaż powiadomienie, gdy zostanie wydana wersja Minecraft",
+        },
+        "Show a notification when a Minecraft snapshot is published": {
+            "zh_CN": "当 Minecraft 快照发布时显示通知",
+            "zh_TW": "當 Minecraft 快照發布時顯示通知",
+            "ja_JP": "Minecraft のスナップショットがリリースされたときに通知を表示",
+            "ko_KR": "Minecraft 스냅샷이 공개되면 알림 표시",
+            "de_DE": "Eine Benachrichtigung anzeigen, wenn ein Minecraft-Snapshot veröffentlicht wird",
+            "fr_FR": "Afficher une notification lorsqu'un snapshot de Minecraft est publié",
+            "es_ES": "Mostrar una notificación cuando se publique una instantánea de Minecraft",
+            "pt_BR": "Mostrar uma notificação quando um snapshot do Minecraft for publicado",
+            "ru_RU": "Показывать уведомление при выходе снапшота Minecraft",
+            "tr_TR": "Bir Minecraft anlık görüntüsü yayınlandığında bildirim göster",
+            "pl_PL": "Pokaż powiadomienie, gdy zostanie wydany snapshot Minecrafta",
+        },
+    },
+    # The notification centre's sentences. Their `{}` placeholders are filled
+    # from the notice's args; the version, task and error ones were catalogued
+    # by hand.
     "NotificationText": {
         "Game did not exit normally": {
             "zh_CN": "游戏未正常退出",
@@ -1569,6 +1609,19 @@ SAVE_TAGS = {
             "ru_RU": "Игра завершилась неправильно",
             "tr_TR": "Oyun düzgün kapanmadı",
             "pl_PL": "Gra nie zakończyła się prawidłowo",
+        },
+        "Minecraft {} has been released. Click here for details": {
+            "zh_CN": "Minecraft {} 已发布，点击此处查看详细信息",
+            "zh_TW": "Minecraft {} 已發布，點擊此處查看詳細資訊",
+            "ja_JP": "Minecraft {} がリリースされました。ここをクリックして詳細を表示",
+            "ko_KR": "Minecraft {}이(가) 출시되었습니다. 여기를 클릭하여 자세히 보기",
+            "de_DE": "Minecraft {} wurde veröffentlicht. Klicke hier für Details",
+            "fr_FR": "Minecraft {} est sorti. Cliquez ici pour plus de détails",
+            "es_ES": "Minecraft {} se ha publicado. Haz clic aquí para ver los detalles",
+            "pt_BR": "Minecraft {} foi lançado. Clique aqui para ver os detalhes",
+            "ru_RU": "Minecraft {} вышел. Нажмите здесь, чтобы узнать подробности",
+            "tr_TR": "Minecraft {} yayınlandı. Ayrıntılar için buraya tıklayın",
+            "pl_PL": "Minecraft {} został wydany. Kliknij tutaj, aby zobaczyć szczegóły",
         },
         "{} seems to have crashed. Click here to view the crash report": {
             "zh_CN": "{} 似乎发生了崩溃，点击此处查看崩溃报告",

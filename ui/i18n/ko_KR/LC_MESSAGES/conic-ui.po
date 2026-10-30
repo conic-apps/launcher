@@ -145,18 +145,8 @@ msgstr "정식 버전 업데이트 알림"
 
 #: ui
 msgctxt "SettingsAccessibility"
-msgid "Show a reminder dialog when a Minecraft release is published"
-msgstr "Minecraft 정식 버전이 출시되면 알림 창을 표시합니다"
-
-#: ui
-msgctxt "SettingsAccessibility"
 msgid "Snapshot update reminder"
 msgstr "스냅샷 업데이트 알림"
-
-#: ui
-msgctxt "SettingsAccessibility"
-msgid "Show a reminder dialog when a Minecraft snapshot is published"
-msgstr "Minecraft 스냅샷이 출시되면 알림 창을 표시합니다"
 
 #: ui
 msgctxt "SettingsAccessibility"
@@ -3787,3 +3777,18 @@ msgstr "계속 기다리기"
 msgctxt "ConfirmCancelTask"
 msgid "Stop task"
 msgstr "작업 중지"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Show a notification when a Minecraft release is published"
+msgstr "Minecraft 정식 버전이 출시되면 알림 표시"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Show a notification when a Minecraft snapshot is published"
+msgstr "Minecraft 스냅샷이 공개되면 알림 표시"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft {} has been released. Click here for details"
+msgstr "Minecraft {}이(가) 출시되었습니다. 여기를 클릭하여 자세히 보기"

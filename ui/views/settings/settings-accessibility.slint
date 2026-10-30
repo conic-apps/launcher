@@ -21,7 +21,7 @@ export component SettingsAccessibility inherits VerticalLayout {
         SettingItem {
             group-first: true;
             title: @tr("Release update reminder");
-            description: @tr("Show a reminder dialog when a Minecraft release is published");
+            description: @tr("Show a notification when a Minecraft release is published");
 
             Switch {
                 checked <=> AppConfig.release-reminder;
@@ -31,7 +31,7 @@ export component SettingsAccessibility inherits VerticalLayout {
 
         SettingItem {
             title: @tr("Snapshot update reminder");
-            description: @tr("Show a reminder dialog when a Minecraft snapshot is published");
+            description: @tr("Show a notification when a Minecraft snapshot is published");
 
             Switch {
                 checked <=> AppConfig.snapshot-reminder;
