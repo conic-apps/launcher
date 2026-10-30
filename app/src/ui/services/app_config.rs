@@ -325,6 +325,24 @@ pub fn open_external(target: &str) -> std::io::Result<()> {
     open::that_detached(target)
 }
 
+/// The wiki page for a Java Edition version, on the Chinese wiki for Chinese
+/// locales and on the English one otherwise.
+pub fn minecraft_version_wiki_url(language: &str, version: &str) -> String {
+    if language.starts_with("zh") {
+        format!("https://zh.minecraft.wiki/w/Java%E7%89%88{version}")
+    } else {
+        format!("https://minecraft.wiki/w/Java_Edition_{version}")
+    }
+}
+
+/// Opens [`minecraft_version_wiki_url`] in the browser.
+pub fn open_minecraft_version_wiki(language: &str, version: &str) {
+    let url = minecraft_version_wiki_url(language, version);
+    if let Err(error) = open_external(&url) {
+        log::warn!("failed to open '{url}': {error}");
+    }
+}
+
 /// Opens the file manager with `path` selected.
 ///
 /// On macOS `open -R`, on Windows `explorer /select,`, and on Linux the

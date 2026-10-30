@@ -84,6 +84,9 @@ export global NotificationText {
         if item.kind == "setup-skipped" {
             return @tr("NotificationText" => "Click here to return to first-run setup");
         }
+        if item.kind == "minecraft-released" {
+            return @tr("NotificationText" => "Minecraft {} has been released. Click here for details", arg(item, 0));
+        }
         return "";
     }
 }

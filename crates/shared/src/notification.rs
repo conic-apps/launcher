@@ -35,6 +35,8 @@ pub enum NoticeKind {
     /// `args[0]` is the crashed instance's display name.
     GameCrashed,
     SetupSkipped,
+    /// `args[0]` is the newly published Minecraft version.
+    MinecraftReleased,
     /// The caller supplies the body; the frontend adds no copy.
     Custom,
 }

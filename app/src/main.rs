@@ -161,6 +161,9 @@ fn main() {
     // fetches the feeds itself the first time it does.
     ui::overlays::news::setup(&ui);
     let notices = ui::services::notifications::setup(&ui);
+    // The Minecraft version reminder shares the self-update check's startup
+    // shape: it runs once in the background and only reports through a notice.
+    ui::services::minecraft_update::setup(Rc::clone(&shared), notices.clone());
     ui::services::tasks::setup(&ui, notices.clone());
     ui::overlays::dialogs::modpack_import::setup(&ui, Rc::clone(&shared), notices.clone());
     {

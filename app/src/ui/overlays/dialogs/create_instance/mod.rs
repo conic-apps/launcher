@@ -188,16 +188,8 @@ fn setup_background_and_wiki(ui: &App, config: Rc<RefCell<config::Config>>) {
     // Every version has a wiki page — on the Chinese wiki for the Chinese
     // locales, on the English one otherwise.
     let language = app_config::active_language_code(config.borrow().language.as_deref());
-    let chinese = language.starts_with("zh");
     state.on_open_version_wiki(move |version| {
-        let url = if chinese {
-            format!("https://zh.minecraft.wiki/w/Java%E7%89%88{version}")
-        } else {
-            format!("https://minecraft.wiki/w/Java_Edition_{version}")
-        };
-        if let Err(error) = app_config::open_external(&url) {
-            log::warn!("failed to open '{url}': {error}");
-        }
+        app_config::open_minecraft_version_wiki(&language, &version);
     });
 }
 

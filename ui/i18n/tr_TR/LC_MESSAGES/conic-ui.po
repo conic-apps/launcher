@@ -145,18 +145,8 @@ msgstr "Sürüm güncelleme hatırlatıcısı"
 
 #: ui
 msgctxt "SettingsAccessibility"
-msgid "Show a reminder dialog when a Minecraft release is published"
-msgstr "Bir Minecraft sürümü yayınlandığında hatırlatma penceresi gösterir"
-
-#: ui
-msgctxt "SettingsAccessibility"
 msgid "Snapshot update reminder"
 msgstr "Anlık görüntü güncelleme hatırlatıcısı"
-
-#: ui
-msgctxt "SettingsAccessibility"
-msgid "Show a reminder dialog when a Minecraft snapshot is published"
-msgstr "Bir Minecraft anlık görüntüsü yayınlandığında hatırlatma penceresi gösterir"
 
 #: ui
 msgctxt "SettingsAccessibility"
@@ -3787,3 +3777,18 @@ msgstr "Beklemeye devam et"
 msgctxt "ConfirmCancelTask"
 msgid "Stop task"
 msgstr "Görevi durdur"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Show a notification when a Minecraft release is published"
+msgstr "Bir Minecraft sürümü yayınlandığında bildirim göster"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Show a notification when a Minecraft snapshot is published"
+msgstr "Bir Minecraft anlık görüntüsü yayınlandığında bildirim göster"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft {} has been released. Click here for details"
+msgstr "Minecraft {} yayınlandı. Ayrıntılar için buraya tıklayın"

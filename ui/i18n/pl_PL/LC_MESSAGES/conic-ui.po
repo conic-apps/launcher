@@ -145,18 +145,8 @@ msgstr "Przypomnienia o wydaniach"
 
 #: ui
 msgctxt "SettingsAccessibility"
-msgid "Show a reminder dialog when a Minecraft release is published"
-msgstr "Pokazuje okno przypomnienia po opublikowaniu wydania Minecraft"
-
-#: ui
-msgctxt "SettingsAccessibility"
 msgid "Snapshot update reminder"
 msgstr "Przypomnienia o snapshotach"
-
-#: ui
-msgctxt "SettingsAccessibility"
-msgid "Show a reminder dialog when a Minecraft snapshot is published"
-msgstr "Pokazuje okno przypomnienia po opublikowaniu snapshotu Minecraft"
 
 #: ui
 msgctxt "SettingsAccessibility"
@@ -3787,3 +3777,18 @@ msgstr "Czekaj dalej"
 msgctxt "ConfirmCancelTask"
 msgid "Stop task"
 msgstr "Zatrzymaj zadanie"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Show a notification when a Minecraft release is published"
+msgstr "Pokaż powiadomienie, gdy zostanie wydana wersja Minecraft"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Show a notification when a Minecraft snapshot is published"
+msgstr "Pokaż powiadomienie, gdy zostanie wydany snapshot Minecrafta"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Minecraft {} has been released. Click here for details"
+msgstr "Minecraft {} został wydany. Kliknij tutaj, aby zobaczyć szczegóły"
