@@ -2,32 +2,12 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The window background.
+//! The window background: a hyperbola sky and a 3D block world, software
+//! rasterised here (with a direct GPU path in [`gl`]) and crossed by the user's
+//! custom background images.
 //!
-//! Two layers, composited over the window's own colour (the palette's `crust`):
-//! the hyperbola sky at 30% opacity, then the 3D block world at 30%. Above them
-//! are the user's custom backgrounds — the global one from Settings →
-//! Appearance, or the current instance's — as up to two images that cross-fade.
-//!
-//! Slint's declarative API has no custom-shader hook and no way to express tens
-//! of thousands of depth-ordered quads, so the sky and the world are
-//! software-rasterised here into `SharedPixelBuffer`s that Slint uploads and
-//! composites on the GPU; the world also has a direct GPU path (see [`gl`]).
-//!
-//! * [`scene`] is the world's terrain, trees and face culling.
-//! * [`raster`] is the z-buffered quad rasteriser the world's two draw passes
-//!   are expressed in.
-//! * [`world`] projects the scene and runs those two passes.
-//! * [`sky`] draws the hyperbolae.
-//!
-//! The layer opacities (0.3) are baked into the pixels, which is what the GPU
-//! would compute for `opacity: 0.3` on the element anyway; the elements
-//! themselves then only need `visible` toggles and the fades between custom
-//! backgrounds.
-//!
-//! Rendering happens on a worker thread (see `controller::Renderer`) so a frame
-//! that takes longer than a display frame cannot stall the UI, and the camera
-//! only advances when the world can actually be seen.
+//! The world renders on a worker thread so a slow frame cannot stall the UI, and
+//! the camera only advances when the world can actually be seen.
 
 pub mod controller;
 pub mod gl;

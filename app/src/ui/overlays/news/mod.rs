@@ -2,23 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The news overlay's Slint adapter: the models the panel draws, the geometry,
-//! the image loading and the changelog viewer.
-//!
-//! It mirrors `ui/overlays/news/`. The browser's UI-neutral session — the
-//! two feeds and the filter over them — lives in [`crate::usecases::news`] as
-//! `NewsSession`, and this controller reaches it through `Deref`; only the
-//! Slint-facing models, the card geometry (which comes from the panel's width)
-//! and the network work live here.
-//!
-//! Two conventions it follows from the rest of the app:
-//!
-//!   * Everything that touches the network runs on the tokio runtime and
-//!     reports back through `crate::ui::services::report` — Slint is not
-//!     thread-safe.
-//!   * Nothing here composes a *translatable* string. Text that must follow a
-//!     language change is resolved in the `.slint` files; only data that stays
-//!     untranslated — a version, a category, a date — is built here.
+//! The news overlay's Slint adapter: the models, geometry, image loading and
+//! changelog viewer. The UI-neutral session lives in [`crate::usecases::news`] as
+//! `NewsSession`, reached through `Deref`; network work reports through
+//! `crate::ui::services::report`.
 
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -41,14 +28,10 @@ mod wiring;
 const IMAGE_FETCH_CONCURRENCY: usize = 8;
 
 thread_local! {
-    /// The one state.
-    ///
-    /// It lives behind an `Rc` for the same reason the content controller does:
-    /// an `upgrade_in_event_loop` closure has to be `Send`, and an `Rc` — which
+    /// An `upgrade_in_event_loop` closure has to be `Send`, and an `Rc` — which
     /// is what a Slint model is — cannot cross into one. Slint's callbacks and
-    /// the event-loop closures both run on the UI thread, so both reach it
-    /// through [`controller`]; an async task carries only owned values and a
-    /// `Weak<App>`.
+    /// the event-loop closures both reach it through [`controller`]; async tasks
+    /// carry only owned values and a `Weak<App>`.
     static CONTROLLER: Rc<RefCell<NewsController>> =
         Rc::new(RefCell::new(NewsController::new()));
 }
@@ -57,16 +40,14 @@ pub(crate) fn controller() -> Rc<RefCell<NewsController>> {
     CONTROLLER.with(Rc::clone)
 }
 
-/// The models the flow draws, the layout inputs, and the changelog in view.
 pub(crate) struct NewsController {
     session: NewsSession,
     cards: Rc<VecModel<NewsCard>>,
     type_chips: Rc<VecModel<NewsChip>>,
     year_chips: Rc<VecModel<NewsChip>>,
     month_chips: Rc<VecModel<NewsChip>>,
-    /// The panel's width, reported by `NewsListPanel`; the card and filter-row
-    /// heights are computed from it. Kept as the float Slint reported so a card
-    /// height matches the box the `.slint` grid draws around it.
+    /// Kept as the float Slint reported so a card height matches the `.slint`
+    /// grid's box.
     list_width: f32,
     /// Each card's top edge and height, index-aligned with `cards`. Kept so a
     /// scroll can work out which cards the viewport touches without rebuilding.
@@ -78,13 +59,10 @@ pub(crate) struct NewsController {
     /// The cards drawn by the last visibility pass, so a scroll only touches
     /// the ones that entered or left rather than every row.
     last_range: std::ops::Range<usize>,
-    /// The scroll state the panel reported: how far the flow has scrolled and
-    /// how tall the viewport is.
     scroll_offset: f32,
     viewport_height: f32,
-    /// Every chip's measured width, one row at a time. The rows wrap, and Slint
-    /// cannot measure a wrapping `FlexboxLayout` at the width it is given, so
-    /// the chips report their widths and the height is computed from them.
+    /// Slint cannot measure a wrapping `FlexboxLayout` at the width it is given,
+    /// so the chips report their widths and the height is computed from them.
     type_widths: HashMap<String, f32>,
     year_widths: HashMap<String, f32>,
     month_widths: HashMap<String, f32>,
@@ -210,10 +188,8 @@ pub(crate) fn load_feeds(ui: &App) {
     ui.global::<NewsState>().set_loading(true);
     let weak = ui.as_weak();
     runtime::spawn(async move {
-        // Both fetches are stringified and handed to `finish_load`, which logs
-        // the errors — but nothing said *what was asked for*, and the URL only
-        // ever appeared inside the request the crate makes. This records the
-        // attempt so a failed feed has a fetch attached to it.
+        // Records what was asked for, so a failed feed has a fetch attached to
+        // its error.
         log::info!("Fetching the Mojang news feed and the Java changelog index");
         let news = news::fetch_news().await.map_err(|error| error.to_string());
         let changelogs = news::fetch_changelogs()
@@ -584,7 +560,6 @@ fn all_chip(selected: bool) -> NewsChip {
     }
 }
 
-/// A row's height, from the widths the chips reported.
 pub(crate) fn row_height(ctrl: &NewsController, row: &str, chips: &VecModel<NewsChip>) -> f32 {
     let widths = ctrl.row_widths_ref(row);
     layout::filter_row_height(
@@ -727,8 +702,7 @@ pub(crate) fn chip_clicked(ui: &App, row: &str, value: &str) {
     }
 }
 
-/// The next selection when a chip is clicked: the value if it differs from the
-/// current one, otherwise nothing — so clicking the selected chip clears it.
+/// Clicking the selected chip clears it.
 fn toggled<T: PartialEq>(current: Option<T>, clicked: Option<T>) -> Option<T> {
     if current == clicked { None } else { clicked }
 }

@@ -20,14 +20,10 @@ use crate::install::InstallKind;
 /// The public update endpoint.
 pub const ENDPOINT_BASE: &str = "https://api.conicmc.app/update/v1";
 
-/// The minisign public key (base64 of the key line) every bundle is signed
-/// with. Rotating it means every installed copy has to be replaced by hand, so
-/// it is a release-engineering decision, not a build one.
-///
-/// The matching secret lives in the release repository's secrets as
-/// `CONIC_UPDATE_SIGNING_KEY` (and its optional password as
-/// `CONIC_UPDATE_SIGNING_KEY_PASSWORD`); `update-sign generate` mints a new
-/// pair and prints both halves.
+/// The minisign public key every bundle is signed with. Rotating it means every
+/// installed copy has to be replaced by hand. The matching secret lives in the
+/// release repository's `CONIC_UPDATE_SIGNING_KEY` (optionally with
+/// `CONIC_UPDATE_SIGNING_KEY_PASSWORD`); `update-sign generate` mints a new pair.
 pub const PUBLIC_KEY: &str = "RWTDUhkJd0bnxt5d0Ll7w1XxRAzp4BNdeFiHM/5h67BkuA8fjzijW3R9";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -45,7 +41,6 @@ impl Channel {
     }
 }
 
-/// The JSON body a `200` carries.
 #[derive(Clone, Debug, Deserialize)]
 pub struct UpdateInfo {
     pub version: String,
@@ -82,7 +77,6 @@ impl UpdateInfo {
     }
 }
 
-/// The `target` path segment the server expects.
 pub fn target() -> &'static str {
     match std::env::consts::OS {
         "macos" => "darwin",
@@ -90,12 +84,10 @@ pub fn target() -> &'static str {
     }
 }
 
-/// The `arch` path segment the server expects.
 pub fn arch() -> &'static str {
     std::env::consts::ARCH
 }
 
-/// Builds the check URL for one channel, install form and running version.
 pub fn endpoint(channel: Channel, kind: InstallKind, current: &str) -> Result<Url> {
     let mut url = Url::parse(ENDPOINT_BASE)?;
     url = url.append_path([channel.as_str(), target(), arch(), current])?;
@@ -103,7 +95,6 @@ pub fn endpoint(channel: Channel, kind: InstallKind, current: &str) -> Result<Ur
     Ok(url)
 }
 
-/// Asks the server whether a newer bundle for `kind` exists.
 pub async fn check(
     channel: Channel,
     kind: InstallKind,

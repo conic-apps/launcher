@@ -2,36 +2,13 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The instance's local content.
+//! The instance's local content: offline readers for mods, resource packs,
+//! saves, screenshots and favorites, plus `remote/` for resolving installed
+//! archives against Modrinth and CurseForge.
 //!
-//! Each module is a self-contained reader of one content kind:
-//!
-//!   * `remote/` resolves installed archives on Modrinth and CurseForge and
-//!     owns the shared identity/version cache; its `mods` and `resourcepacks`
-//!     children add the local parse cache for each kind;
-//!   * `mods/` parses a jar offline, including its jar-in-jar entries;
-//!   * `resourcepack.rs` parses a pack zip or directory;
-//!   * `saves/` reads `level.dat` out of each world and serves a world's icon
-//!     and path;
-//!   * `screenshots.rs` lists the last content kind;
-//!   * `favorites.rs` is the shared favorites file.
-//!
-//! Two design notes, both deliberate:
-//!
-//!   * `worldmap.rs` renders a save's map **without a PNG round trip**.
-//!     `render_map` hands the RGBA buffer straight back and the caller wraps it
-//!     in a `SharedPixelBuffer`, so no encode, base64 or decode is involved.
-//!   * The entry points take borrowed names (`&str`, `impl AsRef<Path>`) rather
-//!     than owned strings; the favorites helpers and `remove_content_files` are the
-//!     exceptions, taking owned `String`s.
-//!
-//! There is deliberately no cheap "how many mods does this instance have" scan
-//! here. A count is a second, disagreeing answer to a question the readers above
-//! already answer exactly — `parse_mods` skips a jar that is not a mod and
-//! yields one entry per jar-in-jar mod, where counting files counts neither —
-//! and it only looks cheaper because it opens nothing. The caller that shows the
-//! same content in two places (the game view's summary and the content overlay)
-//! parses it once and counts that; see `ui/overlays/content/cache.rs`.
+//! There is deliberately no cheap content-count scan here. Only the parsers
+//! agree on what counts (jar-in-jar mods, jars that are not mods), so callers
+//! parse once and count the result; see `ui/overlays/content/cache.rs`.
 
 use std::path::PathBuf;
 
@@ -48,7 +25,6 @@ pub mod saves;
 pub mod screenshots;
 pub mod worldmap;
 
-/// Absolute path of an instance directory.
 pub fn instance_root(instance_id: &str) -> PathBuf {
     LOCATIONS.instances.get_instance_root(instance_id)
 }

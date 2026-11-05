@@ -6,7 +6,6 @@
 
 use super::*;
 
-/// Registers every game view callback on the `GameState` global.
 pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     let controller = Rc::new(RefCell::new(GameController::new(config)));
     // The list model is handed to the view once and then kept in sync in place by

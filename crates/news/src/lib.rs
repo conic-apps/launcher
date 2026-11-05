@@ -3,34 +3,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The launcher-content client: Mojang's news feed and the Java Edition
-//! changelogs.
+//! changelogs, both unauthenticated static JSON from `launchercontent.mojang.com`.
 //!
-//! Both come from the same static host the official Minecraft launcher reads,
-//! `launchercontent.mojang.com`, and both are plain JSON documents with no
-//! authentication and no query parameters:
-//!
-//!   * `/v2/news.json` — the news feed: 100 entries across every edition
-//!     (Java, Bedrock, Dungeons, Legends), each with a title, a category, a
-//!     date, a one-line blurb, a 772×350 banner image and a `readMoreLink` to
-//!     the article on `minecraft.net`. `newsType` carries the platform tags.
-//!   * `/v2/javaPatchNotes.json` — the Java Edition changelog index, every
-//!     snapshot and release since 2018, each with a 540×540 (or older 240×240)
-//!     square image and a `contentPath` pointing at a second document holding
-//!     the full HTML body.
-//!
-//! Two things the API does not do, and this crate therefore does not either:
-//!
-//!   * **It does not localize.** `?lang=…` and `Accept-Language` are both
-//!     ignored — the same bytes come back whatever the client says — and the
-//!     `needsTranslation` flag says only that the official launcher has its own
-//!     translation pipeline behind a private endpoint. The feed text is
-//!     English, always.
-//!   * **It does not page.** Each document is a fixed latest-100 / all-415
-//!     list. There is no `offset`, and `?page=` returns the same body.
-//!
-//! The crate is UI-neutral: it yields plain data, and the app turns it into
-//! models. Sorting is done here (newest first) because that is a property of
-//! the feed rather than of a view.
+//! The API neither localizes (the text is always English) nor pages (each
+//! document is a fixed list). Sorting newest-first lives here because it is a
+//! property of the feed rather than of a view.
 
 pub mod error;
 
@@ -40,41 +17,32 @@ use shared::HTTP_CLIENT;
 
 const BASE_URL: &str = "https://launchercontent.mojang.com";
 
-/// One entry of the news feed.
-///
-/// `image_url` and `read_more` are already absolute — the feed stores the image
-/// as a rooted path (`/v2/images/…`) and the article as a full URL.
+/// `image_url` and `read_more` are already absolute.
 #[derive(Debug, Clone)]
 pub struct NewsItem {
     pub id: String,
     pub title: String,
-    /// The edition the entry belongs to as the feed spells it ("Minecraft: Java
-    /// Edition", "Minecraft for Windows", …). Shown as the card's category.
+    /// The edition as the feed spells it, shown as the card's category.
     pub category: String,
-    /// The platform tags — "Java", "Bedrock", "Dungeons", "Legends",
-    /// "DungeonsII", "News page". Kept so a caller can narrow the feed without
+    /// The platform tags, kept so a caller can narrow the feed without
     /// re-parsing it.
     pub news_type: Vec<String>,
     /// The feed's `YYYY-MM-DD`.
     pub date: String,
-    /// `date` split out: the year and month drive the filters, and all three
-    /// let the app format the date for the reader's locale.
+    /// `date` split out: the year and month drive the filters, and all three let
+    /// the app format the date for the reader's locale.
     pub year: u16,
     pub month: u8,
     pub day: u8,
-    /// The one-line blurb.
     pub text: String,
-    /// The 772×350 wide banner, absolute.
     pub image_url: String,
-    /// The banner's own dimensions, for the card to cut its box from. The feed
-    /// carries them; a document that did not would fall back to 772×350.
+    /// The banner's own dimensions; a document without them falls back to
+    /// 772×350.
     pub image_width: u32,
     pub image_height: u32,
-    /// The article on `minecraft.net`, absolute.
     pub read_more: String,
 }
 
-/// Whether a changelog entry is a stable release or a development snapshot.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ChangelogKind {
     Release,
@@ -83,7 +51,7 @@ pub enum ChangelogKind {
 
 impl ChangelogKind {
     /// The machine-readable key, so a view can resolve a translated label
-    /// without having to know the Rust enum.
+    /// without knowing the Rust enum.
     pub fn key(self) -> &'static str {
         match self {
             Self::Release => "release",
@@ -103,29 +71,24 @@ impl ChangelogKind {
     }
 }
 
-/// One entry of the Java changelog index.
 #[derive(Debug, Clone)]
 pub struct ChangelogEntry {
     pub id: String,
     pub title: String,
     pub version: String,
     pub kind: ChangelogKind,
-    /// The ISO-8601 timestamp the feed writes.
     pub date: String,
     /// `date` split out, for the same reason as [`NewsItem`].
     pub year: u16,
     pub month: u8,
     pub day: u8,
-    /// The square (540×540, or 240×240 for the oldest) image, absolute.
     pub image_url: String,
-    /// The image's own dimensions. The changelog index carries none, so these
-    /// are 540×540 — the shape every entry of it has — unless a document grows
-    /// them.
+    /// The changelog index carries no dimensions, so these are 540×540 unless a
+    /// document grows them.
     pub image_width: u32,
     pub image_height: u32,
-    /// The short blurb.
     pub short_text: String,
-    /// Where the full body lives, relative to `/v2/` — e.g.
+    /// The full body's location relative to `/v2/`, e.g.
     /// `javaPatchNotes/26-4-snapshot-2.json`.
     pub content_path: String,
 }
@@ -183,8 +146,7 @@ fn dimensions(image: &RawImage, fallback: (u32, u32)) -> (u32, u32) {
 /// The banner the news feed always returns, and the fallback when a document
 /// omits its dimensions.
 const NEWS_IMAGE: (u32, u32) = (772, 350);
-/// Every changelog image is square; older entries are 240×240, newer 540×540,
-/// and the card only reads the ratio.
+/// Every changelog image is square; the card only reads the ratio.
 const CHANGELOG_IMAGE: (u32, u32) = (540, 540);
 
 #[derive(Debug, Deserialize)]
@@ -209,15 +171,10 @@ fn absolute_url(url: &str) -> String {
 
 /// `YYYY-MM-DD` or an ISO timestamp into `(year, month, day)`.
 ///
-/// Deliberately a split rather than a date parser: both feeds put the date
-/// first and zero-padded, so this cannot fail or drift with a locale, and the
-/// crate needs no calendar dependency.
-///
-/// A component that does not parse becomes 0, and that is *not* inert: the app
-/// filters both feeds by year and month, so an entry with an unreadable date
-/// silently disappears from every filter rather than showing up undated. Hence
-/// the `debug!` — an upstream document changing its date shape is the only
-/// thing that produces a zero here.
+/// A split rather than a date parser: both feeds put the date first and
+/// zero-padded, so this cannot fail or drift with a locale. An unparseable
+/// component becomes 0, which makes the entry disappear from every date filter,
+/// hence the `debug!`.
 fn date_parts(date: &str) -> (u16, u8, u8) {
     let mut parts = date.split(['-', 'T']);
     let year = parts.next().and_then(|part| part.parse().ok()).unwrap_or(0);
@@ -229,11 +186,9 @@ fn date_parts(date: &str) -> (u16, u8, u8) {
     (year, month, day)
 }
 
-/// Fetches `url` and decodes it as JSON, recording what the server said.
-///
-/// These three requests do not go through `shared::http_cache`, so each one is a
-/// real round trip every time the news overlay opens; the status code is what
-/// tells a proxy error page apart from Mojang being down.
+/// Fetches `url` and decodes it as JSON, recording what the server said. These
+/// requests bypass `shared::http_cache`, so the status code is what tells a proxy
+/// error page apart from Mojang being down.
 async fn fetch_json<T: serde::de::DeserializeOwned>(url: &str) -> Result<T> {
     let response = HTTP_CLIENT.get(url).send().await.map_err(|error| {
         log::warn!("{url} could not be reached: {error}");
@@ -257,7 +212,6 @@ async fn fetch_json<T: serde::de::DeserializeOwned>(url: &str) -> Result<T> {
     })
 }
 
-/// The latest 100 news entries, newest first.
 pub async fn fetch_news() -> Result<Vec<NewsItem>> {
     let url = format!("{BASE_URL}/v2/news.json");
     let feed: Feed<RawNewsItem> = fetch_json(&url).await?;
@@ -284,18 +238,15 @@ pub async fn fetch_news() -> Result<Vec<NewsItem>> {
             }
         })
         .collect();
-    // Newest first. The feeds are close to sorted, but relying on that would
-    // put a re-ordered document on screen in the wrong order.
+    // The feeds are close to sorted, but relying on that would put a re-ordered
+    // document on screen in the wrong order.
     items.sort_by(|a, b| b.date.cmp(&a.date));
-    // The count is the only useful success signal a feed has: an empty browser and
-    // a failed fetch look the same on screen, and the app does not retry a feed
-    // that failed once.
+    // An empty browser and a failed fetch look the same on screen, so the count
+    // is the only useful success signal a feed has.
     log::info!("Mojang's news feed returned {} entries", items.len());
     Ok(items)
 }
 
-/// The Java Edition changelog index — every snapshot and release since 2018,
-/// newest first.
 pub async fn fetch_changelogs() -> Result<Vec<ChangelogEntry>> {
     let url = format!("{BASE_URL}/v2/javaPatchNotes.json");
     let feed: Feed<RawChangelogEntry> = fetch_json(&url).await?;

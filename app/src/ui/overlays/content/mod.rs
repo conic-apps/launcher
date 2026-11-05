@@ -3,37 +3,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The content overlays' Slint adapter: the models the panels draw, the
-//! presenters that turn the use case's plain cards into `ContentCard`s, and the
-//! callbacks registered on the `ContentState` / `ContentSearch` globals.
+//! presenters that turn the use case's cards into `ContentCard`s, and the
+//! callbacks on the `ContentState` / `ContentSearch` globals.
 //!
-//! It owns the install and remove actions and the installed check, the page
-//! list and the version carousel, and the loading the panels ask for. The
-//! browser's UI-neutral session state — the open list, its query, the search
-//! cache, the favourites and the open detail — lives in
-//! [`crate::usecases::content`] as `ContentSession`, and this controller reaches
-//! it through `Deref`.
-//!
-//! It also owns the instance's local content. [`cache`] is the single parsed
-//! copy of the four lists, read by the game view's summary as well as by these
-//! panels, which is why opening a panel is not a load.
-//!
-//! Two conventions it follows from the rest of the app:
-//!
-//!   * Everything that touches the network or the disk runs on the tokio
-//!     runtime (`crate::support::runtime`) and reports back through
-//!     `crate::ui::services::report` — Slint is not thread-safe.
-//!   * Nothing here composes a *translatable* string. A string pushed into a
-//!     model is fixed at the moment it is pushed and would not follow a
-//!     language change, where an `@tr` binding re-evaluates; the labels live in
-//!     `ContentText` (`ui/globals/content.slint`) and the views resolve them.
-//!     Only data that stays untranslated — author names, version numbers,
-//!     loader names — is built here.
-//!
-//! The code is split by concern: the controller, the presenters and the models
-//! live here, the callback wiring is in `wiring`, and the per-list work is in
-//! `cache`, `lists`, `preview`, `search`, `grid`, `body`, `detail` and `icon`.
-//! Selecting and downloading a project lives in `usecases::content_install`, so
-//! the download can outlive this panel and appear in the task centre.
+//! The UI-neutral session lives in [`crate::usecases::content`] as
+//! `ContentSession`, reached through `Deref`; [`cache`] is the single parsed copy
+//! of the instance's four local lists. Network and disk work reports through
+//! `crate::ui::services::report`; translatable text is resolved in the views.
 
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -59,10 +35,9 @@ mod lists;
 mod preview;
 mod search;
 mod wiring;
-/// The world map's tile queue. It lives under `content` because the map is
-/// opened from a save's card, mirroring `ui/overlays/content/world-map.slint`.
 pub(crate) mod world_map;
 
+pub(crate) use crate::usecases::content::*;
 pub(crate) use body::*;
 pub(crate) use cache::*;
 pub(crate) use detail::*;
@@ -72,17 +47,10 @@ pub(crate) use lists::*;
 pub(crate) use preview::*;
 pub(crate) use search::*;
 pub(crate) use wiring::*;
-// The browser's plain data (cards, the search cache, the open query) is
-// UI-neutral and lives in the use case. Re-exported here so the rest of the
-// module keeps seeing the names it always did; only the Slint-facing `finish*`
-// below stays in this layer.
-pub(crate) use crate::usecases::content::*;
 
-/// How many results a remote page holds.
 pub(crate) const PAGE_SIZE: usize = 20;
-/// How many chips one page of the version carousel *steps* by. It is not how
-/// many are visible: the track is drawn whole and clipped, so a wider panel
-/// shows more.
+/// How many chips one page of the version carousel *steps* by; the whole track
+/// is drawn and clipped, so a wider panel shows more.
 pub(crate) const VERSIONS_PER_PAGE: usize = 6;
 /// The gap between the carousel's chips, which its offset sums.
 pub(crate) const VERSION_GAP: f32 = 6.0;
@@ -175,14 +143,10 @@ fn finish_tag(tag: PendingTag) -> CardTag {
 }
 
 thread_local! {
-    /// The one state.
-    ///
-    /// It lives here rather than in a value `setup` owns because an
-    /// `upgrade_in_event_loop` closure has to be `Send`, and an `Rc` — which is
-    /// what a Slint model is — cannot cross into one. Slint's callbacks and the
-    /// event-loop closures both run on the UI thread, so both reach it through
-    /// [`controller`]; an async task carries only owned values and a
-    /// `Weak<App>`.
+    /// An `upgrade_in_event_loop` closure has to be `Send`, and an `Rc` — which
+    /// is what a Slint model is — cannot cross into one. Both the callbacks and
+    /// the event-loop closures reach it through [`controller`]; async tasks
+    /// carry only owned values and a `Weak<App>`.
     static CONTROLLER: Rc<RefCell<ContentController>> =
         Rc::new(RefCell::new(ContentController::new()));
 }
@@ -192,40 +156,29 @@ fn controller() -> Rc<RefCell<ContentController>> {
 }
 
 pub(crate) struct ContentController {
-    /// The grids. Kept as `VecModel`s rather than reached back through the
-    /// globals, so a relayout can rewrite a row in place instead of replacing
-    /// the model — which would destroy and re-create every card element.
+    /// Kept as `VecModel`s so a relayout can rewrite a row in place; replacing
+    /// the model would destroy and re-create every card element.
     saves: Rc<VecModel<ContentCard>>,
     local_mods: Rc<VecModel<ContentCard>>,
     local_resourcepacks: Rc<VecModel<ContentCard>>,
     remote: Rc<VecModel<ContentCard>>,
-    /// Every filter chip's measured width, by its value. The wrapping rows are
-    /// laid out from these (`filter_row_height`), because Slint measures a
-    /// wrapping `FlexboxLayout` at its own "roughly square" preferred width
-    /// rather than at the width the row is given.
+    /// Every filter chip's measured width, by value. Slint measures a wrapping
+    /// `FlexboxLayout` at its own preferred width, so the rows are laid out from
+    /// these instead.
     filter_widths: HashMap<String, f32>,
-    /// The filter rows, as the model the search panel draws. Held here so a
-    /// chip's width report can rewrite one row's height in place — replacing
-    /// the model would re-create every chip and start the measurement again.
+    /// Held here so a chip's width report can rewrite one row's height in place.
     filter_rows: Rc<VecModel<FilterRow>>,
-    /// Which carousel page is showing. Follows the selection when a panel opens
-    /// and the pagers from then on.
     version_page: usize,
-    /// Each version chip's measured width, index-aligned with
-    /// `version_options`. The chips report it (`chip-measured`); the carousel's
-    /// offset is their prefix sum.
+    /// Each version chip's measured width; the carousel's offset is their
+    /// prefix sum.
     version_widths: Vec<f32>,
-    /// The width the open panel's grid has, and the panel's height. Reported by
-    /// the grid itself (`ContentState.grid-resized`).
+    /// The open panel's grid width and height, reported by the grid itself.
     grid_width: i32,
     panel_height: i32,
     /// Which grid is on screen, so a resize knows what to lay out again.
     open_grid: Option<Grid>,
-    /// The browser's UI-neutral session state (the open list, its query, the
-    /// search cache, the favourites, the open detail). It lives in the use case
-    /// so a second frontend can own the same state and run the same logic; this
-    /// controller reaches it through `Deref`, so `self.form` and the like still
-    /// read as fields.
+    /// The UI-neutral session state, reached through `Deref` so `self.form` and
+    /// the like still read as fields.
     state: ContentSession,
 }
 
@@ -347,7 +300,6 @@ thread_local! {
     static UNKNOWN_ICON: RefCell<Option<Image>> = const { RefCell::new(None) };
 }
 
-/// One Modrinth category: its slug is both the filter value and the label key.
 fn modrinth_rows(slugs: &[&str]) -> Vec<(String, String)> {
     slugs
         .iter()
@@ -355,8 +307,6 @@ fn modrinth_rows(slugs: &[&str]) -> Vec<(String, String)> {
         .collect()
 }
 
-/// One CurseForge category: the numeric id is the filter value, the slug the
-/// label key.
 fn curseforge_rows(rows: &[(&str, &str)]) -> Vec<(String, String)> {
     rows.iter()
         .map(|(id, slug)| (id.to_string(), slug.to_string()))

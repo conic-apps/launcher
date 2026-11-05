@@ -2,12 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The launch flow's output port.
-//!
-//! [`update_sink`] is what the app hands [`crate::usecases::launch::run`]. It
-//! turns each [`LaunchUpdate`] into `LaunchState` writes (through
-//! [`presenter`]) and the one-off dialogs, gated by the run's [`Token`] so a
-//! cancelled or superseded run cannot draw.
+//! The launch flow's output port: [`update_sink`] is what the app hands
+//! [`crate::usecases::launch::run`], turning each [`LaunchUpdate`] into
+//! `LaunchState` writes and one-off dialogs, gated by the run's [`Token`].
 
 use std::sync::{
     Arc, Mutex,
@@ -194,8 +191,6 @@ fn set_error(weak: &Weak<App>, token: &Token, message: String) {
     });
 }
 
-/// Pushes the refreshed account into the shared config and the view, on the
-/// event loop.
 fn store_account(weak: &Weak<App>, token: &Token, account: Account) {
     deliver(weak, token, move |ui| {
         SHARED_CONFIG.with(|slot| {
@@ -217,8 +212,6 @@ fn store_account(weak: &Weak<App>, token: &Token, account: Account) {
     });
 }
 
-/// Pushes one `LaunchState` write on the event loop, dropping it if the run has
-/// been superseded.
 fn push(weak: &Weak<App>, token: &Token, update: impl FnOnce(&LaunchState) + Send + 'static) {
     deliver(weak, token, move |ui| {
         update(&ui.global::<LaunchState>());

@@ -2,16 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The Minecraft + loader installer.
-//!
-//! Owns the version-list requests, the install pipeline, the mod loader
-//! installers, the Mojang Java runtime download and the first-launch language
-//! setup. The version-list caches are process-wide statics.
-//!
-//! [`install`] is spawned by the app, which hands in the [`InstallSink`] its
-//! progress is reported through and aborts the task to cancel. The crate owns
-//! the sampling of its own [`DownloadState`], so the caller never sees a shared
-//! counter.
+//! The Minecraft + loader installer: version-list requests, the install
+//! pipeline, the mod loader installers, the Mojang Java runtime download and the
+//! first-launch language setup. [`install`] is spawned by the app, reports through
+//! an [`InstallSink`], and is cancelled by aborting the task.
 
 // TODO: Support Optifine auto install
 
@@ -45,10 +39,8 @@ pub mod vanilla;
 
 pub use error::*;
 
-/// How long a fetched version list stays fresh, in seconds.
 static CACHE_EXPIRATION_SECONDS: u64 = 1800;
 
-/// Seconds since the epoch, used as the cache timestamp.
 fn unix_now() -> u64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)

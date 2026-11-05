@@ -110,10 +110,8 @@ impl BoundAuthCallback {
     }
 }
 
-/// The accept-loop handles, kept so every end of `wait` — return, `?`-less
-/// early exit, or a dropped (aborted) future — takes the loops down with it.
-/// Without the guard, aborting the task that awaited `wait` drops the
-/// `JoinHandle`s, which detaches the loops instead of cancelling them: they
+/// Kept so every end of `wait` takes the accept loops down with it. Dropping a
+/// `JoinHandle` detaches rather than cancels, so without this guard the loops
 /// would hold their listeners, and the port, until the process ended.
 struct AcceptLoops(Vec<tokio::task::JoinHandle<()>>);
 
@@ -172,14 +170,12 @@ impl Shared {
     }
 }
 
-/// The palette and the words, snapshotted when the listener was bound.
 struct Page {
     palette: Palette,
     messages: Messages,
 }
 
-/// Binds the loopback interface on one port, on every address family that
-/// port comes free on.
+/// Binds one port on every loopback address family where it is free.
 fn bind_loopback() -> Result<(Vec<std::net::TcpListener>, u16)> {
     let ipv4 = std::net::TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).map_err(Error::Bind)?;
     let port = ipv4
@@ -201,7 +197,6 @@ fn bind_loopback() -> Result<(Vec<std::net::TcpListener>, u16)> {
     Ok((listeners, port))
 }
 
-/// Accepts until [`Shared::finished`], one task per connection.
 async fn accept(listener: TcpListener, shared: Arc<Shared>) {
     loop {
         let accepted = listener.accept().await;
@@ -261,8 +256,6 @@ async fn serve(mut stream: TcpStream, shared: &Shared) -> io::Result<()> {
     .await
 }
 
-/// What one connection is answered with, and — when it ends the login — with
-/// what.
 struct Response {
     status: u16,
     reason: &'static str,
@@ -273,7 +266,6 @@ struct Response {
 }
 
 impl Response {
-    /// A method this listener has no answer for.
     fn method_not_allowed() -> Self {
         Self {
             status: 405,

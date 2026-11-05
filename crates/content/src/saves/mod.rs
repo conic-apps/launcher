@@ -17,11 +17,8 @@ mod nbt;
 
 /// The fields a save's card shows, read out of its `level.dat` root.
 ///
-/// Pulling the handful of fields out here keeps the NBT shape inside this crate
-/// and gives the app a plain, `Send` summary to carry across threads.
-///
-/// The spawn position is a second kind of field: no card shows it, but the
-/// world map opens centred on it.
+/// The spawn position is not shown on the card, but the world map opens
+/// centred on it.
 #[derive(Debug, Clone, Default)]
 pub struct LevelSummary {
     pub name: Option<String>,

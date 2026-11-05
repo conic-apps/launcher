@@ -103,10 +103,9 @@ pub struct InstanceConfig {
     #[serde(default)]
     pub use_as_launcher_background: bool,
 
-    /// How much this instance's background image is darkened, as a percentage,
-    /// when it is the launcher background. The global background has its own
-    /// `appearance.background_darkness`; an instance background is dimmed at
-    /// this value instead, so the two never share a setting.
+    /// How much this instance's background is darkened, as a percentage, when
+    /// used as the launcher background. Not shared with the global
+    /// `appearance.background_darkness`.
     #[serde(default)]
     pub background_darkness: u8,
 }

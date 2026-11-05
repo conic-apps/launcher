@@ -40,14 +40,12 @@ component ChipPager inherits Rectangle {
 
 component FilterChipView inherits Rectangle {
     in property <FilterChip> chip;
-    /// The chip's own width, which the version carousel needs: a repeated
-    /// element's geometry cannot be read from outside in Slint, so each chip
-    /// reports what it measured. Unhandled by the wrapping rows.
+    /// Repeated-element geometry is unreadable outside, so each chip reports its
+    /// width. The wrapping rows ignore this.
     callback measured(length);
 
     height: 20px;
-    // From the label, explicitly: a component's own `preferred-width` came out
-    // as zero here, which stacked every chip of a row on top of the others.
+    // Explicitly from the label: the component's own `preferred-width` was zero.
     width: label.preferred-width + 16px;
     border-radius: 999px;
     background: !root.chip.selected ? (touch.pressed ? Theme.surface-2
@@ -60,8 +58,7 @@ component FilterChipView inherits Rectangle {
         : root.chip.accent == "favorites" ? Theme.yellow
         : Theme.lavender;
 
-    // The *leave* eases and the enter does not, which is what `duration` bound
-    // to the hover state says. A pressed or selected chip eases either way.
+    // Hover-in is instant, hover-out eased; press and selection ease both ways.
     animate background {
         duration: touch.has-hover && !touch.pressed && !root.chip.selected ? 0ms : 120ms;
         easing: ease-out;
@@ -69,8 +66,7 @@ component FilterChipView inherits Rectangle {
 
     label := Text {
         width: self.preferred-width;
-        // A chip whose label comes from a table is resolved here rather than in
-        // Rust, so it follows a language change.
+        // Resolved here rather than in Rust, so it follows a language change.
         text: root.chip.translated
             ? ContentText.chip-label(ContentState.remote-kind, ContentState.source, root.chip.label-key)
             : root.chip.text;
@@ -83,8 +79,7 @@ component FilterChipView inherits Rectangle {
         clicked => { ContentSearch.chip-clicked(root.chip.value); }
     }
 
-    // `changed` does not fire for the value an element is created with, hence
-    // both.
+    // `changed` does not fire for the initial value, hence both.
     init => { root.measured(root.width); }
     changed width => { root.measured(root.width); }
 }
@@ -99,10 +94,8 @@ component VersionCarousel inherits Rectangle {
 
     HorizontalLayout {
         spacing: 6px;
-        // Centring is on the *cross* axis, not the main axis: a main-axis
-        // alignment other than the default `stretch` makes the layout hand every
-        // child its preferred width and drop its `horizontal-stretch`, which
-        // collapses the viewport below to zero.
+        // Centring is on the cross axis: a non-default main-axis alignment would
+        // drop `horizontal-stretch` and collapse the viewport to zero.
         cross-axis-alignment: center;
 
         ChipPager {
@@ -111,21 +104,15 @@ component VersionCarousel inherits Rectangle {
             clicked => { ContentSearch.version-page-prev(); }
         }
 
-        // The viewport that clips the track.
         viewport := Rectangle {
             horizontal-stretch: 1;
             height: parent.height;
             clip: true;
             background: transparent;
 
-            // The whole track is drawn and the viewport clips it, which is why
-            // more than one page's worth of chips shows at once. Rust computes
-            // the offset from the widths the chips report
-            // (`ContentSearch.chip-measured`), because a repeated element's
-            // geometry is not readable here.
-            //
-            // A layout child's own `x` belongs to its layout, so this is a plain
-            // `Rectangle` holding the track: it is the thing that moves.
+            // The whole track is drawn and clipped. Rust computes the offset from
+            // the widths the chips report. A plain `Rectangle` is needed because a
+            // layout child's `x` belongs to its layout.
             track := HorizontalLayout {
                 x: -ContentSearch.version-offset;
                 y: 0;
@@ -139,8 +126,7 @@ component VersionCarousel inherits Rectangle {
                     measured(width) => { ContentSearch.chip-measured(chip.value, width); }
                 }
 
-                // The animate is declared on the element that owns the property;
-                // it cannot reach into a sibling.
+                // `animate` cannot reach into a sibling, so it lives here.
                 animate x {
                     duration: 240ms;
                     easing: ease-out-quad;
@@ -155,26 +141,9 @@ component VersionCarousel inherits Rectangle {
     }
 }
 
-// The remote lists' search + filter header.
-//
-// A translucent crust panel with a 36px search field and a button beside it,
-// then one row per filter: a 52px label and a run of pill chips. The loader and
-// category rows wrap; the version row is the paginated one and does not.
-//
-// The wrapping rows are a `FlexboxLayout` with `flex-wrap: wrap`. (The plain
-// `HorizontalLayout` used everywhere else in this app never wraps.)
-//
-// The version row is paginated by translating the whole track by its negative
-// offset with a 240ms ease. Slint cannot read a repeated element's geometry from
-// outside, and an id inside a `for` is deliberately unreachable — but each chip
-// can *report* the width it measured, and the offset is the sum of the ones
-// before the page. That is what makes the same track-and-clip arrangement
-// possible here.
-//
-// A filter chip is a 20px pill whose `accent` picks the selected fill. A pager
-// is a 26px round arrow button. The version row's carousel is a pager, the whole
-// track in a clipped viewport, and a pager. One filter row is the label, then
-// either the chip carousel or a wrapping run of chips.
+// The remote lists' search and filter header. The loader and category rows wrap
+// in a `FlexboxLayout`; the version row is paginated by translating a clipped
+// track, using chip widths reported from inside the `for`.
 component FilterRowView inherits Rectangle {
     in property <FilterRow> row-data;
     in property <bool> is-version-row: false;
@@ -185,14 +154,9 @@ component FilterRowView inherits Rectangle {
 
     HorizontalLayout {
         spacing: 10px;
-        // The cross axis is left at its default (`stretch`) deliberately: a
-        // non-stretch alignment hands each child its **preferred** size, and a
-        // wrapping `FlexboxLayout`'s preferred height is measured at its own
-        // "roughly square" width — about twice the lines it actually draws — so
-        // the chip run would be given a box twice as tall as its content and
-        // would spread its lines across it. Stretched, it takes the row's own
-        // height, which Rust computed from the chips' measured widths. The label
-        // and the carousel are unaffected: both set an explicit height.
+        // The cross axis stays `stretch`: a wrapping `FlexboxLayout` reports a
+        // preferred height measured at a roughly square width, about twice the
+        // lines it draws. Stretched, it takes the height Rust computed.
 
         Text {
             text: ContentText.row-label(root.row-data.label);
@@ -206,9 +170,7 @@ component FilterRowView inherits Rectangle {
 
         if root.is-version-row: VersionCarousel {
             horizontal-stretch: 1;
-            // The row's own chips are empty: the carousel draws the whole track,
-            // which is not a page's worth and therefore not what a `FilterRow`
-            // carries.
+            // The carousel draws the whole track, not a page of `FilterRow` chips.
             chips: ContentSearch.version-chips;
         }
 
@@ -219,8 +181,8 @@ component FilterRowView inherits Rectangle {
 
             for chip in root.row-data.chips: FilterChipView {
                 chip: chip;
-                // The row's height is computed in Rust from these (Slint cannot
-                // measure a wrapping `FlexboxLayout` at the width it is given).
+                // Rust computes the row height from these, since a wrapping
+                // `FlexboxLayout` cannot measure itself at its given width.
                 measured(width) => { ContentSearch.chip-measured(chip.value, width); }
             }
         }
@@ -229,24 +191,18 @@ component FilterRowView inherits Rectangle {
 
 export component ContentSearchPanel inherits Rectangle {
     width: 100%;
-    // A Slint layout has no margin, so the box is the content plus the bottom
-    // 16px, and the background stops where the panel does instead of running
-    // behind the gap.
+    // A layout has no margin, so the 16px gap below is outside the panel's fill.
     height: panel-content.preferred-height + 16px;
     background: Colors.transparent;
 
     panel := Rectangle {
-        // Pinned to the top: without a `y` the panel is centred in the box the
-        // 16px above the content box, which put half that gap over the panel's
-        // own top edge — a band of the panel behind it between the title bar and
-        // the search field. The 16px belongs below, against the grid.
+        // Pinned to the top: centring would split the 16px above and below,
+        // but the gap belongs below, against the grid.
         x: 0;
         y: 0;
         width: 100%;
         height: panel-content.preferred-height;
-        // `backdrop-filter: blur(4px)` has no Slint equivalent, so the panel
-        // stays translucent without the blur (the same trade the game view's
-        // toolbar and footer make).
+        // No backdrop blur in Slint 1.18, so the panel is translucent only.
         background: Theme.crust.with-alpha(0.92);
 
         panel-content := VerticalLayout {
@@ -275,8 +231,7 @@ export component ContentSearchPanel inherits Rectangle {
                         selection-foreground-color: Theme.default-text-color;
                         single-line: true;
                         vertical-alignment: center;
-                        // The query is committed on Enter; the input is bound to
-                        // the model as it is typed.
+                        // Enter commits the query, which is already bound as typed.
                         accepted => { ContentSearch.search(); }
                     }
 
@@ -288,12 +243,8 @@ export component ContentSearchPanel inherits Rectangle {
                     }
 
                     field-touch := TouchArea {
-                        // The field carries only the hover fill, no border.
-                        //
-                        // The area sits *over* the input (it is declared after it, so
-                        // it takes the press), which is what gives the field its
-                        // hover fill — so it has to hand the focus over explicitly,
-                        // or clicking the field would never put a cursor in it.
+                        // The area sits over the input to give the field its
+                        // hover fill, so it must hand focus over explicitly.
                         clicked => { input.focus(); }
                     }
                 }

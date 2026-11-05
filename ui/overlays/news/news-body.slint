@@ -2,14 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// A changelog's HTML body.
-//
-// The same engine and the same view the content detail panels draw with, but
-// bound to `NewsState` rather than `ContentState`: the two surfaces are mounted
-// at once in the tree (the news overlay above every page, the content panels
-// inside the game view), and a body pushed into one must not repaint the other.
-// The engine itself — parsing, measuring, the display list — is shared; only the
-// three properties it lands in are the news surface's own.
+// A changelog's HTML body. It shares the content detail panels' engine but binds
+// to `NewsState`, so a body pushed to one surface does not repaint the other.
 
 import { Theme } from "../../theme.slint";
 import { Icons } from "../../icons.slint";
@@ -17,25 +11,21 @@ import { NewsState } from "../../globals/news.slint";
 import { MarkdownView } from "../../components/markdown/markdown-view.slint";
 
 export component NewsBody inherits Rectangle {
-    /// The scroll offset of the scroller this box lives in, in the shared
-    /// `ScrollView` sign: negative scrolled down.
+    /// The scroller's offset, in the shared `ScrollView` sign (negative down).
     in property <length> scroll-y: 0px;
-    /// Where this box sits inside that scrolled content, so the view's culling
-    /// window is measured from its own top rather than the document's.
+    /// Where this box sits in the scrolled content, for culling.
     in property <length> top-in-scroll: 0px;
-    /// How tall the scroller is.
     in property <length> viewport-height: 0px;
     private property <length> inset: 16px;
 
     width: 100%;
-    // The box is the document's height plus the padding on both sides — the
-    // engine lays out the content, the padding is applied here.
+    // The engine lays out the content; the padding is applied here.
     height: view.shown-height + 2 * root.inset;
     background: Theme.surface-0;
     border-radius: 8px;
 
-    // A link that scrolled out from under a stationary pointer keeps its rule
-    // until the pointer moves again, so the hover is cleared on a scroll.
+    // A scroll emits no pointer-move, so clear a link that scrolled out from
+    // under the pointer.
     changed scroll-y => { NewsState.body-hovered = ""; }
 
     view := MarkdownView {

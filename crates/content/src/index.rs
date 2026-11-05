@@ -4,21 +4,11 @@
 
 //! Per-instance file fingerprints for one content folder.
 //!
-//! A SHA-512 is the content identity the remote cache and `identity.json` are
-//! keyed by, but calculating it means reading the whole archive. This index
-//! records the stat of each file beside the checksum it produced, so an
-//! unchanged file is answered from the index instead of being read again. A
-//! changed file, or one that is not in the index at all, is hashed once.
-//!
-//! Paths are the primary key because that is what the directory scan has. An
-//! inode is kept beside it so a renamed file can keep its checksum without being
-//! read again; on platforms where the standard library does not expose one, the
-//! size and modification time still do the common case.
-//!
-//! The file is per instance and kind because deleting an instance should drop
-//! the paths that described it. The checksums themselves are content-addressed
-//! and live in `cache/remote/identity.json`, where an archive shared by two
-//! instances or two content kinds is stored once.
+//! Hashing an archive means reading it whole, so this index records each file's
+//! stat beside its SHA-512 and reuses the checksum while the stat still matches.
+//! An inode lets a renamed file keep its checksum. The file is per instance and
+//! kind; the checksums themselves are content-addressed in
+//! `cache/remote/identity.json`.
 
 use std::{
     collections::HashMap,
@@ -42,15 +32,11 @@ pub(crate) type FileIndex = HashMap<String, FileSnapshot>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub(crate) struct FileSnapshot {
-    /// The file's length in bytes.
     len: u64,
-    /// The modification time as nanoseconds since the Unix epoch.
     mtime_ns: u64,
-    /// The inode where the platform exposes one. It lets a rename reuse the
-    /// checksum instead of reading the file again.
+    /// Lets a rename reuse the checksum instead of reading the file again.
     #[serde(default)]
     ino: Option<u64>,
-    /// The SHA-512 of the bytes these stat fields described.
     sha512: String,
 }
 

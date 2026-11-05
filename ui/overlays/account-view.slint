@@ -19,8 +19,7 @@ import { AvatarMask } from "../globals/avatar.slint";
 import { Dropdown } from "../globals/dropdown.slint";
 import { FocusManager } from "../globals/focus.slint";
 
-// `flexible` lets a pair take the leftover width and elide; the others keep
-// their natural width and are never clipped.
+// `flexible` lets a pair take the leftover width and elide; the rest keep theirs.
 component DetailItem inherits HorizontalLayout {
     in property <string> icon;
     in property <string> label;
@@ -46,32 +45,24 @@ component DetailItem inherits HorizontalLayout {
     }
 }
 
-// The account view overlay: the player's head, the auth details, the launch
-// contribution graph, recent activity, the cape list and the danger zone. It
-// slides in on the shared `ContentOverlay` shell, like the instance settings it
-// mirrors.
+// The account view overlay: head, auth details, launch graph, recent activity,
+// capes and the danger zone, on the shared `ContentOverlay` shell.
 //
-// The top band — the title bar, the account summary and the launch graph — runs
-// full width on the `mantle` fill with no gap between its parts: it is not a
-// card. The sections below it are rounded boxes, re-inset and spaced by the run
-// that holds them.
+// The top band (title bar, summary, graph) runs full width with no gaps; the
+// sections below it are rounded cards.
 export component AccountView inherits Rectangle {
     in property <length> panel-width: 0px;
     in property <length> panel-height: 0px;
     private property <length> cell: 11px;
 
-    // The header head and its CSS-style drop shadow. The shadow is a bitmap
-    // (`AvatarMask.drop-shadow`), grown by `avatar-shadow-pad` on every side so
-    // the blur is not clipped; the head is drawn over it at the box itself.
+    // The shadow is a bitmap, padded so the blur is not clipped.
     private property <length> avatar-size: 64px;
     private property <length> avatar-shadow-blur: 10px;
     private property <length> avatar-shadow-offset-y: 3px;
     private property <length> avatar-shadow-pad: self.avatar-shadow-blur * 1.5
         + self.avatar-shadow-offset-y + 1px;
 
-    // The account dropdown the header button opens reports its pick through
-    // `Dropdown.choose-serial`; this mirrors that into a change the view can
-    // react to (the same wiring `AccountListDropdown` does for the footer).
+    // Mirrors the dropdown's pick into a local change, as `AccountListDropdown` does.
     private property <int> switch-serial: Dropdown.choose-serial;
     changed switch-serial => {
         if Dropdown.choose-owner == "account-view-switch" {
@@ -123,8 +114,7 @@ export component AccountView inherits Rectangle {
         return @tr("AccountView" => "{}月", month);
     }
 
-    /// The short weekday that opens the graph's grid `row` (0 = Sunday). Only
-    /// rows 1, 3 and 5 are labelled, the way GitHub's graph does.
+    /// Only rows 1, 3 and 5 are labelled, like GitHub's graph.
     pure function weekday-label(row: int) -> string {
         if row == 1 {
             return @tr("AccountView" => "Mon");
@@ -155,17 +145,12 @@ export component AccountView inherits Rectangle {
     }
 
     ScrollView {
-        // The top band. The 52px title bar is the first row; the account summary
-        // and the launch graph continue it on the same `mantle`, edge to edge
-        // with no gap, unlike the cards below.
+        // The top band: title bar, summary and graph, edge to edge.
         top-band := VerticalLayout {
             width: 100%;
             spacing: 0px;
 
-            // The same 52px bar the instance settings panel uses, so the two
-            // overlays read as one family. It is tinted lavender — the account's
-            // colour, carried down through the header below. It scrolls away
-            // with the content.
+            // The shared 52px bar, tinted with the account's lavender.
             title-bar := Rectangle {
                 width: 100%;
                 height: 52px;
@@ -194,15 +179,8 @@ export component AccountView inherits Rectangle {
                 width: 100%;
                 spacing: 0px;
 
-                // The header. Square, full width and on the band rather than a
-                // rounded card, so it reads as the title bar's continuation.
-                //
-                // Its fill is the band's `mantle` with a whisper of `lavender`
-                // mixed in. Catppuccin's accents are too light to fill a whole
-                // section with — the text would sit on a washed-out pastel — but
-                // mixed into the dark neutral this far they only shift its hue,
-                // and the account's block reads as its own tone beside the
-                // green-washed graph below.
+                // Square and full width, continuing the title bar. A light accent
+                // mix shifts the neutral's hue without washing out the text.
                 Rectangle {
                     width: 100%;
                     height: 108px;
@@ -218,16 +196,10 @@ export component AccountView inherits Rectangle {
                         spacing: 18px;
                         cross-axis-alignment: center;
 
-                        // A square head with a drop shadow, the way the Vue
-                        // build drew it, so `AccountViewState.avatar` is
-                        // deliberately not passed through `AvatarMask.rounded`
-                        // — the pills round their heads, this one does not.
-                        //
-                        // The shadow follows the head's own alpha
-                        // (`AvatarMask.drop-shadow`), so it traces the hat's
-                        // silhouette instead of the box's square, and the corners
-                        // stay see-through. A `drop-shadow-*` would follow the box
-                        // and cast a square.
+                        // A square head, so the avatar is not passed through
+                        // `AvatarMask.rounded` here. The shadow is a bitmap that
+                        // follows the head's alpha; `drop-shadow-*` would cast a
+                        // square from the box.
                         avatar-box := Rectangle {
                             width: root.avatar-size;
                             height: root.avatar-size;
@@ -275,13 +247,8 @@ export component AccountView inherits Rectangle {
                                     vertical-alignment: center;
                                 }
 
-                                // A bare 36x30 hit area: no fill and no
-                                // outline, just the swap glyph. Hover tints it
-                                // lavender and a press shrinks it. The shared
-                                // `Button` is not used because it always paints
-                                // its controller fill and border (`transparent`
-                                // there means "keep the default", not "none").
-                                // Clicking opens the account dropdown below.
+                                // Bare hit area. `Button` is not used because it
+                                // always paints its fill and border.
                                 switch-account := Rectangle {
                                     width: 36px;
                                     height: 30px;
@@ -335,13 +302,10 @@ export component AccountView inherits Rectangle {
                                 }
                             }
 
-                            // Auth service first, then the last refresh, then the
-                            // UUID, which is the one that may be squeezed down to
-                            // an ellipsis.
+                            // Only the UUID is flexible and may be elided.
                             //
-                            // TODO(account-view): the UUID may be elided here with
-                            // no way to read it in full. Add a hover tooltip
-                            // (DescriptionTooltip) and a click-to-copy action.
+                            // TODO(account-view): add a hover tooltip
+                            // (DescriptionTooltip) and click-to-copy for the UUID.
                             HorizontalLayout {
                                 spacing: 18px;
                                 cross-axis-alignment: center;
@@ -366,9 +330,7 @@ export component AccountView inherits Rectangle {
                     }
                 }
 
-                // The contribution graph. Also on the band, with no seam and no
-                // heading of its own: the year's total moved down beside the
-                // legend.
+                // The contribution graph, also on the band with no heading.
                 Rectangle {
                     width: 100%;
                     height: stats-inner.preferred-height;
@@ -416,14 +378,9 @@ export component AccountView inherits Rectangle {
                                     height: 112px;
 
                                     graph-content := Rectangle {
-                                        // 13px per column (11px cell + 2px
-                                        // gap): the graph's own pitch, matching
-                                        // the cells. Measured against the
-                                        // *viewport*, not the panel: the
-                                        // viewport is narrower by this
-                                        // section's insets, so using the panel
-                                        // left a strip of scrollable blank
-                                        // whenever the graph fit the window.
+                                        // Measured against the viewport, not the
+                                        // panel, or a fitting graph leaves a strip
+                                        // of scrollable blank.
                                         width: max(
                                             graph-scroll.width,
                                             AccountViewState.column-count * 13px);
@@ -462,9 +419,7 @@ export component AccountView inherits Rectangle {
                             spacing: 4px;
                             cross-axis-alignment: center;
 
-                            // The year's total, left-aligned. Its stretch fills
-                            // the row, which pushes the "Less / More" legend to
-                            // the right edge.
+                            // Its stretch pushes the legend to the right edge.
                             Text {
                                 text: @tr(
                                     "AccountView" => "Launched this account {} times in the past year",
@@ -500,8 +455,7 @@ export component AccountView inherits Rectangle {
                     }
                 }
 
-                // The cards, re-inset and spaced below the band. The top padding
-                // is the seam the band deliberately does not have.
+                // The cards, re-inset below the band.
                 VerticalLayout {
                     width: 100%;
                     spacing: 16px;
@@ -510,8 +464,8 @@ export component AccountView inherits Rectangle {
                     padding-right: 24px;
                     padding-top: 16px;
 
-                    // Recent activity: a hand-written rounded box rather than a
-                    // `SettingGroup`, so its fill can carry the account's lavender.
+                    // A hand-written box rather than `SettingGroup`, so its fill
+                    // can carry the account's lavender.
                     VerticalLayout {
                         width: 100%;
                         spacing: 10px;
@@ -598,13 +552,9 @@ export component AccountView inherits Rectangle {
                         }
                     }
 
-                    // Select cape: the same hand-written box, with every cape the
-                    // account owns in a row, led by a "no cape" entry. The active
-                    // one carries a 2px Catppuccin-blue border; the capes are
-                    // rounded in the pixels by `AvatarMask.rounded`, because a
-                    // rounded `clip` is a no-op on the software renderer. While a
-                    // change is in flight the row dims and a small crust badge
-                    // with a spinner covers it.
+                    // The cape list, led by a "no cape" entry. Capes are rounded in
+                    // the pixels by `AvatarMask.rounded`, because a rounded `clip`
+                    // is a no-op on the software renderer.
                     VerticalLayout {
                         width: 100%;
                         spacing: 10px;
@@ -622,9 +572,7 @@ export component AccountView inherits Rectangle {
                             background: Theme.setting-item-background.mix(Theme.lavender, 0.9);
                             border-radius: 8px;
 
-                            // An account can own a lot of capes, so the row
-                            // scrolls sideways when they do not fit. The track
-                            // sits in the box's own 16px bottom padding.
+                            // Scrolls sideways when the capes do not fit.
                             cape-scroll := ScrollViewHorizontal {
                                 width: 100%;
                                 height: 100%;
@@ -656,12 +604,9 @@ export component AccountView inherits Rectangle {
                                             easing: ease;
                                         }
 
-                                        // The "no cape" entry's idle ring: a dashed
-                                        // outline in the glyph's own colour, shown
-                                        // until it is chosen (a cape's unselected tile
-                                        // stays bare). Slint's `Rectangle` has no
-                                        // dashed border, so the dashes are one `Path`
-                                        // of short segments around the rounded tile.
+                                        // The "no cape" entry's dashed ring. A
+                                        // `Rectangle` has no dashed border, so the
+                                        // dashes are one `Path` of segments.
                                         if cape.none && !cape.selected: Path {
                                             x: 0;
                                             y: 0;
@@ -706,13 +651,8 @@ export component AccountView inherits Rectangle {
                                 }
                             }
 
-                            // The in-flight badge, centred on the box: a small
-                            // crust square wrapping the spinner. It stays in the
-                            // tree and slides/fades in and out rather than being
-                            // toggled with `if`, which would pop it into place
-                            // with no transition. The show overshoots
-                            // (`ease-out-back`); the hide eases out like GSAP's
-                            // `power3.out` (`ease-out-quart`).
+                            // The in-flight spinner badge. Kept in the tree so it
+                            // can fade/scale rather than pop in through an `if`.
                             Rectangle {
                                 width: 40px;
                                 height: 40px;
@@ -809,8 +749,7 @@ export component AccountView inherits Rectangle {
             }
         }
 
-        // A trailing 16px spacer, the way the instance settings panel has one:
-        // `spacing` does not account for the last group.
+        // Trailing 16px spacer: `spacing` does not cover the last group.
         Rectangle {
             width: 100%;
             height: 16px;
@@ -827,7 +766,7 @@ export component AccountViewRoot inherits Rectangle {
     overlay := ContentOverlay {
         overlay-visible: AccountViewState.visible;
         panel-inset: 200px;
-        // Lavender, the title bar's colour, at the body's weaker ratio.
+        // Lavender at the body's weaker ratio.
         panel-background: Theme.base.mix(Theme.lavender, 0.9);
         closed => { AccountViewState.close(); }
 

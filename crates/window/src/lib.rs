@@ -7,37 +7,19 @@ use std::sync::Arc;
 
 use slint::ComponentHandle;
 
-/// One thing watching the app window's winit events. See [`on_window_event`].
 type EventFilter = Box<dyn FnMut(&winit::event::WindowEvent)>;
 
 thread_local! {
-    /// Everyone watching, in the order they asked.
     static EVENT_FILTERS: RefCell<Vec<EventFilter>> = const { RefCell::new(Vec::new()) };
-    /// Whether the one filter the winit backend accepts has been registered.
     static EVENT_HOOK: Cell<bool> = const { Cell::new(false) };
 }
 
 /// Registers `filter` to see every winit window event the app window gets.
 ///
-/// **The winit backend keeps exactly one event filter per Slint window, and
-/// `on_winit_window_event` *replaces* it** rather than adding to it — the slot
-/// is a `Cell<Option<Box<dyn FnMut(..)>>>`. So the second caller of the raw API
-/// silently unhooks the first, and the symptom is every watcher but the one
-/// that registered last simply never running: that is how the window controls
-/// lost their hook (`windows_caption`) and the background lost its pointer.
-///
-/// This fans every subscriber out through the one slot, so the order they
-/// register in does not decide which of them works. Call it instead.
-///
-/// Events are always propagated: nothing in the app consumes one, and a filter
-/// that stopped propagation would take the event away from all the others and
-/// from Slint's own handling as well.
-///
-/// The filters run on the thread that owns the window — the one running the
-/// event loop — which is why the list is thread-local and needs no locking.
-/// The window is looked up once, on the first registration, because a winit
-/// window does not exist until the loop has created it; there is only one, and
-/// the app has one window.
+/// The winit backend has one filter slot per window and `on_winit_window_event`
+/// replaces it, so this fans subscribers out through that slot. Events are
+/// always propagated so the other filters and Slint still see them. The list is
+/// thread-local because filters run on the event loop's thread.
 pub fn on_window_event<H: ComponentHandle>(
     component: &H,
     filter: impl FnMut(&winit::event::WindowEvent) + 'static,
@@ -46,10 +28,6 @@ pub fn on_window_event<H: ComponentHandle>(
 
     EVENT_FILTERS.with(|filters| {
         let mut filters = filters.borrow_mut();
-        // The cheap regression guard for the failure this module exists to
-        // prevent: registering a second raw `on_winit_window_event` *replaces*
-        // the first, which cost the window controls their hook once. Every
-        // subscriber is named in the count, so a double registration is visible.
         log::debug!(
             "attaching a window event filter; {} will now be dispatched",
             filters.len() + 1
@@ -58,17 +36,12 @@ pub fn on_window_event<H: ComponentHandle>(
     });
 
     if EVENT_HOOK.replace(true) {
-        // The slot already holds the dispatcher, and it reads the list above,
-        // so a later subscriber is picked up without touching it again.
         return;
     }
-    log::debug!("the window event dispatcher is installed on the winit window");
     component.window().on_winit_window_event(|_, event| {
         EVENT_FILTERS.with(|filters| {
-            // The borrow is held across the calls on purpose: a filter cannot be
-            // removed while it is running, and none of them can reach back in
-            // here (the backend takes its own slot out for the duration of the
-            // dispatch, so a registration from inside would be lost anyway).
+            // Held across the calls: a filter cannot be removed while running,
+            // and the backend already took its slot out for this dispatch.
             for filter in filters.borrow_mut().iter_mut() {
                 filter(event);
             }
@@ -77,12 +50,8 @@ pub fn on_window_event<H: ComponentHandle>(
     });
 }
 
-/// Thin wrapper around a Slint component's window exposing the window-control
-/// operations the title bar needs.
-///
-/// The title bar and Rust callbacks use this service to drive window-state
-/// operations without reaching into the UI tree. It keeps a strong component
-/// handle, so it also keeps the event loop alive while live.
+/// Window-control operations the title bar needs. Holds a strong component
+/// handle, so it keeps the event loop alive while live.
 pub struct WindowService<H: ComponentHandle> {
     component: Arc<H>,
 }
@@ -96,7 +65,6 @@ impl<H: ComponentHandle> Clone for WindowService<H> {
 }
 
 impl<H: ComponentHandle> WindowService<H> {
-    /// Creates a service bound to the given component (strong handle).
     pub fn new(component: H) -> Self {
         Self {
             component: Arc::new(component),
@@ -107,8 +75,6 @@ impl<H: ComponentHandle> WindowService<H> {
         self.component.window()
     }
 
-    /// A weak handle to the component, for a callback that has to reach the UI
-    /// from somewhere the service cannot be moved (a focus listener, a watcher).
     pub fn component_weak(&self) -> slint::Weak<H>
     where
         H: slint::ComponentHandle,
@@ -120,19 +86,13 @@ impl<H: ComponentHandle> WindowService<H> {
         self.set_minimized(true);
     }
 
-    /// Toggles the maximized state (Windows/Linux).
     pub fn toggle_maximize(&self) {
         let maximized = !self.window().is_maximized();
         self.set_maximized(maximized);
     }
 
-    /// Maximizes (or un-maximizes) the window explicitly.
-    ///
-    /// Slint's `set_maximized` answers nothing — it hands the request to the
-    /// window system and does not wait for an answer — so there is no error to
-    /// log here. The request itself is recorded because the caller only logs the
-    /// *intent* (`toggle_maximize` in `main.rs`), and the platform refusing a
-    /// maximize is otherwise indistinguishable from the click never arriving.
+    /// Slint's `set_maximized` reports no outcome, so this logs the request
+    /// itself; otherwise a refused maximize looks like a lost click.
     pub fn set_maximized(&self, maximized: bool) {
         self.window().set_maximized(maximized);
         log::debug!("the window was asked to be maximized={maximized}");
@@ -144,21 +104,11 @@ impl<H: ComponentHandle> WindowService<H> {
         log::debug!("the window was asked to be fullscreen={fullscreen}");
     }
 
-    /// Reports every focus change to `callback`.
+    /// Reports every focus change to `callback` on the event loop's thread.
     ///
-    /// winit's `WindowEvent::Focused` is the platform's own answer, and it is
-    /// delivered to a filter installed here rather than polled: a poll would have
-    /// to run often enough not to miss a short trip to another window, and the
-    /// volume ramp the music player follows a focus change with is not something
-    /// to discover half a second late.
-    ///
-    /// There is deliberately no matching "read it once" accessor. A read at
-    /// startup would always answer "focused", because a Slint window does not
-    /// exist until the event loop runs, so the first event is what actually
-    /// settles it.
-    ///
-    /// The callback runs on the event loop's thread, and the event is propagated
-    /// afterwards so Slint still sees it.
+    /// An event rather than a poll, so a short trip to another window is not
+    /// missed. There is no "read it once" accessor: before the event loop runs
+    /// there is no Slint window, so it would always answer "focused".
     pub fn on_focus_changed(&self, callback: impl FnMut(bool) + 'static) {
         let mut callback = callback;
         on_window_event(self.component.as_ref(), move |event| {
@@ -176,40 +126,21 @@ impl<H: ComponentHandle> WindowService<H> {
         self.window().is_fullscreen()
     }
 
-    /// Brings the window back in front of the user and gives it the input focus.
+    /// Brings the window forward and gives it input focus. This is what a
+    /// second launch does to the instance already running.
     ///
-    /// This is what a second launch of the app does to the one that is already
-    /// running (`single-instance`): the user asked for the launcher again, and
-    /// the answer is the window they already have, not a second one.
-    ///
-    /// A minimized window is restored first, because the platform's own
-    /// activation does nothing for one — it is not on screen to bring forward.
-    /// That is the case when the user reaches the launcher from the dock or the
-    /// taskbar, and minimized is where it usually is by then.
-    ///
-    /// The underlying calls take the focus from whatever the user is working
-    /// in, which is the intent here and why nothing in the app calls this
-    /// speculatively.
-    ///
-    /// It has to run on the event loop's thread: the winit window only exists
-    /// while the loop is pumping, and the platform's activation has to run where
-    /// its own window lives. Call it from an `upgrade_in_event_loop` callback.
+    /// A minimized or hidden window is restored first: the platform cannot
+    /// activate a window that is not on screen. Must run on the event loop's
+    /// thread.
     pub fn bring_to_front(&self) {
-        // Logged as a whole because this is the single-instance path: a second
-        // launch of the app reports itself here and brings this window forward,
-        // and until now the only evidence of that was the request at the call
-        // site, not the outcome.
         log::debug!("bringing the window forward");
         if self.window().is_minimized() {
-            log::debug!("the window was minimized; restoring it");
             self.set_minimized(false);
         }
-        if !self.window().is_visible() {
-            // A launch of the app that arrives after the window was hidden — a
-            // window that is not on screen cannot be brought to it.
-            if let Err(error) = self.window().show() {
-                log::debug!("the window could not be shown: {error}");
-            }
+        if !self.window().is_visible()
+            && let Err(error) = self.window().show()
+        {
+            log::debug!("the window could not be shown: {error}");
         }
         self.focus_window();
     }
@@ -220,11 +151,8 @@ impl<H: ComponentHandle> WindowService<H> {
             .window()
             .with_winit_window(|window| window.set_minimized(minimized))
         {
-            // The winit path: the window manager owns the state, so there is
-            // nothing to report back beyond the request.
             Some(_) => log::debug!("the window manager was asked for minimized={minimized}"),
             None => {
-                // No winit window, so Slint's own API is the only option left.
                 log::debug!(
                     "no winit window to minimize; falling back to Slint for minimized={minimized}"
                 );
@@ -239,27 +167,16 @@ impl<H: ComponentHandle> WindowService<H> {
             .window()
             .with_winit_window(|window| window.focus_window());
         if focused.is_none() {
-            // No winit window (another backend): Slint has no activation of its
-            // own, so there is nothing left to try.
             log::debug!("the window could not be focused: no winit window to focus");
         }
     }
 
-    /// Starts an OS window drag, for a title-bar drag region.
+    /// Starts an OS window drag from a title-bar drag region. The platform
+    /// tracks the drag, so it keeps working outside the window.
     ///
-    /// This is `performWindowDragWithEvent:` on macOS — what Chromium and
-    /// Electron do for their drag regions: the drag is handed to the platform,
-    /// which tracks it in its own event loop, so it keeps working outside the
-    /// window, over other applications, and with the system's window snapping,
-    /// and the window is composited by the OS rather than repainted here.
-    ///
-    /// It has to be called while a mouse event is being dispatched: the drag is
-    /// started from that event (`NSApp.currentEvent`). Slint runs a `TouchArea`'s
-    /// pointer handlers inside the event that produced them, so calling this
-    /// from one of those is what makes it work.
-    ///
-    /// The platform keeps the mouse until the drag is over, so the release (and
-    /// therefore Slint's `clicked`) never arrives for the press that started it.
+    /// Must be called while a mouse event is being dispatched: macOS starts the
+    /// drag from the current event. The platform keeps the mouse until release,
+    /// so Slint never sees the `clicked` for the press that started it.
     pub fn drag_window(&self) {
         use i_slint_backend_winit::WinitWindowAccessor;
         if self
@@ -271,8 +188,6 @@ impl<H: ComponentHandle> WindowService<H> {
             })
             .is_none()
         {
-            // The closure above never ran, so its log line never appeared: a
-            // drag on a backend with no winit window was silently swallowed.
             log::debug!("the window drag did not start: no winit window");
         }
     }

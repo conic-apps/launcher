@@ -5,9 +5,7 @@
 import { Theme } from "../../../theme.slint";
 import { AppIcon } from "../../../components/display/app-icon.slint";
 
-// One service button of the selector: a 32px pill with a 15px icon and its
-// label, spelled out rather than laid out by the parent so the row can be as
-// wide as the three of them.
+// One service button of the selector.
 component ServiceButton inherits Rectangle {
     in property <string> label: "";
     in property <string> icon: "";
@@ -17,9 +15,7 @@ component ServiceButton inherits Rectangle {
     width: content.preferred-width;
     height: 32px;
     border-radius: 4px;
-    // Surface 0 on hover, surface 1 while pressed and surface 2 for the
-    // selected one. The selected fill is checked first, so a selected button
-    // does not react to the pointer at all.
+    // Selected is checked first, so a selected button ignores the pointer.
     background: root.active ? Theme.surface-2
         : button-touch.pressed ? Theme.surface-1
         : button-touch.has-hover ? Theme.surface-0
@@ -56,12 +52,11 @@ component ServiceButton inherits Rectangle {
     }
 }
 
-// The auth-service selector of the add-account dialog: "Microsoft | External |
-// Offline", at the right-hand end of the dialog's header.
+// The auth-service selector: "Microsoft | External | Offline".
 export component AccountAddSelect inherits Rectangle {
-    /// Which service is selected — "microsoft" | "yggdrasil" | "offline".
+    /// "microsoft" | "yggdrasil" | "offline".
     in-out property <string> value: "microsoft";
-    /// Frozen while a screen is mid-flow: 0.6 opacity and no pointer events.
+    /// Frozen while a screen is mid-flow: 0.6 opacity, no pointer events.
     in property <bool> select-enabled: true;
     callback selected(string);
 
@@ -98,7 +93,6 @@ export component AccountAddSelect inherits Rectangle {
         }
     }
 
-    // `&.disabled { pointer-events: none }`.
     blocker := TouchArea {
         enabled: !root.select-enabled;
     }

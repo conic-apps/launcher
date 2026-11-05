@@ -7,10 +7,8 @@ import { ConfirmWarningBody } from "confirm-warning.slint";
 import { Dialogs } from "../../globals/dialogs.slint";
 import { TaskState } from "../../globals/tasks.slint";
 
-// A task that has been running for more than ten seconds is stopped through
-// this prompt: its partial files, a half-created instance or a detached blocking
-// pass are worth one more click. Shorter tasks are stopped immediately by the
-// task service, without ever mounting this dialog.
+// Prompts before stopping a task that has run over ten seconds; shorter tasks are
+// stopped immediately by the task service.
 export component ConfirmCancelTask inherits Rectangle {
     width: 100%;
     height: 100%;
@@ -19,8 +17,7 @@ export component ConfirmCancelTask inherits Rectangle {
     dialog := Dialog {
         dialog-visible: Dialogs.confirm-cancel-task-visible;
         dialog-width: 500px;
-        // `fit-content`: `Dialog` keeps 32px of its own — 16px on each side
-        // (a 1px clip and 15px of padding).
+        // `Dialog` keeps 32px of its own (16px each side).
         dialog-height: body.preferred-height + 32px;
 
         body := ConfirmWarningBody {

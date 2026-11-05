@@ -2,24 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The add-account dialog's "script": drives `account` from the dialog's state
-//! and its four screens.
-//!
-//! Like `create_instance/`, everything that touches the network or the disk
-//! runs on the tokio runtime (`crate::support::runtime`) and reports back through
-//! `crate::ui::services::report`, so the window keeps drawing while a server
-//! answers.
-//! The one exception is anything that builds a Slint `Image` — the profile
-//! heads — which Slint only lets the drawing thread create.
-//!
-//! The Microsoft flow is where this module reads state it did not write: the
-//! login runs as a task (see `account::LoginTaskState`) whose progress
-//! arrives as events, so which of the screen's four states is mounted is
-//! decided here rather than in the screen. The browser flow's half of it —
-//! waiting for the code to come back — is here too: the screen owns when the
-//! listener is wanted (`AccountAddMicrosoft.slint` asks for it as the screen
-//! appears and gives it up as it goes), and this module owns what it is bound
-//! to and what happens when an answer arrives.
+//! The add-account dialog: drives `account` from the dialog's state and its four
+//! screens. Network and disk work runs on the tokio runtime and reports through
+//! `crate::ui::services::report`; the Microsoft login runs as a task whose events
+//! decide which screen is mounted, and this module owns the browser listener.
 
 use std::{
     cell::RefCell,
@@ -45,47 +31,33 @@ mod wiring;
 pub(crate) use login::*;
 pub(crate) use wiring::*;
 
-/// How long the browser flow's listener waits before giving the port back.
-///
-/// An authorization code issued by Microsoft's `consumers` endpoint is good for
-/// ten minutes, and the flow is a human being signing in somewhere else, so the
-/// listener outlives anything shorter. It is the ceiling, not a prompt: the
-/// listener is released the moment the code arrives, the user switches to the
-/// device code, or the dialog closes.
+/// The authorization code is good for ten minutes; the listener is released
+/// sooner the moment the code arrives, the user switches to the device code, or
+/// the dialog closes.
 const AUTH_CODE_TIMEOUT: Duration = Duration::from_secs(600);
 
 thread_local! {
-    /// The chooser's rows. Kept across the dialog's screens so a click can flip
-    /// one in place instead of re-creating every row, and reached through a
-    /// thread-local rather than an `Rc` captured by the callbacks: the UI half
-    /// of `crate::ui::services::report` has to be `Send`, so a worker cannot
-    /// carry it across (`MANIFEST` in `create_instance/` is a thread-local for
-    /// the same reason).
+    /// Kept across the dialog's screens so a click can flip one row in place.
+    /// It is a thread-local rather than an `Rc` captured by callbacks because
+    /// the UI half of `crate::ui::services::report` has to be `Send`.
     static PROFILES: Rc<VecModel<YggdrasilProfileItem>> = Rc::new(VecModel::default());
 
     /// The credentials the chooser's rows belong to.
     static PENDING: RefCell<Option<PendingYggdrasil>> = const { RefCell::new(None) };
 
-    /// What the Microsoft screen's flow owns from one screen swap to the next.
     static MICROSOFT: RefCell<MicrosoftFlow> = RefCell::new(MicrosoftFlow::default());
 }
 
 /// The state the Microsoft screen's two flows carry between callbacks.
 ///
-/// The login task (see `account::LoginTaskState`) is at most one, cancellable,
-/// and the only thing that owns a running Microsoft login. The listener is the
-/// browser flow's other half, and it lives in the same box because it is
-/// released in the same places — leaving the screen, cancelling, closing.
+/// The login task is at most one and cancellable; the listener lives in the same
+/// box because it is released in the same places — leaving the screen,
+/// cancelling, closing.
 #[derive(Default)]
 pub(crate) struct MicrosoftFlow {
     login: LoginTaskState,
-    /// The task blocked on the loopback listener the browser flow's code comes
-    /// back on, while the browser screen is on show.
-    ///
-    /// An abort handle and not the [`account::authcode::AuthCallback`] itself: the
-    /// callback moves into `wait` and comes back as an `Outcome`, and the one
-    /// thing to be done to it from the UI thread is to stop waiting — which is
-    /// what the two ways off this screen have in common.
+    /// An abort handle rather than the callback itself, which moves into `wait`;
+    /// the only thing the UI thread can do to it is stop waiting.
     callback: Option<tokio::task::AbortHandle>,
 }
 

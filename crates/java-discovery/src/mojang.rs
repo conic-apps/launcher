@@ -17,8 +17,7 @@ use storage::LOCATIONS;
 use crate::error::*;
 use crate::models::JavaArch;
 
-/// Maps the current OS architecture to the architecture of the Mojang-provided
-/// Java runtime, which is always built for the host platform.
+/// The Mojang runtime is always built for the host platform.
 pub fn host_java_arch() -> JavaArch {
     match PLATFORM_INFO.arch {
         OsArch::X64 => JavaArch::X64,
@@ -38,8 +37,7 @@ fn no_runtime_folder_error() -> Error {
     Error::NoSupportedJavaRuntime
 }
 
-/// Returns the installation directory of the launcher-managed runtime with the
-/// given component name (e.g. `java-runtime-gamma`).
+/// `java_component` is e.g. `java-runtime-gamma`.
 pub fn get_installation_directory(java_component: &str) -> Result<PathBuf> {
     let root = &LOCATIONS.minecraft.runtime;
     let platform_folder_name = match PLATFORM_INFO.os_family {
@@ -66,8 +64,6 @@ pub fn get_installation_directory(java_component: &str) -> Result<PathBuf> {
     Ok(root.join(platform_folder_name).join(java_component))
 }
 
-/// Returns the `java` executable path of the launcher-managed runtime with the
-/// given component name.
 pub fn get_executable_path(java_component: &str) -> Result<PathBuf> {
     let installation_directory = get_installation_directory(java_component)?;
     match PLATFORM_INFO.os_family {

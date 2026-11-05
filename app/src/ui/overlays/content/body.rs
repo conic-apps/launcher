@@ -18,11 +18,9 @@ thread_local! {
     static BODY: RefCell<Option<BodyRenderer>> = const { RefCell::new(None) };
 }
 
-/// How many of a document's images are fetched at once.
-///
-/// Half the icon grids' figure: a README's images are not the grid's — they come
-/// from wherever the author pointed them, so they are slower and less uniform,
-/// and this is a background task with nothing else waiting on it.
+/// How many of a document's images are fetched at once. They come from wherever
+/// the author pointed them, so they are slower and less uniform than the icon
+/// grids'.
 const BODY_IMAGE_CONCURRENCY: usize = 8;
 
 /// How many images one document is allowed to have fetched.
@@ -51,9 +49,6 @@ pub(crate) struct BodyRenderer {
     /// count is the number of `<details>` in the document plus one, so these are
     /// few.
     chunks: Rc<VecModel<MdChunk>>,
-    /// A run's items and bitmaps, kept beside it so a re-layout rewrites them in
-    /// place: a window drag re-lays the document out, and replacing a model would
-    /// destroy and re-create every item element each time.
     run_items: Vec<Rc<VecModel<MdItem>>>,
     run_images: Vec<Rc<VecModel<MarkdownImage>>>,
     /// Which runs are open, index-aligned with `chunks`, held as a model for the
@@ -137,8 +132,6 @@ impl BodyRenderer {
 }
 
 thread_local! {
-    /// The monospace family the view draws code with, resolved once by
-    /// [`monospace_family`].
     static MONO_FAMILY: RefCell<String> = const { RefCell::new(String::new()) };
 }
 
@@ -194,7 +187,6 @@ pub(crate) fn monospace_family() -> String {
         })
 }
 
-/// The monospace family the body was laid out with, for the view to draw with.
 pub(crate) fn body_mono_family() -> String {
     MONO_FAMILY.with(|family| family.borrow().clone())
 }
@@ -334,7 +326,6 @@ pub(crate) fn layout_detail_body(ui: &App, width: f32) {
 /// question about the engine and nothing else, and a function that took an `App`
 /// could only be answered by opening a window.
 pub(crate) struct BodyLayout {
-    /// The runs, each with the items and bitmaps it owns.
     chunks: Vec<BodyRun>,
     /// Which runs the reader has opened, index-aligned with `chunks`. A run nobody
     /// has an answer for takes the document's own `open`, which is the
@@ -610,7 +601,6 @@ pub(crate) fn clear_body_models() {
     });
 }
 
-/// Empties what the panel draws, leaving the engine's document alone.
 pub(crate) fn clear_detail_body_model(ui: &App) {
     let state = ui.global::<ContentState>();
     state.set_detail_body_hovered(SharedString::default());
@@ -744,7 +734,6 @@ pub(crate) fn number_label(value: Option<i64>) -> String {
     value.map(|value| value.to_string()).unwrap_or_default()
 }
 
-/// Checks whether the open project is installed and writes the result.
 pub(crate) fn refresh_installed(ui: &App) {
     let Some(detail) = controller().borrow().detail.clone() else {
         return;

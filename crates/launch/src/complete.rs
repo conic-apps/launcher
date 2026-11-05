@@ -34,8 +34,6 @@ pub async fn complete_files(
     config: &DownloadConfig,
 ) -> Result<()> {
     let instance_root = LOCATIONS.instances.get_instance_root(&instance.id);
-    // An abnormal run may have left half-written files, so the locks must not
-    // vouch for them: the crash marker forces one full re-check, then clears.
     // Mirrors HMCL's `unmarkLaunchedAbnormally`.
     if instance::last_exit_abnormal(&instance.id) {
         info!(
@@ -92,8 +90,6 @@ pub async fn complete_files(
         .await?;
         info!("Saving libraries lock file");
         if let Err(error) = save_lock_file(&libraries_lock_file) {
-            // If this save is lost, every launch re-verifies the whole
-            // libraries set again, silently.
             warn!(
                 "Could not write the libraries lock file {}: {error}",
                 libraries_lock_file.display()
@@ -176,12 +172,10 @@ async fn complete_java_runtime_files(
     Ok(())
 }
 
-/// Time-to-live applied by [`try_load_lock_file`] before a lock file is
-/// considered stale (10 days).
 pub const LOCK_FILE_TTL_SECONDS: u64 = 10 * 24 * 60 * 60;
 
-/// Reads a timestamped lock file written by [`save_lock_file`], returning `None`
-/// when it is missing, unreadable or older than [`LOCK_FILE_TTL_SECONDS`].
+/// `None` when the file is missing, unreadable, or older than
+/// [`LOCK_FILE_TTL_SECONDS`].
 pub fn try_load_lock_file(path: &Path) -> Option<()> {
     let contents = std::fs::read_to_string(path).ok()?.parse::<u64>().ok()?;
     let now = SystemTime::now()
@@ -194,7 +188,6 @@ pub fn try_load_lock_file(path: &Path) -> Option<()> {
     Some(())
 }
 
-/// Writes a lock file containing the current unix timestamp.
 pub fn save_lock_file(path: &Path) -> std::io::Result<()> {
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)

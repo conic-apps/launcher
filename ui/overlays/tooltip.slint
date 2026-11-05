@@ -5,32 +5,20 @@
 import { Theme } from "../theme.slint";
 import { TooltipState } from "../globals/tooltip.slint";
 
-// The generic pointer tooltip.
+// The generic pointer tooltip, mounted at the app root so no clipping container
+// cuts it off.
 //
-// Mounted at the application root (`app.slint`) for the same reason every other
-// overlay is: the trigger sits wherever its control does, and the containers
-// between it and the window — a collapse, a scroll area, a card — all clip. A
-// panel drawn inside one of them would be cut off, so the trigger only writes
-// the text and the panel is drawn here, above everything.
+// It follows the pointer (written by the Rust service from winit) and flips
+// sides when the window runs out of room.
 //
-// It follows the pointer rather than the trigger: the position comes from
-// `TooltipState.pointer-x/y`, which the Rust service writes from winit's cursor
-// events (`ui/services/tooltip.rs`). The panel is placed to the pointer's
-// lower-right and flips to the upper-left when the window runs out of room, so
-// it never overflows the window at an edge.
-//
-// The reveal is the `Dialog`'s phase machine, for its reason: an `animate` only
-// advances while its property is read, and an element that is not painted for a
-// frame is first asked for the value it is meant to *reach* — so the panel is
-// held at its start values for one frame before the targets move. It fades in
-// and out over `ease`.
+// The reveal uses `Dialog`'s phase machine: an `animate` only advances while
+// read, so the panel holds its start values for one frame first.
 export component TooltipOverlay inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;
 
-    /// Distance from the pointer's tip to the panel, and the room left at the
-    /// window edge before the panel flips to the other side.
+    /// Pointer-to-panel distance and edge room before flipping sides.
     private property <length> offset-x: 14px;
     private property <length> offset-y: 20px;
     private property <length> edge-margin: 8px;
@@ -50,8 +38,7 @@ export component TooltipOverlay inherits Rectangle {
                 root.phase = "starting";
                 start-timer.restart();
             } else {
-                // Wanted again while it was leaving: play the enter from
-                // wherever the leave had got to.
+                // Play the enter from wherever the leave got to.
                 root.phase = "shown";
             }
         } else if root.phase != "closed" && root.phase != "leaving" {
@@ -93,8 +80,7 @@ export component TooltipOverlay inherits Rectangle {
         easing: ease;
     }
 
-    // A plain drawing element: it carries no `TouchArea`, so it never takes a
-    // click meant for the control under the pointer.
+    // No `TouchArea`, so it never takes a click meant for the control below.
     panel := Rectangle {
         x: clamp(
             root.flip-x

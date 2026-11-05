@@ -19,7 +19,6 @@ use crate::platform::platform_anchor;
 
 const FILE_NAME: &str = "locations.toml";
 
-/// The overrides a user chose, one per location, absent when default.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LocationOverrides {
     /// Whether the wizard's storage step has been answered — by finishing or
@@ -36,7 +35,6 @@ pub struct LocationOverrides {
     pub instances: Option<PathBuf>,
 }
 
-/// The fixed path of the bootstrap file.
 pub fn bootstrap_path() -> PathBuf {
     platform_anchor().join(FILE_NAME)
 }

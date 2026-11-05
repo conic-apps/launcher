@@ -4,60 +4,16 @@
 
 //! Platform metadata lookup shared by every content kind.
 //!
-//! Three JSON files live under `cache/remote/`:
+//! `modrinth.json` and `curseforge.json` cache each platform's file lookup by
+//! SHA-512; `identity.json` maps a checksum to the project and file ids it is
+//! known by, never expires, and only changes on a successful lookup. Online
+//! fields win and local data fills the gaps; an embedded (jar-in-jar) mod keeps
+//! its own data. A file known on both platforms is looked up on Modrinth first,
+//! then CurseForge; otherwise both are queried concurrently and the first
+//! response is the frontend result.
 //!
-//! - `modrinth.json` and `curseforge.json` cache each platform's file-feature
-//!   lookup, keyed by the file's SHA-512 checksum. Entries expire after the
-//!   cache TTL and only carry list-display fields.
-//! - `identity.json` maps each checksum to the project/mod and version/file ids
-//!   it is known on either platform. It never expires and does not carry the
-//!   lookup details. A failed lookup leaves the entry unchanged.
-//!
-//! The per-kind child modules own their local parse cache, their icon sidecar
-//! and their path index:
-//!
-//! - `mods` keeps `cache/mods/local.json` and `cache/mods/local-icons/`;
-//! - `resourcepacks` keeps `cache/resourcepacks/local.json` and
-//!   `cache/resourcepacks/icons/`.
-//!
-//! The path index is shared through `crate::index` and stored under each
-//! kind's cache folder, so an unchanged archive is not hashed again.
-//!
-//! The platform lookups for a file are classified by its identity entry:
-//!
-//! - When the identity carries both ids, the lookup follows Modrinth first
-//!   (faster), then CurseForge — cache first, then a fresh query.
-//! - Otherwise both platforms are queried at the same time. The first response
-//!   wins for the frontend result, but both responses are fully processed and
-//!   written to the caches. A platform that fails or has no data for the file
-//!   leaves its identity untouched; the next parse retries it.
-//!
-//! Online info takes priority over the local parse result; local data
-//! supplements whatever the platform does not provide. Icons found online are
-//! passed through as URLs. An embedded (jar-in-jar) mod is a different mod that
-//! happens to ship inside the same file, so it keeps its own name, version and
-//! icon instead of taking the outer jar's.
-//!
-//! # Writing
-//!
-//! The files are shared between concurrent parse requests — the frontend
-//! switching instances mid-parse is enough to start two — so every write is a
-//! read-merge-write behind `CACHE_WRITE_LOCK` that re-reads the current
-//! on-disk state before merging, and two parses never overwrite each other's
-//! entries. Reads take no lock: one that races a concurrent write merely misses
-//! that entry, and the merge re-reads the file under the lock regardless, so
-//! locking the read path would only add contention to folder parsing for nothing.
-//!
-//! `merge_and_save` and the per-kind local caches take the same lock, and that
-//! is what keeps the writes deadlock-free. Three invariants hold it together:
-//!
-//! 1. One acquisition, never nested. A `tokio::sync::Mutex` is not reentrant, so
-//!    the helpers that run under it only load and save files, which take no lock
-//!    of their own — no cycle is reachable.
-//! 2. Nothing but disk I/O and serde runs under the lock. No platform query
-//!    reaches back into it; every query happens before the saves.
-//! 3. The synchronous scan that hashes a folder runs outside the lock, before
-//!    anything is saved.
+//! Every cache write is a read-merge-write behind `CACHE_WRITE_LOCK`; the lock is
+//! taken once and never nested, and only disk I/O and serde run under it.
 
 use std::{
     collections::HashMap,
@@ -764,7 +720,6 @@ async fn query_curseforge_batch(
     (info_by_hash, identity)
 }
 
-/// One installed archive the open project resolved to.
 #[derive(Debug, Clone)]
 pub struct InstalledFile {
     pub path: PathBuf,

@@ -3,28 +3,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The instance's local content, parsed once and read by everything that shows
-//! it.
+//! it, so the summary's counts and the overlay's list cannot disagree.
 //!
-//! The game view's summary and the content overlay are the same content twice
-//! over: the summary says "12 mods" and draws five of their icons, and the
-//! overlay lists all twelve. Both read one parsed copy, so the two numbers
-//! cannot disagree and a panel open does not re-hash every jar.
-//!
-//! Three rules make that work, and each one costs something:
-//!
-//!   * A kind is parsed only when the cache cannot answer. [`ensure`] is called
-//!     from every game view apply, so it has to be cheap when nothing changed:
-//!     it is a `HashMap` lookup and a comparison of two `Instant`s.
-//!   * A stale entry is still served while it is being replaced. A person
-//!     editing a mod folder should not watch the counts blink to zero, so the
-//!     accessors ignore the TTL and only [`ensure`] acts on it.
-//!   * Only the *current* instance is written to the globals. A parse that
-//!     finishes after the selection moved on still fills the cache — it is keyed
-//!     by instance and will be correct if that instance is opened again — but it
-//!     must not draw itself on another instance's summary.
-//!
-//! The TTL is what notices a jar dropped into `mods/` by hand, outside the app:
-//! it is only seen when the list goes stale and is re-read.
+//! A stale entry is still served while it is replaced, and only the current
+//! instance is written to the globals: a parse that outlives the selection fills
+//! the cache but must not draw itself under another instance.
 
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -37,15 +20,10 @@ use content::saves::LevelSummary;
 
 use super::*;
 
-/// How long a parsed list stays the answer before [`ensure`] re-reads it.
-///
-/// Not a freshness guarantee but a floor on how often the disk is walked, which
-/// is what makes a file dropped into the instance by hand show up without a
-/// reload. Everything the app itself changes goes through [`refresh`] instead,
-/// so it is never waiting on this.
+/// A floor on how often the disk is walked, so a file dropped in by hand shows
+/// up without a reload. The app's own writes go through [`refresh`] instead.
 const CACHE_TTL: Duration = Duration::from_secs(60);
 
-/// One of the four things an instance holds locally.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub(crate) enum Kind {
     Saves,
@@ -55,8 +33,7 @@ pub(crate) enum Kind {
 }
 
 impl Kind {
-    /// Every kind, in the order the summary lists them and the preview models are
-    /// numbered in.
+    /// In the order the summary lists them and the preview models are numbered.
     pub(crate) const ALL: [Kind; 4] = [
         Kind::Saves,
         Kind::Mods,
@@ -65,8 +42,6 @@ impl Kind {
     ];
 }
 
-/// One parsed list and when it was parsed.
-///
 /// The data is behind an `Arc` because every projection is handed a handle
 /// rather than a copy — a two-hundred-mod list is a few hundred structs, and the
 /// summary, the overlay and the preview row all want it in the same frame — and
@@ -99,8 +74,6 @@ impl InstanceContent {
     }
 }
 
-/// What a parse produced, before it is filed under its kind. The kinds are
-/// different types, so a parse has to say which one it is handing back.
 enum Parsed {
     Saves(Vec<(String, LevelSummary)>),
     Mods(Vec<ResolvedMod>),
@@ -122,7 +95,6 @@ thread_local! {
     static SEQ: RefCell<HashMap<(String, Kind), u64>> = RefCell::new(HashMap::new());
 }
 
-/// Starts a parse for every kind of `instance` the cache cannot answer.
 pub(crate) fn ensure(ui: &App, instance: &str) {
     for kind in Kind::ALL {
         start(ui, instance, kind, true);
@@ -149,8 +121,6 @@ pub(crate) fn clear() {
     CACHE.with(|cache| cache.borrow_mut().clear());
 }
 
-/// The instance's saves, each a folder name and the summary read out of its
-/// `level.dat`.
 pub(crate) fn saves(instance: &str) -> Option<Arc<Vec<(String, LevelSummary)>>> {
     CACHE.with(|cache| {
         cache
@@ -257,7 +227,6 @@ fn repanel(ui: &App, instance: &str, kind: Kind) {
     }
 }
 
-/// Whether a parse of `key` is running.
 fn is_running(key: &(String, Kind)) -> bool {
     INFLIGHT.with(|inflight| inflight.borrow().get(key).is_some_and(|count| *count > 0))
 }

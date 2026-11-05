@@ -8,32 +8,22 @@ import {
 } from "../../globals/content.slint";
 import { ContentCard } from "content-card.slint";
 
-// The card grid, shared by all nine lists.
-//
-// The intended grid is `repeat(auto-fill, minmax(290px, 1fr))` with a 12px gap
-// and `16px 32px 32px 32px` padding. Slint has no wrapping grid — its only
-// multi-column construct is `Row`, and a repeated child becomes a single cell —
-// so the column count has to come from outside in any case, and Rust computes
-// it from the panel's width and lays every card out. Each card's `x`/`y`/
-// `width`/`height` is therefore already in the model, and this component is the
-// `for` that draws them plus the empty state over the top.
+// The card grid, shared by all nine lists. Slint has no wrapping grid, so Rust
+// computes the columns from the panel width and places every card; this is the
+// `for` that draws them.
 export component ContentCardGrid inherits Rectangle {
     in property <[CardData]> cards: [];
     /// 72px for the content lists, 64px for the saves.
     in property <length> icon-size: 72px;
     in property <string> subtitle-style: "authors";
-    /// Rust's rows × row height plus the padding. It has to be given rather
-    /// than measured — the cards are positioned absolutely, and an
-    /// absolutely-positioned child contributes nothing to its parent's
-    /// measurement, so the panel's `ScrollView` would otherwise see a grid of
-    /// zero height and stop scrolling.
+    /// Rust's rows × row height plus padding. It must be given: absolutely
+    /// positioned children measure zero, so the `ScrollView` would not scroll.
     in property <length> grid-height: 0px;
 
     callback select(string);
     callback open-path(string);
-    /// The card's trash button. Carries the card's title as well as its id,
-    /// because the saves grid has to name the save in the confirmation dialog
-    /// (`ConfirmDeleteSave`) and the id is the folder, not the name.
+    /// Carries the title too: the save id is the folder, not the name shown in
+    /// `ConfirmDeleteSave`.
     callback delete(string, string);
     callback toggle-favorite(string);
     callback open-link(string);
@@ -43,8 +33,7 @@ export component ContentCardGrid inherits Rectangle {
     height: root.grid-height;
     background: transparent;
 
-    // The grid's own padding. The visible cards live inside it; the empty state
-    // is centred over the whole area, padding included.
+    // The visible cards live inside this padding.
     grid := Rectangle {
         x: 32px;
         y: 16px;

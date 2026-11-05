@@ -12,8 +12,7 @@ import {
 } from "../globals/notifications.slint";
 import { TaskItem, TaskState, TaskText } from "../globals/tasks.slint";
 
-// The 4px progress strip at the bottom of a task card. It spans the card's full
-// width; the card's own rounded clip gives the bottom corners their shape.
+// The 4px progress strip at the bottom of a task card.
 component TaskBar inherits Rectangle {
     in property <float> value: 0;
     in property <float> max: 0;
@@ -45,14 +44,12 @@ component TaskBar inherits Rectangle {
     }
 }
 
-// One running task. The body is clickable when the task has a target; the X
-// always asks for a stop, and the task centre decides whether it must confirm.
+// One running task; the X asks for a stop and the centre decides on confirmation.
 component TaskRow inherits Rectangle {
     in property <TaskItem> item;
-    /// Read by a preview to pause its deadline while the pointer is on the card.
+    /// A preview pauses its deadline while this is true.
     out property <bool> hovered: card-click.has-hover || dismiss-touch.has-hover;
-    /// The body was clicked. The centre navigates directly; a preview fades
-    /// first and only then runs the action.
+    /// The centre navigates directly; a preview fades first, then acts.
     callback body-clicked();
 
     width: 100%;
@@ -120,8 +117,7 @@ component TaskRow inherits Rectangle {
         card-click := TouchArea {
             width: root.width - 32px;
             height: 100%;
-            // Enabled without a target too: a preview's deadline pauses on
-            // hover, and a disabled area never reports it.
+            // Enabled without a target too, so hover still reports.
             enabled: !root.item.cancelling;
             clicked => {
                 if root.item.action-kind != "none" {
@@ -170,10 +166,8 @@ component TaskRow inherits Rectangle {
     }
 }
 
-// One floating preview of a running task. The task card itself is the toast; it
-// disappears after five seconds while the centre keeps the ongoing card. The
-// enter/leave motion mirrors `NotificationToast`: a short slide from the edge,
-// a fade on a body click, and a slide back out before the row is removed.
+// One floating preview of a running task; it expires after five seconds while
+// the centre keeps the ongoing card.
 component TaskToast inherits Rectangle {
     in property <TaskItem> item;
 
@@ -206,9 +200,7 @@ component TaskToast inherits Rectangle {
         opacity: root.phase-alpha * root.body-alpha;
         background: transparent;
 
-        // The shadow is a backdrop, not a property of the card: the card clips
-        // its own contents to round the progress strip, and a blurred shadow on
-        // that clipped layer would blur the text too.
+        // The shadow is a backdrop: on the clipped card it would blur the text too.
         Rectangle {
             width: 100%;
             height: 100%;
@@ -228,8 +220,7 @@ component TaskToast inherits Rectangle {
     private property <int> remaining-ms: 5000;
     private property <int> shown-id: -1;
 
-    // A row reused when another task is inserted at the front must get its own
-    // deadline and enter motion; progress updates keep the same id.
+    // A reused row gets a fresh deadline and entrance; progress keeps the same id.
     changed item => {
         if root.item.id != root.shown-id {
             root.shown-id = root.item.id;
@@ -291,46 +282,39 @@ component TaskToast inherits Rectangle {
 
 component NotificationRow inherits Rectangle {
     in property <NotificationItem> item;
-    /// How far the card travels on enter and leave. The centre clips at its
-    /// content padding, so its default keeps the exit visible; the toast sits
-    /// nearer the window edge and has room for a longer throw.
+    /// Travel distance; the toast sits nearer the edge and can throw farther.
     in property <length> slide-distance: 24px;
-    /// The floating preview needs a shadow to lift it off the page; the centre
-    /// card sits in a panel of its own and stays flat.
+    /// A floating preview needs a shadow; the centre card stays flat.
     in property <bool> floating: false;
-    /// Set by the centre's Clear all; the whole list exits as one stagger.
+    /// The centre's Clear all exits the whole list as one stagger.
     in property <bool> clearing: false;
     in property <int> clear-index: 0;
     /// The toast checkmark drops the card instead of sliding it right.
     in property <bool> fall-on-dismiss: false;
-    /// The centre's cards leave with opacity only; a toast still slides right
-    /// when its five seconds run out.
+    /// The centre leaves with opacity only; a toast also slides right.
     in property <bool> slide-on-exit: true;
     /// The toast body fades before its action runs.
     in property <bool> fade-on-body-click: false;
-    /// Read by a toast to pause its deadline while the pointer is on the card.
+    /// Lets a toast pause its deadline while hovered.
     out property <bool> hovered: card-click.has-hover || dismiss-touch.has-hover;
-    /// The card is already leaving; a toast must stop its deadline.
+    /// A toast must stop its deadline once this is true.
     out property <bool> closing: root.leaving || root.falling || root.body-fading;
 
     private property <length> dismiss-width: 32px;
-    // `starting` holds the offset for one frame: Slint only advances an animated
-    // property while something reads it, so the renderer has to see the start
-    // values before the enter retargets them to rest.
+    // Holds the offsets one frame so the renderer sees the start values.
     private property <string> phase: "starting";
     private property <bool> leaving: root.phase == "leaving";
     private property <length> phase-dx: root.phase == "starting"
         || (root.phase == "leaving" && root.slide-on-exit)
         ? root.slide-distance : 0px;
     private property <float> phase-alpha: root.phase == "shown" ? 1.0 : 0.0;
-    // Clear all keeps the rows in the model while they leave, so they travel
-    // from their own slots instead of collapsing into each other.
+    // Clear all keeps rows in the model while leaving, so they travel from their
+    // own slots instead of collapsing.
     private property <length> clear-dx: root.clearing && root.slide-on-exit
         ? root.slide-distance : 0px;
     private property <float> clear-alpha: root.clearing ? 0.0 : 1.0;
-    // The fall is simulated rather than eased: a real toss needs the vertical
-    // speed to reverse, which no single cubic-bezier can express. Drive it from
-    // `animation-tick()` so it advances per rendered frame, not per timer tick.
+    // A real toss reverses vertical speed, which no cubic-bezier expresses, so
+    // this is driven from `animation-tick()` per frame.
     private property <bool> falling: false;
     private property <bool> fall-ticking: false;
     private property <duration> fall-start: 0ms;
@@ -366,8 +350,8 @@ component NotificationRow inherits Rectangle {
         easing: ease-out-quad;
     }
 
-    // The wrapper's y belongs to the stack; the card moves itself inside it, so
-    // the fall and the reflow do not both animate the same property.
+    // The wrapper's `y` belongs to the stack; the card moves inside it, so fall
+    // and reflow animate different properties.
     card := Rectangle {
         width: 100%;
         height: 68px;
@@ -390,8 +374,7 @@ component NotificationRow inherits Rectangle {
 
         card-click := TouchArea {
             width: root.width - root.dismiss-width;
-            // Enabled even without an action: `hovered` above is what pauses a
-            // toast's deadline, and a disabled area never reports hover.
+            // Enabled without an action so hover still pauses a toast's deadline.
             enabled: !root.closing;
             clicked => {
                 if root.fade-on-body-click {
@@ -443,9 +426,8 @@ component NotificationRow inherits Rectangle {
             color: Theme.text;
             font-size: 12px;
             wrap: word-wrap;
-            // `max-lines` with `elide` drops the first wrapped line in this
-            // layout, so a titled card clips instead: the player must see the
-            // instance name that starts the sentence.
+            // `elide` with `max-lines` drops the first line here, so a titled card
+            // clips instead; the instance name starts the sentence.
             max-lines: root.has-title ? 2 : 3;
             overflow: root.has-title ? clip : elide;
             vertical-alignment: root.has-title ? top : center;
@@ -488,19 +470,17 @@ component NotificationRow inherits Rectangle {
         }
     }
 
-    /// The exit finished; the owner decides whether the card leaves only its
-    /// preview or the centre as well.
+    /// The owner decides whether only the preview or the centre leaves too.
     callback finished();
-    /// The checkmark asked to dismiss the notification itself, not just its
-    /// preview (a preview expires on its own without touching the centre).
+    /// Dismiss the notification itself, not just its preview.
     callback dismiss-requested();
-    /// The body was clicked; the owner runs the notice's action.
+    /// The owner runs the notice's action.
     callback body-clicked();
 
     private property <bool> dismiss-on-finish: false;
 
-    // A reused row must start a fresh notice with no fall in flight, or the
-    // previous toast's latched time base leaves the new one off screen.
+    // A reused row must clear any fall in flight, or the old time base leaves the
+    // new notice off screen.
     changed item => {
         root.falling = false;
         root.fall-ticking = false;
@@ -564,8 +544,7 @@ component NotificationRow inherits Rectangle {
     }
 }
 
-// One floating preview. Only the toast owns the deadline; the centre's copy of
-// the same notice has none.
+// One floating preview. Only the toast owns the deadline.
 component NotificationToast inherits Rectangle {
     in property <NotificationItem> item;
     width: 100%;
@@ -590,8 +569,7 @@ component NotificationToast inherits Rectangle {
         }
     }
 
-    // Stopping the timer while hovered preserves `remaining-ms`, so the deadline
-    // pauses rather than restarting the whole five seconds.
+    // Stopping while hovered preserves `remaining-ms`, pausing the deadline.
     expire-timer := Timer {
         interval: 50ms;
         running: !card.hovered && !card.closing && root.remaining-ms > 0;
@@ -604,9 +582,8 @@ component NotificationToast inherits Rectangle {
     }
 }
 
-/// The floating previews in the window's top-right corner. They mirror the
-/// centre's newest notifications and stack downwards; a preview that expires
-/// leaves the centre untouched.
+/// The floating previews in the window's top-right corner. Expiry leaves the
+/// centre untouched.
 export component NotificationToasts inherits Rectangle {
     width: 100%;
     height: 100%;
@@ -621,8 +598,7 @@ export component NotificationToasts inherits Rectangle {
     private property <length> notification-y: root.toast-margin
         + (TaskState.toasts.length > 0 ? root.task-toast-height + 8px : 0px);
 
-    // Absolute positions, like the centre's stack: a layout child's position
-    // belongs to its layout and would snap when the rows move.
+    // Absolute positions: a layout child's position would snap when rows move.
     task-toast-stack := Rectangle {
         x: root.width - root.toast-width - root.toast-margin;
         y: root.toast-margin;
@@ -661,15 +637,12 @@ export component NotificationToasts inherits Rectangle {
     }
 }
 
-/// The notification centre uses the same full-height side-panel treatment as
-/// the news surface, entering from the right and covering the window's right
-/// side rather than floating above the page.
+/// The notification centre: a right-side panel like the news surface.
 export component NotificationOverlay inherits Rectangle {
     width: 100%;
     height: 100%;
     visible: root.phase != "closed";
-    // The panel's drop shadow paints outside its box; clip it so the top blur
-    // cannot cross into the title bar above this overlay.
+    // Clips the panel's shadow so it cannot cross into the title bar.
     clip: true;
     background: #000000.with-alpha(0.35 * root.scrim-alpha);
 
@@ -677,12 +650,10 @@ export component NotificationOverlay inherits Rectangle {
     private property <bool> open: NotificationState.visible;
     private property <float> scrim-alpha: root.phase == "shown" ? 1.0 : 0.0;
     private property <length> panel-width: 300px;
-    // Only the slide offset animates; the window-relative term stays outside it,
-    // so a resize moves the panel with the right edge instead of easing after it.
+    // Only the offset animates, so a resize moves the panel with the edge.
     private property <length> panel-offset: root.phase == "shown" ? 0px : root.panel-width;
     private property <bool> leaving: root.phase == "leaving";
-    // Clear all keeps the rows mounted while they leave; the timer below drops
-    // them from the model only after the last staggered card has finished.
+    // Keeps rows mounted while leaving; the timer drops them after the stagger.
     private property <bool> clearing: false;
     animate scrim-alpha {
         duration: 150ms;
@@ -695,8 +666,7 @@ export component NotificationOverlay inherits Rectangle {
 
     changed open => {
         if root.open {
-            // The centre already lists them; a preview would only cover it and
-            // should not keep its own deadline running behind the panel.
+            // The centre lists them; clear previews so no deadline runs behind it.
             NotificationState.expire-all();
             TaskState.expire-all-toasts();
             root.phase = "starting";
@@ -728,7 +698,6 @@ export component NotificationOverlay inherits Rectangle {
         triggered => { root.phase = "closed"; }
     }
 
-    // 40ms per row plus the 200ms exit, with 20ms of margin.
     clear-timer := Timer {
         interval: (NotificationState.notifications.length - 1) * 40ms + 220ms;
         running: root.clearing;
@@ -814,9 +783,8 @@ export component NotificationOverlay inherits Rectangle {
                     }
                 }
 
-                // Running work comes before the completed notices. The two
-                // stacks keep their own pitch because a task card carries a
-                // progress strip at its bottom and is taller than a notice.
+                // Running work comes before completed notices; the taller task
+                // card has its own pitch.
                 if TaskState.tasks.length > 0: VerticalLayout {
                     spacing: 6px;
 
@@ -859,9 +827,8 @@ export component NotificationOverlay inherits Rectangle {
                     }
                 }
 
-                // Fixed-height rows are positioned absolutely so one that
-                // outlives the card above it can glide to its new slot; a layout
-                // would snap it there in one frame.
+                // Absolute rows so one outliving the card above can glide to its
+                // new slot; a layout would snap it.
                 notifications-stack := Rectangle {
                     height: max(0px, NotificationState.notifications.length * 76px - 8px);
 
@@ -875,9 +842,8 @@ export component NotificationOverlay inherits Rectangle {
                             duration: 260ms;
                             easing: cubic-bezier(0.33, 1, 0.68, 1);
                         }
-                        // While Clear all runs, the rows must survive until the
-                        // list timer drops them together; an individual exit
-                        // must not pull one out from under the stagger.
+                        // During Clear all, rows survive until the list timer drops
+                        // them; an individual exit must not break the stagger.
                         finished => {
                             if !root.clearing {
                                 NotificationState.dismiss(item.id);

@@ -14,15 +14,11 @@ import { InstanceListDropdown } from "instance-list-dropdown.slint";
 export component InstancesListToolBar inherits Rectangle {
     width: 400px;
     height: 112px;
-    // The root is only the 400×112 box `InstancesList` positions against; the
-    // panel with the background is `body` below, because the intro animates that
-    // whole element.
+    // The root is only the box `InstancesList` positions against; `body` carries
+    // the background because the intro animates that whole element.
     background: transparent;
-    // NOTE: a `z` is not set here. A component root's `z` only reaches the
-    // parent's stacking order when the parent places it from a `for` loop — for
-    // a plain instance the compiler's z-order pass reads the instance's own
-    // binding and drops the rest. `InstancesList` sets it where the toolbar has
-    // to sit above the scrolling rows.
+    // No `z` here: a component root's `z` is dropped on a plain instance, so
+    // `InstancesList` sets the stacking order where it places the toolbar.
 
     private property <[DropdownOption]> sort-options: [
         { key: "name", label: @tr("Name"), icon: "" },
@@ -43,10 +39,7 @@ export component InstancesListToolBar inherits Rectangle {
     private property <string> group-label:
     GameState.group-mode == "loader" ? @tr("Mod loader") : @tr("Ungrouped");
 
-    // Intro: the toolbar slides in from 100px to the right over 0.5s, easing
-    // out quart. It is the first beat of the list's intro, which the game view
-    // starts 0.05s after the footer and the summary, so the shared delay is
-    // 50ms.
+    // The first beat of the list's intro, 50ms after the footer and summary.
     private property <length> intro-dx: GameIntro.played ? 0px : 100px;
     private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
 
@@ -64,9 +57,7 @@ export component InstancesListToolBar inherits Rectangle {
         easing: ease-out-quart;
     }
 
-    // The whole panel is one element: the intro animates it as a unit, so the
-    // translucent background slides in together with the controls rather than
-    // staying put under them.
+    // One element, so the background slides in with the controls.
     body := Rectangle {
         x: root.intro-dx;
         y: 0;
@@ -78,18 +69,13 @@ export component InstancesListToolBar inherits Rectangle {
         opacity: root.intro-alpha;
         visible: root.intro-alpha > 0.01;
 
-        // The panel is drawn on top of the scrolling rows, but a bare
-        // `Rectangle` does not take pointer events: Slint dispatches to the
-        // topmost item first and falls through to the items below whenever one
-        // ignores the event, so a press on the panel's empty area would reach the
-        // card underneath and select it. The shield swallows it; it is declared
-        // first so the controls below still get their own events.
+        // A bare `Rectangle` takes no pointer events, so presses on empty panel
+        // space would reach the card underneath. The shield swallows them;
+        // declared first so the controls below still get their own events.
         shield := TouchArea {
             width: parent.width;
             height: parent.height;
-            // A bare `TouchArea`'s `scroll-event` defaults to `reject`, which
-            // would let the wheel through to the list, so accept it to keep the
-            // list from scrolling under the panel.
+            // Accept the wheel so the list does not scroll under the panel.
             scroll-event(event) => { accept }
             clicked => { FocusManager.clear(); }
         }
@@ -124,8 +110,7 @@ export component InstancesListToolBar inherits Rectangle {
                         }
                     }
 
-                    // Slint's `TextInput` has no placeholder of its own, so it is
-                    // drawn over the field rather than laid out beside it.
+                    // `TextInput` has no placeholder, so it is drawn over the field.
                     if GameState.search-query == "" && !input.has-focus: Text {
                         x: 16px;
                         y: 0;
@@ -159,18 +144,10 @@ export component InstancesListToolBar inherits Rectangle {
                 }
             }
 
-            // The two dropdowns split the row exactly in half. `horizontal-stretch:
-            // 1` alone cannot do that: it only hands out what is left after each
-            // child's preferred size, and these two prefer different widths
-            // ("Sort" against "Group", "Play time" against "Ungrouped").
-            //
-            // So the preferred size is zero on both: equal floors plus equal
-            // stretch factors make the two come out exactly equal whatever the
-            // value is, and the row divides rather than packs. Stating the half
-            // directly — reading `other-row.width` — is what this *cannot* do: a
-            // child's preferred size feeding the layout cache that decides the
-            // very width it read is a binding loop, and it is one that cost the
-            // dropdowns their click handling outright.
+            // Equal stretch alone would not split the row evenly, since the two
+            // prefer different widths. Zeroing both preferred widths gives equal
+            // floors, so the stretch factors divide the row exactly. Reading the
+            // other's width instead would be a binding loop.
             other-row := HorizontalLayout {
                 height: 25px;
                 spacing: 8px;

@@ -4,15 +4,9 @@
 
 //! The skin-model and cape images the account view draws.
 //!
-//! Both are composed here rather than in Slint, which cannot crop or sample an
-//! image itself. The model is the *front view* of the 64x64 player skin: the
-//! head, torso, arms and legs, each drawn base layer first and its overlay
-//! (hat / jacket / sleeves / trousers) blended on top, all nearest-neighbour.
-//! This is the same artwork the Vue build drew into a `<canvas>`; producing a
-//! pixel buffer is the Slint equivalent.
-//!
-//! The cape is the 10x17 face at the top-left of a 64x32 cape texture, scaled
-//! to fit.
+//! Both are composed here because Slint cannot crop or sample an image itself.
+//! The model is the front view of the 64x64 skin, base layers first and overlays
+//! blended on top; the cape is the 10x17 face of a 64x32 texture, scaled to fit.
 
 use image::RgbaImage;
 use slint::{Image, SharedPixelBuffer};
@@ -174,7 +168,6 @@ fn blit(
     }
 }
 
-/// Source-over compositing, the blend the overlays use.
 fn over(source: [u8; 4], destination: [u8; 4]) -> [u8; 4] {
     let channel = |index: usize| source[index] as f32 / 255.0;
     let alpha_s = channel(3);

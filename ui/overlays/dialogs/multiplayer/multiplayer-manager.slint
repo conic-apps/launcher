@@ -18,7 +18,6 @@ import {
     MultiplayerPlayer,
 } from "../../../globals/multiplayer.slint";
 
-// One member row of the group's player list.
 component PlayerRow inherits VerticalLayout {
     in property <MultiplayerPlayer> player;
 
@@ -38,7 +37,6 @@ component PlayerRow inherits VerticalLayout {
             color: Theme.default-text-color.transparentize(0.1);
         }
 
-        // Only the host carries the tag.
         if root.player.kind == "HOST": tag := Rectangle {
             width: tag-text.preferred-width + 8px;
             height: 15px;
@@ -54,9 +52,7 @@ component PlayerRow inherits VerticalLayout {
         }
     }
 
-    // The padding is above the line, and the box is as tall as the text needs
-    // it, so a vendor string that wraps grows the row instead of running past the
-    // card.
+    // As tall as the text needs, so a wrapping vendor string grows the row.
     Rectangle {
         width: 100%;
         height: vendor-text.preferred-height + 4px;
@@ -75,7 +71,6 @@ component PlayerRow inherits VerticalLayout {
     }
 }
 
-// One of the two group cards of the waiting screen.
 component WaitAction inherits Rectangle {
     in property <string> icon: "add-circle";
     in property <string> label: "";
@@ -101,12 +96,8 @@ component WaitAction inherits Rectangle {
         padding-right: 16px;
         spacing: 8px;
         cross-axis-alignment: center;
-        // No `alignment`: the default `stretch` leaves the text column the rest
-        // of the row, which is the width `wrap: word-wrap` then wraps at. A
-        // main-axis `alignment` other than the default sizes a child to its
-        // *preferred* width instead — the unwrapped line — so the wrapping would
-        // never happen and a long locale would run past the card.
-
+        // No main-axis `alignment`: anything but the default `stretch` sizes the
+        // text to its unwrapped width, so a long locale would run past the card.
         AppIcon {
             name: root.icon;
             size: 30px;
@@ -140,12 +131,8 @@ component WaitAction inherits Rectangle {
     }
 }
 
-// The blue bordered note.
-//
-// The paragraph is placed by hand rather than in a nested layout: a wrapping
-// `Text` one layout level away from the column that owns its width reports a
-// single line (see the add-account dialog's Yggdrasil note), so the box takes
-// its height from the text's own measurement at the width it is given.
+// The blue bordered note. Placed by hand: one layout level deeper, a wrapping
+// `Text` measures a single line.
 component InfoNote inherits Rectangle {
     in property <string> note: "";
     in property <color> tone: Theme.blue;
@@ -170,8 +157,7 @@ component InfoNote inherits Rectangle {
     }
 }
 
-// The surface card with the status line, the indeterminate bar and the Cancel
-// button beside them.
+// Status line, indeterminate bar and Cancel button.
 component ScanProgress inherits Rectangle {
     in property <string> status: "";
     in property <bool> show-countdown: false;
@@ -265,8 +251,7 @@ component WaitingScreen inherits VerticalLayout {
                 clicked => {
                     MultiplayerState.code-input-open = true;
                     MultiplayerState.code-input = "";
-                    // `codeInputValid` follows the field: recompute it after a
-                    // programmatic clear, since `edited` does not fire for one.
+                    // `edited` does not fire for a programmatic clear.
                     MultiplayerState.code-input-changed();
                 }
             }
@@ -279,7 +264,6 @@ component HostScanScreen inherits VerticalLayout {
     spacing: 0px;
     alignment: start;
 
-    // `p.description.description-info` with its `<br/>`.
     note := Rectangle {
         width: 100%;
         height: line1.preferred-height + line2.preferred-height + 18px;
@@ -331,8 +315,8 @@ component HostReadyScreen inherits VerticalLayout {
     spacing: 0px;
     alignment: start;
 
-    // "已复制！" swaps in for the invite code, out-in. Both halves are driven by
-    // `MultiplayerState.code-copied` (the manager's 1.5s timer puts it back).
+    // "Copied!" swaps in for the invite code, out-in; the manager's timer resets
+    // `code-copied`.
     private property <bool> copied: MultiplayerState.code-copied;
     private property <bool> copy-shown: false;
     private property <bool> copy-leaving: false;
@@ -376,12 +360,10 @@ component HostReadyScreen inherits VerticalLayout {
     }
 
     HorizontalLayout {
-        // 16px between the two cards.
         spacing: 16px;
         padding-top: 16px;
 
-        // The two cells are 44% and 56% of the row less the gap. A stretch factor
-        // says that directly and keeps saying it when the gap changes.
+        // 44:56 split; a stretch factor keeps it correct when the gap changes.
         actions := Rectangle {
             horizontal-stretch: 44;
             background: Theme.surface-0;
@@ -394,12 +376,8 @@ component HostReadyScreen inherits VerticalLayout {
 
                 VerticalLayout {
                     alignment: start;
-                    // The label shrink-to-fits, capped at the card's width.
-                    // `cross-axis-alignment: center` would hand over the
-                    // *unwrapped* width and so never wrap; stretching the box and
-                    // centring the glyphs inside it puts the text's left edge in
-                    // the same place either way, and gives the wrap somewhere to
-                    // happen.
+                    // Stretches because cross-axis centring would hand over the
+                    // unwrapped width, leaving nothing to wrap at.
                     cross-axis-alignment: stretch;
                     padding-top: 6px;
                     spacing: 12px;
@@ -451,9 +429,8 @@ component HostReadyScreen inherits VerticalLayout {
                     }
                 }
 
-                // A bare child of the card's column, so `alignment: space-between`
-                // puts it at the bottom and the default cross-axis stretch makes
-                // it the card's width.
+                // A bare child, so `space-between` puts it at the bottom and
+                // cross-axis stretch makes it the card's width.
                 Button {
                     horizontal-stretch: 1;
                     text: @tr("Multiplayer" => "Close connection");
@@ -479,12 +456,9 @@ component HostReadyScreen inherits VerticalLayout {
                     player: player;
                 }
 
-                // The waiting message; the italic is dropped: Slint has no
-                // oblique style for the embedded variable font. The 8px above it
-                // is the list's own spacing once there are rows to separate from,
-                // so it is a padding here — where the message is the list's only
-                // child and the gap has nothing to sit between, and where a
-                // `Text` cannot carry the padding itself.
+                // The italic is dropped: Slint has no oblique for the embedded
+                // font. The 8px is padding because the list's spacing has no rows
+                // to sit between.
                 if MultiplayerState.players.length == 0: VerticalLayout {
                     padding-top: 8px;
 
@@ -529,11 +503,8 @@ component GuestCodeInputScreen inherits VerticalLayout {
                 background: transparent;
             }
 
-            // The field comes before the button, under the default `stretch` —
-            // the field takes the free space and the button lands at the end.
-            // Written the other way round it cannot work: a `horizontal-stretch`
-            // child has to be the one that grows, and it would push the button to
-            // the left of the row rather than the right.
+            // The field comes first under the default `stretch`, so it grows and
+            // the button lands at the end.
             row := HorizontalLayout {
                 spacing: 8px;
                 cross-axis-alignment: center;
@@ -583,7 +554,6 @@ component GuestReadyScreen inherits VerticalLayout {
             spacing: 8px;
             alignment: space-between;
 
-            // 12px between the member rows.
             players := VerticalLayout {
                 alignment: start;
                 spacing: 12px;
@@ -668,19 +638,15 @@ component ExceptionScreen inherits VerticalLayout {
     }
 }
 
-// The manager body: the title row with the NAT label, the screen swap and the
-// bottom button bar.
-//
-// The bar is laid out in flow rather than absolutely: it sits 24px from the
-// panel's bottom edge, with the 16px above it.
+// The manager body: title row, screen swap and bottom button bar, laid out in
+// flow.
 export component MultiplayerManager inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
     alignment: start;
 
-    // The out-in swap (see `CreateInstance` for the state machine): the mounted
-    // screen plays its 80ms leave, the slot switches, and the arriving screen
-    // moves from its enter rest to `shown` a frame later.
+    // The out-in swap: the mounted screen leaves, then the next mounts at its
+    // enter rest.
     private property <string> screen: MultiplayerState.screen;
     private property <string> shown: "";
     private property <bool> leaving: false;
@@ -688,8 +654,7 @@ export component MultiplayerManager inherits VerticalLayout {
     private property <bool> leave-armed: false;
     private property <bool> enter-armed: false;
 
-    // The comparison is mirrored onto a local property so a `changed` handler can
-    // see it — a qualified global property cannot be watched directly.
+    // Mirrored locally because `changed` cannot watch a qualified global.
     private property <bool> scanning: MultiplayerState.state == "host-scanning";
 
     init => {
@@ -746,13 +711,8 @@ export component MultiplayerManager inherits VerticalLayout {
         triggered => { MultiplayerState.code-copied = false; }
     }
 
-    // The LAN-scan countdown.
-    //
-    // The timer is driven purely by its `running` binding, like the add-account
-    // dialog's device-code countdown: `restart()` only restarts a timer that has
-    // been started before, and `stop()` — which `timer.stop()` lowers to — writes
-    // `running` and so throws the binding away, after which no later arm could
-    // start it again.
+    // The LAN-scan countdown. Driven by its `running` binding: `restart()` only
+    // restarts a started timer, and `stop()` would discard the binding.
     scan-timer := Timer {
         interval: 1s;
         running: root.scanning && MultiplayerState.scan-remaining > 0;
@@ -773,7 +733,6 @@ export component MultiplayerManager inherits VerticalLayout {
             color: Theme.default-text-color.transparentize(0.1);
         }
 
-        // Shown only while the local peer is known.
         if MultiplayerState.show-nat: Text {
             text: @tr("Multiplayer" => "Your network environment: {}", MultiplayerState.local-nat-label);
             font-size: 14px;
@@ -850,7 +809,7 @@ export component MultiplayerManager inherits VerticalLayout {
                     if root.screen == "waiting" || root.screen == "exception" {
                         MultiplayerState.close();
                     } else {
-                        // The "hide window (connection stays open)" label.
+                        // Hides the window; the connection stays open.
                         MultiplayerState.visible = false;
                     }
                 }

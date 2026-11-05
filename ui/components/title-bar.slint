@@ -45,44 +45,34 @@ component LinuxWindowControlButton inherits Rectangle {
     }
 }
 
-// One of the platform's own window controls, as the platform draws it.
-//
-// The artwork is the platform's own: the glyph comes from the font Windows draws
-// its caption buttons with, and the fills are DWM's, both rendered by
-// `src/native/windows/caption.rs`. The state is the platform's too — the controls are
-// non-client area, so the system hit tests and clicks them, and reports the
+// One of the platform's own window controls, as the platform draws it. The glyph
+// and fills come from `src/native/windows/caption.rs`. The controls are
+// non-client area, so the system hit tests and clicks them and reports the
 // pointer through `window-control-hovered` / `-pressed`.
 //
-// The fill is published as *colours* rather than baked into the bitmap, because
-// the fill is the only thing that changes for two of the three controls, and
-// being able to interpolate it is what gives hovering and pressing a transition.
+// The fill is published as colours rather than baked into the bitmap so it can be
+// interpolated, giving hover and press a transition.
 export struct WindowControl {
-    /// Which control this is: 0 minimize, 1 maximize (or restore), 2 close.
+    /// 0 minimize, 1 maximize (or restore), 2 close.
     index: int,
-    /// The glyph in the caption's own ink: what the control shows at rest.
+    /// The glyph at rest, in the caption's own ink.
     glyph: image,
-    /// The same glyph in the ink that reads on `plate` — white, for the close
-    /// button, and the same image as `glyph` for the other two, which never get
-    /// a plate.
+    /// The same glyph in the ink that reads on `plate`.
     plate-glyph: image,
     /// Whether this control's fill is an opaque plate rather than a translucent
-    /// wash, which is the only reason a glyph would change ink. Close is; the
-    /// other two are not.
+    /// wash, so its glyph changes ink. Only close is.
     plate: bool,
     /// The fill behind the glyph on hover.
     hover-fill: color,
-    /// What the press *adds* on top of `hover-fill`, not the fill on its own: the
-    /// two are stacked, so this is an increment. Compositing two washes of `a` and
-    /// `b` lands on `a + b - a·b`, so the increment that reaches the pressed
-    /// strength is `(pressed - hover) / (1 - hover)` — worked out in
-    /// `src/native/windows/caption.rs`, where the numbers live.
+    /// What the press adds on top of `hover-fill`. Compositing `a` and `b` gives
+    /// `a + b - a·b`, so the increment is `(pressed - hover) / (1 - hover)`;
+    /// `src/native/windows/caption.rs` computes it.
     press-fill: color,
 }
 
-// Draws one of the platform's window controls. There is deliberately no TouchArea
-// and no callback: the platform owns these, presses and all, so a handler here
-// would never fire. The platform places them with the same inset this component
-// is given, which is what keeps the two in step (see `src/native/windows/caption.rs`).
+// Draws one platform window control. No TouchArea or callback: the platform owns
+// the presses, so a handler here would never fire. The platform places them with
+// the same inset this component is given.
 component SystemWindowControl inherits Rectangle {
     in property <WindowControl> control;
     in property <int> hovered: -1;
@@ -92,10 +82,7 @@ component SystemWindowControl inherits Rectangle {
     height: 100%;
 
     // How far into the control the pointer is: 0 at rest, 1 hovered, 2 pressed.
-    // Two numbers rather than one, so the press can be quicker than the hover the
-    // way the platform's own buttons are: the press rides *on top of* the hover
-    // instead of replacing it, so letting go drops straight back to a hover and
-    // only leaving takes the full hover duration.
+    // Two numbers so press can be quicker than hover and ride on top of it.
     private property <float> hover-level: root.hovered == root.control.index ? 1 : 0;
     private property <float> press-level: root.pressed == root.control.index ? 1 : 0;
     animate hover-level {
@@ -108,10 +95,7 @@ component SystemWindowControl inherits Rectangle {
     }
     private property <float> level: root.hover-level + root.press-level;
 
-    // The fill is two layers whose opacities carry the whole ramp, saturated
-    // because `level` runs 0, 1, 2 rather than a fraction. Interpolating the
-    // colours instead would mean `mix`, whose factor weights the *receiver* and
-    // which is alpha-aware besides — the wrong tool for a flat wash.
+    // Two fill layers whose opacities carry the ramp, because `level` runs 0, 1, 2.
     background: Colors.transparent;
     Rectangle {
         background: root.control.hover-fill;
@@ -123,20 +107,15 @@ component SystemWindowControl inherits Rectangle {
         opacity: clamp(root.level - 1, 0, 1);
     }
 
-    // The glyph, in whichever ink the current fill needs. Only close's fill is
-    // opaque, so only its glyph changes ink; minimize and maximize keep one image
-    // at full opacity and let the wash behind them do all the moving — which is
-    // the platform's own model, and why the two are gated on `plate` rather than
-    // cross-faded unconditionally: cross-fading an image with itself composites
-    // it twice, which lands short of opaque mid-transition and makes the glyph
-    // thin out as it moves.
+    // The glyph in whichever ink the fill needs. Only close changes ink; the
+    // others keep one image at full opacity so they are not composited twice
+    // mid-transition, which would thin the glyph out.
     Image {
         source: root.control.glyph;
         width: 100%;
         height: 100%;
         opacity: root.control.plate ? 1 - clamp(root.level, 0, 1) : 1;
-        // The artwork is rendered at the device size of this rectangle, so
-        // filling it is exact rather than a rescale.
+        // The artwork is rendered at this rectangle's device size.
         image-fit: fill;
     }
 
@@ -149,9 +128,8 @@ component SystemWindowControl inherits Rectangle {
     }
 }
 
-// Title bar. macOS uses native traffic lights, Linux the custom window controls
-// below, and Windows the platform's own controls over the right-hand end of the
-// bar (`SystemWindowControl`).
+// Title bar. macOS uses native traffic lights, Linux the custom controls below,
+// and Windows the platform's own controls at the right-hand end.
 export component TitleBar inherits Rectangle {
     in property <bool> macos: false;
     in property <bool> linux: false;
@@ -159,9 +137,9 @@ export component TitleBar inherits Rectangle {
     /// Whether the window is in native fullscreen, where macOS hides the
     /// traffic lights (see the leading controls below).
     in property <bool> fullscreen: false;
-    /// How much of the bar's right-hand end the platform's own window controls
-    /// take, and the controls themselves with their state. All pushed in from
-    /// `src/native/windows/caption.rs`, which is also where they are placed.
+    /// How much of the right-hand end the platform's window controls take, and
+    /// the controls with their state. Pushed in and placed by
+    /// `src/native/windows/caption.rs`.
     in property <length> window-controls-inset: 0px;
     in property <[WindowControl]> window-controls: [];
     in property <int> window-control-hovered: -1;
@@ -169,8 +147,8 @@ export component TitleBar inherits Rectangle {
     in property <string> search-placeholder;
     in property <string> search-hotkey;
     in property <string> current-page: "game";
-    /// Whether background music is on at all. Turning it off pauses the player
-    /// and closes its panel (`app/src/ui/overlays/music_player/`).
+    /// Whether background music is on at all; turning it off pauses the player and
+    /// closes its panel.
     in property <bool> music-enabled: true;
 
     callback open-home();
@@ -183,10 +161,8 @@ export component TitleBar inherits Rectangle {
     callback minimize-window();
     callback close-window();
 
-    // What the right-hand actions have to stay clear of: the custom Linux
-    // controls (78px of buttons plus an 8px gap, 86px in all) or the platform's
-    // own controls plus a 10px gap. macOS has nothing on the right, so its
-    // inset is that 10px on its own.
+    // What the right-hand actions must clear: Linux's 86px of custom controls,
+    // or the platform's controls plus a 10px gap.
     private property <length> controls-inset:
         root.linux ? 86px : root.window-controls-inset + 10px;
 
@@ -197,14 +173,11 @@ export component TitleBar inherits Rectangle {
     private property <length> right-actions-start:
         root.width - root.right-actions-width - root.controls-inset;
 
-    // The navigation glyphs are Ionicons (stroked, 512 viewbox, stroke-width 32)
-    // read out of the generated `Icons` table rather than pasted in here, so they
-    // cannot drift from the icon set. An 18px glyph on a 512 view box scales the
+    // Ionicons are 512-viewbox with stroke-width 32, so an 18px glyph scales the
     // stroke to 32 * 18 / 512 = 1.125px.
     private property <length> stroked-icon-width: 1.125px;
-    // The three Linux/Windows window-control glyphs below are *not* in the icon
-    // set -- they are drawn to the platform's own metrics, and there is no SVG
-    // for them -- so they stay literals.
+    // The window-control glyphs are not in the icon set (no SVG, platform
+    // metrics), so they stay literals.
     private property <string> minimize-icon: "M128 256H384";
     private property <string> maximize-icon: "M144 144H368V368H144Z";
     private property <string> close-icon: "M160 160L352 352M352 160L160 352";
@@ -212,10 +185,8 @@ export component TitleBar inherits Rectangle {
     height: 44px;
     background: Theme.titlebar-background.transparentize(0.2);
 
-    // The platform's own window controls (Windows), flush with the window's
-    // right edge and as tall as the bar. Outside `WindowMoveArea`: they are
-    // non-client area, so the system hit tests and clicks them, and the bar's own
-    // drag area must not sit on top of them.
+    // Windows' own window controls, flush right and as tall as the bar. Outside
+    // `WindowMoveArea`: they are non-client area, so the system hit tests them.
     if root.windows: Rectangle {
         width: root.window-controls-inset;
         height: 100%;
@@ -231,13 +202,10 @@ export component TitleBar inherits Rectangle {
         }
     }
 
-    // The drag surface is a sibling behind the controls, not their parent. As
-    // their parent, `WindowMoveArea` would see the press in its before-children
-    // filter even when a button was about to handle it, so a drag begun on the
-    // bell would move the window. Behind the controls, the button's `TouchArea`
-    // aborts the traversal first and the drag filter never runs. macOS's native
-    // title bar also turns a double-click into a zoom; that gesture is disabled
-    // in `native/macos/traffic_lights.rs`.
+    // The drag surface is a sibling behind the controls, not their parent: as a
+    // parent, `WindowMoveArea` would see a press meant for a button and drag the
+    // window. macOS's double-click-to-zoom is disabled in
+    // `native/macos/traffic_lights.rs`.
     WindowMoveArea {
         width: root.width;
         height: root.height;
@@ -249,10 +217,8 @@ export component TitleBar inherits Rectangle {
         }
     }
 
-    // Left navigation actions (settings, home). At left:16, or left:90 on
-    // macOS to clear the native traffic lights — except in fullscreen, where
-    // AppKit hides them: the controls take the corner they leave behind
-    // instead of lining up behind nothing.
+    // Left navigation actions (settings, home), at left:16, or left:90 on macOS
+    // to clear the traffic lights — except in fullscreen, where AppKit hides them.
     Rectangle {
         x: root.left-actions-start;
         width: 60px;
@@ -311,9 +277,8 @@ export component TitleBar inherits Rectangle {
         }
     }
 
-    // Sized to the text it shows and parked immediately left of the right
-    // action group, so it moves with those buttons rather than tracking the
-    // window's centre.
+    // Sized to its text and parked left of the right action group, so it moves
+    // with those buttons rather than tracking the window centre.
     Rectangle {
         width: search-bar.content-width;
         x: root.right-actions-start - 8px - self.width;
@@ -331,13 +296,8 @@ export component TitleBar inherits Rectangle {
         }
     }
 
-    // Right-side actions (news, notifications, then music). The window controls take the
-    // far right on the platforms that have them there; macOS traffic lights
-    // remain on the left.
-    //
-    // One container rather than three absolutely-placed buttons, so the news
-    // button keeps its place when the music button is absent: the container's
-    // own width shrinks by that button and its 8px gap.
+    // Right-side actions (news, notifications, then music). One container rather
+    // than three absolute buttons, so news keeps its place when music is absent.
     Rectangle {
         width: root.right-actions-width;
         height: 28px;

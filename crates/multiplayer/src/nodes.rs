@@ -17,17 +17,13 @@ const API_KEY: &str = env!("CONIC_NEXUS_API_KEY");
 
 const NODES_ENDPOINT: &str = "https://api.conicmc.app/easytier/nodes";
 
-/// A node list is not worth delaying the session over, so the request is given
-/// its own deadline rather than the shared client's unbounded one.
+/// Gives the request its own deadline rather than the shared client's unbounded
+/// one; a node list is not worth delaying the session over.
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 
-/// The node list, fetched at most once for the life of the process. It is the
-/// same for every session, so a later session — a re-opened dialog, a room left
-/// and created again — reuses this rather than asking the server again.
-///
-/// Failures are memoized too: an attempt that came back empty is not retried
-/// until the app restarts, which trades one transient outage's missing nodes for
-/// never hammering the endpoint.
+/// Fetched at most once per process, including failures: an empty result is not
+/// retried until the app restarts, so a transient outage costs its nodes but
+/// never hammers the endpoint.
 static PUBLIC_NODES: OnceCell<Vec<String>> = OnceCell::new();
 
 /// Only the field the session needs; the server also sends a name, description
@@ -37,8 +33,6 @@ struct Node {
     url: String,
 }
 
-/// The `url` of every public node the server advertises, fetched once and then
-/// served from [`PUBLIC_NODES`].
 pub(crate) async fn fetch_public_nodes() -> Vec<String> {
     if let Some(nodes) = PUBLIC_NODES.get() {
         return nodes.clone();

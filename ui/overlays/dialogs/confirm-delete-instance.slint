@@ -9,16 +9,11 @@ import { InstanceCard } from "../../components/display/instance-card.slint";
 import { Dialogs, DeleteInstanceState } from "../../globals/dialogs.slint";
 import { GameTime } from "../../globals/game.slint";
 
-// The dialog the instance settings overlay's "Delete instance" row opens.
+// The instance settings' "Delete instance" confirmation. The height comes from
+// the body's measuring layout, since `Dialog` has no `fit-content`.
 //
-// `Dialog` has no `fit-content` height mode, so the height comes from the
-// measuring layout the body is written in — the arrangement the add-account and
-// multiplayer dialogs use.
-//
-// The warning, its "游戏时间：" label and its two button labels are hard-coded
-// Chinese. The Chinese is kept as the source text of a `@tr`, so a locale without
-// an entry still reads these strings while the catalogues can translate them —
-// the treatment the four launch error dialogs already have.
+// The Chinese source text is kept inside `@tr`, so an untranslated locale still
+// reads it.
 
 component ConfirmDeleteBody inherits VerticalLayout {
     in property <length> content-width: 0px;
@@ -34,13 +29,9 @@ component ConfirmDeleteBody inherits VerticalLayout {
         font-weight: Theme.font-weight-normal;
         color: Theme.default-text-color.transparentize(0.1);
         wrap: word-wrap;
-        // A `line-height: 1.3` is deliberately not reproduced: Slint 1.18 has no
-        // CSS `line-height` — `line-height-factor` multiplies the font's *natural*
-        // line height rather than the font size, and the two are not in a fixed
-        // ratio (Comfortaa's is 1.115em, the CJK fallback this sentence actually
-        // draws with is nearer 1.4em), so one factor cannot hold both. The
-        // paragraph keeps its natural leading, like every other text in the app;
-        // see `README.md`.
+        // Slint 1.18 has no CSS `line-height`, and `line-height-factor` multiplies
+        // the natural line height, which differs between Comfortaa and the CJK
+        // fallback. The paragraph keeps its natural leading.
     }
 
     InstanceCard {
@@ -71,8 +62,7 @@ component ConfirmDeleteBody inherits VerticalLayout {
             clicked => { DeleteInstanceState.cancel(); }
         }
 
-        // The 8px between the two buttons: both stretch equally, which leaves the
-        // gap between them.
+        // The 8px gap between the equally stretched buttons.
         Rectangle {
             width: 8px;
             background: transparent;
@@ -98,13 +88,10 @@ export component ConfirmDeleteInstance inherits Rectangle {
     dialog := Dialog {
         dialog-visible: Dialogs.confirm-delete-instance-visible;
         dialog-width: 500px;
-        // `fit-content`: `Dialog` keeps 32px of its own — 16px on each side
-        // (a 1px clip and 15px of padding).
+        // `Dialog` keeps 32px of its own (16px each side).
         dialog-height: body.preferred-height + 32px;
 
-        // Sized against the slot's width, not `parent` — the elements written in
-        // a component's braces have the element they are written *in* as their
-        // parent, which here is the whole window.
+        // Sized against the slot, not `parent` (the whole window).
         body := ConfirmDeleteBody {
             content-width: dialog.content-width;
         }

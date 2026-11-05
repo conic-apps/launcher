@@ -11,16 +11,14 @@ import { AppConfig } from "../../globals/settings.slint";
 import { GameState, GameIntro } from "../../globals/game.slint";
 import { AccountListDropdown } from "account-list-dropdown.slint";
 
-// A pill-shaped footer action (account switcher / connect / new instance /
-// install pack). The label is hidden for the icon-only buttons.
+// A pill-shaped footer action; the label is hidden for icon-only buttons.
 component FooterButton inherits Rectangle {
     in property <string> icon;
     in property <bool> show-label: false;
     in property <string> label-text: "";
     callback clicked;
 
-    // 12px of padding around a 22px icon on each side; the labelled "New
-    // instance" adds an 8px gap and the label.
+    // Icon padding, plus an 8px gap and the label when labelled.
     width: root.show-label ? 54px + label.preferred-width : 46px;
     private property <length> label-width: root.show-label ? label.preferred-width : 0px;
     height: 36px;
@@ -33,12 +31,9 @@ component FooterButton inherits Rectangle {
 
     HorizontalLayout {
         alignment: center;
-        // The label is hidden on the icon-only buttons but its cell stays in the
-        // layout — and Slint gives even an *empty* `Text` a few pixels of
-        // preferred width — so both its width and its gap have to be zeroed or
-        // the icon is pushed left of centre and the button reads as
-        // right-padded only. The width is a property of its own because the
-        // button's own width needs the label's, which `visible` cannot give.
+        // An empty `Text` still has preferred width, so the label's width and
+        // gap must both zero out or the icon goes off-centre. The width is its
+        // own property because the button's width needs it.
         spacing: root.show-label ? 8px : 0px;
         cross-axis-alignment: center;
 
@@ -70,10 +65,7 @@ export component GameFooterBar inherits Rectangle {
     height: 56px;
     background: transparent;
 
-    // The bar slides up from 56px below the window over 0.6s, then its contents
-    // fade in from +10px, staggered — the avatar at 0.1s, the account name at
-    // 0.15s, connect at 0.2s. The right-hand actions run alongside the first
-    // group, so they take the same 0.1s / 0.15s beats.
+    // The bar slides up, then contents fade in from +10px, staggered.
     private property <duration> item-duration: 200ms;
     private property <length> intro-dy: GameIntro.played ? 0px : 56px;
     animate intro-dy {
@@ -81,18 +73,13 @@ export component GameFooterBar inherits Rectangle {
         easing: ease-out-quart;
     }
 
-    // The bar is drawn on top of the instance list, but a bare `Rectangle` does
-    // not take pointer events: Slint dispatches to the topmost item first and
-    // falls through to the items below whenever one ignores the event, so a
-    // press on the bar's empty area would reach the card underneath and select
-    // it. The shield swallows it; it is declared first so the controls in `body`
-    // below still get their own events.
+    // A bare `Rectangle` takes no pointer events, so presses on empty bar space
+    // would reach the card underneath. The shield swallows them; declared first
+    // so the controls in `body` still get their own events.
     shield := TouchArea {
         width: root.width;
         height: root.height;
-        // A bare `TouchArea`'s `scroll-event` defaults to `reject`, which would
-        // let the wheel through to the list, so accept it to keep the list from
-        // scrolling under the bar.
+        // Accept the wheel so the list does not scroll under the bar.
         scroll-event(event) => { accept }
     }
 
@@ -104,18 +91,12 @@ export component GameFooterBar inherits Rectangle {
         background: Theme.surface-0.transparentize(0.2);
 
         // Declared first: it is the layer under every sibling.
-        //
-        // Its opacity is 0.3, not 0.5.
         if AppConfig.show-visualizer: BeatMap {
             fill: true;
             transparent: true;
             opacity: 0.3;
-            // The visualizer fills the footer, so its box is the footer's. It is
-            // given here, at the one place that knows that box, because a
-            // percentage on a component's own root does *not* resolve against
-            // the element the instance was written in: it is evaluated before
-            // the wrapper an `if` puts around a conditional child has a size,
-            // and stays at the 100px it could not resolve.
+            // Sizes must be given here: a percentage on a conditional child's
+            // root is evaluated before its `if` wrapper has a size.
             width: parent.width;
             height: parent.height;
             resized(bar-count) => { MusicState.resized(bar-count); }
@@ -127,8 +108,7 @@ export component GameFooterBar inherits Rectangle {
             background: transparent;
 
             pill := AccountListDropdown {
-                // 28 + 56 − 16: the avatar's right edge, less the 16px the pill
-                // tucks under the circle.
+                // Avatar's right edge, less the 16px the pill tucks under it.
                 x: 68px;
                 y: -6px + self.intro-dy;
                 name: GameState.current-account-name;
@@ -184,8 +164,7 @@ export component GameFooterBar inherits Rectangle {
             background: transparent;
 
             unlogged-pill := Rectangle {
-                // 28 + 56 − 16, as the logged-in pill above: the avatar's right
-                // edge less the 16px the pill tucks under the circle.
+                // As the logged-in pill above.
                 x: 68px;
                 y: -6px + self.intro-dy;
                 width: 32px + unlogged-text.preferred-width + 16px;
@@ -246,15 +225,9 @@ export component GameFooterBar inherits Rectangle {
             }
         }
 
-        // Declared after the account layers so the avatar's circle — inset 28px
-        // from the left, overhanging the bar — is painted *over* the left 16px of
-        // the name pill it overlaps. Slint paints siblings in declaration order
-        // unless `z` is set, and the compiler ignores `z` on a component
-        // instance's root, so here the order is the z-order.
-        //
-        // The box is 56px. `AccountAvatar` insets its own 4px for the avatar's
-        // padding and border, so both sit inside those 56px and need no extra
-        // room here.
+        // Declared after the account layers so the overhanging circle paints over
+        // the name pill. The compiler ignores `z` on a component root, so
+        // declaration order is the z-order here.
         avatar-wrap := Rectangle {
             x: 28px;
             y: -18px + self.intro-dy;
@@ -276,8 +249,7 @@ export component GameFooterBar inherits Rectangle {
                 easing: ease-out-quart;
             }
 
-            // Hover grows the head, a press shrinks it; the scale is centred on
-            // the box so the circle stays put.
+            // Scale about the box centre so the circle stays put.
             transform-origin: { x: self.width / 2, y: self.height / 2 };
             transform-scale: avatar-touch.pressed ? 92% : avatar-touch.has-hover ? 104% : 100%;
             animate transform-scale {

@@ -16,8 +16,7 @@ export component MultiplayerDownloadProgress inherits VerticalLayout {
 
     init => { MultiplayerState.start-download(); }
 
-    // `display: flex; align-items: center` — the icon is the taller of the two,
-    // so the row is 50px and the message column is centred against it.
+    // The 50px icon sets the row height; the message centres against it.
     HorizontalLayout {
         height: 50px;
         spacing: 16px;
@@ -41,8 +40,7 @@ export component MultiplayerDownloadProgress inherits VerticalLayout {
                     text: MultiplayerState.download-phase-text;
                     font-size: 16px;
                     line-height-factor: 1;
-                    // The headline wraps rather than pushing the counter out of
-                    // the panel.
+                    // Wraps rather than pushing the counter out of the panel.
                     wrap: word-wrap;
                     color: Theme.default-text-color.transparentize(0.1);
                 }
@@ -68,8 +66,7 @@ export component MultiplayerDownloadProgress inherits VerticalLayout {
         }
     }
 
-    // The 16px above the button is padding below, and the row is the button
-    // itself; the 12px gap is dead for a single child.
+    // The row is the button itself; the 12px gap is dead for a single child.
     actions := HorizontalLayout {
         padding-top: 16px;
         spacing: 12px;

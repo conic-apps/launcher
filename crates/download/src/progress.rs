@@ -22,10 +22,8 @@ pub enum DownloadPhase {
 
 /// A plain reading of a [`DownloadState`], safe to cross a thread.
 ///
-/// `DownloadState` cannot be compared or moved around usefully on its own: the
-/// counters sit behind `Arc`s, so a clone shares them and always equals the
-/// original. This is the value a use case samples and reports through its
-/// [`shared::Sink`], and `PartialEq` on it is what lets a reporter drop the
+/// `DownloadState`'s counters sit behind `Arc`s, so a clone shares them and
+/// always equals the original. `PartialEq` here is what lets a reporter drop
 /// ticks where nothing moved.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct DownloadSnapshot {
@@ -78,15 +76,9 @@ impl DownloadState {
 /// How often [`watch`] samples a running download.
 pub const WATCH_INTERVAL: Duration = Duration::from_millis(100);
 
-/// Runs `work` while reporting `state` on a clock, then runs `work` to its
-/// result and reports once more.
-///
-/// This is the sampler every use case that downloads reports through: the
-/// download itself only updates the shared counters (cheap, lock-free, and free
-/// to run from several tasks at once), and the sampling and the change test live
-/// here rather than in the interface layer. `report` is called with the current
-/// snapshot immediately and then every [`WATCH_INTERVAL`], and once more after
-/// `work` resolves so the final byte count is never missed.
+/// Runs `work` while reporting `state` on a clock. `report` is called
+/// immediately, then every [`WATCH_INTERVAL`], and once more after `work`
+/// resolves so the final byte count is never missed.
 pub async fn watch<F, R>(state: &DownloadState, mut report: R, work: F) -> F::Output
 where
     F: Future,

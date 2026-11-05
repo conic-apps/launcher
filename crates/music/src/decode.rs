@@ -4,21 +4,10 @@
 
 //! Decoding a track.
 //!
-//! [`TrackSource`] streams: opening it reads the container header and nothing
-//! else, so the duration is known and playback can start immediately, and the
-//! audio itself is pulled in only as the device consumes it
-//! ([`TrackSource::decode_into`]). Seeking is a real seek on the container: the
-//! decoder is reset and the reported position moves to the target.
-//!
-//! The streaming shape matters because the alternative — reading the whole file
-//! into a `Vec` of frames before a single sample reaches the device — makes
-//! every track change cost a full-file read. With a library of lossless
-//! 16/44.1 kHz WAVs that is a hundred megabytes per switch, and a switch takes
-//! seconds.
-//!
-//! One [`TrackSource`] belongs to one thread: it owns the reader and the
-//! decoder, so it lives on the player's worker (see `player.rs`) and never on the
-//! audio callback.
+//! [`TrackSource`] streams: opening it reads only the container header, so the
+//! duration is known and playback can start immediately while audio is pulled as
+//! the device consumes it. One [`TrackSource`] belongs to one thread — the
+//! player's worker, never the audio callback.
 
 use std::path::{Path, PathBuf};
 
@@ -33,11 +22,8 @@ use symphonia::core::units::Time;
 
 use crate::error::{Error, Result};
 
-/// How many samples [`TrackSource::decode_into`] aims to append per call.
-///
-/// A call keeps decoding whole packets until it has appended at least this many
-/// samples, so it returns a little more than this, or however much is left at
-/// the end of the track.
+/// A call decodes whole packets until it has appended at least this many
+/// samples, so it returns a little more, or whatever is left at the end.
 const READ_SIZE: usize = 2048;
 
 /// A track that is opened but not yet decoded: the reader, the decoder, and
@@ -56,17 +42,12 @@ pub struct TrackSource {
     /// container does not say, which the player reads as "unknown" rather than
     /// "empty".
     duration: f64,
-    /// How far into the track the reader is, in seconds.
     position: f64,
     finished: bool,
 }
 
 impl TrackSource {
     /// Opens `path` — its container header, its decoder, nothing more.
-    ///
-    /// This is what a track change waits on, so it deliberately stops short of
-    /// decoding: on a hundred-megabyte file that is the difference between a few
-    /// milliseconds and a few seconds.
     ///
     /// The extension is only a probe hint, so a file whose name lies about its
     /// contents is still read if its magic says otherwise; what the decoders do
@@ -136,8 +117,6 @@ impl TrackSource {
         })
     }
 
-    /// How long the track is, in seconds, from the container rather than from
-    /// having decoded all of it. `0.0` when the container does not say.
     pub fn duration(&self) -> f64 {
         self.duration
     }
@@ -164,17 +143,13 @@ impl TrackSource {
         self.finished
     }
 
-    /// Decodes the next stretch of the track into `out`, appending interleaved
-    /// samples in `-32768..=32767` and returning how many it wrote.
+    /// Appends the next stretch to `out` as interleaved samples in
+    /// `-32768..=32767` and returns how many it wrote.
     ///
     /// `0` means the end of the track, but it may also mean a run of undecodable
-    /// packets was skipped — one bad frame in an MP3 is not a reason to refuse
-    /// the track. Callers should therefore keep reading until the source reports
-    /// itself [`finished`](Self::finished) rather than stopping at the first `0`.
-    ///
-    /// `out` is the caller's so that a read allocates nothing per call. It is
-    /// trimmed to whole frames on the way in and on the way out, so its contents
-    /// can be indexed by frame without a per-frame bounds check.
+    /// packets was skipped, so callers must keep reading until the source reports
+    /// itself [`finished`](Self::finished). `out` is the caller's so a read
+    /// allocates nothing per call; it is kept on whole frames.
     pub fn decode_into(&mut self, out: &mut Vec<i16>) -> Result<usize> {
         let channels = usize::from(self.channels);
         out.truncate(out.len() - out.len() % channels.max(1));
@@ -302,8 +277,6 @@ impl TrackSource {
     }
 }
 
-/// The track's length in seconds, from the container's own count of frames.
-///
 /// A file that declares no length reports `0.0`, which the player shows as an
 /// unknown duration rather than an empty track.
 fn duration_of(params: &CodecParameters, sample_rate: u32) -> f64 {

@@ -41,7 +41,6 @@ struct Server {
 
 #[interface(name = "org.SingleInstance.DBus")]
 impl Server {
-    /// Hands a later launch's command line to the running instance.
     fn execute_callback(&mut self, argv: Vec<String>, cwd: String) {
         report(&self.launches, Launch { args: argv, cwd });
     }

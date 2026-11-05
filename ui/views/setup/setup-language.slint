@@ -16,16 +16,14 @@ component LanguageButton inherits Rectangle {
     width: root.track-width;
     height: 42px;
     border-radius: 8px;
-    // Selection is tested first, then press, then hover, so a selected button
-    // never shows a pointer state. (`AccountAddSelect`'s service buttons follow
-    // the same rule.)
+    // Selection first, then press, then hover, so a selected button never shows
+    // a pointer state.
     background: root.selected ? Theme.surface-1
         : touch.pressed ? Theme.surface-1
         : touch.has-hover ? Theme.surface-0
         : transparent;
-    // Hover arrives instantly and leaves eased; selection and press ease in over
-    // 200ms. Reading the duration from the state the animation is heading for
-    // expresses that.
+    // Reading the duration from the target state gives hover-in an instant
+    // start and eases the rest.
     animate background {
         duration: root.selected || touch.pressed ? 200ms : touch.has-hover ? 0ms : 100ms;
         easing: ease;
@@ -37,9 +35,8 @@ component LanguageButton inherits Rectangle {
         text: root.label;
         vertical-alignment: center;
         horizontal-alignment: center;
-        // One pixel above the default button label size, which is rather small
-        // for a row the user reads rather than recognises. The button's own box
-        // stays 42px either way.
+        // Above the default button label size, since these are read, not
+        // recognised.
         font-size: 12px;
         font-weight: Theme.font-weight-normal;
         color: root.selected ? Theme.mauve : Theme.default-text-color.transparentize(0.1);
@@ -54,11 +51,9 @@ component LanguageButton inherits Rectangle {
     }
 }
 
-// The wizard's first screen. It has no intro of its own; the header, body and
-// footer are the only ones that animate.
+// The wizard's first screen has no intro of its own.
 export component SetupLanguage inherits VerticalLayout {
-    /// The 12 language codes, in the same order the General settings dropdown
-    /// uses.
+    /// Kept in the same order as the General settings dropdown.
     private property <[string]> codes: [
         "en_us",
         "zh_cn",
@@ -74,7 +69,6 @@ export component SetupLanguage inherits VerticalLayout {
         "pl_pl",
     ];
 
-    /// A language code as its endonym.
     pure function language-label(value: string) -> string {
         if value == "en_us" { return "English"; }
         if value == "zh_cn" { return "简体中文"; }
@@ -111,22 +105,16 @@ export component SetupLanguage inherits VerticalLayout {
         message: @tr("SetupLanguage" => "This wizard will quickly walk you through some important settings so you can start playing right away.");
     }
 
-    // The grid has to be computed here: `GridLayout` cannot do an `auto-fill`
-    // track list — its `col`/`row` bindings have to be compile-time constants —
-    // and a wrapping `FlexboxLayout` measures itself as √(total area) rather
-    // than at the width it is given, which the `ScrollView` above asks for. So
-    // the track count and the column width are worked out here instead: as many
-    // 100px tracks with 8px gaps between them as fit, each then stretched over
-    // what is left over.
+    // Computed here because `GridLayout` needs compile-time track counts and
+    // a wrapping `FlexboxLayout` measures as √(area), not at the given width.
+    // Fit as many 100px tracks as possible, then stretch them to fill.
     grid := Rectangle {
         width: 100%;
         background: transparent;
         private property <int> columns: max(1, floor((self.width + 8px) / 108px));
         private property <int> rows: ceil(root.codes.length / self.columns);
         private property <length> track-width: (self.width - (self.columns - 1) * 8px) / self.columns;
-        // The 16px `margin-top` is folded into the box rather than taken as a
-        // padding: a `Rectangle` has no padding, and the first row would have to
-        // carry it on its own.
+        // A `Rectangle` has no padding, so the 16px top margin is in the height.
         height: 16px + self.rows * 42px + (self.rows - 1) * 8px;
 
         for code[index] in root.codes: LanguageButton {

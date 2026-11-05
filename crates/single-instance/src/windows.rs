@@ -137,7 +137,6 @@ pub(crate) fn claim(launches: Sender<Launch>) -> Result<Guard, AlreadyRunning> {
     }
 }
 
-/// Looks for the primary's window, waiting briefly for one that is on its way.
 fn find_window(class_name: &[u16], window_name: &[u16]) -> Option<HWND> {
     let deadline = Instant::now() + WINDOW_WAIT;
     loop {
@@ -152,7 +151,6 @@ fn find_window(class_name: &[u16], window_name: &[u16]) -> Option<HWND> {
     }
 }
 
-/// Registers the window class and creates the hidden message window.
 fn create_window(class_name: &[u16], window_name: &[u16]) -> Result<HWND, std::io::Error> {
     unsafe {
         let class = WNDCLASSEXW {
@@ -308,8 +306,6 @@ impl Drop for Guard {
     }
 }
 
-/// The calling thread's id, which the window wants to compare against the
-/// thread that created it.
 fn current_thread() -> u32 {
     unsafe { GetCurrentThreadId() }
 }
@@ -325,7 +321,7 @@ fn lock_launches() -> std::sync::MutexGuard<'static, Option<Sender<Launch>>> {
         .unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
-/// Encodes a string as a Win32 name, which is a NUL terminated UTF-16 sequence.
+/// A Win32 name: a NUL-terminated UTF-16 sequence.
 fn wide(string: &str) -> Vec<u16> {
     OsStr::new(string)
         .encode_wide()

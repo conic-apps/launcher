@@ -32,12 +32,10 @@ use crate::{
     ModLoaderProgress, ModLoaderReporter, error::*, vanilla::generate_libraries_downloads,
 };
 
-/// A list of Forge versions for a given Minecraft version.
 #[derive(Clone, Deserialize, Serialize)]
 pub struct ForgeVersionList(HashMap<String, Vec<String>>);
 
 impl ForgeVersionList {
-    /// Fetches every Forge version, keyed by Minecraft version.
     pub async fn new() -> Result<Self> {
         let mut list: Self = HTTP_CLIENT
             .get("https://files.minecraftforge.net/net/minecraftforge/forge/maven-metadata.json")
@@ -158,7 +156,6 @@ pub async fn install(
     )
 }
 
-/// Downloads the Forge installer JAR to a temporary file and returns its path.
 pub async fn download_installer(
     mcversion: &str,
     forge_version: &str,
@@ -308,7 +305,6 @@ async fn wait_child(mut child: Child, reporter: &ModLoaderReporter) -> Result<()
     let success = Arc::new(AtomicBool::new(false));
 
     let stdout_pump = pump_lines(stdout, pid, reporter, Some(Arc::clone(&success)));
-    // stderr is optional: a caller that did not pipe it hands back `None`.
     let stderr_pump = async {
         match stderr {
             Some(stderr) => pump_lines(stderr, pid, reporter, None).await,

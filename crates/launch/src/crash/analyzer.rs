@@ -4,20 +4,14 @@
 
 //! Recognising why a game crashed.
 //!
-//! A port of HMCL's `CrashReportAnalyzer` (GPL-3.0), whose rule table is the
-//! collected experience of several years of Minecraft crash reports. Each rule
-//! is a regex over the game's output; the first match per rule becomes a
-//! [`Reason`] that names the rule and carries the groups it captured (a mod id,
-//! an expected Java version, a file, …).
+//! A port of HMCL's `CrashReportAnalyzer` (GPL-3.0): each rule is a regex over
+//! the game's output, and the first match becomes a [`Reason`] carrying the
+//! captured groups. The crash report is found from the game's own
+//! `#@!@# Game crashed! Crash report saved to:` line rather than by modified
+//! time, which can surface a report from an earlier run.
 //!
-//! The module also finds the crash report itself the way HMCL does: from the
-//! game's own `#@!@# Game crashed! Crash report saved to:` line (exact path),
-//! or, failing that, extracted from the captured console output. This avoids
-//! guessing by modified time, which can surface a report from an earlier run.
-//!
-//! Two Java-only constructs are spelled out for Rust's `regex`: `\R` (any line
-//! break) becomes `\r?\n`, and the named-group syntax is the same
-//! `(?<name>…)`.
+//! Two Java-only constructs are spelled out for Rust's `regex`: `\R` becomes
+//! `\r?\n`, and named groups use the same `(?<name>…)` syntax.
 
 use std::{
     collections::BTreeSet,

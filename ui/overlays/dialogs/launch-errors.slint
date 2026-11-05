@@ -9,14 +9,10 @@ import { AppIcon } from "../../components/display/app-icon.slint";
 import { Dialogs } from "../../globals/dialogs.slint";
 import { Navigation } from "../../globals/navigation.slint";
 
-// The four dialogs the launch view raises before/while starting.
+// The four dialogs the launch view raises. Each is a warning icon, a message and
+// a "Cancel launch" button that hides it and goes back.
 //
-// They share one shape: a 50px warning icon, the message beside it and a
-// full-width "Cancel launch" button below, which hides the dialog and goes back.
-//
-// The four sentences are hard-coded English. The English is kept as the source
-// text of a `@tr`, so a locale without an entry still reads these strings while
-// the catalogues can translate them.
+// The English source text is kept inside `@tr`, so an untranslated locale reads it.
 export component LaunchErrorDialogs inherits Rectangle {
     width: 100%;
     height: 100%;

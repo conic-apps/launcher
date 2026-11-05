@@ -2,12 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The notification for a newly published Minecraft version.
-//!
-//! Like the self-update check, this runs once at startup in the background. The
-//! comparison and the record of what was already shown live in
-//! [`crate::usecases::minecraft_update`]; this module only turns a published
-//! version into a notice whose action opens that version's wiki page.
+//! The startup notification for a newly published Minecraft version whose
+//! action opens that version's wiki page. The comparison and the record of what
+//! was already shown live in [`crate::usecases::minecraft_update`].
 
 use std::{cell::RefCell, rc::Rc};
 

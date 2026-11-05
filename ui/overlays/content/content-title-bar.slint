@@ -5,16 +5,7 @@
 import { Theme } from "../../theme.slint";
 import { AppIcon } from "../../components/display/app-icon.slint";
 
-// The panels' header row: a 52px mantle bar with the panel's icon, its title,
-// and — on the panels that can show content from more than one place — the
-// source switcher pushed to the right.
-//
-// The switcher is 40x32 buttons in a 4px-gapped row, each tinted by the source
-// it selects (blue for local, Modrinth's green, CurseForge's peach) and backed
-// by `surface2` while active.
-//
-// The local button draws a stroked glyph, the two platform marks are filled,
-// which is `AppIcon`'s stroke/fill split.
+// A source switcher button: tinted by its source, `surface2` while active.
 component SourceButton inherits Rectangle {
     in property <string> source: "";
     in property <bool> active: false;
@@ -37,8 +28,7 @@ component SourceButton inherits Rectangle {
         name: root.source == "local" ? "file-tray-full-outline"
             : root.source == "modrinth" ? "modrinth"
             : "curseforge";
-        // The Modrinth mark is a 593-unit view box and reads a size larger than
-        // the 512-unit ionicons at the same number, so it is drawn 3px smaller.
+        // Modrinth's 593-unit view box reads larger than the 512-unit icons.
         size: root.source == "modrinth" ? 18px : 24px;
         icon-color: root.tint;
     }
@@ -55,11 +45,10 @@ export component ContentTitleBar inherits Rectangle {
     in property <string> icon: "";
     in property <length> icon-size: 20px;
     in property <string> title: "";
-    /// Gap below the bar. Only the saves panel sets one; the others leave it at
-    /// 0.
+    /// Only the saves panel sets a gap below the bar.
     in property <length> title-gap: 0px;
-    /// "" when the panel has a single source. Otherwise the switcher is drawn
-    /// with `sources` — "local", "modrinth", "curseforge".
+    /// Empty for a single-source panel; otherwise "local", "modrinth",
+    /// "curseforge".
     in property <[string]> sources: [];
     in property <string> active-source: "";
 
@@ -70,10 +59,8 @@ export component ContentTitleBar inherits Rectangle {
     background: transparent;
 
     bar := Rectangle {
-        // Pinned to the top on purpose: without a `y` a child is centred, which
-        // split `title-gap` into an equal gap above and below the bar — a band
-        // of the panel's `base` over the header and a shorter gap under it. The
-        // gap is meant to be *below* the bar, between it and what follows.
+        // Pinned to the top: a centered child would split `title-gap` above and
+        // below, but the gap belongs below the bar.
         x: 0;
         y: 0;
         width: parent.width;
@@ -81,8 +68,7 @@ export component ContentTitleBar inherits Rectangle {
         background: Theme.mantle;
         clip: true;
 
-        // The title takes what the buttons leave, and the row is pushed against
-        // the right padding edge by the spacer.
+        // The title takes what the buttons leave; the spacer pushes them right.
         HorizontalLayout {
             padding-left: 32px;
             padding-right: 32px;
@@ -105,9 +91,8 @@ export component ContentTitleBar inherits Rectangle {
             }
 
             switcher := HorizontalLayout {
-                // The buttons' own 32px, and their width is what they measure —
-                // a layout with no `width` of its own takes its parent's, which
-                // would run them back over the title.
+                // Without an explicit width a layout takes its parent's, which
+                // would run the buttons back over the title.
                 height: 32px;
                 vertical-stretch: 0;
                 spacing: 4px;

@@ -54,7 +54,7 @@ impl LoaderArtifactList {
             .await?)
     }
 
-    /// The loader artifacts, in the order the Fabric meta API returned them.
+    /// Ordered as the Fabric meta API returned them.
     pub fn as_slice(&self) -> &[FabricLoaderArtifact] {
         &self.0
     }

@@ -4,65 +4,19 @@
 
 //! Keeps the native AppKit traffic lights aligned with the custom title bar.
 //!
-//! # Why the buttons are not moved by hand
+//! AppKit owns the buttons' geometry and discards direct frame writes on every
+//! layout pass, so this answers the metrics AppKit asks for instead: `NSWindow`'s
+//! `+frameViewClassForStyleMask:` is swizzled to hand out a `ConicThemeFrame`
+//! subclass whose `-_titlebarHeight`, `-_minXTitlebarWidgetInset` and
+//! `-_shouldCenterTrafficLights` place the buttons. The pitch stays AppKit's.
 //!
-//! The buttons' geometry belongs to AppKit: every titlebar layout pass
-//! re-derives the `NSTitlebarContainerView`'s frame and the buttons' positions
-//! from its own metrics, discarding anything written with `setFrame:`. Moving
-//! the frames and re-applying them from notification callbacks (what Electron
-//! still does) therefore always races AppKit's layout — and it loses exactly
-//! when it matters: during the window open animation, and while swiping between
-//! Spaces the window is composited by the window server,
-//! `NSWindowDidUpdateNotification` is not delivered, and the reverted geometry
-//! is what ends up on screen.
+//! Fullscreen hides the buttons; [`watch_fullscreen`] reports that to the UI.
+//! [`install_titlebar_guard`] removes AppKit's double-click zoom so the custom
+//! bar can handle it.
 //!
-//! Chromium hit the same thing and changed model: rather than writing a
-//! position, it answers the *metrics* AppKit asks for, and AppKit lays the
-//! buttons out itself. Nothing is stored that AppKit could reset, so the
-//! geometry survives every animation by construction.
-//!
-//! # How
-//!
-//! `NSWindow` asks `+frameViewClassForStyleMask:` which class to use as its
-//! frame view (AppKit's answer is `NSThemeFrame`). We swizzle that to hand out
-//! `ConicThemeFrame` for titled windows, and register four AppKit methods on
-//! that subclass — added through the runtime so no symbol is referenced at link
-//! time. Three are private SPI; `setStyleMask:` overrides a public one:
-//!
-//! | selector | answer |
-//! |---|---|
-//! | `-_titlebarHeight` | [`TITLEBAR_HEIGHT`], or AppKit's own value in fullscreen |
-//! | `-_minXTitlebarWidgetInset` | [`WIDGET_INSET_X`] |
-//! | `-_shouldCenterTrafficLights` | `YES` — centres the buttons vertically inside that height |
-//! | `-setStyleMask:` | records the fullscreen bit, then forwards to AppKit |
-//!
-//! The pitch between buttons stays AppKit's own rather than being hardcoded.
-//!
-//! # When the buttons are not there
-//!
-//! Native fullscreen hides them (AppKit hides the whole titlebar container), so
-//! the title bar stops having to leave room for them: [`watch_fullscreen`]
-//! reports the state into the UI, which is what moves the leading controls back
-//! into the corner they occupy on every other platform.
-//!
-//! # Title bar gestures
-//!
-//! The native title bar owns the whole top strip and turns a double-click there
-//! into a zoom before Slint's hit testing sees the press. The custom bar has
-//! controls of its own there and already handles double-clicking through its
-//! `TouchArea`, so [`install_titlebar_guard`] removes AppKit's owner of that
-//! gesture; otherwise a quick double-click on the bell maximised the window.
-//!
-//! # Keeping the fallback honest
-//!
-//! The three metric selectors are private API, so [`install()`] arms a one-shot
-//! self-check: it asks the window for its frame-view class and measures the
-//! close button. If the metric route did not take (no `NSThemeFrame`, renamed
-//! selector, AppKit ignoring the overrides), the check installs
-//! [`install_fallback`] — the frame-writing approach, hardened by deriving its
-//! geometry from AppKit instead of hardcoding it. Setting
-//! `CONIC_FORCE_TRAFFIC_LIGHT_FALLBACK=1` selects that path up front, so it can
-//! be exercised without patching the SPI out.
+//! The metric selectors are private API, so [`install()`] self-checks and falls
+//! back to writing frames if they stop working. Set
+//! `CONIC_FORCE_TRAFFIC_LIGHT_FALLBACK=1` to exercise that path.
 
 use std::cell::{Cell, RefCell};
 use std::ffi::{CStr, c_void};
@@ -81,13 +35,10 @@ use objc2_foundation::{
     CGPoint, CGRect, NSNotification, NSNotificationCenter, NSString, ns_string,
 };
 
-/// Height of the custom title bar in `ui/components/title-bar.slint`.
-///
-/// Answering this from `-_titlebarHeight` is what fixes the buttons'
-/// vertical position: AppKit centres them inside it.
+/// Height of the custom title bar in `ui/components/title-bar.slint`; AppKit
+/// centres the buttons inside it.
 const TITLEBAR_HEIGHT: f64 = 44.0;
 
-/// Left edge of the close button.
 const WIDGET_INSET_X: f64 = 16.0;
 
 /// `NSWindowStyleMaskTitled`.
@@ -98,9 +49,7 @@ const STYLE_MASK_FULLSCREEN: usize = 1 << 14;
 /// `NSWindowCloseButton`; miniaturize and zoom follow it.
 const CLOSE_BUTTON: usize = 0;
 
-/// How often AppKit asked for each metric. Only read by the self-check's
-/// diagnostics, and the quickest way to see which override a future macOS
-/// stopped consulting.
+// Call counters for the self-check diagnostics.
 static TITLEBAR_HEIGHT_CALLS: AtomicUsize = AtomicUsize::new(0);
 static WIDGET_INSET_CALLS: AtomicUsize = AtomicUsize::new(0);
 static CENTER_TRAFFIC_LIGHTS_CALLS: AtomicUsize = AtomicUsize::new(0);
@@ -108,44 +57,30 @@ static STYLE_MASK_CALLS: AtomicUsize = AtomicUsize::new(0);
 
 const EXPECTED_CENTER_Y: f64 = TITLEBAR_HEIGHT / 2.0;
 
-/// Self-check tolerance, in points: AppKit rounds to the backing store.
+/// AppKit rounds to the backing store.
 const CHECK_TOLERANCE: f64 = 1.5;
-/// How long the self-check waits for AppKit to settle before giving up on the
-/// metric route.
 const CHECK_TIMEOUT: Duration = Duration::from_millis(1000);
 
-/// A borrowed Objective-C object.
 type Id = *mut AnyObject;
-/// An Objective-C selector.
 type SelPtr = *const ffi::objc_selector;
 
-/// A `+frameViewClassForStyleMask:` implementation.
 type FrameViewClassImp =
     unsafe extern "C" fn(*const ffi::objc_class, SelPtr, usize) -> *mut ffi::objc_class;
-/// A `-_titlebarHeight` implementation.
 type TitlebarHeightImp = unsafe extern "C" fn(Id, SelPtr) -> f64;
-/// A `-setStyleMask:` implementation.
 type SetStyleMaskImp = unsafe extern "C" fn(Id, SelPtr, usize);
 
-/// `+[NSWindow frameViewClassForStyleMask:]` as AppKit implemented it, kept so
-/// untitled windows still get AppKit's own frame view.
+/// AppKit's original implementation, kept for untitled windows.
 static ORIGINAL_FRAME_VIEW_CLASS_IMP: AtomicPtr<c_void> = AtomicPtr::new(ptr::null_mut());
 /// The `ConicThemeFrame` class, or null while the metric route is unavailable.
 static THEME_FRAME_CLASS: AtomicPtr<ffi::objc_class> = AtomicPtr::new(ptr::null_mut());
-/// `-[NSThemeFrame _titlebarHeight]`, for the fullscreen branch.
 static SUPER_TITLEBAR_HEIGHT_IMP: AtomicPtr<c_void> = AtomicPtr::new(ptr::null_mut());
-/// `-[NSThemeFrame setStyleMask:]`, which our override forwards to.
 static SUPER_SET_STYLE_MASK_IMP: AtomicPtr<c_void> = AtomicPtr::new(ptr::null_mut());
 
-/// Key for the style mask recorded by [`set_style_mask_override`]. Its address is the
-/// key, so the value never needs to be read.
+/// Used only as an associated-object key, so the value is never read.
 static STYLE_MASK_KEY: u8 = 0;
 
-/// Installs the mechanism that keeps the traffic lights in place.
-///
-/// Must run *before the first `NSWindow` exists*: the frame-view class is chosen
-/// during `NSWindow` initialisation, so a window created earlier would keep
-/// AppKit's own frame view and never see our metrics.
+/// Installs the traffic-light mechanism. Must run before the first `NSWindow`
+/// exists: the frame-view class is chosen during `NSWindow` initialisation.
 pub fn install() {
     install_titlebar_guard();
     if std::env::var_os("CONIC_FORCE_TRAFFIC_LIGHT_FALLBACK").is_some() {
@@ -175,17 +110,7 @@ pub fn install() {
 }
 
 /// Keeps the UI's `window-fullscreen` flag in step with the window, so the title
-/// bar knows whether the traffic lights are there to leave room for.
-///
-/// The state comes from the notifications rather than a poll: AppKit hides the
-/// buttons at the end of the fullscreen transition, and the layout has to flip
-/// with them — a poll would leave the controls hanging where the buttons were
-/// until its next tick. The app always starts windowed, so there is no initial
-/// value to read.
-///
-/// The notification's window is asked for its style mask rather than trusting
-/// the notification's name, because that mask is what AppKit's own hiding
-/// follows — and the app has exactly one window that can go fullscreen.
+/// bar knows whether to leave room for the traffic lights.
 pub fn watch_fullscreen(ui: &crate::slint_backend::App) {
     use slint::ComponentHandle;
 
@@ -213,22 +138,16 @@ pub fn watch_fullscreen(ui: &crate::slint_backend::App) {
     log::debug!(target: "shell", "traffic lights: watching the fullscreen state");
 }
 
-/// Registers `ConicThemeFrame` (an `NSThemeFrame` subclass) and makes `NSWindow`
-/// hand it out for titled windows.
-///
-/// Returns `false` — having changed nothing — when the private API this relies
-/// on is not there, so the caller can fall back.
+/// Registers `ConicThemeFrame` and makes `NSWindow` hand it out for titled
+/// windows. Returns `false`, changing nothing, if the private API is missing.
 fn install_theme_frame_class() -> bool {
-    // SAFETY: every step below goes through the Objective-C runtime, and the
-    // whole function runs on the main thread before any window exists.
+    // SAFETY: runtime calls on the main thread before any window exists.
     unsafe {
         let theme_frame = ffi::objc_getClass(c"NSThemeFrame".as_ptr());
         if theme_frame.is_null() {
             return false;
         }
 
-        // The implementations we forward to. If a future macOS renames either
-        // selector we want to know now, not at layout time.
         let Some(super_titlebar_height) = method_implementation(theme_frame, c"_titlebarHeight")
         else {
             return false;
@@ -276,9 +195,8 @@ fn install_theme_frame_class() -> bool {
             return false;
         }
 
-        // AppKit consults `+frameViewClassForStyleMask:` on `NSWindow` itself,
-        // and winit's `WinitWindow` subclass does not override it, so taking the
-        // method over on `NSWindow` reaches our window.
+        // winit's `WinitWindow` does not override this, so taking it over on
+        // `NSWindow` reaches our window.
         let style_mask_sel = ffi::sel_registerName(c"frameViewClassForStyleMask:".as_ptr());
         let Some(factory) =
             (ffi::class_getClassMethod(ffi::objc_getClass(c"NSWindow".as_ptr()), style_mask_sel))
@@ -293,10 +211,6 @@ fn install_theme_frame_class() -> bool {
         };
         let Some(original) = ffi::method_getImplementation(factory) else {
             ffi::objc_disposeClassPair(subclass);
-            // Not the same failure as the check above: the selector is there and
-            // answers nothing. Swallowing it made a renamed or already-swizzled
-            // `+[NSWindow frameViewClassForStyleMask:]` report itself as "NSThemeFrame
-            // is unavailable", which sends the reader after the wrong cause.
             log::warn!(
                 target: "shell",
                 "traffic lights: +[NSWindow frameViewClassForStyleMask:] has no \
@@ -319,18 +233,11 @@ fn install_theme_frame_class() -> bool {
     }
 }
 
-/// Registers `implementation` for `selector` on `cls`.
+/// Registers `implementation` for `selector` on `cls`; `types` is the Objective-C
+/// type encoding and must match the function signature.
 ///
-/// `types` is the Objective-C type encoding, and it is what tells the runtime
-/// how to call the implementation — so it has to match the function's signature.
-///
-/// The cast is not noise. `class_addMethod` returns an Objective-C `BOOL`,
-/// which `objc-sys` types as `bool` on arm64 (where C's `BOOL` is `_Bool`) and
-/// as `i8` on x86_64 (where it is `signed char`). Returning the value directly
-/// therefore compiles on Apple Silicon and fails on Intel with
-/// `expected bool, found i8`; and testing it against `0` fails the other way,
-/// because Rust has no `PartialEq<i8>` for `bool`. Going through `i8` is what
-/// satisfies both — `bool as i8` is `0` or `1`, and so is every `BOOL`.
+/// The `i8` round-trip covers both arm64 (`bool`) and x86_64 (`i8`) spellings of
+/// Objective-C's `BOOL`.
 fn add_method(
     cls: *mut ffi::objc_class,
     selector: &CStr,
@@ -350,11 +257,7 @@ fn add_method(
     }
 }
 
-/// Re-types a method implementation for the untyped `IMP` the runtime stores.
-///
-/// The real signature lives in the type encoding passed alongside it; nothing
-/// checks the two against each other, which is why every call site spells the
-/// encoding out.
+/// Re-types a method implementation for the runtime's untyped `IMP`.
 fn as_imp(implementation: *const c_void) -> ffi::IMP {
     if implementation.is_null() {
         return None;
@@ -364,22 +267,10 @@ fn as_imp(implementation: *const c_void) -> ffi::IMP {
     Some(unsafe { std::mem::transmute::<*const c_void, unsafe extern "C" fn()>(implementation) })
 }
 
-/// Suppresses the native title bar's double-click zoom.
-///
-/// The custom bar draws its controls over a native title bar that still owns
-/// the top strip. AppKit turns a double-click there into a zoom before Slint's
-/// hit testing ever sees the press, so a quick double-click on the bell
-/// maximised the window even though the bell had handled the clicks. The bar
-/// already gives double-clicking to its own `TouchArea` (fullscreen on macOS),
-/// so the native owner of that gesture is removed here rather than shadowed.
-///
-/// Dragging is not touched: a `WindowMoveArea` starts it through
-/// `performWindowDragWithEvent`, while AppKit's title-bar drag is a separate
-/// gesture with no reliable point to interpose on.
+/// Removes AppKit's double-click zoom so the custom title bar can handle it
+/// before Slint sees the press. Dragging is untouched.
 fn install_titlebar_guard() {
-    // SAFETY: every step goes through the Objective-C runtime on the main
-    // thread, before the window exists. Missing selectors are reported rather
-    // than assumed, since they are private API.
+    // SAFETY: runtime calls on the main thread before the window exists.
     unsafe {
         let window = ffi::objc_getClass(c"NSWindow".as_ptr());
         if window.is_null() {
@@ -413,16 +304,11 @@ fn install_titlebar_guard() {
 /// `-[NSWindow zoom:]` / `-performZoom:`: the native title bar's double-click.
 unsafe extern "C" fn suppress_titlebar_zoom(_this: Id, _cmd: SelPtr, _sender: Id) {}
 
-/// `-[NSThemeFrame _titlebarHeight]`: how tall the title bar is.
-///
-/// This is the one that moves the buttons vertically — see
-/// [`should_center_traffic_lights`].
+/// `-[NSThemeFrame _titlebarHeight]`.
 unsafe extern "C" fn titlebar_height(this: Id, cmd: SelPtr) -> f64 {
     TITLEBAR_HEIGHT_CALLS.fetch_add(1, Ordering::Relaxed);
-    // Fullscreen keeps AppKit's own height: as Chromium notes, overriding it
-    // unconditionally gets in the way of how immersive fullscreen works. The
-    // style mask is not reliable at query time (AppKit may still report the
-    // windowed mask mid-transition), hence the recorded bit.
+    // Fullscreen keeps AppKit's height. The live style mask is unreliable
+    // mid-transition, so the recorded bit is used instead.
     let super_imp = SUPER_TITLEBAR_HEIGHT_IMP.load(Ordering::Relaxed);
     if !super_imp.is_null() && unsafe { is_fullscreen(this) } {
         let original: TitlebarHeightImp = unsafe { std::mem::transmute(super_imp) };
@@ -431,17 +317,15 @@ unsafe extern "C" fn titlebar_height(this: Id, cmd: SelPtr) -> f64 {
     TITLEBAR_HEIGHT
 }
 
-/// `-[NSThemeFrame _minXTitlebarWidgetInset]`: left edge of the close button.
+/// `-[NSThemeFrame _minXTitlebarWidgetInset]`.
 unsafe extern "C" fn min_x_titlebar_widget_inset(_this: Id, _cmd: SelPtr) -> f64 {
     WIDGET_INSET_CALLS.fetch_add(1, Ordering::Relaxed);
     WIDGET_INSET_X
 }
 
-/// `-[NSThemeFrame _shouldCenterTrafficLights]`: centre the buttons inside
-/// [`TITLEBAR_HEIGHT`] (44 / 2 = 22) instead of pinning them to its top edge.
+/// `-[NSThemeFrame _shouldCenterTrafficLights]`: `YES`.
 unsafe extern "C" fn should_center_traffic_lights(_this: Id, _cmd: SelPtr) -> i8 {
     CENTER_TRAFFIC_LIGHTS_CALLS.fetch_add(1, Ordering::Relaxed);
-    // `BOOL` on Apple platforms: `YES`.
     1
 }
 
@@ -484,7 +368,6 @@ unsafe extern "C" fn frame_view_class(
     unsafe { original(cls, cmd, style_mask) }
 }
 
-/// Whether the style mask [`set_style_mask_override`] recorded says fullscreen.
 unsafe fn is_fullscreen(frame: Id) -> bool {
     let recorded = unsafe {
         ffi::objc_getAssociatedObject(
@@ -504,10 +387,7 @@ unsafe fn is_fullscreen(frame: Id) -> bool {
     style_mask & STYLE_MASK_FULLSCREEN != 0
 }
 
-/// Replaces the implementation of `name` on `cls`.
-///
-/// Returns `false` and leaves the class alone when the selector is missing, so
-/// a renamed private method is visible in the log instead of silently skipped.
+/// Replaces `name` on `cls`; `false` if the selector is missing.
 unsafe fn set_method_implementation(
     cls: *const ffi::objc_class,
     name: &CStr,
@@ -522,10 +402,7 @@ unsafe fn set_method_implementation(
     true
 }
 
-/// Looks up a method's implementation, or `None` if the selector is gone.
-///
-/// Both a missing selector and a null implementation come back as `None`, so
-/// call sites can treat "AppKit does not implement this any more" the same way.
+/// A method's implementation, or `None` if the selector is gone.
 unsafe fn method_implementation(cls: *const ffi::objc_class, name: &CStr) -> ffi::IMP {
     let method = unsafe { ffi::class_getInstanceMethod(cls, ffi::sel_registerName(name.as_ptr())) };
     if method.is_null() {
@@ -546,11 +423,8 @@ fn imp_to_ptr(imp: ffi::IMP) -> *mut c_void {
     }
 }
 
-/// Arms the one-shot check that decides whether the metric route reaches AppKit.
-///
-/// The structural half is decisive and runs on the first visible update; the
-/// geometric half waits for AppKit to settle, because an override that is
-/// consulted but ignored would still leave the buttons in the wrong place.
+/// Arms the one-shot check that decides whether the metric route works. The
+/// structural check runs once; the geometric one waits for AppKit to settle.
 fn arm_self_check() {
     let started = Rc::new(Cell::new(None::<Instant>));
     let settled = Rc::new(Cell::new(false));
@@ -594,8 +468,7 @@ fn arm_self_check() {
         if (observed.x - WIDGET_INSET_X).abs() > CHECK_TOLERANCE
             || (observed.center_y - EXPECTED_CENTER_Y).abs() > CHECK_TOLERANCE
         {
-            // Not necessarily broken yet: AppKit may not have laid the titlebar
-            // out since the window appeared. Keep waiting until the timeout.
+            // AppKit may not have laid the titlebar out yet; wait for the timeout.
             return;
         }
 

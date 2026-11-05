@@ -8,17 +8,9 @@ import { TooltipArea } from "../../components/controls/tooltip-area.slint";
 import { GameTime } from "../../globals/game.slint";
 import { NewsCard as CardData, NewsText } from "../../globals/news.slint";
 
-// One card of the news flow.
-//
-// The flow is two feeds in one column, and the two feeds carry different
-// pictures — a news entry a 772×350 banner, a changelog a 540×540 square — so
-// the card has two shapes. The shape follows the image's own aspect ratio,
-// which Rust passes as `image-ratio`: a banner stacks picture over copy, a
-// square sits picture beside copy.
-//
-// The card's `height` is computed in Rust: the flow positions every card
-// absolutely so it can cull the ones outside the viewport, and the height is
-// part of that stacking.
+// One card of the news flow. The two feeds have different image shapes, so a
+// banner stacks picture over copy and a square sits picture beside copy. Heights
+// are computed in Rust because the flow positions cards absolutely for culling.
 
 component CardMedia inherits Rectangle {
     in property <image> source;
@@ -31,9 +23,7 @@ component CardMedia inherits Rectangle {
         width: 100%;
         height: 100%;
         source: root.source;
-        // The picture fills the box it is given, cropping whatever does not fit
-        // rather than leaving bands: the banner is a fixed height and the row's
-        // thumbnail is a square, and neither should letterbox.
+        // Crops rather than letterboxing.
         image-fit: cover;
         opacity: root.loading ? 0.0 : 1.0;
         animate opacity {
@@ -51,9 +41,6 @@ component CardMedia inherits Rectangle {
 }
 
 // A news entry: the wide banner across the top, then the copy.
-//
-// The banner's height is its own width over the image's ratio, so the picture
-// is shown at its native proportions and the card grows with the panel.
 export component NewsBannerCard inherits Rectangle {
     in property <CardData> card;
     callback clicked;
@@ -69,8 +56,7 @@ export component NewsBannerCard inherits Rectangle {
         easing: ease-out;
     }
 
-    /// The banner's fixed height. `layout::NEWS_MEDIA_HEIGHT` in Rust is the
-    /// same 200, and the card's `height` is this plus the copy block.
+    /// Matches `layout::NEWS_MEDIA_HEIGHT` in Rust.
     private property <length> media-height: 200px;
 
     CardMedia {
@@ -83,9 +69,7 @@ export component NewsBannerCard inherits Rectangle {
         border-radius: 8px;
     }
 
-    // The date, as a translucent crust capsule over the banner's top-right
-    // corner. It is declared after the media so it paints over it, and inset by
-    // 12px from the edges.
+    // Declared after the media so it paints over the banner's corner.
     date-chip := Rectangle {
         x: parent.width - self.width - 12px;
         y: 12px;
@@ -95,8 +79,7 @@ export component NewsBannerCard inherits Rectangle {
         background: Theme.crust.with-alpha(0.65);
 
         chip-label := Text {
-            // The app's one localized absolute date, which reorders for a
-            // language whose date reads year-first.
+            // The localized absolute date; it reorders for year-first languages.
             text: GameTime.year-month-day(
                 root.card.date-month,
                 root.card.date-day,
@@ -115,8 +98,7 @@ export component NewsBannerCard inherits Rectangle {
         height: parent.height - root.media-height;
         background: transparent;
 
-        // 110px of copy: 12 + 22 (title) + 4 + 16 (meta) + 4 + 40 (blurb) + 12.
-        // Rust's `BANNER_INFO_HEIGHT` is the same number.
+        // Matches Rust's `BANNER_INFO_HEIGHT`.
         VerticalLayout {
             padding-left: 16px;
             padding-right: 16px;
@@ -160,9 +142,8 @@ export component NewsBannerCard inherits Rectangle {
         clicked => { root.clicked(); }
     }
 
-    // A news card opens its article in the system browser (a changelog opens in
-    // the panel instead, so only this shape carries the hint). The card owns its
-    // own `touch`, so the hover comes from there and the built-in area is off.
+    // Only this shape opens in the browser, so only it carries the hint. The card
+    // owns its touch, so hover comes from there.
     TooltipArea {
         text: @tr("View in browser");
         hovered: card-touch.has-hover;
@@ -186,8 +167,7 @@ export component NewsRowCard inherits Rectangle {
         easing: ease-out;
     }
 
-    // The image is as wide as it is tall times its ratio — a square here — and
-    // fills the card's height.
+    // Tall times ratio — a square here — and full card height.
     private property <length> media: root.height * root.card.image-ratio;
 
     CardMedia {
@@ -207,9 +187,7 @@ export component NewsRowCard inherits Rectangle {
         height: parent.height;
         background: transparent;
 
-        // The release / snapshot tag, the version and the date, on one line. The
-        // tag leads, the version takes the middle and the date is pushed to the
-        // trailing edge.
+        // Tag, version and date on one line.
         HorizontalLayout {
             x: 0;
             y: 8px;
@@ -233,10 +211,8 @@ export component NewsRowCard inherits Rectangle {
                 }
             }
 
-            // The version takes the space the date leaves, so the date lands on
-            // the trailing edge and a long version elides rather than pushing it
-            // off the card. `horizontal-stretch` defaults to 1, so the date has
-            // to say 0 explicitly to stay its own width.
+            // The version takes the slack and elides; the date says stretch 0
+            // explicitly because the default is 1.
             Text {
                 horizontal-stretch: 1;
                 text: root.card.title;

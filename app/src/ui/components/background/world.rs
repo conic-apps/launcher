@@ -2,29 +2,22 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The world render pass: projects the `Scene`'s faces and draws them.
-//!
-//! Two halves: the fills (blended, writing depth, far to near in emission
-//! order, with the ground quad first), then the outlines — screen-space quads
-//! two device pixels wide, `LEQUAL`, replacing whatever they land on.
+//! The world render pass: projects the `Scene`'s faces and draws the fills,
+//! then the screen-space outline quads.
 
 use slint::{Rgba8Pixel, SharedPixelBuffer};
 
 use super::raster::{self, Canvas, Vertex};
 use super::scene::{self, EDGE_WIDTH_DEVICE_PX, Scene};
 
-/// Everything the world needs for one frame.
 pub struct FrameRequest {
-    /// Render target size in pixels (the window's device size times the render
-    /// scale — see `background::controller::WORLD_PIXEL_BUDGET`).
     pub width: u32,
     pub height: u32,
-    /// Buffer pixels per *device* pixel: the outline is two device pixels wide,
-    /// so it shrinks with the render scale or the lines would thicken.
+    /// Buffer pixels per device pixel, so the two-device-pixel outline does not
+    /// thicken with the render scale.
     pub edge_scale: f32,
     pub cam_z: f32,
-    /// The palette's `crust` — both the fill colour and the base the outlines
-    /// mix from.
+    /// The palette's `crust`, the fill colour and the base the outlines mix from.
     pub crust: [f32; 3],
     /// Latte outlines in black, every other flavour in white.
     pub dark: bool,
@@ -33,8 +26,8 @@ pub struct FrameRequest {
 pub struct WorldRenderer {
     canvas: Canvas,
     scene: Scene,
-    /// Projected faces, kept between the fill pass and the stroke pass so a
-    /// face is projected once per frame.
+    /// Kept between the fill pass and the stroke pass so each face is projected
+    /// once.
     projected: Vec<[Vertex; 4]>,
 }
 
@@ -55,8 +48,6 @@ impl WorldRenderer {
         let focal = half_w / scene::FOV_HALF_TAN;
         let aspect = self.canvas.height() as f32 / self.canvas.width() as f32;
 
-        // The geometry only changes when the camera crosses a block boundary;
-        // between rebuilds this is a no-op and only the projection runs.
         self.scene.update(request.cam_z, aspect, false);
 
         self.canvas.begin();
@@ -97,10 +88,8 @@ impl WorldRenderer {
         }
         clock.mark("fills");
 
-        // Line colour: the flavours that draw on a dark crust outline in white,
-        // and Latte in black (`const c = latte ? 0 : 255`). The fills are the
-        // crust itself, so in a dark palette these outlines are the whole
-        // picture.
+        // The fills are the crust itself, so on a dark palette these outlines are
+        // the whole picture.
         let outline = if request.dark { 1.0 } else { 0.0 };
         let half_edge = EDGE_WIDTH_DEVICE_PX * request.edge_scale / 2.0;
         for (face, quad) in self.scene.faces.iter().zip(self.projected.iter()) {
@@ -160,9 +149,7 @@ impl WorldRenderer {
     }
 }
 
-/// Per-pass timings, logged at debug level with `RUST_LOG=background=debug`.
-/// The renderer is the one thing in the app whose cost is worth watching while
-/// it runs, and the split says which pass to look at when it grows.
+/// Per-pass timings, logged at debug level, so the expensive pass is visible.
 struct Clock {
     started: std::time::Instant,
     last: std::time::Instant,
@@ -214,11 +201,8 @@ impl Default for WorldRenderer {
     }
 }
 
-/// The vertex shader's projection: `ndcX = (x - camX) * focal / dz / halfW` and
-/// the same for y with the sign flipped, mapped into window pixels.
-///
-/// The depth is clamped to the near and far planes before being inverted, which
-/// is the shader's `clamp(dz, uNearZ, uFarZ)` as it reaches the depth test.
+/// The CPU twin of the vertex shader's projection. The depth is clamped to the
+/// near and far planes before inversion, as the shader does.
 #[inline]
 fn project(corner: [f32; 3], cam_z: f32, focal: f32, half_w: f32, half_h: f32) -> Vertex {
     let dz = corner[2] - cam_z;

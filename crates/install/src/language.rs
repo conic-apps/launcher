@@ -4,17 +4,12 @@
 
 //! Configures the in-game language by writing `lang` into `options.txt`.
 //!
-//! The game directory of an instance is `instances/<id>`, where Minecraft reads
-//! `options.txt` on startup. [`configure_game_language`] writes it during the
-//! install if the game has no options file yet; [`force_game_language`] is the
-//! modpack path, where an override may have supplied its own `options.txt` after
-//! the install and the launcher's language has to win without dropping the
-//! pack's other options.
+//! [`configure_game_language`] writes it during install only when the game has
+//! no options file; [`force_game_language`] is the modpack path, where an
+//! override's `options.txt` must keep its other options but lose `lang`.
 //!
-//! The era decides the casing of the region code. Releases carry a comparable
-//! version number, so they are matched by version; snapshots do not, so they
-//! fall back to the release date. The language must also exist in the client
-//! jar: writing a code the version does not ship leaves the game on its default.
+//! The era decides region-code casing (releases by version, snapshots by
+//! release date), and the language must exist in the client jar.
 
 use std::path::Path;
 
@@ -40,9 +35,7 @@ const MC_1_10_RELEASE_DATE: &str = "2016-06-08";
 enum LanguageEra {
     /// 1.0 and earlier: the game has no language option at all.
     Pre1Dot1,
-    /// 1.1 ~ 1.10: the region code must be uppercase.
     Legacy,
-    /// 1.11+: the region code must be lowercase.
     Modern,
 }
 

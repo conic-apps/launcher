@@ -8,28 +8,16 @@ import { Loading } from "../controls/loading.slint";
 import { DescriptionTooltip } from "../../globals/tooltip.slint";
 import { FocusManager } from "../../globals/focus.slint";
 
-// A single settings row.
-//
-// Layout: 10/16/10/14 padding, a 40px icon column with an 8px right margin, a
-// text column (13px title, 12px description at ~51% alpha) and a right-aligned
-// control area. Navigable rows show a chevron and get the hover / active
-// background; rows with a control use the caller's children.
+// A single settings row: a 40px icon column, a title/description text column and
+// a right-aligned control area. Navigable rows show a chevron and the hover /
+// active background; rows with a control use the caller's children.
 export component SettingItem inherits Rectangle {
     in property <string> title: "";
     // Optional blue tag chips appended to the title (Java runtime versions).
     in property <[string]> tags: [];
     in property <string> description: "";
     in property <string> icon: "";
-    /// The row's icon and chevron are drawn stroke-only, with the fill pass
-    /// suppressed on both. It is a switch rather than a colour because that is
-    /// all it is ever used for: suppressing the fill over a shared stroke.
-    ///
-    /// The five rows that pass it (`moon`, `bell`, `server` — in the settings
-    /// screens and the wizard's palette screen) draw stroke-only glyphs either
-    /// way, because `build.rs` splits an icon by what each of its shapes paints
-    /// and those three declare `fill="none"` themselves, so their fill pass is
-    /// empty. It is carried through so the rows say what they meant, and so a
-    /// row that swaps in a filled glyph keeps the outline it asked for.
+    /// Draw the icon and chevron stroke-only, suppressing the fill pass.
     in property <bool> icon-outline: false;
     in property <image> custom-icon;
     in property <bool> custom-icon-rounded: false;
@@ -37,106 +25,59 @@ export component SettingItem inherits Rectangle {
     // Clickable but without the trailing chevron (collapse headers).
     in property <bool> clickable: false;
     in property <bool> resetable: false;
-    /// Shows a small spinner after the title while the row's value is loading.
+    /// Shows a spinner after the title while the row's value is loading.
     in property <bool> loading: false;
-    /// A second string drawn after the title, so a row can name the value the
-    /// rest of it is about. A `title` property cannot carry it, and there is no
-    /// named slot: Slint's only slot is the anonymous `@children`, which this
-    /// component already spends on its trailing chevron.
+    /// A second string after the title, for the value the row is about. Slint's
+    /// only slot, `@children`, is already spent on the chevron.
     in property <string> title-suffix: "";
-    // Hover/pressed state a parent can drive for rows that are not navigable
-    // but still clickable.
+    // Hover/pressed state a parent can drive for non-navigable clickable rows.
     in property <bool> hovered: false;
     in property <bool> pressed: false;
     in property <bool> item-disabled: false;
-    // Whether this row sits on the top / bottom edge of the group it belongs to.
+    // Whether this row is on the top / bottom edge of its group. The group cannot
+    // round or clip its children, so the rows round their own corners.
     //
-    // The group rounds its first and last row and nothing else, and there is no
-    // `overflow` on the group, so the corners are the rows' own. Slint has no
-    // `:first-child` selector and cannot reach into a `@children` slot, so the
-    // row that ends the group says so itself.
-    //
-    // This cannot be a clip instead: a `clip: true` + `border-radius` box is
-    // clipped *rectangularly* by Slint's software renderer
-    // (`i-slint-renderer-software`'s `combine_clip`
-    // ignores the radius), and the winit backend silently falls back to that
-    // renderer when femtovg's OpenGL context cannot be created — a VM, an RDP
-    // session, a disabled or outdated GPU driver — with no log. A rounded fill
-    // is what every renderer draws.
+    // A `clip: true` + `border-radius` box would not do: the software renderer
+    // clips rectangularly, ignoring the radius, and winit falls back to it when
+    // femtovg's OpenGL context cannot be created.
     in property <bool> group-first: false;
     in property <bool> group-last: false;
-    // Pin the description to a fixed number of lines, eliding the rest (0 = as
-    // many lines as it takes).
+    // Pin the description to this many lines, eliding the rest (0 = natural
+    // height).
     //
-    // This is not a cosmetic choice, it is what makes such a row measurable at
-    // all. Slint measures a *repeated* element's height (`for runtime in ...`)
-    // at its own **preferred width** — the width its content wants unwrapped —
-    // while the layout that places it uses the width the container gives it. A
-    // wrapping `Text` therefore never wraps in the measurement and does wrap in
-    // the layout, so the row measures a line short per wrapped line. Nothing
-    // recovers from that: the width change re-triggers the measurement, which
-    // comes out the same way, and a container whose height is *measured* rather
-    // than computed — `SettingCollapse`'s `clip: true` content box, and with it
-    // `ScrollView`'s `content-height` — ends up shorter than what it holds, so
-    // the bottom of the list is cut off and cannot be scrolled to either.
-    //
-    // A `height` binding is what pins it: Slint turns any `height` into a
-    // layout cell's min *and* max, so the height this row is measured at stops
-    // following the text and the measurement and the layout agree. `max-lines`
-    // and `elide` then keep the text inside that box, and a hover hands the full
-    // string to `DescriptionTooltipOverlay` (drawn at the application root, since
-    // the box is clipped by the very containers that were mis-measuring).
-    //
-    // Rows that are *not* repeated need none of this: their height is measured
-    // through their own `layoutinfo-v`, where the text is measured at the width
-    // it is given (`Item::layout_info(…, -1, …)` falls back to the current
-    // `width`), which is why only a `for`-built list ever showed the bug.
+    // This is what makes a repeated row measurable: Slint measures a repeated
+    // element at its preferred (unwrapped) width but lays it out at the given
+    // width, so wrapped lines are counted short. A `height` binding pins the cell
+    // to min == max, and `max-lines` + `elide` keep the text inside it. The full
+    // string goes to the description tooltip on hover.
     in property <int> description-lines: 0;
 
     callback clicked;
     callback reset;
 
-    // The group radius.
     private property <length> group-radius: 8px;
-    // The pitch a pinned description is given per line. The text itself keeps the
-    // `1.1` line-height factor the unpinned branch uses, so 18px is the box each
-    // line is allotted — a shade over the line box it draws, which keeps the
-    // descenders off the row's bottom padding.
-    // `DescriptionTooltipOverlay` carries the same constant: the panel has to
-    // collapse onto the line it explains.
+    // The box allotted to each pinned description line. `DescriptionTooltipOverlay`
+    // carries the same constant so the panel collapses onto the line it explains.
     private property <length> description-line-height: 18px;
 
-    /// Hands the pinned description's place and size **in the window** to the
-    /// tooltip, which draws its panel from them (`DescriptionTooltipOverlay`):
-    /// `x`/`y` are the box's `absolute-position` — a position in the window, not
-    /// a position in the list — and `width` is what the text column gave the box.
-    ///
-    /// Called on hover, and again from the pinned box's `follow-timer` for as
-    /// long as the panel is this row's, so the panel tracks the row instead of
-    /// being left behind by it. The row leaving the scroll viewport is what ends
-    /// it, not a "the content is moving" flag: `ScrollView`'s only such signal is
-    /// "the offset is still easing towards its wheel target", which a trackpad
-    /// never is (it moves offset and target together), so gating on it covered a
-    /// wheel and not a trackpad.
+    /// Hands the pinned description's window position and width to the tooltip.
+    /// Called on hover and again from `follow-timer`, so the panel tracks the row.
     function push-description-anchor(x: length, y: length, w: length) {
         DescriptionTooltip.anchor-x = x;
         DescriptionTooltip.anchor-y = y;
         DescriptionTooltip.anchor-width = w;
     }
 
-    /// This row's number in `DescriptionTooltip`'s ownership of the anchor, taken
-    /// when it opens the panel. `0` means it never has.
+    /// This row's ownership number for the tooltip anchor; `0` means it never had
+    /// it.
     private property <int> description-anchor-seq: 0;
 
-    /// Whether the panel on screen is this row's — see
-    /// `DescriptionTooltip.anchor-seq` for why that is a number.
+    /// Whether the panel on screen is this row's.
     private property <bool> owns-description-anchor: root.description-anchor-seq != 0
         && root.description-anchor-seq == DescriptionTooltip.anchor-seq;
 
-    /// Claims the anchor for this row and hands it the description to explain.
-    /// Only the opening hover calls this: the follow-up pushes come from the
-    /// pinned box's tick, which must keep the claim it already has rather than
-    /// take a new number every 8ms.
+    /// Claims the anchor for this row and hands it the description. Only the
+    /// opening hover calls this; follow-up ticks keep the existing claim.
     function claim-description-anchor(t: string) {
         root.description-anchor-seq = DescriptionTooltip.next-anchor-seq + 1;
         DescriptionTooltip.next-anchor-seq = root.description-anchor-seq;
@@ -155,10 +96,9 @@ export component SettingItem inherits Rectangle {
     animate background { duration: 50ms; }
     opacity: root.item-disabled ? 0.6 : 1.0;
 
-    // Declared before the content so controls (selects, switches, reset
-    // buttons) stay on top and keep receiving pointer events; empty areas fall
-    // through to this touch area. It is always enabled (even for plain rows) so
-    // that clicking a row blurs any focused text field.
+    // Declared before the content so controls stay on top and keep their pointer
+    // events; empty areas fall through here. Always enabled so a click blurs any
+    // focused field.
     touch := TouchArea {
         width: root.width;
         height: root.height;
@@ -224,11 +164,8 @@ export component SettingItem inherits Rectangle {
                     }
 
                     if root.title-suffix != "": title-suffix-box := HorizontalLayout {
-                        // The suffix: 14px rather than the title's 13, 80%
-                        // opaque, and 8px of margin on its right — which
-                        // separates it from the reset button and the chevron. A
-                        // `Text` carries no padding, so the margin is a padding on
-                        // a box around it.
+                        // 8px on the right separates the suffix from the reset
+                        // button and chevron; `Text` has no padding of its own.
                         cross-axis-alignment: center;
                         padding-right: 8px;
 
@@ -275,9 +212,8 @@ export component SettingItem inherits Rectangle {
                         }
                     }
 
-                    // Keeping the box in the tree and animating its opacity is
-                    // what gives the fade: a freshly created element would simply
-                    // appear.
+                    // Keep the box in the tree and animate opacity; a newly
+                    // created element would simply appear.
                     loading-box := Rectangle {
                         width: 15px;
                         height: 15px;
@@ -299,9 +235,8 @@ export component SettingItem inherits Rectangle {
                     }
                 }
 
-                // The description at its natural height: as many lines as it
-                // takes. Correct wherever the row's height is not measured across
-                // a width it is not given — see `description-lines`.
+                // The description at its natural height. Safe where the row is not
+                // measured across a width it is not given — see `description-lines`.
                 if root.description != "" && root.description-lines <= 0: Text {
                     text: root.description;
                     font-size: 12px;
@@ -312,27 +247,19 @@ export component SettingItem inherits Rectangle {
                     line-height-factor: 1.1;
                 }
 
-                // A description pinned to `description-lines` lines. The box is
-                // what pins the row (see `description-lines`); the text is
-                // elided inside it, and the hover opens the full string.
+                // A description pinned to `description-lines` lines; the hover opens
+                // the full string.
                 if root.description != "" && root.description-lines > 0: pinned-box := Rectangle {
-                    // `width: 100%` is load-bearing, not cosmetic. The `if` makes
-                    // this box a *repeated* element, and a repeated element gets no
-                    // synthesized layout info of its own — `gen_layout_info_prop`
-                    // skips it — so its `preferred-width` is 0, and the
-                    // `cross-axis-alignment: start` column would then hand it, and
-                    // the text inside it, a zero width: nothing is drawn. The
-                    // percent becomes the cell's min *and* max, which is the
-                    // column's width, and is the same width the unpinned branch
-                    // gets. (`height` is what pins the measurement; see
-                    // `description-lines`.)
+                    // `width: 100%` is load-bearing. The `if` makes this a repeated
+                    // element with no synthesized layout info, so its
+                    // `preferred-width` is 0 and the `start`-aligned column would
+                    // give it a zero width.
                     width: 100%;
                     height: root.description-lines * root.description-line-height;
                     background: transparent;
 
-                    // Only text that does not fit on the line(s) it was given is
-                    // worth a tooltip: `preferred-width` is the unwrapped width,
-                    // `width` what the column had left for it.
+                    // Only text that does not fit its given lines is worth a
+                    // tooltip.
                     property <bool> clipped: pinned-text.preferred-width > pinned-text.width + 0.5px;
 
                     pinned-text := Text {
@@ -354,22 +281,16 @@ export component SettingItem inherits Rectangle {
                         y: 0px;
                         width: parent.width;
                         height: parent.height;
-                        // A `TouchArea` grabs the press whether or not it handles
-                        // it, so the row's own `touch` never sees a click that
-                        // lands on the description. This is that area's half of
-                        // it, verbatim: without it a pinned row would not blur a
-                        // focused field.
+                        // A `TouchArea` grabs the press, so the row's own `touch`
+                        // never sees this click; repeat its behaviour here.
                         clicked => {
                             FocusManager.clear();
                             if (root.navigable || root.clickable) {
                                 root.clicked();
                             }
                         }
-                        // A hover change is the only other signal this area has to
-                        // give: `pointer-event` reports `Cancel` on losing the
-                        // hover only while it holds the grab, so the widget idiom
-                        // is a `changed` on the property. Declared after the text
-                        // so it is on top of it.
+                        // `pointer-event` reports `Cancel` on losing hover only
+                        // while it holds the grab, so watch the property instead.
                         changed has-hover => {
                             if self.has-hover && parent.clipped {
                                 root.claim-description-anchor(root.description);
@@ -383,25 +304,14 @@ export component SettingItem inherits Rectangle {
                         }
                     }
 
-                    // Keeps the panel's anchor on this box for as long as the panel
-                    // is this row's, which outlasts the pointer being on the row: a
-                    // scroll takes the row out from under a pointer that has not
-                    // moved (a trackpad gesture never moves it) and leaves it on
-                    // the panel, and the panel still has to travel with the content
-                    // from there.
+                    // Keeps the panel's anchor on this box while the panel is this
+                    // row's, so it travels with content scrolled out from under a
+                    // still pointer (a trackpad never moves it).
                     //
-                    // A tick rather than `changed`, because `absolute-position` is
-                    // a native call: the Rust backend emits it without a single
-                    // property read, so no dependency is registered for it and
-                    // nothing ever invalidates it — a `changed absolute-position`
-                    // handler stays silent while the list scrolls. (Reading it is
-                    // always current; it just never fires.) There is no property
-                    // down here to watch instead: the scroll offset is applied by
-                    // an ancestor's `y` far above the row, and a row's own `y` and
-                    // `width` do not move when the list scrolls. 8ms is the tick
-                    // `ScrollView` and `SliderBar` already ease on; it only
-                    // runs while a panel is up, and the three writes are no-ops
-                    // whenever the anchor has not actually moved.
+                    // A tick rather than `changed`: `absolute-position` is a native
+                    // call with no registered dependency, so `changed` never fires
+                    // when the list scrolls. The writes are no-ops when the anchor
+                    // has not moved.
                     follow-timer := Timer {
                         interval: 8ms;
                         running: root.owns-description-anchor

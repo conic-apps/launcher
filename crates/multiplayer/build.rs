@@ -5,15 +5,9 @@
 //! Bakes in the Conic Nexus app API key and registers it with the API server.
 //!
 //! The key is derived from `BUILD_API_KEY` and the build's identity rather than
-//! generated randomly: the release builds one version on six separate runners,
-//! and a random key per runner would leave five binaries holding a key the KV
-//! store no longer has. Deriving it makes every runner of one build compute the
-//! same key, so registering is idempotent.
-//!
-//! Without `BUILD_API_KEY` — a local `cargo build`, `cargo test`, `cargo clippy`
-//! — there is nothing to derive from and no registration is attempted; the crate
-//! is told so through the same empty `CONIC_NEXUS_API_KEY` the CurseForge crate
-//! uses for its missing key.
+//! generated randomly, so all six release runners of one build compute the same
+//! key and registration is idempotent. Without `BUILD_API_KEY` no key is derived
+//! and `CONIC_NEXUS_API_KEY` is left empty.
 
 use std::{env, fmt::Write as _, fs, path::Path, process::Command};
 
@@ -51,18 +45,14 @@ fn main() {
 }
 
 /// `<version>-<date>-<commit>`, the identity every runner of one build agrees
-/// on. The version is unchanged between releases, so the date and commit are
-/// what keep two builds of the same version distinct.
+/// on. The date and commit keep two builds of the same version distinct.
 fn build_name(version: &str) -> String {
     format!("{version}-{}-{}", utc_date(), commit())
 }
 
-/// Today's date in UTC as `YYYYMMDD`.
-///
-/// Hand-rolled rather than reached for a date crate: `chrono`'s `clock` feature
-/// drags `iana-time-zone` and its per-platform shims into the build script for
-/// one `format!`, and a build script is the wrong place to grow a dependency
-/// tree. This is Howard Hinnant's `civil_from_days`.
+/// Today's date in UTC as `YYYYMMDD`, via Howard Hinnant's `civil_from_days`.
+/// Hand-rolled because a date crate would drag per-platform shims into a build
+/// script for one `format!`.
 fn utc_date() -> String {
     let days = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -92,8 +82,7 @@ fn app_version() -> String {
     }
 
     let manifest = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../app/Cargo.toml");
-    // A version bump is exactly what a release is, so the rebuilt name has to
-    // follow it.
+    // A version bump is exactly what a release is.
     println!("cargo:rerun-if-changed={}", manifest.display());
 
     let version = fs::read_to_string(&manifest)
@@ -153,10 +142,9 @@ fn commit() -> String {
         .unwrap_or_else(|| "unknown".to_string())
 }
 
-/// The app key for `name`: `SHA-256(BUILD_API_KEY || ":" || name)` in hex. It is
-/// public the moment it ships inside a binary, so it is a revocable identifier
-/// rather than a secret — and without `BUILD_API_KEY` a leaked key reveals
-/// nothing about any other build.
+/// `SHA-256(BUILD_API_KEY || ":" || name)` in hex. It ships inside the binary,
+/// so it is a revocable identifier, not a secret; without `BUILD_API_KEY` a
+/// leaked key reveals nothing about any other build.
 fn derive_key(build_key: &str, name: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(build_key.as_bytes());
@@ -171,10 +159,9 @@ fn derive_key(build_key: &str, name: &str) -> String {
         })
 }
 
-/// Adds the key to the KV store. `curl` rather than an HTTP crate: it is on
-/// every runner and in every developer's PATH, and a build script cannot use the
-/// crate's own `reqwest` anyway. Best-effort — a failure is reported and the
-/// build continues.
+/// Adds the key to the KV store with `curl`, which is available on every runner
+/// (a build script cannot use the crate's own `reqwest`). Best-effort: a failure
+/// is reported and the build continues.
 fn register(build_key: &str, name: &str, key: &str) -> Result<(), String> {
     let body = serde_json::json!({ "name": name, "key": key }).to_string();
     let output = Command::new("curl")

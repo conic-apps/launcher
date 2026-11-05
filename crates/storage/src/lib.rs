@@ -4,26 +4,15 @@
 
 //! The launcher's on-disk layout.
 //!
-//! Three independent locations make up an install, and [`LOCATIONS`] resolves
-//! them once at startup:
+//! Three independent locations, resolved once by [`LOCATIONS`]:
+//! [`LauncherLocation`] (the launcher's own data), [`MinecraftLocation`] (the
+//! shared install) and [`InstancesLocation`].
 //!
-//! * [`LauncherLocation`] — the launcher's own data: `config.toml`, accounts,
-//!   logs, music, the cache, the Conic Nexus native library and the per-run
-//!   scratch directory.
-//! * [`MinecraftLocation`] — the shared Minecraft installation: `assets`,
-//!   `libraries`, `versions` and the launcher-managed Java `runtime`.
-//! * [`InstancesLocation`] — the per-instance game directories.
-//!
-//! By default all three hang off one root: `instances` and `minecraft` are
-//! subdirectories of it and the launcher data is the root itself. The root is
-//! chosen from the platform and the packaging (see [`default_root`]); each of
-//! the three can be redirected independently by the user.
-//!
-//! That redirection cannot live in `config.toml`, because the config file is
-//! itself inside the launcher location: the choice has to be readable before the
-//! config is. It lives in a small bootstrap file at a fixed platform anchor
-//! instead — see [`bootstrap_path`] — and the launcher is restarted after it
-//! changes.
+//! By default all three hang off one root: `minecraft` and `instances` are
+//! subdirectories and the launcher data is the root itself. Each can be
+//! redirected independently. The override lives in a bootstrap file at a fixed
+//! platform anchor, not in `config.toml`, because it has to be readable before
+//! the config.
 
 mod bootstrap;
 mod instances;
@@ -41,14 +30,10 @@ pub use launcher::LauncherLocation;
 pub use minecraft::MinecraftLocation;
 pub use platform::{APP_DIR_NAME, default_root, platform_anchor, platform_base};
 
-/// The resolved layout, initialised once on first use.
-///
-/// Resolution reads the bootstrap file and probes the platform, so it has to
-/// run before the logger (which writes into [`LauncherLocation::logs`]) and
-/// before the config is loaded (which reads [`LauncherLocation::config`]).
+/// The resolved layout. Initialised before the logger and the config, which
+/// both read from it.
 pub static LOCATIONS: Lazy<Locations> = Lazy::new(Locations::resolve);
 
-/// The three roots the launcher writes to.
 #[derive(Debug, Clone)]
 pub struct Locations {
     pub launcher: LauncherLocation,
@@ -57,7 +42,6 @@ pub struct Locations {
 }
 
 impl Locations {
-    /// Resolves the layout from the platform default and the bootstrap file.
     pub fn resolve() -> Self {
         Self::from_overrides(default_root(), load_overrides())
     }
@@ -79,11 +63,8 @@ impl Locations {
             minecraft: MinecraftLocation::new(minecraft_root),
             instances: InstancesLocation::new(instances_root),
         };
-        // The one line that answers "where is my data". Every other explanation of
-        // a missing library, account or instance is downstream of these three
-        // paths, and this is the only place they are all known together. `info`
-        // because the storage step can be changed at runtime and the app
-        // restarts right after — the log is how a relocation is confirmed.
+        // The only place all three paths are known together; a relocation is
+        // confirmed from this line.
         log::info!(
             "launcher data at {}, minecraft at {}, instances at {}",
             locations.launcher.root.display(),
@@ -93,8 +74,6 @@ impl Locations {
         locations
     }
 
-    /// Creates the directories an install needs and seeds the files the game's
-    /// installers expect.
     pub fn init(&self) {
         self.launcher.init();
         self.minecraft.init();

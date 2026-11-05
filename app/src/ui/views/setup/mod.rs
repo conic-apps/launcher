@@ -2,29 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The first-run setup wizard's "script".
-//!
-//! Three things need Rust. The import-instances screen fetches the Mojang
-//! version manifest and writes an `instance.toml`; the Java settings screen asks
-//! whether this machine can have a Java runtime downloaded for it at all, which
-//! is a property of the platform rather than of the config; and the storage step
-//! opens the folder picker and commits the location choice when the wizard
-//! finishes or is skipped.
-//!
-//! Everything else the wizard touches is config (`AppConfig.language`,
-//! `AppConfig.palette`, …) or account state the game view already owns
-//! (`GameState.current-account-*`), so it needs no script of its own.
-//!
-//! # Why finishing can move data
-//!
-//! The storage step sits after the language step but the wizard keeps writing
-//! to the *current* data directory (the config's `config.toml`, the account
-//! files, the created instances) until it finishes. That is deliberate: the
-//! launcher location itself lives in that config, so it cannot be applied
-//! without a restart, and a restart in the middle of the wizard would lose every
-//! later step. Instead `finish` writes the in-memory config — language and all —
-//! into the chosen launcher directory and moves the rest of the data there, and
-//! only then restarts.
+//! The first-run setup wizard: creates instances from the Mojang manifest,
+//! answers whether Java can be auto-installed on this platform, and commits the
+//! storage choice, which can move data and restart the app.
 
 use std::{
     cell::RefCell,
@@ -194,8 +174,6 @@ fn finish(ui: &App, shared: &Rc<RefCell<config::Config>>) {
     }
 
     if changed {
-        // Only the roots that moved are recorded in the file; an unchanged one
-        // stays absent.
         // The new roots only take effect on the next start.
         crate::ui::services::app_config::relaunch();
     } else {

@@ -6,24 +6,10 @@
 //! Microsoft (OAuth → Xbox Live → XSTS → Minecraft services), offline
 //! profiles, and Yggdrasil (authlib-injector) servers.
 //!
-//! The logic lives in the modules (`offline.rs`, `microsoft/`, `yggdrasil/`),
-//! and `microsoft_task` owns the at-most-one running Microsoft login task.
-//!
-//! `serde` renames exist only where a *wire* format requires them — the
-//! `camelCase` renames on the Yggdrasil request bodies, the `textureKey` rename
-//! on a Microsoft skin — because the servers and the shared `config.toml` speak
-//! them. [`microsoft::LoginReporter`] reports through a closure the app points
-//! at its UI thread.
-//!
-//! The browser flow cannot be handed a fixed redirect URI, because its loopback
-//! listener (`authcode`) binds an OS-chosen port that is unknown until the flow
-//! starts. [`microsoft::redeem_access_token`] therefore takes the
-//! `redirect_uri` to repeat rather than carrying a literal. The refresh request
-//! sends none: RFC 6749 §6 makes it conditional, and an account does not keep
-//! the URI the code was issued against.
-//!
-//! The serialized [`Account`] form lives as `current_account` in `config.toml`,
-//! and the account files as `accounts/*.json` in the data directory.
+//! The browser flow cannot use a fixed redirect URI because its loopback listener
+//! (`authcode`) binds an OS-chosen port, so [`microsoft::redeem_access_token`]
+//! takes the URI to repeat; the refresh request sends none (RFC 6749 §6). The
+//! serialized [`Account`] lives as `current_account` in `config.toml`.
 
 use std::path::Path;
 
@@ -56,7 +42,6 @@ pub enum Account {
 }
 
 impl Account {
-    /// The display name of the account's current profile.
     pub fn get_profile_name(&self) -> String {
         match self {
             Account::Microsoft(account) => account.profile.profile_name.to_string(),
@@ -65,7 +50,6 @@ impl Account {
         }
     }
 
-    /// The profile UUID in hyphenated form.
     pub fn get_profile_uuid(&self) -> String {
         match self {
             Account::Microsoft(account) => account.profile.uuid.to_string(),
@@ -74,7 +58,6 @@ impl Account {
         }
     }
 
-    /// The token a launch passes to the game.
     pub fn get_access_token(&self) -> String {
         match self {
             Account::Microsoft(account) => account.minecraft_access_token.to_string(),
@@ -103,14 +86,12 @@ impl Account {
         }
     }
 
-    /// A stable key identifying the account: the lowercased type and the
-    /// profile UUID, e.g. `microsoft-…`.
+    /// The lowercased type and the profile UUID, e.g. `microsoft-…`.
     pub fn key(&self) -> String {
         format!("{}-{}", self.kind().to_lowercase(), self.get_profile_uuid())
     }
 }
 
-/// Every stored account, grouped by kind.
 #[derive(Serialize, Deserialize)]
 pub struct Accounts {
     pub microsoft: Vec<MicrosoftAccount>,
@@ -130,8 +111,6 @@ pub fn list_accounts() -> Accounts {
     }
 }
 
-/// A stored list, or an empty one when the file is missing, unreadable, or
-/// malformed.
 fn read_json<T: for<'de> Deserialize<'de>>(path: &Path) -> Vec<T> {
     let Ok(data) = std::fs::read_to_string(path) else {
         return Vec::new();

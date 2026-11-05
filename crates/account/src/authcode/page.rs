@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The page the browser lands on when the OAuth redirect fires. The colors and
-//! the words are handed in throw `Palette` and `Messages` struct.
+//! words are handed in through `Palette` and `Messages`.
 
 use std::sync::LazyLock;
 
@@ -22,21 +22,14 @@ fn template() -> &'static str {
         .map_or(TEMPLATE, |(_, rest)| rest.trim_start())
 }
 
-/// One `{{ name }}` placeholder, however it is spaced.
-///
-/// The whitespace is optional on purpose. For example, `{{ name }}`, `{{name}}`
-/// and `{{\n  name\n}}` are all the same placeholder.
-///
-// The class is spelled out rather than written `\s`, which would be the
-// Unicode-aware Perl class: the only whitespace this ever has to match is
-// ASCII whitespace in a file in this crate, and the Unicode tables behind
-// `\s` are binary weight for nothing.
+/// One `{{ name }}` placeholder, however it is spaced. The whitespace class is
+/// spelled out rather than `\s` because only ASCII whitespace in this crate's
+/// own file has to match.
 const PLACEHOLDER: &str = r"\{\{[ \t\r\n]*([A-Za-z][A-Za-z0-9-]*)[ \t\r\n]*\}\}";
 
 static PLACEHOLDER_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(PLACEHOLDER).expect("the placeholder pattern is a literal"));
 
-/// A color for the page.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Rgba {
     pub r: u8,

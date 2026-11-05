@@ -10,10 +10,8 @@ mod memory;
 
 pub use memory::{get_available_memory_bytes, get_total_memory_bytes};
 
-/// The host platform, detected once on first use.
 pub static PLATFORM_INFO: Lazy<PlatformInfo> = Lazy::new(PlatformInfo::new);
 
-/// The path delimiter character used in environment variables like `PATH`.
 #[cfg(windows)]
 pub const DELIMITER: &str = ";";
 #[cfg(not(windows))]
@@ -49,8 +47,6 @@ pub enum OsArch {
     Unknown,
 }
 
-/// Represents the high-level operating system family.
-///
 /// Groups the detailed `os_info` types (Ubuntu, Windows 10, …) into the three
 /// families the rest of the app branches on.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
@@ -66,7 +62,6 @@ pub enum OsFamily {
 pub struct PlatformInfo {
     /// The real hardware CPU architecture, detected at runtime via `os_info`.
     pub arch: OsArch,
-
     pub os_type: Type,
 
     pub os_family: OsFamily,
@@ -77,8 +72,6 @@ pub struct PlatformInfo {
 }
 
 impl PlatformInfo {
-    /// Constructs a new [`PlatformInfo`] instance using runtime system data.
-    ///
     /// # Panics
     /// Panics if the OS is not supported by the program.
     #[allow(clippy::new_without_default)]

@@ -2,29 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The world map's "script": the tile cache and the render queue behind
-//! `ui/overlays/content/world-map.slint`.
-//!
-//! # The tile cache
-//!
-//! A Slint `Image` is a reference-counted handle over a `SharedPixelBuffer`:
-//! cloning one is free, there is no encoded form to keep a second copy of, and
-//! the renderer drops its own GPU copy under memory pressure on its own. So
-//! there is **one** cache, here, keyed by tile and holding the finished `Image`:
-//! a tile is either cached or not yet rendered, with no second tier to keep in
-//! step. The model the component draws is a *view* of it — the tiles in the
-//! visible range — and it is written row by row, so a tile keeps its element for
-//! as long as it is on screen.
-//!
-//! # The load queue
-//!
-//! A pending set, an in-flight set, a nearest-to-centre priority scan and a 50ms
-//! debounce, all driven from the event loop. The model is refilled from the cache
-//! **immediately** when the range moves, and only the *renders* are debounced.
-//!
-//! The tiles themselves come from a `tilemap::TileSource` chosen in
-//! `crate::usecases::worldmap` (the save renderer today, a seed source later);
-//! this module owns only the queue, the `Image` cache and the model.
+//! The world map's tile cache and render queue behind
+//! `ui/overlays/content/world-map.slint`. The component's model is a view of the
+//! visible range, refilled from the cache immediately when the range moves; only
+//! the renders are debounced.
 
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -78,7 +59,6 @@ pub(crate) const QUEUE_MARGIN: i32 = 8;
 /// component multiplies by the tile size to place a tile.
 pub(crate) type TileKey = (i32, i32);
 
-/// What one tile of the queue needs to be rendered.
 #[derive(Clone)]
 pub(crate) struct Job {
     key: TileKey,

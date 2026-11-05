@@ -27,16 +27,11 @@ pub use microsoft_auth_step::redeem_access_token;
 
 /// Decodes one Microsoft endpoint's answer, naming the endpoint when it refuses.
 ///
-/// The status is checked before the body is parsed: a `401` body is perfectly
-/// good JSON, so parsing first would fail on a missing `Token` key and surface
-/// as [`Error::MicrosoftResponseMissingKey`] rather than an authentication
-/// refusal. XSTS answering `401` is the ordinary outcome for an account with no
-/// Xbox profile, and it is the single most misdiagnosed failure in the chain.
-///
-/// The body is kept in the error and the log because the endpoints explain
-/// themselves in it: XSTS names the problem in `XErr`, and the token endpoints
-/// name the failing grant in `error_description`. It is truncated first — an
-/// error page from a proxy in front of the endpoint can be arbitrarily long.
+/// The status is checked before the body is parsed: a `401` is perfectly good
+/// JSON, so parsing first would surface as [`Error::MicrosoftResponseMissingKey`]
+/// rather than an authentication refusal. The body is kept because the endpoints
+/// explain themselves in it; it is truncated first, since a proxy error page can
+/// be arbitrarily long.
 pub(super) async fn decode(response: reqwest::Response, endpoint: &str) -> Result<Value> {
     let status = response.status();
     if !status.is_success() {
@@ -188,24 +183,22 @@ pub async fn refresh_account(uuid: Uuid, force_refresh: bool) -> Result<Microsof
     Ok(refreshed_account)
 }
 
-/// Makes `cape_id` the account's active cape on Mojang's side, then re-reads
-/// and stores the profile so its `capes[].state` reflects the change.
+/// Re-reads and stores the profile so its `capes[].state` reflects the change.
 pub async fn set_active_cape(uuid: Uuid, cape_id: &str) -> Result<MicrosoftAccount> {
     let account = refresh_account(uuid, false).await?;
     minecraft_profile_step::set_active_cape(&account.minecraft_access_token, cape_id).await?;
     reload_profile(&account).await
 }
 
-/// Clears the account's active cape on Mojang's side and stores the reloaded
-/// profile. The account keeps owning every cape.
+/// The account keeps owning every cape.
 pub async fn clear_active_cape(uuid: Uuid) -> Result<MicrosoftAccount> {
     let account = refresh_account(uuid, false).await?;
     minecraft_profile_step::clear_active_cape(&account.minecraft_access_token).await?;
     reload_profile(&account).await
 }
 
-/// Re-reads the game profile and writes it back, so a cape change's new `state`
-/// values reach the account file (and, later, the UI that reads it).
+/// Writes the re-read profile back so a cape change's new `state` values reach
+/// the account file.
 async fn reload_profile(account: &MicrosoftAccount) -> Result<MicrosoftAccount> {
     let response =
         minecraft_profile_step::get_game_profile(&account.minecraft_access_token).await?;

@@ -18,21 +18,11 @@ import { InstanceSettingsState } from "../globals/instance-settings.slint";
 import { AppConfig } from "../globals/settings.slint";
 import { ContentOverlay } from "content/content-overlay.slint";
 
-// The instance settings overlay: the panel slides up inside the shared content
-// shell.
-//
-// The wrapper is `ContentOverlay`, with a narrower container (`calc(100% - 200px)`
-// instead of `150px`), the same scrim and the same slide. See
-// `InstanceSettingsRoot`.
-//
-// Everything here is a *static* subtree — no `for`, no `if` around a measured row
-// — which is what lets `ScrollView` measure the panel's height: a repeated row is
-// measured at its own preferred width (see `SettingItem`'s `description-lines`),
-// and none of these rows is built by a `for`.
+// The instance settings overlay, sliding inside the shared content shell with a
+// narrower container. The subtree is static (no `for`, no measured `if` row), so
+// `ScrollView` can measure the panel's height.
 export component InstanceSettings inherits Rectangle {
-    /// The overlay container's size, passed in rather than read off `parent`:
-    /// the container is inset from the game view the elements are written in
-    /// (see `ContentOverlay`).
+    /// Passed in because the container is inset from the game view.
     in property <length> panel-width: 0px;
     in property <length> panel-height: 0px;
 
@@ -41,8 +31,7 @@ export component InstanceSettings inherits Rectangle {
     background: transparent;
 
     ScrollView {
-        // A 52px mantle bar with a settings glyph and the panel's name. It is
-        // inside the scroller, so it scrolls away with the content.
+        // The 52px bar, inside the scroller so it scrolls away.
         title-bar := Rectangle {
             width: 100%;
             height: 52px;
@@ -67,16 +56,14 @@ export component InstanceSettings inherits Rectangle {
             }
         }
 
-        // 16px below the title bar; the scroller's `alignment: start` keeps it
-        // at its fixed height rather than stretching it.
+        // 16px below the title bar.
         Rectangle {
             width: 100%;
             height: 16px;
             background: transparent;
         }
 
-        // 16px of horizontal padding, with the groups' own 8px inset
-        // (`width: calc(100% - 16px); margin: 0 auto`) inside it.
+        // 16px horizontal padding, plus the groups' own 8px inset.
         body := VerticalLayout {
             width: 100%;
             spacing: 0px;
@@ -90,9 +77,8 @@ export component InstanceSettings inherits Rectangle {
                 background: transparent;
             }
 
-            // The card is inset by its own `margin: 0 8px` and 16px narrower, so
-            // it needs a box to sit in: a layout child cannot carry an `x`, and
-            // `height` is what keeps the column measured.
+            // The card needs a box: a layout child cannot carry an `x`, and the
+            // height keeps the column measured.
             Rectangle {
                 width: 100%;
                 height: 60px;
@@ -121,9 +107,7 @@ export component InstanceSettings inherits Rectangle {
                 background: transparent;
             }
 
-            // Everything below is a group; 16px is the gap between them. The 8px
-            // padding is the `width: calc(100% - 16px); margin: 0 auto` inset
-            // `SettingGroup` leaves to its caller (see `setting-group.slint`).
+            // 16px between groups; the 8px padding is `SettingGroup`'s inset.
             groups := VerticalLayout {
                 width: 100%;
                 spacing: 16px;
@@ -136,9 +120,8 @@ export component InstanceSettings inherits Rectangle {
                         group-first: true;
                         title: @tr("InstanceSettings" => "Set background image");
                         icon: "image";
-                        // The chevron *replaces* the row's contents while the row
-                        // is navigable, so the button below is drawn exactly when
-                        // the chevron is not.
+                        // The chevron replaces the row's contents, so the button
+                        // shows exactly when the row is not navigable.
                         navigable: !InstanceSettingsState.has-background;
                         clicked => {
                             InstanceSettingsState.pick-background(
@@ -461,11 +444,8 @@ export component InstanceSettings inherits Rectangle {
                 }
             }
 
-            // A trailing 16px spacer after the last group: `spacing` only accounts
-            // for the gaps *between* groups, so without it the danger group would
-            // sit flush against the bottom of the panel. It is here rather than
-            // inside `groups` because that layout's own 16px `spacing` would add a
-            // second one in front of it.
+            // Trailing 16px spacer: `spacing` only covers gaps between groups. It
+            // is outside `groups`, whose own spacing would add another.
             Rectangle {
                 width: 100%;
                 height: 16px;

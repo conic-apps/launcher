@@ -11,16 +11,9 @@ import { Loading } from "../../components/controls/loading.slint";
 import { ScrollView } from "../../components/containers/scroll-view.slint";
 import { ModpackImportState } from "../../globals/dialogs.slint";
 
-// The confirmation before a modpack install.
-//
-// It opens as soon as the manifest is read, while the pack's CurseForge file
-// list is still being resolved (`checking`), so the user can set the instance
-// name in the meantime. Files that cannot be downloaded (the author disabled
-// distribution, the file was deleted, or its name was unsafe) appear in the
-// scrollable list; the confirm button then means "install anyway".
-//
-// Confirming creates the instance and navigates to the launch screen, whose
-// own install panel and cancel button take over (`LaunchState.purpose`).
+// The confirmation before a modpack install. It opens as soon as the manifest is
+// read, so the instance name can be set while the file list resolves. Files that
+// cannot be downloaded are listed, and confirming then means "install anyway".
 export component ModpackImportDialog inherits Rectangle {
     width: 100%;
     height: 100%;
@@ -134,8 +127,7 @@ export component ModpackImportDialog inherits Rectangle {
                     wrap: word-wrap;
                 }
 
-                // The API's own message, kept small and bounded: the translated
-                // sentence above says what the user can do about it.
+                // The API's own message, bounded; the text above says what to do.
                 Text {
                     text: ModpackImportState.error-message;
                     font-size: 11px;
@@ -189,8 +181,7 @@ export component ModpackImportDialog inherits Rectangle {
                 }
             }
 
-            // Keeps the buttons at the bottom when there is no list to fill the
-            // space. The list above owns the stretch when there is one.
+            // Keeps the buttons at the bottom when there is no list to stretch.
             if !ModpackImportState.failed && ModpackImportState.files.length == 0: Rectangle {
                 vertical-stretch: 1;
                 background: transparent;
@@ -211,8 +202,7 @@ export component ModpackImportDialog inherits Rectangle {
                     }
                 }
 
-                // The 8px between the two buttons: both stretch equally, so the
-                // gap is what is left over.
+                // The 8px gap between the equally stretched buttons.
                 Rectangle {
                     width: 8px;
                     background: transparent;

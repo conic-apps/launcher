@@ -6,10 +6,10 @@
 export struct NotificationItem {
     id: int,
     kind: string,
-    /// Literal title, empty when the kind's translated title is used or the
-    /// notice has no title at all.
+    /// Literal title; empty when the kind's translated title is used or there is
+    /// none.
     title: string,
-    /// Literal body, empty when the kind's translated template is used.
+    /// Literal body; empty when the kind's translated template is used.
     body: string,
     /// Values for the kind's template placeholders, in order.
     args: [string],
@@ -20,9 +20,8 @@ export struct NotificationItem {
 export global NotificationState {
     in-out property <bool> visible: false;
     in-out property <[NotificationItem]> notifications: [];
-    /// The floating previews in the top-right corner. Its rows mirror
-    /// `notifications` until one expires, at which point only the preview goes
-    /// away and the centre keeps the card.
+    /// The floating previews. They mirror `notifications` until one expires, at
+    /// which point only the preview goes away.
     in-out property <[NotificationItem]> toasts: [];
     in-out property <int> notification-count: 0;
 
@@ -41,11 +40,8 @@ export global NotificationText {
         return index < item.args.length ? item.args[index] : "";
     }
 
-    /// The card's optional heading.
-    ///
-    /// A literal title on the notice wins; otherwise a known kind supplies its
-    /// translated one. Empty means no title, and the card keeps the single-body
-    /// layout every notice had before titles were optional.
+    /// The card's optional heading: a literal title wins, otherwise a known kind
+    /// supplies its translated one. Empty means no title.
     public pure function notification-title(item: NotificationItem) -> string {
         if item.title != "" {
             return item.title;

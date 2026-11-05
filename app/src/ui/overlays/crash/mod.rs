@@ -2,21 +2,12 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The crash overlay's adapter: it subscribes to the launch crate's session
-//! events, posts a notification for the crash and raises the overlay when that
-//! notification is activated.
+//! The crash overlay: subscribes to the launch crate's session events, posts a
+//! notification for the crash and raises the overlay when it is activated.
 //!
-//! The subscription is installed once for the whole app, not per launch: a game
-//! outlives the launch flow that started it, so the crash it may produce arrives
-//! long after that flow — and its generation token — are gone. This is the
-//! single `Sink` the composition root installs (see `launch::running`).
-//!
-//! The report callback hands the collected strings to `usecases::crash_report`,
-//! which writes one combined report into the launcher's logs; this adapter then
-//! opens that file. The report contains the game's own report (or the collected
-//! details), the captured console, `logs/latest.log` and the launcher log. The
-//! callback is wired here so the writer stays reachable while the overlay's
-//! body is being rewritten; the panel does not draw a button for it yet.
+//! The subscription is installed once for the whole app, because a game outlives
+//! the launch flow that started it. The report callback writes one combined
+//! report and opens it.
 
 use std::sync::Arc;
 
@@ -32,7 +23,6 @@ use crate::usecases::crash_report;
 
 /// Installs the app's running-session subscriber and the overlay's callbacks.
 pub(crate) fn setup(ui: &App) {
-    // "Close" hides the overlay and leaves the page it interrupted in place.
     let weak = ui.as_weak();
     ui.global::<CrashState>().on_close(move || {
         if let Some(ui) = weak.upgrade() {
@@ -92,7 +82,6 @@ pub(crate) fn setup(ui: &App) {
     running::subscribe(sink);
 }
 
-/// Pushes a collected crash into `CrashState` and raises the overlay.
 fn show(ui: &App, crash: CrashReport) {
     let state = ui.global::<CrashState>();
     state.set_instance_name(crash.instance_name.into());
@@ -162,11 +151,9 @@ fn reason_items(reasons: &[Reason]) -> Vec<CrashReason> {
         .collect()
 }
 
-/// The width of a tab stop in the crash log's monospace font.
 const TAB_WIDTH: usize = 4;
 
-/// Splits the crash text into lines and tags each with the colour the panel
-/// should draw it in.
+/// Splits the crash text into lines and tags each with the colour to draw it in.
 fn detail_lines(details: &str) -> ModelRc<CrashLogLine> {
     let lines = details
         .lines()
@@ -287,8 +274,7 @@ fn open_report(ui: &App) {
     }
 }
 
-/// Renders the matched rules as one line each: the rule's name, and the fields
-/// it captured when it has any (a mod id, an expected version, a file).
+/// Renders each rule as one line with the fields it captured.
 fn format_reasons(reasons: &[Reason]) -> String {
     reasons
         .iter()

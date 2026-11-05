@@ -2,20 +2,11 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! UI-neutral vocabulary for the task centre.
-//!
-//! A task is long-running work the user started and can still see or stop: a
-//! content download, a modpack install, the game install behind a launch. It
-//! crosses the boundary as plain data, so the use case that owns its lifetime
-//! mentions neither Slint nor the app, and a producer only needs a [`TaskSink`].
-//!
-//! The kind selects the frontend's translated title and icon; the target says
-//! where a click on the card goes. Both are data rather than a callback: a task
-//! card can be clicked more than once, unlike a one-shot notification action.
+//! UI-neutral vocabulary for the task centre: long-running, cancellable work
+//! such as a content download or a modpack install.
 
 use crate::Sink;
 
-/// A task's identity for as long as it is running.
 pub type TaskId = i32;
 
 /// What the task is doing, which selects the frontend's title and icon.
@@ -32,7 +23,6 @@ pub enum TaskKind {
 }
 
 impl TaskKind {
-    /// The stable key the frontend branches on.
     pub fn key(self) -> &'static str {
         match self {
             Self::ContentDownload => "content-download",
@@ -43,7 +33,6 @@ impl TaskKind {
     }
 }
 
-/// The step the task is currently on. The frontend translates it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TaskStage {
     Preparing,
@@ -57,7 +46,6 @@ pub enum TaskStage {
 }
 
 impl TaskStage {
-    /// The stable key the frontend branches on.
     pub fn key(self) -> &'static str {
         match self {
             Self::Preparing => "preparing",

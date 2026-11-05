@@ -100,10 +100,7 @@ export component SettingsView inherits Rectangle {
 
     private property <string> motion: PageMotion.phase("settings");
 
-    // The tint fades on the content's own beat, so the whole page — backdrop
-    // included — comes and goes as one rather than the content sliding over an
-    // already-present tint. `transparentize(1.0)` is the fully transparent end,
-    // the same colour at alpha 0.
+    // The tint fades on the content's beat so the page comes and goes as one.
     background: Theme.base.transparentize(root.motion == "shown" ? 0.4 : 1.0);
     animate background {
         duration: 250ms;
@@ -112,15 +109,12 @@ export component SettingsView inherits Rectangle {
 
     private property <length> intro-offset: 40px;
 
-    // Background click layer: clicking empty space (page padding, section
-    // titles, gaps between rows) blurs the focused text field. Controls and rows
-    // declare their own touch areas on top and handle the click themselves.
+    // Clicking empty space blurs the focused field; controls handle their own.
     TouchArea {
         clicked => { FocusManager.clear(); }
     }
 
-    // The page's content: it slides up from `intro-offset` below and fades in,
-    // and fades out in place, on the tint's beat above.
+    // Slides up from `intro-offset` and fades in; fades out in place.
     HorizontalLayout {
         y: root.motion == "enter" ? root.intro-offset : 0px;
         opacity: root.motion == "shown" ? 1.0 : 0.0;
@@ -205,9 +199,7 @@ export component SettingsView inherits Rectangle {
             background: transparent;
 
             scroll := ScrollView {
-                // Named to stay clear of `ScrollView`'s own layout, which these
-                // children are inlined into (`content-column` here, `content-layout`
-                // there).
+                // Named to stay clear of `ScrollView`'s internal `content-layout`.
                 content-column := VerticalLayout {
                     padding-top: 24px;
                     padding-right: 24px;
@@ -276,8 +268,7 @@ export component SettingsView inherits Rectangle {
         : s1.y + root.vp <= 100px ? 1
         : 0;
 
-    // The `true` asks for a smooth scroll, which the `ScrollView` glides
-    // through its lerp.
+    // The `true` asks for a smooth scroll through the `ScrollView`'s lerp.
     public function scroll-to(index: int) {
         if index == 0 { scroll.scroll-to(16px - s0.y, true); }
         if index == 1 { scroll.scroll-to(16px - s1.y, true); }

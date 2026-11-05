@@ -26,8 +26,6 @@ impl GameController {
                 },
             );
         }
-        // The persisted view state, read back before the first paint so a
-        // restart comes back to the list the user left.
         let saved = crate::usecases::game::load();
         let sort = match saved.sort_mode() {
             SavedSortMode::Name => SortBy::Name,
@@ -70,14 +68,9 @@ impl GameController {
         Self::reload_selecting(ui, None);
     }
 
-    /// Re-reads the instance list and makes `select` the current instance once
-    /// it lands.
-    ///
-    /// A freshly created instance has to end up selected, but it is not in the
-    /// listing loaded at the time: selecting it straight away would leave the
-    /// summary empty until the reload completes, and a plain [`Self::reload`]
-    /// would keep the instance that was current before. Carrying the id into the
-    /// completion sets the list and its selection in the same apply.
+    /// Carries `select` into the completion so the list and its selection are
+    /// set in the same apply; selecting straight away would leave the summary
+    /// empty until the reload lands.
     pub(crate) fn reload_selecting(ui: &App, select: Option<String>) {
         let sort = controller().borrow().sort;
         let weak = ui.as_weak();
@@ -104,15 +97,11 @@ impl GameController {
         });
     }
 
-    /// Adopts a freshly listed set of instances and re-reads everything derived
-    /// from it. Runs on the UI thread, on the far side of [`GameController::reload`].
+    /// Runs on the UI thread, after [`GameController::reload`].
     pub(crate) fn set_instances(&mut self, instances: Vec<Instance>) {
         self.instances = instances;
         // Re-scan the per-instance caches so a refresh picks up external changes.
         self.playtime.clear();
-        // The content cache is keyed the same way and read the same often, so it
-        // is dropped for the same reason: the instance folder may have been
-        // edited outside the app since the listing was read.
         crate::ui::overlays::content::cache::clear();
         // Keep the selection valid, falling back to the first instance and
         // persisting it, so a deleted instance stops being restored on the next
@@ -192,12 +181,8 @@ impl GameController {
         self.expanded.get(key).copied().unwrap_or(true)
     }
 
-    /// Persists the view state: the current id, the sort, the grouping and the
-    /// expanded groups.
-    ///
-    /// It is written on a sort, a grouping, a group toggle and an instance
-    /// switch — not on a scroll, a search or a refresh — since a write is a few
-    /// kilobytes of JSON.
+    /// Written on a sort, grouping, group toggle and instance switch — not on a
+    /// scroll, search or refresh, since a write is a few kilobytes of JSON.
     pub(crate) fn persist(&self) {
         let state = InstanceViewState {
             current_id: self.current_id.clone().unwrap_or_default(),
@@ -222,9 +207,8 @@ impl GameController {
         crate::usecases::game::save(&state);
     }
 
-    /// Builds the flattened list, assigning each row its y/height (so the view
-    /// can position rows absolutely and draw the parallax rail) and returning
-    /// the total content height plus the current instance's row bounds.
+    /// Returns the rows, the total content height and the current instance's row
+    /// bounds.
     pub(crate) fn build_rows(&self) -> (Vec<GameRow>, f32, Option<(f32, f32)>) {
         const GAP_TOP: f32 = 132.0;
         const GAP_BOTTOM: f32 = 100.0;
@@ -323,9 +307,8 @@ impl GameController {
         (rows, row_y + GAP_BOTTOM, current_row)
     }
 
-    /// The instance ids in the order the list displays them, paired with the
-    /// group each belongs to. Favorites come first; a starred instance that also
-    /// belongs to a loader group is listed once, with its first group.
+    /// The instance ids in display order, paired with their first group.
+    /// Favorites come first.
     fn ordered_ids(&self) -> Vec<(String, String)> {
         let filtered = self.filtered();
         let favorites: Vec<&Instance> = filtered
@@ -364,13 +347,8 @@ impl GameController {
         ordered
     }
 
-    /// Moves the current instance one place in the displayed order. Up (-1) and
-    /// Down (1) use this, and so does Alt/Option + a wheel notch. Crossing into
-    /// a loader group opens that group in the accordion before the row is
-    /// scrolled into view.
-    ///
-    /// Returns whether the selection moved. The ends do not wrap: at the first
-    /// or last instance another gesture in the same direction is a no-op.
+    /// Moves the current instance one place in display order, opening the target
+    /// loader group. The ends do not wrap; returns whether the selection moved.
     pub(crate) fn move_selection(&mut self, direction: i32) -> bool {
         if direction == 0 {
             return false;
@@ -409,8 +387,8 @@ impl GameController {
         self.adopt_selection(group, id)
     }
 
-    /// The laid-out y of a group header. The toggle callback uses it to bring
-    /// the newly opened group's name under the sort/group bar.
+    /// The laid-out y of a group header, used to scroll a newly opened group
+    /// under the sort/group bar.
     pub(crate) fn group_header_y(&self, key: &str) -> Option<f32> {
         (0..self.rows_model.row_count())
             .filter_map(|index| self.rows_model.row_data(index))
@@ -437,9 +415,6 @@ impl GameController {
         self.persist();
         true
     }
-    /// The group keys in display order and whether each is open. The row list
-    /// already carries this, but the accordion normalisation and the stepper
-    /// need a compact list that does not depend on a row's height.
     fn group_ranges(rows: &[GameRow]) -> Vec<GroupRange> {
         rows.iter()
             .filter(|row| row.kind.as_str() == "group")
@@ -488,10 +463,8 @@ impl GameController {
         }
     }
 
-    /// The instance's decoded background for its list card, memoised by the
-    /// background file's modified time so a relayout does not re-read and
-    /// re-decode every instance's image. `load_background` reads the file again
-    /// on a miss; a cache hit clones the shared pixel buffer.
+    /// Memoised by the background file's modified time so a relayout does not
+    /// re-read and re-decode every instance's image.
     fn instance_background(&self, instance: &Instance) -> Image {
         if !instance.has_background {
             // The picture may have just been removed: drop the cached decode.
@@ -518,13 +491,8 @@ impl GameController {
         image
     }
 
-    /// Merges the freshly laid-out rows into the model the view is rendering.
-    ///
-    /// Rows are matched by `uid` rather than by position: reordering (sorting,
-    /// grouping, starring) only changes their `row_y`, and the view animates the
-    /// rows it already has. Resetting the model instead would destroy and recreate
-    /// every row item, which is exactly what would stop them gliding along the
-    /// rail.
+    /// Matches by `uid` rather than position so reordering only changes `row_y`
+    /// and the view animates the rows it already has instead of recreating them.
     pub(crate) fn sync_rows(&mut self, rows: Vec<GameRow>) {
         let model = &self.rows_model;
         let first_layout = !self.synced;
@@ -532,10 +500,7 @@ impl GameController {
         let mut incoming: HashMap<SharedString, GameRow> =
             rows.into_iter().map(|row| (row.uid.clone(), row)).collect();
 
-        // Rows we already render: update in place, keeping their identity (and so
-        // whatever animation is currently running on them). What was matched is
-        // remembered separately — the map itself has to stay whole here, it is
-        // what the append pass below takes the new rows from.
+        // The map has to stay whole; the append pass below takes new rows from it.
         let mut kept: HashSet<SharedString> = HashSet::new();
         for index in 0..model.row_count() {
             let Some(current) = model.row_data(index) else {
@@ -554,8 +519,7 @@ impl GameController {
             }
         }
 
-        // Rows that are gone (deleted, filtered out, regrouped): removed from the
-        // back so the indices below stay valid.
+        // From the back so the indices stay valid.
         for index in (0..model.row_count()).rev() {
             let Some(current) = model.row_data(index) else {
                 continue;
@@ -565,10 +529,8 @@ impl GameController {
             }
         }
 
-        // Rows that are new to the list are appended hidden and revealed by the
-        // timer, which is what animates them in. The very first layout is the
-        // exception: those rows are the ones the view's intro slides in, so they
-        // are handed over already visible.
+        // New rows are appended hidden and revealed by the timer, except on the
+        // first layout, which the view's intro slides in.
         for key in order {
             if kept.contains(&key) {
                 continue;
@@ -589,10 +551,8 @@ impl GameController {
             self.instances.is_empty() || (!self.search.trim().is_empty() && filtered.is_empty());
         let (mut rows, mut content_height, mut current_row) = self.build_rows();
         self.groups = Self::group_ranges(&rows);
-        // Grouping is an accordion: one open page, the others collapsed. A
-        // saved state from before this was a rule can carry several open groups;
-        // keep the one holding the current instance, so the selected instance
-        // stays visible, and close the rest.
+        // An older saved state can carry several open groups; keep the one
+        // holding the current instance and close the rest.
         if self.group_mode == "loader" {
             let open: Vec<String> = self
                 .groups
@@ -621,11 +581,9 @@ impl GameController {
                 self.groups = Self::group_ranges(&rows);
             }
         }
-        // The motion kind has been baked into those rows; reset the flag so the
-        // next layout defaults to the FLIP.
+        // The motion kind is baked into those rows; the next layout defaults to
+        // the FLIP.
         self.flip = true;
-        // Drop the decodes of instances that no longer exist, so their images
-        // do not linger for the rest of the session.
         {
             let live: HashSet<&str> = self.instances.iter().map(|it| it.id.as_str()).collect();
             self.backgrounds
@@ -639,8 +597,6 @@ impl GameController {
             .map(|id| self.playtime(&id))
             .unwrap_or_default();
         let current = self.current().cloned();
-        // The window background follows the current instance (the summary below
-        // consumes `current`, so this is taken first).
         let background_instance = current.as_ref().map(|instance| {
             (
                 instance.id.clone(),
@@ -650,8 +606,8 @@ impl GameController {
             )
         });
 
-        // Taken out for the map below, which needs the cache mutably while it
-        // borrows the account list immutably, and put back afterwards.
+        // The map below needs the cache mutably while borrowing the account list
+        // immutably.
         let mut avatars = std::mem::take(&mut self.avatars);
         let accounts: Vec<AccountItem> = self
             .accounts
@@ -679,10 +635,8 @@ impl GameController {
         );
         let current_id = current.as_ref().map(|instance| instance.id.clone());
         apply_current(&state, current.as_ref(), playtime);
-        // The four counts and the four preview rows, out of the shared content
-        // cache. This runs after `apply_current` because the cache refuses to
-        // write to the summary unless it is the current instance — a property
-        // only that writes.
+        // Must run after `apply_current`, which is what marks the summary as the
+        // current instance for the cache.
         apply_content(ui, current_id.as_deref());
         apply_account(&state, current_account.as_ref(), current_avatar);
         apply_background(ui, background_instance.as_ref());
@@ -768,19 +722,13 @@ fn apply_current(state: &GameState<'_>, current: Option<&Instance>, playtime: u6
     }
 }
 
-/// The summary's four counts and its four preview rows, out of the content
-/// cache the overlay draws from.
+/// The summary's counts and preview rows, out of the shared content cache.
 ///
-/// `apply` runs on every list change — a sort, a group toggle, a keystroke in
-/// the search box — so this is where the cache is asked rather than where the
-/// instance is selected: it is a lookup while the cache answers, which is what
-/// keeps those three from re-reading the disk. It also writes the counts
-/// synchronously, so a fresh cache answers immediately instead of on the next
-/// parse to land.
+/// `apply` runs on every list change, so a cache lookup is what keeps those from
+/// re-reading the disk; the counts are written synchronously so a fresh cache
+/// answers immediately.
 fn apply_content(ui: &App, current_id: Option<&str>) {
     let Some(id) = current_id else {
-        // No instance: the rows and the counts are emptied rather than left
-        // showing the last one.
         crate::ui::overlays::content::cache::counts(ui, None);
         crate::ui::overlays::content::clear_rows();
         return;

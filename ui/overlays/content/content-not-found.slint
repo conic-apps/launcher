@@ -6,33 +6,20 @@ import { Theme } from "../../theme.slint";
 import { AppIcon } from "../../components/display/app-icon.slint";
 import { Loading } from "../../components/controls/loading.slint";
 
-// The "nothing here" placeholder, drawn over an empty grid, and the spinner
-// block the list views show instead of their grid while the first response is
-// on its way.
+// The "nothing here" placeholder and the loading spinner block.
 //
-// The placeholder plays 350ms in on `cubic-bezier(.34, 1.56, .64, 1)` — a slight
-// overshoot — and 250ms out on `cubic-bezier(.215, .61, .355, 1)`, the body
-// fading in and scaling up from 0.9, so it springs open rather than appearing. A
-// newly created element
-// never plays an `animate` (its first evaluation takes the not-animating
-// branch), which is why this shows itself for one frame at the rest values
-// first, exactly like `Dialog` and `DescriptionTooltip` do.
+// The placeholder springs in and fades out. A newly created element never plays
+// an `animate`, so it shows a frame at the rest values first, like `Dialog`.
 export component ContentNotFound inherits Rectangle {
     in property <bool> show: false;
-    /// The failure variant: a connectivity icon, the failing message and the
-    /// error colour, with the same spring, body and block as the empty one.
+    /// The failure variant: connectivity icon, message and error colour.
     in property <bool> failed: false;
     in property <string> description: "";
-    /// The failure variant's small line was clicked.
     callback retry;
-    /// The block it occupies, and the box the body is centred in. A definite
-    /// height rather than `100%` or a measured one: it is a child of a column,
-    /// and a component whose height is measured collapses to nothing there (see
-    /// the note in `panels.slint`). What the block *is* differs per call site —
-    /// see `panels.slint`, which is the only place that decides.
+    /// A definite height: a measured component collapses to nothing as a child
+    /// of a column (see the note in `panels.slint`).
     in property <length> block-height: 150px;
-    /// How tall the placeholder's own content is, for the call sites whose block
-    /// is that content plus a padding.
+    /// For call sites whose block is this content plus padding.
     out property <length> content-height: body.preferred-height;
 
     width: 100%;
@@ -42,7 +29,6 @@ export component ContentNotFound inherits Rectangle {
     // "closed" | "starting" | "shown" | "leaving"
     private property <string> phase: "closed";
     visible: root.phase != "closed";
-    // The placeholder sits over the grid without swallowing its clicks.
     private property <float> reveal: root.phase == "shown" ? 1.0 : 0.0;
     private property <float> spring: root.phase == "shown" ? 1.0 : 0.9;
 
@@ -102,8 +88,7 @@ export component ContentNotFound inherits Rectangle {
         VerticalLayout {
             spacing: 12px;
 
-            // A wrapper rather than an alignment on the icon: cell alignment
-            // is a property of native elements, not of a component.
+            // A wrapper: cell alignment is a property of native elements only.
             Rectangle {
                 height: 64px;
                 background: transparent;
@@ -133,8 +118,7 @@ export component ContentNotFound inherits Rectangle {
                 background: transparent;
 
                 description-label := Text {
-                    // Wrapped at the block's 380px like any paragraph — no
-                    // height of its own.
+                    // Wrapped at the block's 380px, with no height of its own.
                     text: root.failed ? @tr("Click here to retry") : root.description;
                     font-size: 12px;
                     color: Theme.default-text-color.transparentize(0.1);
@@ -145,9 +129,7 @@ export component ContentNotFound inherits Rectangle {
             }
         }
 
-        // The whole failure body is the retry control. The empty-state
-        // placeholder has no click of its own, so this sits only in the
-        // failure variant.
+        // The whole failure body is the retry control; the empty state has none.
         if root.failed: TouchArea {
             width: parent.width;
             height: parent.height;
@@ -156,8 +138,7 @@ export component ContentNotFound inherits Rectangle {
     }
 }
 
-// The spinner block the list views draw while the first response is in flight:
-// a 32px spinner in a padded mantle box.
+// The spinner block shown while the first response is in flight.
 export component ContentLoading inherits Rectangle {
     width: 100%;
     height: 144px;
@@ -167,8 +148,7 @@ export component ContentLoading inherits Rectangle {
         width: 100%;
         padding-top: 40px;
         padding-bottom: 40px;
-        // The mark is centred across the panel. `alignment` would centre it down
-        // the column instead and leave it against the left edge.
+        // `alignment` would centre it vertically instead and leave it at the left.
         cross-axis-alignment: center;
 
         Rectangle {

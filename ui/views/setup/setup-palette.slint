@@ -10,13 +10,8 @@ import { PaletteRow } from "../../components/display/palette-row.slint";
 import { AppConfig } from "../../globals/settings.slint";
 import { WizardTitle, WizardMessage } from "wizard-text.slint";
 
-// The same group the appearance settings open with — one `SettingItem` with a
-// switch, then the four palette tiles — without the group's title, and at full
-// width.
-//
-// The palette change itself needs nothing here: `Theme.active-palette` already
-// resolves "follow system" to Mocha or Latte, and the tiles arm the 300ms
-// palette transition themselves (see `PaletteRow`).
+// The appearance settings' palette group, without a title and at full width.
+// `Theme.active-palette` resolves "follow system"; the tiles arm the transition.
 export component SetupPalette inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
@@ -37,8 +32,7 @@ export component SetupPalette inherits VerticalLayout {
         alignment: start;
 
         SettingGroup {
-            // Full width: the wizard's column is already inset by the body's own
-            // 36px.
+            // Full width: the wizard's column already has the body's 36px inset.
             width: 100%;
 
             SettingItem {
@@ -50,8 +44,7 @@ export component SetupPalette inherits VerticalLayout {
 
                 Switch {
                     checked <=> AppConfig.palette-follow-system;
-                    // Arms the palette transition, which is what makes a change
-                    // a *user* change (see `Theme.transitions-enabled`).
+                    // Arms the palette transition so this reads as a user change.
                     toggled => {
                         Theme.transitions-enabled = true;
                         AppConfig.changed();

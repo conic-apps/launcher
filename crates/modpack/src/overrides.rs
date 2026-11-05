@@ -2,12 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The pack file trees that are copied over the instance root.
-//!
-//! A format decides which trees it has (CurseForge's `overrides/`; Modrinth
-//! would also contribute `client-overrides/`), and this module knows how to
-//! extract a directory or an entry prefix from a zip. The install calls it
-//! after the game is in place, so the pack's configs and `options.txt` win.
+//! The pack file trees copied over the instance root after the game is in
+//! place, so the pack's configs and `options.txt` win.
 
 use std::path::{Path, PathBuf};
 

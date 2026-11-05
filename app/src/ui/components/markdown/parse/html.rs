@@ -2,26 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! A tag soup → [`Block`].
+//! A tag-soup HTML → [`Block`], which is how CurseForge serves descriptions.
 //!
-//! CurseForge serves its descriptions as HTML (`?markup=true`), so half the
-//! detail panels in the launcher are not Markdown at all. comrak cannot read
-//! HTML and the renderer's contract is the block tree, so this module is a
-//! second front end onto the same tree: a tokenizer, then a recursive walk that
-//! maps the tags GitHub's own renderer understands (`p`, `h1`…`h6`, `ul`/`ol`/
-//! `li`, `pre`/`code`, `blockquote`, `table`/`tr`/`th`/`td`, `hr`, `img`, `a`,
-//! `strong`, `em`, `del`, `sup`, …) onto [`Block`] and [`Inline`].
-//!
-//! It is a tag soup reader, not a conforming HTML parser, and that is the right
-//! trade for this input: a description is authored by hand, is served as a
-//! fragment, and every tag that matters here is unambiguous. A tag the walker
-//! does not know is *transparent* — the tag itself is dropped and its contents
-//! keep being parsed where they are — so `<span>`, `<font>` and a
-//! `<centre>`-era `<div>` all render as their text, exactly as a browser would.
-//!
-//! `script`, `style`, `head`, `title` and `noscript` are dropped with their
-//! contents: their text is not prose, and the launcher's own detail panels
-//! refuse a body carrying a `<script>` outright rather than sanitising it.
+//! An unknown tag is transparent, so its contents keep being parsed; `script`,
+//! `style`, `head`, `title` and `noscript` are dropped with their contents.
 
 use crate::ui::components::markdown::doc::{Align, Block, Cell, Inline, Inlines, ListItem};
 
@@ -31,13 +15,7 @@ pub fn parse(source: &str) -> Vec<Block> {
     parser.blocks(&[])
 }
 
-/// The inline content of an HTML fragment.
-///
-/// For a caller that has the source of one element's content rather than of a
-/// document — a `<summary>`'s label, which arrives as a string inside a raw HTML
-/// block. It goes through the same tokenizer as a document would, so
-/// `<summary><strong>x</strong></summary>` gives a bold run rather than one
-/// string with tags in it.
+/// The inline content of one element's source, such as a `<summary>` label.
 pub fn fragment_inlines(source: &str) -> Inlines {
     let tokens = tokenize(source);
     let mut parser = Parser { tokens, pos: 0 };
@@ -80,7 +58,6 @@ fn tokenize(source: &str) -> Vec<Token> {
             continue;
         }
 
-        // `<!…>`: a comment, a doctype or a CDATA section.
         if source[index..].starts_with("<!--") {
             let end = source[index..]
                 .find("-->")
@@ -117,8 +94,6 @@ fn tokenize(source: &str) -> Vec<Token> {
         let Some(token) = parse_tag(inner) else {
             continue;
         };
-        // Text before a tag only becomes a token once it has content, so that
-        // inter-tag whitespace does not produce empty paragraphs.
         if !text.is_empty() {
             tokens.push(Token::Text(unescape_entities(&text)));
             text.clear();
@@ -132,14 +107,9 @@ fn tokenize(source: &str) -> Vec<Token> {
     collapse_whitespace(tokens)
 }
 
-/// Applies the two rules a browser applies to whitespace, and no more.
-///
-/// A run of whitespace is one space, as in HTML. A space is also dropped where
-/// it cannot be seen — at the edge of a block, where the browser's line box
-/// ignores it — and *kept* everywhere else, because it is what separates
-/// `Two <b>bold</b>.` into three runs instead of two glued ones.
+/// Collapses whitespace and drops it at block edges, but keeps it elsewhere
+/// because it separates neighbouring runs.
 fn collapse_whitespace(tokens: Vec<Token>) -> Vec<Token> {
-    // Which token boundaries a space cannot be seen across.
     let mut block_edge = vec![true; tokens.len() + 1];
     for (index, token) in tokens.iter().enumerate() {
         block_edge[index] = match token {
@@ -183,8 +153,8 @@ fn collapse_whitespace(tokens: Vec<Token>) -> Vec<Token> {
     out
 }
 
-/// The end of a tag, respecting quoted attribute values so that an `href` with a
-/// `>` in it does not end the tag early.
+/// Respects quoted attribute values, so an `href` containing `>` does not end
+/// the tag early.
 fn find_tag_end(source: &str, start: usize) -> Option<usize> {
     let bytes = source.as_bytes();
     let mut index = start + 1;
@@ -297,9 +267,8 @@ fn parse_attributes(source: &str) -> Vec<(String, String)> {
     attrs
 }
 
-/// The named entities these descriptions actually carry, plus the punctuation a
-/// hand-written description tends to use. Numeric references — decimal and
-/// hexadecimal — are handled generically below.
+/// The named entities descriptions actually carry; numeric ones are handled
+/// generically below.
 const ENTITIES: &[(&str, &str)] = &[
     ("amp", "&"),
     ("lt", "<"),
@@ -356,8 +325,7 @@ const ENTITIES: &[(&str, &str)] = &[
     ("star", "★"),
 ];
 
-/// Resolves the named and numeric references a description carries. An unknown
-/// reference is left as it was written, which is what a browser does too.
+/// An unknown reference is left as written, as a browser does.
 pub fn unescape_entities(text: &str) -> String {
     if !text.contains('&') {
         return text.to_string();
@@ -402,8 +370,7 @@ pub fn unescape_entities(text: &str) -> String {
     out
 }
 
-/// The text of a run of HTML, with the tags removed. Used where a body carries
-/// markup the block tree does not model.
+/// The text of a run of HTML with the tags removed.
 pub fn text_content(source: &str) -> String {
     let mut out = String::new();
     for token in tokenize(source) {
@@ -423,7 +390,6 @@ const DROPPED: &[&str] = &[
     "canvas", "audio", "video", "select", "textarea", "option",
 ];
 
-/// The inline decorations a `<b>`/`<i>`/`<del>`/`<code>` stack turns on.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 struct Flags {
     strong: bool,
@@ -435,7 +401,6 @@ struct Flags {
 }
 
 impl Flags {
-    /// A `<strong>` inside an `<em>` adds, it does not replace.
     fn with(&self, name: &str) -> Self {
         let mut flags = *self;
         match name {
@@ -499,12 +464,8 @@ impl Parser {
         self.blocks_until(stop, &[])
     }
 
-    /// [`Self::blocks`], with a second stop set that only a *close* tag matches.
-    ///
-    /// A list item needs this: `blocks(["li"])` must stop at the next `<li>`
-    /// (open) but must *not* stop at a nested `<ul>` (open) — yet it does have
-    /// to stop at the enclosing `</ul>` (close), or it swallows that tag as a
-    /// stray close and nests everything that follows the list inside the item.
+    /// A second stop set matched only by close tags, which a list item needs: it
+    /// must not stop at a nested `<ul>` but must stop at the enclosing `</ul>`.
     fn blocks_until(&mut self, stop: &[&str], closes: &[&str]) -> Vec<Block> {
         let mut out: Vec<Block> = Vec::new();
         let mut pending: Inlines = Vec::new();
@@ -522,7 +483,6 @@ impl Parser {
                     if stop.contains(&name.as_str()) || closes.contains(&name.as_str()) {
                         break;
                     }
-                    // A stray close tag: the input is a fragment, so drop it.
                     self.pos += 1;
                 }
                 Token::Open {
@@ -545,8 +505,6 @@ impl Parser {
                         self.pos += 1;
                         self.block(name, attrs, &mut out);
                     } else {
-                        // An inline tag, or a self-closed one: `br` is a break
-                        // inside the paragraph the runs are accumulating into.
                         self.pos += 1;
                         pending.extend(self.inlines(&context, &[name.as_str()]));
                     }
@@ -567,8 +525,6 @@ impl Parser {
         match name {
             "p" | "div" | "section" | "article" | "header" | "footer" | "main" | "aside"
             | "figure" | "dd" | "dt" | "address" => {
-                // A `div` is a container, so its children keep their own block
-                // structure; a `p` is a paragraph even if it holds inline text.
                 if name == "p" {
                     let inlines = self.inlines(&InlineContext::default(), &["p"]);
                     if let [Inline::Image { url, title, alt }] = inlines.as_slice() {
@@ -621,19 +577,11 @@ impl Parser {
             }
             "hr" => out.push(Block::Rule),
             "details" => {
-                // The one element here that is a control and not a container: the
-                // summary is the label of a thing that opens, and the blocks after
-                // it are what the thing hides. `<summary>` is where the split
-                // happens, so it is read here rather than left to `blocks`, which
-                // would flatten the whole thing into text.
+                // The one element here that is a control rather than a container.
                 let open = attr("open").is_some();
-                // Everything up to the summary, which is nothing but the newline
-                // a README puts after `<details>` in all but a few cases, and
-                // whatever a document chose to put there instead.
                 let mut blocks: Vec<Block> = self.blocks(&["summary", "details"]);
                 let mut summary: Inlines = Vec::new();
-                // `blocks` stops *on* the tag rather than consuming it, so this is
-                // the only place the summary can be read.
+                // `blocks` stops on the summary tag rather than consuming it.
                 if matches!(
                     self.peek(),
                     Some(Token::Open { name, self_closing: false, .. }) if name == "summary"
@@ -653,8 +601,7 @@ impl Parser {
                 let table = self.table();
                 out.extend(table);
             }
-            // `center`, `font`, `span`, `details > summary` and anything else
-            // unknown: transparent, so the children keep their own structure.
+            // Unknown: transparent, so the children keep their own structure.
             _ => out.extend(self.blocks(&[])),
         }
     }
@@ -669,22 +616,15 @@ impl Parser {
                     self.pos += 1;
                     items.push(ListItem {
                         task: None,
-                        // The item ends at the next `<li>` and at its list's
-                        // own close; a nested `<ul>` inside it is a nested list,
-                        // not the end of the item.
                         blocks: self.blocks_until(&["li"], stop),
                     });
                 }
                 Token::Close(name) if stop.contains(&name.as_str()) => {
-                    // Consume the list's own close rather than leaving it for
-                    // the caller: a nested list's `</ul>` left behind would be
-                    // read as the close of the outer list and cut it short.
+                    // Consume the list's own close; a nested `</ul>` left behind
+                    // would cut the outer list short.
                     self.pos += 1;
                     break;
                 }
-                // Whitespace and the `</li>` of the item just read are not part
-                // of the list; anything else that is not an `li` of this list
-                // is dropped rather than allowed to nest the walk.
                 _ => {
                     self.pos += 1;
                 }
@@ -757,9 +697,6 @@ impl Parser {
     }
 
     fn raw_text(&mut self) -> String {
-        // The caller has consumed the open tag, so the matching close is what
-        // ends this. Anything that looks like a tag before it is dropped, which
-        // is what a `pre` full of markup needs.
         let mut out = String::new();
         let mut depth = 0usize;
         while let Some(token) = self.next_token() {
@@ -793,7 +730,6 @@ impl Parser {
                         self.pos += 1;
                         break;
                     }
-                    // `</p>` without a `<p>` of our own, and stray closes.
                     self.pos += 1;
                 }
                 Token::Open {
@@ -826,10 +762,7 @@ impl Parser {
                             let mut inner = context.clone();
                             inner.link = Some((url.clone(), title.clone()));
                             let label = self.inlines(&inner, &["a"]);
-                            // A link with no text of its own — GitHub's image
-                            // links, `<a href><img></a>` — has no label, so it
-                            // is dropped rather than drawn as an empty blue
-                            // run: the image inside it keeps its own box.
+                            // An image link has no label; keep the image's box.
                             if !label.is_empty() {
                                 let (url, title) = inner.link.clone().unwrap();
                                 out.push(Inline::Link {
@@ -888,16 +821,12 @@ fn wrap(tag: &str, context: &InlineContext, contents: Inlines) -> Inline {
     } else if flags.strike && !context.flags.strike {
         Inline::Strike(contents)
     } else if flags.code && !context.flags.code {
-        // A code span with nested markup keeps the text and drops the markup,
-        // which is what the `code` element means.
         Inline::Code(crate::ui::components::markdown::doc::plain_text(&contents))
     } else if flags.sup && !context.flags.sup {
         Inline::Sup(contents)
     } else if contents.len() == 1 {
         contents.into_iter().next().unwrap()
     } else {
-        // Two stacked decorations, `<b><i>`, are one inline with both flags
-        // set, which the flags on the next tag will pick up.
         Inline::Emph(contents)
     }
 }
@@ -946,7 +875,7 @@ fn flush_paragraph(pending: &mut Inlines, out: &mut Vec<Block>) {
         return;
     }
     let inlines = std::mem::take(pending);
-    // A run that is nothing but whitespace, or a lone `<br>`, disappears.
+    // A run of only whitespace, or a lone `<br>`, disappears.
     let text: String = inlines
         .iter()
         .map(|inline| match inline {

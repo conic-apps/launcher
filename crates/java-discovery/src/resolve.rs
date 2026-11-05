@@ -22,7 +22,6 @@ use crate::models::JavaArch;
 use crate::mojang;
 use crate::scan_java_runtimes;
 
-/// A resolved Java runtime: the executable path together with its architecture.
 #[derive(Debug, Clone)]
 pub struct ResolvedJava {
     pub path: PathBuf,
@@ -39,10 +38,8 @@ pub struct ResolvedJava {
 #[derive(Debug, Clone, Default)]
 pub struct ResolveJavaOptions {
     pub instance_java_path: Option<String>,
-    /// Whether the Mojang-provided runtime is preferred over system runtimes.
     pub prefer_mojang_java: bool,
     pub disabled_java_runtimes: Vec<String>,
-    /// Required Java major version of the game version.
     pub required_major_version: u32,
     /// Mojang runtime component of the game version (e.g. `java-runtime-gamma`).
     pub mojang_component: String,

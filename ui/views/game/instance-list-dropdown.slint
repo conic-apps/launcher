@@ -17,14 +17,9 @@ export component InstanceListDropdown inherits Rectangle {
 
     out property <bool> opened: root.is-open;
 
-    // No `width` here on purpose. A `Rectangle` fills its parent anyway, so the
-    // row below does not need to be told the component's width — but a *layout*
-    // child must not bind one, and `width: 100%` on the root was quietly taking
-    // the width back from the layout that was supposed to be dividing it. With
-    // the two instances in `instances-list-tool-bar.slint` both at
-    // `horizontal-stretch: 1` the row stopped splitting in half.
+    // No `width`: a layout child must not bind one, or it steals the width the
+    // parent layout is dividing.
     height: 25px;
-    // The root carries the head's fill.
     background: Theme.surface-0;
     border-radius: 4px;
 
@@ -42,32 +37,16 @@ export component InstanceListDropdown inherits Rectangle {
         }
     }
 
-    // The label is its own text and the selection takes the rest, with the
-    // chevron 12px from the end.
-    //
-    // Spelled out rather than left to the default: the geometry default is
-    // specified per element type, and this is the box the only `TouchArea` in
-    // the component lives in — a layout whose children are all `Rectangle`s has
-    // a preferred size of 0, so if the default is ever the preferred size
-    // rather than the parent's, the dropdown stops being clickable rather than
-    // merely looking wrong.
+    // The label is its own text; the selection takes the rest, with the chevron
+    // 12px from the end. Sizes are explicit because this box hosts the only
+    // `TouchArea`.
     head := HorizontalLayout {
         width: root.width;
         height: root.height;
         cross-axis-alignment: center;
 
-        // Both halves are layouts rather than `Rectangle`s wrapping a layout.
-        // A nested `HorizontalLayout` does not fill a `Rectangle` parent the way
-        // the `Rectangle` itself does — it shrink-wraps — and `width: 100%` on
-        // it did not rescue that here: the row stayed a few pixels wide, the
-        // selection elided to a bare "…", and the chevron, 12px from the end of
-        // a tiny box, sat in the middle of the dropdown instead of at its edge.
-        // Made a layout, it is placed by `head` like anything else, so it is
-        // given the room it is entitled to and its own padding applies.
-        //
-        // `horizontal-stretch: 0` keeps the label at its own width. Stretch
-        // factors default to 1, so without it the label would claim half the row
-        // away from the selection.
+        // `horizontal-stretch: 0` keeps the label at its own width; the default 1
+        // would claim half the row from the selection.
         label-box := Rectangle {
             horizontal-stretch: 0;
             vertical-stretch: 0;
@@ -90,10 +69,7 @@ export component InstanceListDropdown inherits Rectangle {
             }
         }
 
-        // The chevron's `horizontal-stretch: 0` gives it its own 14px and the
-        // selection the rest, so the arrow is 12px from the end whatever the text
-        // is doing. Stretch factors default to 1, and a stretching chevron claims
-        // half the free space with the text and drags the arrow inward.
+        // The chevron's `horizontal-stretch: 0` keeps it 12px from the end.
         selected-box := Rectangle {
             horizontal-stretch: 1;
             background: transparent;
@@ -127,14 +103,8 @@ export component InstanceListDropdown inherits Rectangle {
         }
     }
 
-    // The whole component is the click target, so this hangs off the *root*
-    // and not off `head`. Inside the layout it was a column like any other:
-    // stretch factors default to 1, so it took a share of the free space away
-    // from the selection, and `width: 100%` handed it the whole row as its
-    // preferred size besides — the selection elided to a bare "…" and the
-    // chevron stopped being 12px from the end. Out here it is in no layout at
-    // all, so the `TouchArea` rule applies in full: 100% of its parent, which is
-    // the whole dropdown, and it costs the row nothing.
+    // Hangs off the root, not `head`: inside the layout it would consume a share
+    // of the row; out here it covers the whole dropdown and costs the row nothing.
     head-touch := TouchArea {
         width: 100%;
         height: 100%;

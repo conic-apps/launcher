@@ -5,23 +5,20 @@
 //! How this copy of the launcher was installed, and therefore whether it may
 //! update itself and which bundle the server should hand back.
 //!
-//! Guessing from `$APPIMAGE` or the executable's path is not enough — a Linux
-//! build may be an AppImage, a package-manager install *or* a portable tarball,
-//! and those need different answers. Each packaging format therefore ships an
-//! `update-policy` marker that names its own form; the environment override and
-//! the per-OS fallback below only cover a build that was run straight out of
-//! `target/` or an installer that has not written one yet.
+//! Guessing from `$APPIMAGE` or the executable's path is not enough, so each
+//! packaging format ships an `update-policy` marker naming its form; the
+//! environment override and per-OS fallback cover only a build run straight out
+//! of `target/` or an installer that wrote no marker.
 
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-/// The file a package or a portable archive leaves beside the executable (or
-/// under `/usr/share`, or in a macOS bundle's `Resources`) naming its form.
+/// Left beside the executable (or under `/usr/share`, or in a macOS bundle's
+/// `Resources`) naming the install form.
 pub const POLICY_FILE: &str = "update-policy";
 
-/// A self-updatable bundle form. The string form is what the update server's
-/// `?kind=` parameter takes.
+/// The string form is what the update server's `?kind=` parameter takes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum InstallKind {
     #[serde(rename = "appimage")]
@@ -90,7 +87,6 @@ impl std::fmt::Display for InstallForm {
     }
 }
 
-/// Detects the install form once, for the current process.
 pub fn detect() -> InstallForm {
     if let Ok(value) = std::env::var("CONIC_UPDATE_POLICY")
         && let Some(form) = parse_policy(&value)

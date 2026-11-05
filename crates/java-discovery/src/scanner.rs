@@ -2,15 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Filesystem scanning for installed Java runtimes.
-//!
-//! Design inspired by HMCL's `JavaManager#searchPotentialJavaExecutables`:
-//! candidates are collected from the environment (`JAVA_HOME`, `PATH`),
-//! platform specific locations (Windows registry and Program Files, Linux
-//! `/usr/lib/jvm`, macOS `JavaVirtualMachines` and Homebrew), Minecraft's
-//! bundled runtime folders and launcher-managed runtime roots. Each candidate
-//! is validated by reading its `release` file and running
-//! `java -XshowSettings:properties -version`, then deduplicated by its
+//! Filesystem scanning for installed Java runtimes. Candidates come from
+//! environment variables, platform-specific locations, Minecraft's bundled
+//! runtimes and launcher-managed roots; each is validated by its `release` file
+//! and a `java -XshowSettings:properties -version` probe, then deduplicated by
 //! canonical path.
 
 use std::{
@@ -43,8 +38,6 @@ use crate::{
     },
 };
 
-/// How long a single `java -XshowSettings:properties -version` probe may run
-/// before it is killed.
 const JAVA_PROBE_TIMEOUT: Duration = Duration::from_secs(10);
 
 /// Scans the system for installed Java runtimes using default options.

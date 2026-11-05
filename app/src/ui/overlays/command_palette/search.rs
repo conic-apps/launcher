@@ -107,7 +107,6 @@ pub(crate) fn curseforge_type(class_id: Option<i64>) -> &'static str {
     }
 }
 
-/// The Modrinth `project_type`, which the search types as a plain string.
 pub(crate) fn modrinth_type(project_type: &str) -> &'static str {
     match project_type {
         "mod" => "mod",
@@ -145,11 +144,8 @@ pub(crate) fn first_present(value: &Value, names: &[&str]) -> String {
 
 /// Fetches and decodes the results' icons, detached from the results themselves.
 ///
-/// They are not worth waiting for: the icon fills in beside a row that is
-/// already there, and holding the list back for twenty of them made the palette
-/// look dead for as long as the slowest CDN took. Each is a separate task, so
-/// twenty of them take one round trip rather than twenty, and each gives up on
-/// its own so one dead host cannot hold the rest.
+/// The icons are not worth waiting for, and each fetch is its own task so one
+/// dead host cannot hold the rest.
 pub(crate) fn spawn_icon_fetch(weak: Weak<App>, token: u64, wanted: Vec<(usize, String)>) {
     crate::support::runtime::spawn(async move {
         let mut tasks = Vec::with_capacity(wanted.len());

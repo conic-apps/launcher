@@ -14,8 +14,7 @@ import { AppConfig, JavaRuntime } from "../../globals/settings.slint";
 component JavaRuntimeList inherits VerticalLayout {
     in property <[JavaRuntime]> runtimes: [];
     in property <string> scan-error: "";
-    // Whether this list ends a `SettingCollapse`. Which row that is depends on
-    // the branch showing, so it is worked out here and handed to that one row.
+    // Which row ends the `SettingCollapse` depends on the visible branch.
     in property <bool> group-last: false;
 
     width: 100%;
@@ -39,12 +38,8 @@ component JavaRuntimeList inherits VerticalLayout {
         title: "Java " + runtime.major;
         tags: [runtime.vendor, runtime.version, runtime.arch];
         description: runtime.display-path;
-        // A path is a single line with the rest elided, hover for the whole of it
-        // — and it has to be pinned, since this is the one row on the settings
-        // page whose height is *measured* rather than laid out: the rows come
-        // from a `for`, which Slint measures at the row's own preferred width
-        // where a wrapping description never wraps. See `SettingItem`'s
-        // `description-lines`.
+        // Pinned to one line: a `for` measures rows at their preferred width,
+        // where a wrapping description never wraps.
         description-lines: 1;
 
         Switch {
@@ -55,8 +50,7 @@ component JavaRuntimeList inherits VerticalLayout {
 }
 
 export component SettingsJvm inherits VerticalLayout {
-    /// The 8px inset each group carries inside the settings page, which the
-    /// setup wizard drops by passing `0px`.
+    /// The setup wizard drops the page's 8px inset by passing `0px`.
     in property <length> group-inset: 8px;
 
     width: 100%;

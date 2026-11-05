@@ -5,38 +5,20 @@
 //! The frequency analyser the footer visualizer reads, reproducing the Web Audio
 //! `AnalyserNode` step for step.
 //!
-//! The Web Audio spec (and every implementation of it) defines one
-//! `getFloatFrequencyData` read as:
-//!
-//!   1. Blackman-window the last `fftSize` samples of the signal,
-//!   2. a DFT of that size, normalised by `1/fftSize`,
-//!   3. an exponential smoothing of the *magnitudes* across reads, with
-//!      `smoothingTimeConstant` as the carry-over factor,
-//!   4. and finally the `20·log10` the float accessor reports.
-//!
-//! Smoothing the magnitudes and only then taking the logarithm matters: doing it
-//! the other way round (a plain average of the previous frame's dB) is a
-//! different filter, and the visualizer is the only thing that reads this.
-//!
-//! The analyser taps what the device is given, after the gain has been applied,
-//! so the volume scales the bars along with the sound.
+//! Smoothing the magnitudes and only then taking the logarithm is deliberate: a
+//! plain average of the previous frame's dB is a different filter. The analyser
+//! taps the signal after the gain, so volume scales the bars along with the sound.
 
 use std::sync::Arc;
 
 use rustfft::{Fft, FftPlanner, num_complex::Complex32};
 
-/// The default `fftSize`.
 pub const DEFAULT_FFT_SIZE: usize = 2048;
 
-/// The `smoothingTimeConstant`, matching the Web Audio default.
 pub const SMOOTHING_TIME_CONSTANT: f32 = 0.8;
 
-/// A Web Audio `AnalyserNode`.
-///
-/// `fftSize` is a power of two in the range 32..32768 in Web Audio; the
-/// visualiser is the only thing that ever sets it (through the bar count) and it
-/// always rounds to a power of two itself, so an out-of-range value is clamped
-/// rather than rejected.
+/// A Web Audio `AnalyserNode`. The visualiser always rounds `fftSize` to a power
+/// of two itself, so an out-of-range value is clamped rather than rejected.
 pub struct Analyser {
     fft_size: usize,
     window: Vec<f32>,
@@ -64,19 +46,15 @@ impl Analyser {
         analyser
     }
 
-    /// The `fftSize`: the number of samples every read transforms, and twice
-    /// [`Self::frequency_bin_count`].
     pub fn fft_size(&self) -> usize {
         self.fft_size
     }
 
-    /// The `frequencyBinCount`: the number of values a read reports.
     pub fn frequency_bin_count(&self) -> usize {
         self.fft_size / 2
     }
 
-    /// Resizes the transform, as `analyser.fftSize = size` does. A no-op when
-    /// the size is already what the analyser is using.
+    /// A no-op when the size is already what the analyser is using.
     pub fn set_fft_size(&mut self, fft_size: usize) {
         let fft_size = normalize_fft_size(fft_size);
         if fft_size == self.fft_size {
@@ -91,22 +69,17 @@ impl Analyser {
         self.smoothed.resize(self.frequency_bin_count(), 0.0);
     }
 
-    /// One `getFloatFrequencyData`: the spectrum of `input` (the samples the
-    /// analyser has been fed, newest last), in dB, one value per frequency bin.
-    ///
-    /// Fewer samples than `fftSize` are zero-padded at the front and more are
-    /// truncated to the newest `fftSize`, matching the Web Audio ring buffer.
+    /// One `getFloatFrequencyData`, in dB. Fewer samples than `fftSize` are
+    /// zero-padded at the front and more are truncated to the newest `fftSize`,
+    /// matching the Web Audio ring buffer.
     pub fn read(&mut self, input: &[f32]) -> Vec<f32> {
         let mut bins = Vec::with_capacity(self.frequency_bin_count());
         self.read_into(input, &mut bins);
         bins
     }
 
-    /// [`Self::read`] writing into `bins`, which is cleared first.
-    ///
-    /// The audio callback uses this rather than `read` so that a read allocates
-    /// nothing: handing out a fresh `Vec` every read would put an allocation on
-    /// the one thread that cannot afford one.
+    /// [`Self::read`] writing into `bins`, which is cleared first. The audio
+    /// callback uses this so a read allocates nothing on the audio thread.
     pub fn read_into(&mut self, input: &[f32], bins: &mut Vec<f32>) {
         let size = self.fft_size;
         let skip = input.len().saturating_sub(size);

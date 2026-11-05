@@ -2,87 +2,53 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// Command palette state.
-//
-// Slint has no per-instance state and no computed properties, so the split is:
-//
-//   * the *pure-UI* state lives in this global and is written from the view —
-//     whether the palette is open, which mode it is in, what has been typed and
-//     which row is selected;
-//   * the *domain* state lives in Rust — the instance list, the Modrinth and
-//     CurseForge searches — and is pushed in as a plain model of `PaletteItem`.
-//
-// The rendered list is built in Rust (`app/src/ui/overlays/command_palette/`) rather than
-// assembled in an expression, for the reason the instance list and the content
-// cards give: a Slint expression can neither build a model nor index one, and
-// the list's order, filtering, section labels and heights all have to agree.
+// Command palette state. Pure-UI state (open, mode, query, selection) lives
+// here and is written from the view; domain state lives in Rust and is pushed in
+// as a `PaletteItem` model.
 
-/// One row of the palette's result list.
-///
-/// A row is a command, an instance or a project from an online search, and the
-/// three differ in what they carry. The translatable parts are *not* strings but
-/// keys: a string pushed into a model is fixed at the moment it is pushed and
-/// would not follow a language change, where an `@tr` binding re-evaluates — so
-/// `CommandText` resolves these (see the note on that global).
+/// One row of the palette's result list: a command, an instance or an online
+/// project. Translatable parts are keys, resolved by `CommandText`, because a
+/// string pushed into a model would not follow a language change.
 export struct PaletteItem {
     /// What `hover` / `perform` report and what `selected-key` is compared
     /// against: `instance-<id>`, `modrinth-<id>`, `curseforge-<id>`, or the
-    /// command's own name.
+    /// command's name.
     key: string,
     title: string,
-    /// "" for a title that is data (an instance's name, a project's), or the
-    /// command's key when the title is one of the five fixed commands:
-    /// "launch-instance" | "create-instance" | "add-account" | "search-modrinth"
-    /// | "search-curseforge".
+    /// "" for data titles, or the command's key for the five fixed commands.
     title-kind: string,
     /// The project's author, or "".
     author: string,
-    /// The mod loader tags, in the API's own slugs (fabric | forge | quilt |
-    /// neoforge), already filtered. The tag's *label* is
-    /// `ContentText.loader()`'s, which is a name map and not a translation
-    /// either.
+    /// The mod loader tags in the API's slugs (fabric | forge | quilt | neoforge),
+    /// already filtered.
     loaders: [string],
     subtitle: string,
-    /// "" or the project type the subtitle is the label of: "mod" | "modpack" |
+    /// "" or the project type the subtitle labels: "mod" | "modpack" |
     /// "resourcepack" | "shader".
     subtitle-kind: string,
-    /// The `AppIcon` name: a command's or an instance's glyph ("play", "add",
-    /// "user-add", "minecraft"), or the site an online result came from
-    /// ("modrinth" / "curseforge").
+    /// The `AppIcon` name, or the site an online result came from.
     icon: string,
-    /// Whether `icon` is a site mark rather than a glyph. The two are drawn
-    /// from different elements with different rules — an `AppIcon` for the
-    /// first, a site image for the second — and take their ink from different
-    /// variables: the glyph from the icon's colour, the mark from a `fill` of
-    /// its own.
+    /// Whether `icon` is a site mark rather than a glyph; the two are drawn
+    /// differently and take their ink from different variables.
     icon-is-brand: bool,
-    /// The project's own icon, when the search returned one. It takes the place
-    /// of the mark entirely.
+    /// The project's own icon, when the search returned one.
     icon-image: image,
     has-icon-image: bool,
     /// Whether the trailing chevron is drawn.
     has-children: bool,
-    /// The action the footer reports for the selected row: "open" | "select" |
-    /// "launch".
+    /// The footer action for the selected row: "open" | "select" | "launch".
     action-kind: string,
-    /// The section heading drawn above this row, or "" — "commands" |
-    /// "instances" | "results". Only the first row of a section carries one.
+    /// The section heading above this row, or "" — "commands" | "instances" |
+    /// "results". Only the first row of a section carries one.
     section-kind: string,
-    /// The section label's own height: `6px 10px 2px` padding around an 11px
-    /// line — 19px — plus 4px of margin below the text, so 23px. 0 when the row
-    /// carries no heading.
+    /// The section label's height, 0 when the row carries no heading.
     label-height: length,
-    /// The row's height: `8px 10px` padding around a main line of at least
-    /// 24px. 40px without the loader tags and 46px with them, the tag row being
-    /// `13px` title + `3px` gap + `14px` tags.
+    /// The row's height, with or without the loader tag row.
     row-height: length,
 }
 
-/// The palette's translated strings.
-///
-/// The context is set explicitly (`@tr("CommandText" => …)`) because these are
-/// not one component's own strings: the rows, the placeholder, the breadcrumb and
-/// the footer hints are separate elements.
+/// The palette's translated strings. The context is explicit because the rows,
+/// placeholder, breadcrumb and footer hints are separate elements.
 export global CommandText {
     /// A row's title — the command's own, or the data Rust pushed.
     public pure function title(kind: string, text: string) -> string {
@@ -154,15 +120,12 @@ export global CommandText {
         return @tr("CommandText" => "Close");
     }
 
-    /// The empty-list messages. `kind` is one of "searching" | "type-to-search"
-    /// | "failed" | "none", and `source` is the site for the one that names it.
+    /// The empty-list messages. `kind` is "searching" | "type-to-search" |
+    /// "failed" | "none"; `source` names the site where relevant.
     public pure function empty(kind: string, source: string) -> string {
         if kind == "type-to-search" {
-            // The site is named rather than left implicit: the message sits in an
-            // empty list under a field whose placeholder already says which site is
-            // being searched, and "and press Enter" would promise that a key does
-            // something the field never asked it to. Only Enter performs a search,
-            // and there is nothing to perform here.
+            // Name the site: only Enter performs a search, so do not promise that
+            // a key does something here.
             if source == "curseforge" {
                 return @tr("CommandText" => "Type keywords to search on CurseForge");
             }
@@ -182,49 +145,37 @@ export global CommandPaletteState {
     /// "modrinth" | "curseforge" — which site `search-online` searches.
     in-out property <string> source: "modrinth";
     in-out property <string> query: "";
-    /// Whether the query with its surrounding whitespace removed is empty, which
-    /// the empty state and the search both ask about. Slint has no `trim`, so
-    /// Rust answers it.
+    /// Whether the trimmed query is empty. Slint has no `trim`, so Rust answers.
     in-out property <bool> query-empty: true;
 
     in-out property <[PaletteItem]> items: [];
-    /// The height of `items` laid out end to end, headings included. The results
-    /// area is `min(320px, this + 12px)` tall.
+    /// The height of `items` laid out end to end, headings included.
     in-out property <length> items-content-height: 0px;
-    /// Bumped whenever `items` is replaced, so the view can drop the scroll
-    /// offset. A sequence number rather than the model itself because two
-    /// rebuilds can produce the same list.
+    /// Bumped whenever `items` is replaced, so the view drops the scroll offset.
     in-out property <int> items-seq: 0;
 
-    /// The key of the selected row, what the view compares a row's `key` against
-    /// to draw the highlight, and what the footer's action belongs to.
+    /// The key of the selected row.
     in-out property <string> selected-key: "";
-    /// The key of the row the pointer is over, which is *not* the selection: the
-    /// pointer does not move the selection, so the keyboard's selection stays put
-    /// and the pointer only says where it is. "" is "no row".
+    /// The key of the row the pointer is over, which is not the selection.
     in-out property <string> hovered-key: "";
     in-out property <string> selected-action-kind: "";
     in-out property <length> selected-row-y: 0px;
     in-out property <length> selected-row-height: 0px;
-    /// Bumped on every selection change, arrow key or pointer, so the view
-    /// scrolls the selected row into sight.
+    /// Bumped on every selection change so the view scrolls the row into sight.
     in-out property <int> selected-seq: 0;
 
     in-out property <bool> online-searching: false;
     in-out property <bool> online-error: false;
 
-    /// Opens the palette, or closes it if it is already open: the `Ctrl`/`⌘` + `/`
-    /// shortcut.
+    /// Opens the palette, or closes it if already open.
     callback toggle();
     /// The title bar's search field was clicked.
     callback open();
     /// The backdrop, Escape, or a command that finishes its work.
     callback close();
-    /// A row was clicked. It becomes the selection, and a click on the row that
-    /// already is the selection opens it.
+    /// A row was clicked; a click on the already-selected row opens it.
     callback click(int);
-    /// Enter, which acts on the selected row — the view has no index of its own
-    /// to report.
+    /// Enter, acting on the selected row.
     callback perform-selected();
     /// The pointer moved onto a row, or off one (a negative index).
     callback hover(int);
@@ -232,16 +183,13 @@ export global CommandPaletteState {
     callback move-selection(int);
     /// The user typed in the search field; the selection is reset.
     callback query-changed();
-    /// Escape with a non-empty query: the query is emptied, which resets the
-    /// selection and the online results with it.
+    /// Escape with a non-empty query: empty it and reset the results.
     callback clear-query();
     /// A command that opens another mode was chosen. `kind` is "launch-instance"
-    /// or "search-online", and `source` the site for the latter.
+    /// or "search-online"; `source` is the site for the latter.
     callback enter-mode(string, string);
-    /// Escape with an empty query, or Backspace on an empty query, outside the
-    /// root mode.
+    /// Escape or Backspace on an empty query, outside the root mode.
     callback back-to-root();
-    /// The 250ms debounce after the last keystroke elapsed. The search itself runs
-    /// on the tokio runtime (`app/src/ui/overlays/command_palette/`).
+    /// The 250ms debounce after the last keystroke elapsed.
     callback run-search();
 }

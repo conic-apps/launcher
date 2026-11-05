@@ -3,12 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The launch screen's presenter: a crate's progress → a [`LaunchView`] →
-//! `LaunchState`.
-//!
-//! This is the testable half of the Humble Object pair. It decides how a byte
-//! count becomes text and which stage shows a spinner, but it does not know
-//! Slint: the mapping is a pure function of a crate event, so it is unit-tested
-//! without a window, and [`apply_view`] is the only Slint-touching line.
+//! `LaunchState`. The mapping is pure and unit-tested without a window;
+//! [`apply_view`] is the only Slint-touching line.
 
 use crate::slint_backend::LaunchState;
 use crate::support::formatting::bytes;

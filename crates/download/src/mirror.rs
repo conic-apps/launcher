@@ -37,7 +37,6 @@ impl MirrorUsage {
                 .collect(),
         }
     }
-    /// Selects the libraries mirror with the fewest active connections.
     pub(crate) fn get_libraries_mirror(&self, disabled: &[String]) -> Option<Mirror> {
         let (k, v) = self
             .libraries
@@ -51,7 +50,6 @@ impl MirrorUsage {
         );
         Some(Mirror(k.clone(), v.clone()))
     }
-    /// Selects the assets mirror with the fewest active connections.
     pub(crate) fn get_assets_mirror(&self, disabled: &[String]) -> Option<Mirror> {
         let (k, v) = self
             .assets

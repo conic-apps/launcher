@@ -16,18 +16,13 @@ fn session_file() -> PathBuf {
     LOCATIONS.launcher.root.join("music_session.json")
 }
 
-/// The saved track and its position.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct SavedTrack {
-    /// Absolute path of the track that was playing.
     pub path: String,
-    /// How far into it, in seconds.
     #[serde(default)]
     pub current_time: f64,
 }
 
-/// Writes the state.
-///
 /// A failed write is logged rather than propagated: losing the saved position
 /// must not interrupt playback.
 pub fn save(state: &SavedTrack) {
@@ -40,8 +35,6 @@ pub fn save(state: &SavedTrack) {
     }
 }
 
-/// Reads the state back, or `None` when there is none to read.
-///
 /// Every failure — a missing file, a truncated write, a `current_time` that is
 /// not a number — means "no saved state" rather than an error.
 pub fn load() -> Option<SavedTrack> {

@@ -15,11 +15,9 @@ import {
 import { ScrollInput, ScrollSource } from "../../globals/scroll.slint";
 import { InstancesListToolBar } from "instances-list-tool-bar.slint";
 
-// One instance card of the list: the two stacked rounded cards (an outer card
-// carrying the state colour, and the content card offset to the right) with the
-// loader tag and the last-played line. `InstancesListContent` computes the
-// resting x from its rail; the component owns the 20px nudge the current card
-// carries.
+// One instance card: an outer card carrying the state colour, a content card
+// offset to the right, the loader tag and the last-played line. The caller
+// computes the rail x; this component owns the current card's 20px nudge.
 component InstanceListCard inherits Rectangle {
     in property <GameRow> item;
     in property <length> base-x: 0px;
@@ -37,14 +35,10 @@ component InstanceListCard inherits Rectangle {
     y: 2px;
     width: 480px;
     height: 56px;
-    // The outer card is a single path: an 8px rounded rectangle with the content
-    // card's 6px rounded rectangle punched out. The two subpaths wind in
-    // opposite directions, so the default nonzero fill rule leaves a hole: the
-    // state colour paints only the exposed left strip and thin frame, and the
-    // area the content card covers stays transparent. (Slint 1.18's renderer
-    // ignores `fill-rule: evenodd` here, hence the reversed inner winding.) The
-    // geometry has to match the content card below — 8px/6px radii, 16px left
-    // and 3px right / 1px top and bottom insets.
+    // One path: the outer 8px rounded rect with the content card's 6px rect
+    // punched out. The subpaths wind oppositely because Slint 1.18 ignores
+    // `fill-rule: evenodd`, leaving the hole under the nonzero rule. The geometry
+    // must match the content card below.
     background: transparent;
     transform-origin: { x: self.width / 2, y: self.height / 2 };
     transform-scale-x: card-touch.pressed && !root.item.current ? 0.99 : root.item.current ? 1.03 : 1.0;
@@ -118,8 +112,7 @@ component InstanceListCard inherits Rectangle {
 
         Close { }
 
-        // The content card, counter-clockwise, so the nonzero fill rule leaves
-        // it as a hole.
+        // Counter-clockwise, so the nonzero rule leaves a hole.
         MoveTo {
             x: 22;
             y: 1;
@@ -180,10 +173,8 @@ component InstanceListCard inherits Rectangle {
         Close { }
     }
 
-    // The content card: a second rounded card offset to the right. With the
-    // outer's overlap punched out it keeps its translucency — it shows the
-    // backdrop, not the state colour. It clips so an instance background image
-    // stays inside its rounded corners.
+    // The content card, raised over the punched-out outer. It clips so an
+    // instance background stays inside its rounded corners.
     Rectangle {
         x: 16px;
         y: 1px;
@@ -195,11 +186,8 @@ component InstanceListCard inherits Rectangle {
             : card-touch.has-hover && !root.item.current ? Theme.surface-0.with-alpha(0.8)
             : Theme.surface-0.with-alpha(0.4);
 
-        // The instance's custom background, pinned to the content card's right.
-        // It starts 100px in, which keeps the 16px colour strip and the name
-        // clear, and its left edge is already faded to transparent in the pixels
-        // (`load_background`) so it dissolves into the card instead of ending in
-        // a flat colour band.
+        // Starts 100px in to keep the colour strip and name clear; its left edge
+        // is pre-faded in the pixels (`load_background`) to dissolve into the card.
         if root.item.has-background && root.item.background.width > 0: Image {
             x: 100px;
             y: 0;
@@ -244,9 +232,7 @@ component InstanceListCard inherits Rectangle {
         }
 
         HorizontalLayout {
-            // No `spacing`: the only separator between the label and the value is
-            // the single collapsed whitespace character, which is the label's own
-            // trailing string.
+            // No `spacing`: the label's trailing space is the only separator.
             cross-axis-alignment: center;
 
             Text {
@@ -280,9 +266,8 @@ component InstanceListCard inherits Rectangle {
     }
 }
 
-// A group header of the list: the accent bar, the collapse chevron, the title
-// and the count badge. `InstancesListContent` computes the resting x from its
-// rail; the component is otherwise self-contained.
+// A group header: accent bar, collapse chevron, title and count badge. The
+// caller computes the rail x.
 component InstanceGroupRow inherits Rectangle {
     in property <GameRow> item;
     in property <length> base-x: 0px;
@@ -294,11 +279,8 @@ component InstanceGroupRow inherits Rectangle {
     y: 2px;
     width: 480px;
     height: 40px;
-    // The same layered treatment as `InstanceListCard`: an 8px rounded outer path
-    // with the 6px content card punched out (the inner subpath wound the other
-    // way under the default nonzero fill rule), so the group colour shows as a
-    // left strip and frame. The geometry matches the content card below — 20px
-    // left, 3px right, 1px top and bottom.
+    // Same punched-out layered path as `InstanceListCard`, so the group colour
+    // shows as a left strip and frame.
     background: transparent;
 
     Path {
@@ -373,26 +355,20 @@ component InstanceGroupRow inherits Rectangle {
     }
 }
 
-// The scrolling content: every row laid out absolutely (Rust writes the
-// `row-y`/`height` in the model) and animated along the rail. It is pure layout
-// and rendering — `InstancesList`'s wrapping `TouchArea` owns the wheel and
-// trackpad input, and the row clicks are reported back as callbacks so the list
-// keeps the collapse lock and the centring a selection needs.
+// The scrolling content: every row laid out absolutely (Rust writes `row-y` and
+// `height`) and animated along the rail. `InstancesList` owns wheel/trackpad
+// input and keeps the collapse lock and selection centring.
 //
-// Cards glide along a parabola: `rail-x` pulls a row `rail-offset` to the left
-// at the vertical centre of the viewport and eases it part-way back towards its
-// resting x as it nears the top and bottom. It is a pure function of the row's
-// *current* y, so while a row animates to a new slot (collapse/expand, sort,
-// grouping) its x follows the same curve that the wheel draws.
+// `rail-x` pulls a row left at the viewport centre and eases it back near the
+// top and bottom. It depends only on the row's current y, so a row animating to
+// a new slot follows the same curve the wheel draws.
 component InstanceListContent inherits Rectangle {
     /// The list's smoothed scroll offset.
     in property <length> scroll-y: 0px;
-    /// The viewport height, which the rail and the intro stagger are measured
-    /// against (this element's own height is the whole content).
+    /// The rail and intro stagger are measured against this, not this element's
+    /// own height (which is the whole content).
     in property <length> viewport-height: 0px;
-    /// A group header was clicked, with its key.
     callback group-clicked(string);
-    /// An instance card was clicked, with its id.
     callback card-clicked(string);
 
     // The card content starts 200px in; the group box rests 40px to the left of
@@ -405,33 +381,24 @@ component InstanceListContent inherits Rectangle {
     // *wrapper*'s centre.
     private property <length> group-half-height: 21px;
 
-    // `InstancesList` starts the list 50ms in and its cards 115ms after that;
-    // each card is staggered 30ms further along the row pitch the stagger counts
-    // in, i.e. one card row (`CARD_HEIGHT` in `GameController::build_rows`).
+    // Cards start 165ms in, staggered 30ms per card row (`CARD_HEIGHT`).
     private property <duration> intro-card-delay: 165ms;
     private property <duration> intro-stagger: 30ms;
     private property <length> intro-row-pitch: 58px;
-    /// How many steps the entrance has, one per card row the viewport holds. The
-    /// entrance staggers every card the viewport can see, so a window that fits
-    /// more rows has to spread over more steps — otherwise the cards past the
-    /// cap would all share the last one.
+    /// One step per card row the viewport holds, so taller windows spread over
+    /// more steps instead of sharing the last one.
     private property <float> intro-steps: max(1, root.viewport-height / root.intro-row-pitch);
-    /// Where the list sat when the entrance started. The stagger counts from the
-    /// first row *on screen* (the list opens centred on the current instance),
-    /// not from the first row of the list — and it is captured rather than read
-    /// live so that scrolling mid-entrance cannot reshuffle the order.
+    /// Captured at entrance start: the stagger counts from the first row on
+    /// screen, and capturing prevents scrolling mid-entrance from reshuffling it.
     private property <length> intro-top: 0px;
 
-    /// Called by `InstancesList` once the list has settled on the current
-    /// instance and just before it plays the entrance. Everything the entrance
-    /// is ordered against — the layout, the offset — is only final at that point.
+    /// Called once the list has settled, just before the entrance plays.
     public function begin-intro() {
         self.intro-top = root.scroll-y;
     }
 
-    /// `viewport-center-y` is the row's centre as it appears on screen, i.e. its
-    /// content position minus the scroll offset — callers subtract `scroll-y`,
-    /// so the sign of the scroll can only be got wrong in one place.
+    /// `viewport-center-y` is the row's centre on screen, so callers subtract
+    /// `scroll-y` and the sign lives in one place.
     pure function rail-x(viewport-center-y: length) -> length {
         if root.viewport-height <= 0px {
             return 0px;
@@ -475,27 +442,19 @@ component InstanceListContent inherits Rectangle {
     height: GameState.list-content-height;
     background: transparent;
 
-    // Row heights are laid out in Rust (`row-y`/`height`), so the view positions
-    // the rows absolutely: that is what lets a row animate to its new slot
-    // without the model being rebuilt.
+    // Rust lays out row positions, so rows animate to new slots without the
+    // model being rebuilt.
     for row[i] in GameState.rows: row-box := Rectangle {
         y: row.row-y;
         width: parent.width;
         height: row.height;
         background: transparent;
 
-        // The intro slides cards in from +40px along the rail, staggered by
-        // 0.03s; a row that appears later (search, sort, grouping, starring)
-        // slides in from +24px instead. Both are offsets on top of the rail, so
-        // the card enters *along* the curve rather than merely fading.
+        // The entrance slides from +40px along the rail; a row appearing later
+        // slides from +24px. Both are rail offsets, so it enters along the curve.
         //
-        // The stagger counts the card rows between the top of the window and this
-        // one, which is the order the entrance has to follow. It is deliberately
-        // not the `for` index: the index runs over the whole model, so it both
-        // saturates (a list opened on its last instance gave every row on screen
-        // the same step, and they all arrived in the same frame) and, after a
-        // sort change, no longer matches the visual order at all — `sync_rows`
-        // keeps the model's order and moves the rows by their `row-y`.
+        // The stagger counts card rows from the top of the window, not the `for`
+        // index, which saturates and no longer matches visual order after a sort.
         private property <float> intro-rank: clamp(
             (row.row-y - root.intro-top) / root.intro-row-pitch,
             0,
@@ -507,18 +466,14 @@ component InstanceListContent inherits Rectangle {
         private property <length> appear-dx: row.appear ? 0px : 24px;
         private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
         private property <float> appear-alpha: row.appear ? 1.0 : 0.0;
-        /// The collapse fade: a card of a collapsed group goes to 0 where it
-        /// stands, while the rows below close the gap.
+        /// The collapse fade: a collapsed group's cards fade in place.
         private property <float> row-alpha: row.opacity;
 
         x: self.intro-dx + self.appear-dx;
-        // `opacity` itself must stay unanimated: it is the product of these
-        // three, and an `animate` here would chase the moving product with a
-        // second easing, so the row's fade would lag behind its slide instead of
-        // running with it.
+        // Not animated: it is the product of three animated values, and a second
+        // easing would make the fade lag the slide.
         opacity: self.intro-alpha * self.appear-alpha * self.row-alpha;
-        // A fading row (a collapsed group's cards) must not take clicks from what
-        // it is covering.
+        // A fading row must not take clicks from what it covers.
         visible: self.opacity > 0.01;
 
         animate intro-dx {
@@ -543,10 +498,8 @@ component InstanceListContent inherits Rectangle {
             duration: 300ms;
             easing: cubic-bezier(0.33, 1, 0.68, 1);
         }
-        // The FLIP: when the slot changes the row glides there, and because its
-        // x is a pure function of its y the row travels along the rail at the
-        // same eased progress. A reorder or a re-open travels on the FLIP curve
-        // (400ms); a group collapse on the cubic curve (300ms).
+        // The FLIP: x is a pure function of y, so the row glides along the rail.
+        // A reorder uses the FLIP curve (400ms); a collapse the cubic (300ms).
         animate y {
             duration: row.flip ? 400ms : 300ms;
             easing: row.flip
@@ -576,67 +529,39 @@ component InstanceListContent inherits Rectangle {
     }
 }
 
-// Grouped instance list.
+// Grouped instance list, anchored so the cards peek in from the right.
 //
-// The list is anchored so its right edge sits 320px past the viewport, with the
-// cards peeking from the right.
-//
-// The rail and the custom scrollbar both follow a smoothed offset
-// (`lerp: 0.16`: every frame the offset closes 16% of the remaining distance to
-// the target). That is a `Timer` easing `scroll-y` towards `target-y`, instead
-// of a `Flickable`: a Flickable would add its own fixed-duration wheel
-// animation on top of the lerp, and its input handling would fight the
-// programmatic scrolling this view needs (`scroll-to-current` on selection, the
-// snap that centres the current instance when the view opens, and the lock that
-// freezes scrolling while a group collapses).
-//
-// Wheel events are captured by the `TouchArea` that *wraps* the content. The
-// cards' own `TouchArea`s never handle scroll events and Slint's `EventResult`
-// defaults to `reject`, so the wheel bubbles up to it. A trackpad does not go
-// through the lerp at all — its deltas, the fingers' and the momentum's alike,
-// are applied as they arrive (see `globals/scroll.slint`), because macOS
-// derives that momentum from the velocity the gesture ended at: easing it would
-// stall the list on release and ramp back up.
+// The rail and scrollbar follow a smoothed offset (`lerp`), driven by a `Timer`
+// rather than a `Flickable`: a Flickable would add its own wheel animation and
+// fight the programmatic scrolling this view needs. Wheel events bubble to the
+// wrapping `TouchArea`; trackpad deltas are applied as they arrive (see
+// `globals/scroll.slint`), because easing macOS momentum would stall it.
 export component InstancesList inherits Rectangle {
     width: 680px;
     height: 100%;
     background: transparent;
 
-    // The scrollbar is pinned against the *window*: 8px from its right edge,
-    // 6px wide, spanning from 126px below the title bar (below the toolbar) to
-    // 60px above the bottom.
+    // Pinned against the window, below the toolbar, above the footer.
     private property <length> scrollbar-right: 8px;
     private property <length> scrollbar-width: 6px;
     private property <length> scrollbar-top: 8px + 112px + 6px;
     private property <length> scrollbar-bottom: 56px + 4px;
 
-    /// Smoothed scroll offset: 0 at the top, growing as the list scrolls down.
-    /// Drives the rail and the scrollbar thumb.
+    /// Smoothed scroll offset; drives the rail and the scrollbar thumb.
     in-out property <length> scroll-y: 0px;
-    /// Where `scroll-y` is heading (wheel input, `scrollTo`, centring).
+    /// Where `scroll-y` is heading.
     in-out property <length> target-y: 0px;
-    /// Wheel distance multiplier. A notch is `LineDelta * 60` in winit but ~120px
-    /// on a trackpad, hence 2. A trackpad scrolls with pixel deltas, which are
-    /// already in pixels: the wheel path scales by this, the trackpad path
-    /// applies them as they are.
+    /// Wheel distance multiplier; trackpad deltas are already in pixels.
     private property <float> wheel-step: 2;
     private property <length> max-scroll: max(0px, GameState.list-content-height - root.height);
-    // While a toggle is settling the offset is left alone, even if the list just
-    // became shorter than it: the collapse plays out first and the glide to the
-    // new end follows (see `changed max-scroll` below).
+    // While settling, leave the offset alone so the collapse plays out first.
     private property <length> clamped-target: root.settling
         ? root.target-y
         : clamp(root.target-y, 0px, root.max-scroll);
 
-    // While a group collapses or expands the rows travel along the rail: scrolling
-    // in the middle of that would drag their x along while they move, and a second
-    // toggle would collapse cards that are still in flight, so both are held off
-    // for 700ms and 350ms respectively.
-    //
-    // The release is driven by the timers' `running` *bindings*. Calling
-    // `restart()` would not work here: it only restarts a timer that has been
-    // started before, so a `running: false` timer would never fire and the list
-    // would stay locked until the view was rebuilt.
+    // Scrolling and a second toggle are held off while a collapse/expand animates
+    // (700ms and 350ms). The timers' `running` bindings drive the release;
+    // `restart()` would not start a timer that was never running.
     private property <bool> settling: false;
     private property <bool> toggle-locked: false;
 
@@ -651,39 +576,26 @@ export component InstancesList inherits Rectangle {
         running: root.toggle-locked;
         triggered => {
             root.toggle-locked = false;
-            // The collapse has played by now: if it made the list shorter than the
-            // current offset, glide up to the end it has now.
+            // If the collapse shortened the list, glide up to its new end.
             root.target-y = clamp(root.target-y, 0px, root.max-scroll);
         }
     }
 
-    // Collapsing the last group shortens the list under the current offset. The
-    // collapse plays first and only then eases to the new end, and expanding must
-    // not scroll back to where the collapse left off — so the *target* is clamped
-    // here, once, instead of the derived offset being clamped continuously while
-    // the collapse runs.
+    // Clamp the target once, so the collapse plays first and expanding does not
+    // scroll back to where it left off.
     changed max-scroll => {
         if !root.settling {
             root.target-y = clamp(root.target-y, 0px, root.max-scroll);
         }
     }
 
-    // `lerp: 0.16` — 16% of the remaining distance per 60Hz frame. The step is
-    // scaled by the frame time so the glide looks the same on a 120Hz display as
-    // on a 60Hz one (`1 - (1 - lerp)^(dt * 60)`), which is reproduced here:
-    // Slint fires the timer at whatever rate it can (its own frame rate), so the
-    // step has to be derived from the elapsed time rather than fixed. The timer
-    // only runs while there is distance left to cover: unlike a `Flickable`
-    // there is no momentum to integrate.
+    // 16% of the remaining distance per 60Hz frame, scaled by elapsed time so
+    // the glide looks the same at any frame rate.
     private property <float> lerp: 0.16;
     private property <float> last-tick-ms: 0;
 
-    /// Whether the offset still has to catch up with the target. Held in its own
-    /// property because a `changed` handler can only observe a property of this
-    /// element (or a global), and the moment the glide *starts* has to be caught:
-    /// the timer stops once the offset settles, so without this the first tick
-    /// after an idle period would read that whole gap as its frame time and start
-    /// the glide with a jump sized for a second-long frame.
+    /// Catches the glide start: without it the first tick after idle would treat
+    /// the whole gap as its frame time and jump.
     private property <bool> scrolling: abs(root.clamped-target - root.scroll-y) > 0.5px;
     private property <bool> dropdown-open: Dropdown.open;
 
@@ -693,17 +605,13 @@ export component InstancesList inherits Rectangle {
         }
     }
 
-    // Up/Down and Alt/Option + a wheel notch move the current instance; the
-    // serial is bumped after Rust has re-laid out the rows, so centring reads
-    // the new row.
+    // Bumped after Rust re-lays out the rows, so centring reads the new row.
     private property <int> selection-serial: GameState.selection-serial;
     changed selection-serial => {
         root.scroll-to-current(true);
     }
 
-    // A newly opened group keeps its header just below the floating
-    // sort/group bar (8px top + 112px bar + 6px gap), rather than at the
-    // viewport's top edge where the bar would cover it.
+    // Keeps an opened group's header below the floating sort/group bar.
     private property <length> group-scroll-top: 8px + 112px + 6px;
     private property <int> group-scroll-serial: GameState.group-scroll-serial;
     changed group-scroll-serial => {
@@ -720,16 +628,9 @@ export component InstancesList inherits Rectangle {
         interval: 8ms;
         running: root.scrolling;
         triggered => {
-            // The step is scaled by the *real* elapsed time, so the glide lasts
-            // the same real duration even when Slint is running at a low frame
-            // rate (a debug build sits at 25-50ms per frame, and a fixed step
-            // would stretch the glide by as much). The upper bound only guards a
-            // stall of the whole event loop, which would otherwise be spent in one
-            // visible jump.
-            //
-            // The target is already inside the list, so the offset is not clamped
-            // again here: clamping it would snap the list on the frame a collapsed
-            // group made it shorter, instead of easing up to the new end.
+            // Scale by real elapsed time so a low frame rate does not stretch the
+            // glide; the upper bound only guards an event-loop stall. The target
+            // is already in range, so clamping here would snap on a collapse.
             root.scroll-y = root.scroll-y + (root.clamped-target - root.scroll-y) * (1 - pow(
                 1 - root.lerp,
                 clamp((ScrollInput.now-ms() - root.last-tick-ms) / 1000, 0.004, 0.05) * 60,
@@ -738,9 +639,7 @@ export component InstancesList inherits Rectangle {
         }
     }
 
-    /// Centres the current instance. `smooth` glides there along the rail and is
-    /// used after every card selection; `!smooth` moves the offset with the
-    /// target and is used to open on the selected instance.
+    /// `smooth` glides there (selection); `!smooth` opens directly on it.
     public function scroll-to-current(smooth: bool) {
         if GameState.current-row-y >= 0px {
             root.target-y = clamp(
@@ -754,22 +653,16 @@ export component InstancesList inherits Rectangle {
         }
     }
 
-    // `GameView` plays the list 0.05s after the footer and the summary, and the
-    // list's own intro starts the cards 0.115s in.
+    // The list plays 0.05s after the footer and summary.
     private property <duration> intro-list-delay: 50ms;
 
-    /// Called by `GameView` once the list has settled on the current instance
-    /// and just before it plays the entrance. Everything the entrance is ordered
-    /// against — the layout, the offset — is only final at that point.
+    /// Called once the list has settled, just before the entrance plays.
     public function begin-intro() {
         content.begin-intro();
     }
 
-    // The toolbar keeps its own size and is positioned relative to the list's
-    // right edge. The z has to be set *here*, on the instance: the rows scroll
-    // under the toolbar, and a component root's own `z` is only honoured for
-    // `for`-loop children (see the compiler's z-order pass), which is why the
-    // toolbar was once painted underneath them.
+    // `z` must be set on the instance: a component root's own `z` is only
+    // honoured for `for`-loop children, and the rows scroll under the toolbar.
     InstancesListToolBar {
         x: root.width - 320px - self.width;
         y: 8px;
@@ -795,10 +688,8 @@ export component InstancesList inherits Rectangle {
                     return accept;
                 }
                 if !root.settling {
-                    // Alt/Option turns the wheel into an instance stepper.
-                    // Without it the wheel is only a scroll, so a stray notch
-                    // never changes the selection. Arrow keys use the same
-                    // `move-selection`, without a modifier.
+                    // Alt/Option + wheel steps the selection; plain wheel only
+                    // scrolls.
                     if ScrollInput.source() == ScrollSource.wheel && event.modifiers.alt {
                         if event.delta-y != 0 {
                             GameState.move-selection(event.delta-y > 0 ? -1 : 1);
@@ -807,20 +698,16 @@ export component InstancesList inherits Rectangle {
                     }
                     if root.max-scroll > 0px {
                         if ScrollInput.source() == ScrollSource.wheel {
-                            // A wheel notch is a *distance*, not a motion: it goes
-                            // into the target and the offset eases after it.
+                            // A notch is a distance: go into the target and ease.
                             root.target-y = clamp(
                                 root.target-y - event.delta-y * root.wheel-step,
                                 0px,
                                 root.max-scroll,
                             );
                         } else {
-                            // A trackpad, fingers down or coasting: the deltas *are*
-                            // the motion, so the list goes exactly where they put it
-                            // (writing the target too drops a glide in flight). Its
-                            // momentum is macOS' own, derived from the velocity the
-                            // gesture ended at — easing it would stall the list on
-                            // release and ramp back up, see `scroll-view.slint`.
+                            // Trackpad deltas are the motion itself, and their
+                            // momentum is macOS' own; easing it would stall on
+                            // release. Writing the target drops any glide in flight.
                             root.scroll-y = clamp(
                                 root.scroll-y - event.delta-y,
                                 0px,
@@ -838,8 +725,7 @@ export component InstancesList inherits Rectangle {
                 scroll-y: root.scroll-y;
                 viewport-height: root.height;
                 group-clicked(key) => {
-                    // `toggle-locked`: a second click while the rail transition
-                    // is still running would collapse cards that are mid-flight.
+                    // A second click mid-flight would collapse moving cards.
                     if !root.toggle-locked {
                         root.settling = true;
                         root.toggle-locked = true;
@@ -848,17 +734,14 @@ export component InstancesList inherits Rectangle {
                 }
                 card-clicked(key) => {
                     GameState.select-instance(key);
-                    // The selection is centred, even when the card was already
-                    // the current one.
+                    // Centre even when the card was already current.
                     root.scroll-to-current(true);
                 }
             }
         }
     }
 
-    // The placeholder fades and scales in over 350ms with
-    // `cubic-bezier(0.34, 1.56, 0.64, 1)` (Slint's `ease-out-back`); the `if`
-    // removes it directly, so there is no leave animation.
+    // Fades and scales in on `ease-out-back`; the `if` removes it with no leave.
     if GameState.show-placeholder: placeholder := Rectangle {
         x: root.width - 320px - self.width;
         y: root.height / 2 - self.height / 2;
@@ -922,13 +805,10 @@ export component InstancesList inherits Rectangle {
         }
     }
 
-    // A 6px track pinned 8px from the right edge of the *window* (hence the
-    // -320px below: this view overhangs the window by that much), with an 8px
-    // thumb that widens to 10px on hover and can be dragged or used to jump.
+    // A 6px track pinned 8px from the window's right edge (the -320px offsets
+    // the view's overhang); the thumb widens on hover and can be dragged.
     scrollbar := Rectangle {
         visible: root.max-scroll > 0.5px;
-        // Intro: the bar slides in from just past the window edge while fading
-        // in.
         private property <length> intro-dx: GameIntro.played
             ? 0px
             : root.scrollbar-width + root.scrollbar-right;
@@ -978,16 +858,10 @@ export component InstancesList inherits Rectangle {
             animate transform-scale-x, transform-scale-y { duration: 120ms; }
         }
 
-        // Grabbing the thumb drags it; pressing the track elsewhere jumps so the
-        // thumb centres under the cursor and then keeps dragging it. Both move
-        // the offset without animating.
-        //
-        // The drag state has to be tracked here rather than keyed off the event's
-        // button: Slint reports a *move* with `PointerEventButton.other`, so
-        // `button == left` only ever matches the press. The touch area is as wide
-        // as the *hovered* thumb (10px, hanging 2px off each side of the 6px
-        // track) so grabbing the overhang does not shrink the thumb out from under
-        // the cursor.
+        // Pressing the thumb drags it; pressing the track centres the thumb under
+        // the cursor and drags. Drag state is tracked here because Slint reports a
+        // move with `PointerEventButton.other`. The area covers the hovered
+        // thumb's 10px, including its 2px overhang, so grabbing does not shrink it.
         track-touch := TouchArea {
             x: -2px;
             width: parent.width + 4px;
@@ -1004,8 +878,7 @@ export component InstancesList inherits Rectangle {
                         return;
                     }
                     FocusManager.clear();
-                    // Pressing the thumb keeps the grab point; pressing the track
-                    // brings the thumb's centre to the cursor.
+                    // Thumb: keep the grab point. Track: centre under the cursor.
                     root.drag-anchor = self.mouse-y >= thumb.y && self.mouse-y <= thumb.y + thumb.height
                         ? self.mouse-y - thumb.y
                         : thumb.height / 2;
@@ -1019,11 +892,9 @@ export component InstancesList inherits Rectangle {
     }
 
     private property <bool> dragging: false;
-    /// Where inside the thumb the pointer grabbed it, so dragging does not make
-    /// the thumb jump under the cursor.
+    /// The grab point inside the thumb, so dragging does not make it jump.
     private property <length> drag-anchor: 0px;
 
-    /// Maps a pointer position inside the scrollbar track to a scroll offset.
     function drag-scrollbar(mouse-y: length) {
         if root.max-scroll <= 0px || scrollbar.height <= thumb.height {
             return;

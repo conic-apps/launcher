@@ -2,14 +2,12 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The create-instance dialog's "script": drives `install` from the dialog's
-//! state and its two screens.
+//! The create-instance dialog: drives `install` from the dialog's state and its
+//! two screens.
 //!
-//! Everything that touches the network or the disk runs on the tokio runtime
-//! (`crate::support::runtime`) and reports back through `crate::ui::services::report::report`, so the
-//! window keeps drawing while a version list is fetched. The one exception is
-//! the background picker's image decode, which Slint only lets the UI thread
-//! create (see `setup_background_and_wiki`).
+//! Network and disk work runs on the tokio runtime and reports back through
+//! `crate::ui::services::report::report`; only the background picker's image
+//! decode stays on the UI thread, which Slint requires.
 
 use std::{cell::RefCell, path::Path, rc::Rc};
 
@@ -28,7 +26,6 @@ thread_local! {
     static MANIFEST: RefCell<Vec<MinecraftVersionItem>> = const { RefCell::new(Vec::new()) };
 }
 
-/// The mod loader names, as the select and the version lists spell them.
 const MOD_LOADERS: [&str; 4] = ["Fabric", "Quilt", "Forge", "Neoforge"];
 
 pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
@@ -193,8 +190,6 @@ fn setup_background_and_wiki(ui: &App, config: Rc<RefCell<config::Config>>) {
     });
 }
 
-/// Replaces the chooser's rows with the ones of `category`; the "old" category
-/// matches any kind containing "old".
 fn apply_category(state: &CreateInstanceState, manifest: &[MinecraftVersionItem], category: &str) {
     let rows: Vec<MinecraftVersionItem> = manifest
         .iter()
@@ -296,8 +291,6 @@ fn spawn_mod_loader_fetch(weak: Weak<App>, loader: &'static str, mcversion: Stri
     });
 }
 
-/// A Forge version as the list shows it: everything after the Minecraft
-/// version.
 fn forge_version_label(version: &str) -> String {
     version.split('-').skip(1).collect::<Vec<_>>().join("-")
 }

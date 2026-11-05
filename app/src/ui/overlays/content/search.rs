@@ -59,7 +59,6 @@ pub(crate) fn version_order(id: &str) -> (u32, u32, u32) {
     )
 }
 
-/// The carousel's page count — how many times the track can step.
 pub(crate) fn version_page_count(state: &ContentController) -> usize {
     state.version_options.len().div_ceil(VERSIONS_PER_PAGE)
 }
@@ -86,8 +85,7 @@ pub(crate) fn list_key(kind: RemoteKind, source: &str) -> String {
     format!("{}:{}", kind.key(), source)
 }
 
-/// That list's `(current page, total pages)` — `(1, 0)` for one that has not
-/// searched yet, which is what hides its pagination bar.
+/// `(1, 0)` for a list that has not searched yet, which hides its page bar.
 pub(crate) fn list_pages(state: &ContentController) -> (usize, usize) {
     pages_of(&state.pages, state.kind, &state.source)
 }
@@ -159,8 +157,6 @@ pub(crate) fn filter_row_height_of(available: f32, widths: impl Iterator<Item = 
     lines * FILTER_CHIP_HEIGHT + (lines - 1.0) * FILTER_CHIP_GAP
 }
 
-/// Recounts every row's height from the widths reported so far and rewrites the
-/// rows that changed, in place.
 pub(crate) fn relayout_filters(ui: &App) {
     let state = controller();
     let state = state.borrow();
@@ -591,14 +587,12 @@ pub(crate) fn show_results(ui: &App, list: &str, page: usize, cards: Vec<BuiltCa
     ensure_translations(ui, platform, ids);
 }
 
-/// `<platform>:<id>` — one cache for both platforms, keyed so their ids cannot
-/// collide.
+/// One cache for both platforms, keyed so their ids cannot collide.
 pub(crate) fn translation_key(platform: Platform, id: &str) -> String {
     format!("{}:{id}", platform.key())
 }
 
-/// Whether the launcher is showing Chinese, the only locale a translation is
-/// asked for in.
+/// Chinese is the only locale a translation is asked for in.
 pub(crate) fn chinese_locale(ui: &App) -> bool {
     let language = ui.global::<AppConfig>().get_language();
     crate::ui::services::app_config::resolve_locale(language.as_str()).starts_with("zh")
@@ -722,7 +716,6 @@ pub(crate) fn apply_translations(ui: &App) {
     }
 }
 
-/// The loader slugs the cards tag, and that the CurseForge loader map keys on.
 pub(crate) const LOADER_SLUGS: [&str; 4] = ["fabric", "forge", "quilt", "neoforge"];
 
 pub(crate) async fn search_modrinth(

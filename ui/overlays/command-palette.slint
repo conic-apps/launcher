@@ -14,16 +14,11 @@ import {
     PaletteItem,
 } from "../globals/command-palette.slint";
 
-// A `kbd`: `font-family: inherit; font-size: 11px; padding: 1px 5px;
-// border-radius: 4px` on surface0. Its own height is 13px, and it is the
-// 14px `corner-down-left` glyph beside the primary hint that makes the hint row
-// 14px tall.
+// A keyboard key cap.
 component KeyCap inherits Rectangle {
     in property <string> text: "";
-    // `padding: 1px 5px`. An explicit width rather than a `min-width`: a minimum
-    // is something the surrounding layout has to solve for, and solving for it
-    // reads the widths of the very elements that width is measured from, which is
-    // a loop. Pinning it ends the argument.
+    // Explicit width, not `min-width`, which the layout would have to solve for
+    // and which reads the widths it is measured from.
     width: key-text.width + 10px;
     height: 13px;
     border-radius: 4px;
@@ -33,20 +28,14 @@ component KeyCap inherits Rectangle {
         text: root.text;
         font-size: 11px;
         font-weight: Theme.font-weight-normal;
-        // Inherited from the hints row, which only the primary hint overrides.
         color: Theme.subtext-0;
         vertical-alignment: center;
         horizontal-alignment: center;
     }
 }
 
-// One row of the result list: `.palette-item` and everything inside it.
-//
-// The row is 8px of padding around `max(24px, .item-main)`, and `.item-main` is
-// the title line plus — when the project carries loader tags — a `3px` gap and a
-// `14px` tag row. The 24px icon box decides the height whenever there are no
-// tags, which is why `PaletteItem.row-height` is 40px or 46px and nothing in
-// between. Rust works both out, so this component never measures itself.
+// One row of the result list. Rust computes `row-height`, so this never measures
+// itself.
 component PaletteRow inherits Rectangle {
     in property <PaletteItem> item;
     in property <bool> selected: false;
@@ -58,24 +47,15 @@ component PaletteRow inherits Rectangle {
 
     width: 100%;
     height: root.item.row-height;
-    // The keyboard's selection takes surface1 and the pointer's hover a lighter
-    // step. Separating them is deliberate, and telling the two apart is what a
-    // second colour is for.
+    // Keyboard selection and pointer hover use different colours on purpose.
     background: root.selected ? Theme.surface-1
         : root.hovered ? Theme.surface-0
         : transparent;
     border-radius: 8px;
     border-width: 0px;
 
-    // The row is one line: everything centred, 10px of spacing and 8px/10px of
-    // padding. `.item-main` is the only child that flexes, so the title takes
-    // whatever the icon, the subtitle and the chevron leave it — and the
-    // subtitle's own width is its text, which is something a hand-placed box
-    // cannot ask for.
-    //
-    // `.item-main`'s height is settled by the line on its own, except that a
-    // plain `Rectangle` reports none, so it is the 13px title line plus 3px and
-    // the 14px tag row when there are tags.
+    // A plain `Rectangle` reports no height, so it is stated: title line plus
+    // the tag row when there are tags.
     private property <length> main-height: root.item.loaders.length > 0 ? 30px : 13px;
 
     HorizontalLayout {
@@ -93,8 +73,7 @@ component PaletteRow inherits Rectangle {
             height: 24px;
             background: transparent;
 
-            // Two mutually exclusive branches: Slint has no `else if` in the
-            // element form.
+            // Two branches: Slint has no element-form `else if`.
             if root.item.has-icon-image: Rectangle {
                 x: (parent.width - self.width) / 2;
                 y: (parent.height - self.height) / 2;
@@ -115,10 +94,8 @@ component PaletteRow inherits Rectangle {
                 y: (parent.height - self.height) / 2;
                 name: root.item.icon;
                 size: 18px;
-                // A glyph from the icon set takes the default text colour at 85%;
-                // a site mark takes `text` at 85%. The two differ under high
-                // contrast, where the default text colour is forced to pure white
-                // or black while `text` is not.
+                // Brand marks use `text`; under high contrast the default text
+                // colour is forced to pure white or black, but `text` is not.
                 icon-color: root.item.icon-is-brand
                     ? Theme.text.transparentize(0.15)
                     : Theme.default-text-color.transparentize(0.15);
@@ -131,14 +108,9 @@ component PaletteRow inherits Rectangle {
             background: transparent;
             clip: true;
 
-            // The 13px line the 13px title takes. Baseline alignment has no Slint
-            // equivalent, so the 11px author is centred in it instead, which puts
-            // it within a pixel of where baseline alignment would. The two are 6px
-            // apart, and the author is fixed while the title elides.
-            // The explicit `y` is not decoration: a child of a plain element with no
-            // `y` is *centred* in it, which put the title 8.5px — exactly half of the
-            // 17px the 30px column has spare — below where it belongs, on top of the
-            // loader tags.
+            // Slint has no baseline alignment, so the author is centred in the
+            // title line. The explicit `y` matters: a child of a plain element is
+            // otherwise centred, putting the title on the loader tags.
             HorizontalLayout {
                 y: 0px;
                 width: 100%;
@@ -147,10 +119,8 @@ component PaletteRow inherits Rectangle {
                 cross-axis-alignment: center;
 
                 title-text := Text {
-                    // `overflow: elide` drops this to a zero minimum, so the layout
-                    // may shrink it and the title elides; its `preferred-width` is
-                    // still the whole text, which is what it is given when there is
-                    // room.
+                    // `overflow: elide` gives a zero minimum, so the layout can
+                    // shrink it; its preferred width is still the whole text.
                     horizontal-stretch: 0;
                     height: 13px;
                     text: CommandText.title(root.item.title-kind, root.item.title);
@@ -162,9 +132,8 @@ component PaletteRow inherits Rectangle {
                     overflow: elide;
                 }
 
-                // The author keeps its whole name: with no `overflow: elide` its
-                // minimum width is the whole string, so the title is what gives way
-                // when the line is too narrow.
+                // No elide, so the author keeps its whole name and the title
+                // gives way.
                 if root.item.author != "": author-text := Text {
                     horizontal-stretch: 0;
                     height: 13px;
@@ -176,9 +145,7 @@ component PaletteRow inherits Rectangle {
                     vertical-alignment: center;
                 }
 
-                // The slack, taken after the author rather than before it. It is
-                // why the author sits against the title instead of against the
-                // row's right edge.
+                // Slack after the author, so it sits against the title.
                 Rectangle {
                     min-width: 0px;
                     horizontal-stretch: 1;
@@ -220,9 +187,8 @@ component PaletteRow inherits Rectangle {
         if root.item.subtitle-kind != "" || root.item.subtitle != "": subtitle-text := Text {
             horizontal-stretch: 0;
             height: 12px;
-            // A project's category is a label and is resolved from its key; an
-            // instance's own `loader · version` is data and comes through as it
-            // is.
+            // Categories resolve from a key; an instance's `loader · version` is
+            // already data.
             text: root.item.subtitle-kind != ""
                 ? CommandText.category(root.item.subtitle-kind)
                 : root.item.subtitle;
@@ -240,11 +206,8 @@ component PaletteRow inherits Rectangle {
         }
     }
 
-    // The whole row is the target, its own 8px padding included.
-    //
-    // The hover is a raw `move`, not `TouchArea.moved`: that one is the *drag*,
-    // which only arrives with the button held, and the selection is meant to
-    // follow a pointer that is merely over the row.
+    // Hover uses a raw move, not `TouchArea.moved`, which is a drag and requires
+    // the button held.
     pointer := TouchArea {
         width: 100%;
         height: 100%;
@@ -259,57 +222,34 @@ component PaletteRow inherits Rectangle {
     }
 }
 
-// The whole overlay: the `#00000042` scrim and the palette panel under it.
+// The command palette overlay: a scrim and the panel. It appears without an
+// entrance animation.
 //
-// There is no entrance animation; the panel simply appears. The key handling is:
-//
-//   ↑ ↓        move the selection, wrapping at both ends
-//   Enter      perform the selected row — the `TextInput`'s `accepted` callback,
-//              which is the one Slint does call for a single-line field
-//   Escape     clear the query, else go back a mode, else close and go home
-//   Backspace  on an *empty* query, go back a mode
-//
-// All four are read in `capture-key-pressed` and not in `key-pressed`, and that is
-// not a stylistic choice: a `TextInput` accepts Backspace unconditionally — it
-// has nothing to delete and says so anyway — and it accepts the arrow keys to
-// move the caret, so an ancestor's `key-pressed` is never reached. `accept` in
-// `capture-key-pressed` keeps the event from being delivered at all. A Backspace
-// with text in the field is rejected, which is what lets the field delete a
-// character as usual.
+// Keys are handled in `capture-key-pressed`, not `key-pressed`: a `TextInput`
+// accepts Backspace and the arrows first, so an ancestor would never see them.
+// A Backspace with text in the field is rejected so the field can edit normally.
 export component CommandPaletteOverlay inherits Rectangle {
     width: 100%;
     height: 100%;
     background: #00000042;
     border-radius: 16px;
-    // Above the music player and the content overlays (which set no `z` of their
-    // own), below the dialogs (`z: 2000`) — so this sits between the two in
-    // `app.slint`.
+    // Between the content overlays and the dialogs (`z: 2000`).
     z: 1500;
 
-    // The backdrop closes the palette. It is declared before the panel so that
-    // the panel — and everything inside it — stays on top of it: Slint hit-tests
-    // the last-declared element first.
+    // Declared before the panel, so the panel stays on top: the last-declared
+    // element is hit-tested first.
     scrim := TouchArea {
         width: parent.width;
         height: parent.height;
         clicked => { CommandPaletteState.close(); }
-        // The wheel has to be taken here for the same reason
-        // `content-overlay.slint`'s scrim takes it: without this, the instance
-        // list and the settings page scroll behind the open palette.
+        // Take the wheel, or the pages behind scroll.
         scroll-event(event) => { accept }
     }
 
-    // The results area is capped at 320px *including* its 6px of padding and
-    // shrinks to its content — the list's own height, or the empty state's,
-    // whichever is taller — so the panel is the input row plus the results plus
-    // the footer, each of the first and last a fixed height.
-    //
-    // The cap is `max(320px, …)`: while a search is running the content is the
-    // 72px spinner rather than no rows at all. Measuring the list alone left the
-    // area 12px tall and the spinner clipped.
+    // Capped at 320px including padding, and shrinks to the taller of the list
+    // and the empty state. The `max` keeps the 72px spinner from being clipped.
     private property <length> results-height: min(320px, max(CommandPaletteState.items-content-height, root.empty-height) + 12px);
-    // 1px of border + the input row (12 + 16 + 12 + a 1px rule) + the results +
-    // the footer (8 + 14 + 8 + a 1px rule) + 1px of border.
+    // Border + input row + results + footer + border.
     private property <length> panel-height: 74px + root.results-height + 2px;
 
     private property <bool> shown: CommandPaletteState.visible;
@@ -320,8 +260,7 @@ export component CommandPaletteOverlay inherits Rectangle {
         width: max(600px, root.width - 500px);
         height: root.panel-height;
         x: (root.width - self.width) / 2;
-        // 4px below the top edge: the backdrop is the whole window, so the panel
-        // hangs inside the title bar.
+        // Hangs 4px below the top edge, inside the title bar.
         y: 4px;
         drop-shadow-color: #00000071;
         drop-shadow-blur: 50px;
@@ -330,12 +269,8 @@ export component CommandPaletteOverlay inherits Rectangle {
         border-color: Theme.surface-1.with-alpha(0.9);
         border-radius: 12px;
 
-        // A Slint border is drawn inside the box and does not inset the children,
-        // so the content box starts 1px in, which keeps the hairline visible.
-        // `clip` lives here rather than on the panel because the panel carries the
-        // drop shadow, and the corner rounding here is what keeps the input row's
-        // rule and the footer's from running past. The radius is one pixel smaller
-        // so the clip *is* the panel's rounded box.
+        // Starts 1px in, since a border does not inset children. `clip` lives here
+        // so the panel can keep its drop shadow; the radius is 1px smaller.
         content := Rectangle {
             x: 1px;
             y: 1px;
@@ -345,26 +280,14 @@ export component CommandPaletteOverlay inherits Rectangle {
             clip: true;
             background: transparent;
 
-            // The key scope wraps the content rather than sitting beside it: a
-            // `FocusScope` only sees the key events of what it *contains*, and
-            // the search field is the focused element.
-            //
-            // Every child below therefore carries an explicit `y`. A `FocusScope`
-            // *centres* the children it lays out — a child with no `y` lands at
-            // `(scope.height - child.height) / 2` rather than at the top, which
-            // put the input row in the middle of the panel. A plain `Rectangle`
-            // leaves such a child at 0; the `FocusScope` does not.
+            // A `FocusScope` only sees events of what it contains, and it centres
+            // children with no `y`, so every child below sets one.
             scope := FocusScope {
                 width: 100%;
                 height: 100%;
 
-                // Focus the field on the way in. A mode change needs no
-                // equivalent: nothing is re-created and the field keeps its focus.
-                //
-                // The focus is given *back* on the way out, from `app.slint`: Slint
-                // drops the focus of an element that is not visible, but only on
-                // the next key press, by which time the shortcut that opened the
-                // palette has been swallowed and thrown away.
+                // Focus the field on the way in. `app.slint` restores focus on the
+                // way out, since Slint drops it only on the next key press.
                 private property <bool> shown: CommandPaletteState.visible;
                 changed shown => {
                     if shown {
@@ -398,18 +321,16 @@ export component CommandPaletteOverlay inherits Rectangle {
                     return reject;
                 }
 
-                // The panel swallows the clicks that reach it, so only the scrim's
-                // own clicks close the palette. The rows are declared after this,
-                // so they are the ones a click lands on.
+                // Swallows clicks, so only the scrim closes. Rows are declared
+                // after this and take their own.
                 panel-touch := TouchArea {
                     x: 0px;
                     y: 0px;
                     width: 100%;
                     height: 100%;
 
-                    // Over the panel but not over a row, so the pointer is nowhere
-                    // in particular. The rows are declared after this, so a move
-                    // over one lands on the row instead.
+                    // Clears hover over the panel; rows declared later take their
+                    // own moves.
                     pointer-event(event) => {
                         if event.kind == PointerEventKind.move {
                             CommandPaletteState.hover(-1);
@@ -455,7 +376,7 @@ export component CommandPaletteOverlay inherits Rectangle {
                     }
 
                     input := TextInput {
-                        // Left inset: the 16px icon plus the 10px gap.
+                        // The 16px icon plus a 10px gap.
                         x: 42px;
                         y: 12px;
                         width: parent.width - 42px - 16px;
@@ -464,9 +385,8 @@ export component CommandPaletteOverlay inherits Rectangle {
                         font-size: 15px;
                         font-weight: Theme.font-weight-normal;
                         color: Theme.default-text-color;
-                        // The macOS backend draws the caret in the selection
-                        // background colour, forced to full alpha, so a
-                        // translucent one gives a text-coloured caret.
+                        // The macOS caret uses the selection background at full
+                        // alpha, so a translucent one gives a text-coloured caret.
                         selection-background-color: Theme.default-text-color.with-alpha(0.3);
                         selection-foreground-color: Theme.default-text-color;
                         single-line: true;
@@ -490,44 +410,18 @@ export component CommandPaletteOverlay inherits Rectangle {
                         width: parent.width - 12px;
                         height: parent.height - 12px;
 
-                        // A new list starts at the top. Both globals are mirrored
-                        // onto a local property first: Slint's `changed` does not
-                        // take a qualified global.
+                        // A new list starts at the top. Globals are mirrored locally
+                        // because `changed` does not take a qualified global.
                         private property <int> items-seq: CommandPaletteState.items-seq;
                         private property <int> selected-seq: CommandPaletteState.selected-seq;
                         changed items-seq => { self.scroll-to(0px, false); }
                         changed selected-seq => { self.reveal-selected(); }
 
-                        // The row is scrolled to only when the arrow keys took it
-                        // off screen, with 8px of slack, and a row already inside
-                        // the viewport is left alone — which is what keeps a key
-                        // press from yanking the list back.
-                        //
-                        // `top` and `bottom` are where the row sits inside the
-                        // scroller and its height; `first` / `last` are what the
-                        // scroll area shows.
-                        //
-                        // All of it is in the `content-y` sign rather than the `offsetTop`
-                        // one. `ScrollView.content-y` counts *down*, so a row 400px into the
-                        // content is `-400px`, and that is the sign `scroll-to` takes as
-                        // well — its argument is documented as "the same sign as
-                        // `content-y`". Handing it the `offsetTop` directly clamps every
-                        // call to zero, which is a view that knows exactly which row to
-                        // show and never moves.
-                        //
-                        // The two targets do not read alike, and that is the arithmetic
-                        // rather than a choice. `scroll-to(y)` lands on `scroll-y = -y`,
-                        // and a row at `-top` needs `scroll-y = -top - 8px` to sit 8px
-                        // below the viewport's top — so the argument is `top + 8px`. The
-                        // row below the viewport is the mirror image: it needs its bottom
-                        // 8px above the viewport's bottom, which comes out as
-                        // `bottom + height - 8px`.
-                        //
-                        // Getting the first one wrong is quiet: `top - 8px` still moves,
-                        // because it asks to scroll *up* past a row that is above the
-                        // viewport — but it stops 16px short of where it meant to, leaving
-                        // the row's top 8px above the viewport and a fifth of a 40px row
-                        // cut off. Only the arrow key that scrolls back up hits that branch.
+                        // Scroll only when the arrow keys took the row off screen,
+                        // with 8px of slack. All values use the `content-y` sign:
+                        // it counts down, so a row 400px in is `-400px`, and
+                        // `scroll-to` takes the same sign. Passing `offsetTop`
+                        // directly clamps every call to zero.
                         function reveal-selected() {
                             let top = -CommandPaletteState.selected-row-y;
                             let bottom = top - CommandPaletteState.selected-row-height;
@@ -540,20 +434,15 @@ export component CommandPaletteOverlay inherits Rectangle {
                             }
                         }
 
-                        // The list. Each row carries its own heading's height with it, so
-                        // the loop is a flat stack of `label-height + row-height` boxes —
-                        // The heading belongs to the first row of a section and to
-                        // that row alone; `label-height` is 0 for every other one.
+                        // Each row carries its heading's height, so the loop is a flat
+                        // stack of `label-height + row-height`; `label-height` is 0
+                        // except on a section's first row.
                         for item[index] in CommandPaletteState.items: row-slot := Rectangle {
                             width: 100%;
                             height: item.label-height + item.row-height;
                             background: transparent;
 
-                            // The heading: a 6px/10px/2px padded 11px line. The box
-                            // is `label-height` — 23px, not the 19px those add up to
-                            // — because 4px of margin sits under the heading, so its
-                            // grey text reads as separate from the row below it. The
-                            // line itself is unchanged; only the space under it is.
+                            // The heading line; its box includes 4px of space below.
                             if item.label-height > 0: section-label := Text {
                                 x: 10px;
                                 y: 6px;
@@ -574,8 +463,8 @@ export component CommandPaletteOverlay inherits Rectangle {
                                 index: index;
                                 selected: item.key == CommandPaletteState.selected-key;
                                 hovered: item.key == CommandPaletteState.hovered-key;
-                                // A row that is not the selection becomes it, and a
-                                // click on the row that already is opens it.
+                                // Clicking a non-selected row selects it; clicking
+                                // the selected one opens it.
                                 pressed(row) => { CommandPaletteState.click(row); }
                                 pointer-moved(row) => { CommandPaletteState.hover(row); }
                             }
@@ -608,8 +497,6 @@ export component CommandPaletteOverlay inherits Rectangle {
                     }
                 }
 
-                // 8px/12px padding around a 14px line, with a 1px rule above it:
-                // 31px, the last of the three bands `panel-height` adds up.
                 footer := Rectangle {
                     x: 0px;
                     y: parent.height - self.height;
@@ -619,13 +506,8 @@ export component CommandPaletteOverlay inherits Rectangle {
                     border-width: 1px;
                     border-color: Theme.surface-1.with-alpha(0.8);
 
-                    // With two children, giving the slack to the first is the same
-                    // as space-between: the breadcrumb stretches and elides while
-                    // the hints keep the width they ask for.
-                    // `alignment` is the layout's *main* axis, so `center` would
-                    // line the breadcrumb and the hints up as a single group; the
-                    // default `stretch` puts one at each end, because the breadcrumb
-                    // takes the slack and the hints do not.
+                    // The breadcrumb stretches and elides; the hints keep their
+                    // width, putting one at each end.
                     HorizontalLayout {
                         x: 12px;
                         y: 8px;
@@ -641,8 +523,7 @@ export component CommandPaletteOverlay inherits Rectangle {
                             font-size: 12px;
                             font-weight: Theme.font-weight-normal;
                             color: Theme.subtext-0;
-                            // Slint centres text in its box; an elided line is
-                            // left-aligned.
+                            // Slint centres text; an elided line is left-aligned.
                             horizontal-alignment: left;
                             overflow: elide;
                             vertical-alignment: center;
@@ -667,14 +548,8 @@ export component CommandPaletteOverlay inherits Rectangle {
                                 }
                             }
 
-                            // Back in a sub-mode, Close at the root — one hint
-                            // either way, which is why the cap is the mode's own.
-                            //
-                            // Each hint is a 4px row of a cap and a label, a layout
-                            // rather than a box with a computed width: the cap's
-                            // width is its own glyph's, which is not a number to
-                            // write down, and using the row's height for it put the
-                            // label inside the cap.
+                            // Back in a sub-mode, Close at the root. A layout is
+                            // used because the cap's width is its glyph's.
                             if CommandPaletteState.mode != "root": back-hint := HorizontalLayout {
                                 vertical-stretch: 0;
                                 spacing: 4px;
@@ -710,8 +585,7 @@ export component CommandPaletteOverlay inherits Rectangle {
                                 }
                             }
 
-                            // The selected row's own action, and the only hint in
-                            // the default text colour rather than subtext0.
+                            // The only hint in the default text colour.
                             if CommandPaletteState.selected-action-kind != "": primary := HorizontalLayout {
                                 vertical-stretch: 0;
                                 spacing: 4px;
@@ -739,9 +613,7 @@ export component CommandPaletteOverlay inherits Rectangle {
         }
     }
 
-    // The empty state. Only the online mode has one: the root mode always has its
-    // five commands and the instance mode its instances, so neither list is ever
-    // empty. A chain of `if`s, tested in order.
+    // Only the online mode can be empty; the root and instance modes never are.
     private property <string> empty-kind: {
         if (CommandPaletteState.mode != "search-online") { return "none"; }
         if (CommandPaletteState.online-searching) { return "searching"; }
@@ -750,33 +622,24 @@ export component CommandPaletteOverlay inherits Rectangle {
         return "none";
     }
 
-    // 24px of padding above and below, around a 13px line — or a 24px spinner.
     private property <length> empty-height: root.empty-kind == "searching" ? 72px : 61px;
 
-    // The 250ms debounce, restarted by every change to the query or the mode.
-    //
-    // `changed` cannot watch a qualified global, so the two are folded into one
-    // local property. The separator is a control character neither can hold, so
-    // two different states can never fold into the same string.
+    // Folds query and mode because `changed` cannot watch a global. The control
+    // character separator cannot occur in either.
     private property <string> debounce-key: CommandPaletteState.query + "\u{1}" + CommandPaletteState.mode;
     debounce := Timer {
         interval: 250ms;
         running: false;
         triggered => {
-            // One shot. A `Timer` whose `running` stays true repeats every
-            // `interval`, which would search for as long as the palette is open.
+            // One shot: a timer left running would repeat every interval.
             debounce.stop();
             CommandPaletteState.run-search();
         }
     }
 
     changed debounce-key => {
-        // `Timer.restart()` only restarts a timer that has already run, and
-        // `start()` is only `running = true` — so a timer that has not run yet is
-        // started, and every change after that restarts it. That pair is the
-        // debounce: the deadline moves with every keystroke, so the one that fires
-        // is the last one's. Restarting a `running: false` timer is a no-op, which
-        // is why the search never ran.
+        // `restart()` is a no-op on a timer that never ran, so start it first;
+        // afterwards every change restarts the deadline.
         if debounce.running {
             debounce.restart();
         } else {

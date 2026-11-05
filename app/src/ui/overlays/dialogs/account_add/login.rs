@@ -391,9 +391,8 @@ pub(crate) fn show_profile_chooser(ui: &App, credentials: &PendingYggdrasil) {
     state.set_yggdrasil_view("profiles".into());
 }
 
-/// Stores one account per chosen profile.
-///
-/// Every profile gets its own identifier and its own copy of the credentials.
+/// Stores one account per chosen profile, each with its own identifier and copy
+/// of the credentials.
 pub(crate) fn add_yggdrasil_accounts(
     ui: &App,
     credentials: &PendingYggdrasil,

@@ -8,21 +8,15 @@ import { SetupWizardState } from "../../globals/setup.slint";
 import { SettingsJvm } from "../settings/settings-jvm.slint";
 import { WizardTitle, WizardMessage, WizardWarning } from "wizard-text.slint";
 
-// The settings page's Java section with the wizard's two overrides on top: the
-// groups run the body's full width rather than the settings page's, and the
-// section carries a 16px top margin.
-//
-// The body's own `ScrollView` is the one that moves; this screen adds no nested
-// scroll area, which would only grow with its content and never scroll.
+// The settings Java section with the wizard's full-width layout and top margin.
+// The body's `ScrollView` is the only scroller; a nested one would never scroll.
 export component SetupJavaSettings inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
     alignment: start;
 
-    // A platform that cannot fetch a Java runtime gets the auto-install switch
-    // turned off, since it would never resolve. The screen is created when the
-    // step is entered and destroyed when it is left, so this runs once per
-    // visit.
+    // Auto-install is pointless on a platform that cannot fetch a runtime.
+    // The screen is recreated per visit, so this runs once each time.
     init => {
         if !SetupWizardState.jvm-auto-install-supported && AppConfig.prefer-mojang-java {
             AppConfig.prefer-mojang-java = false;

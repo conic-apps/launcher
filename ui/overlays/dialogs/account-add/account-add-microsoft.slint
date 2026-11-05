@@ -11,64 +11,39 @@ import {
 } from "../../../components/containers/slide-transition.slint";
 import { Dialogs, AccountAddState } from "../../../globals/dialogs.slint";
 
-// "Sign in with Microsoft" — the first screen of the add-account dialog.
-//
-// The screen shows one of four states, swapped with the same out-in beat the
-// dialog's shell uses for its screens (see `account-add.slint`): the mounted
-// state plays its 80ms slide-out first, then the arriving one plays its 250ms
-// slide-in. Which state is mounted is `AccountAddState.ms-view`, which
-// `app/src/ui/overlays/dialogs/account_add.rs` drives — the screen only decides how each looks.
+// "Sign in with Microsoft", the add-account dialog's first screen. Four states,
+// swapped with the same out-in beat as the dialog shell; Rust drives `ms-view`.
 export component AccountAddMicrosoft inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
-    // `start`: the screen's own height changes as its states swap, and a
-    // stretching column would spread that over the rows instead (see
-    // `AccountAdd`).
+    // `start`: a stretching column would spread height changes over the rows.
     alignment: start;
 
-    // Mounted inside the setup wizard, which hides this screen's "Cancel"
-    // buttons (they would close a dialog that is not there) and gives the link
-    // box more room. See `AccountAdd`.
+    // The wizard hides the "Cancel" buttons and gives the link box more room.
     in property <bool> wizard-host: false;
 
-    /// The gap the link box sits in: 8px above it and 16px below it in the
-    /// dialog, and 36px on both sides in the wizard.
-    ///
-    /// The link's bottom margin and the button row's top margin collapse, so the
-    /// row below the link is `max(link-margin, 16px)` away rather than their
-    /// sum — which is what the padding below says.
+    /// The link box's gap: 8px/16px in the dialog, 36px in the wizard. Margins
+    /// collapse, so the row below is `max(link-margin, 16px)` away, not the sum.
     private property <length> link-margin: root.wizard-host ? 36px : 8px;
 
-    // A `changed` handler cannot take a qualified global property, so the view
-    // is mirrored into a local first (`input.slint` does the same with the
-    // focus counter).
+    // Mirrored locally because `changed` cannot take a qualified global.
     private property <string> view: AccountAddState.ms-view;
-    /// The state actually mounted — one 80ms beat behind `view`.
+    /// The state actually mounted, one 80ms beat behind `view`.
     private property <string> shown: "";
     private property <bool> leaving: false;
     private property <bool> leave-armed: false;
     private property <bool> enter-armed: false;
     private property <string> arrive-phase: "shown";
 
-    // Everything after the first screen slides in from the right, and the first
-    // screen slides back in from the left.
+    // Later states slide in from the right; the first one slides back from the left.
     private property <string> direction: (root.view == "processing" || root.view == "error"
         || root.view == "device-code") ? "left" : "right";
 
     init => {
-        // The state the screen opens in is simply mounted.
         root.shown = root.view;
-        // The `changed` handler below cannot see this first mount. A Slint
-        // change tracker takes its baseline *after* `init` has run (the
-        // generated `user_init` sets `shown` and only then calls
-        // `change_tracker_init_erased`), so a screen that opens already on the
-        // browser flow rises straight to the baseline `true` and never fires.
-        // The dialog never does — it opens after this screen exists, so
-        // `dialog-visible` is the change it sees — but the wizard mounts this
-        // screen as an already-visible step, so its listener has to be asked
-        // for here or the login link stays empty and "Log in" opens the file
-        // manager. `prepare-auth-code-flow` is a no-op when one is already
-        // bound, so the two paths cannot bind twice.
+        // The change tracker takes its baseline after `init`, so a screen that
+        // opens already on the browser flow never fires `changed`. Ask for the
+        // listener here; `prepare-auth-code-flow` is a no-op if already bound.
         if root.browser-flow-on-screen {
             AccountAddState.prepare-auth-code-flow();
         }
@@ -87,8 +62,7 @@ export component AccountAddMicrosoft inherits VerticalLayout {
         }
     }
 
-    // The out-in beat: the mounted state plays its leave, and the arriving one
-    // is mounted when that is over.
+    // The out-in beat: mount the arriving state after the leave.
     leave-timer := Timer {
         interval: 80ms;
         running: root.leave-armed;
@@ -103,9 +77,8 @@ export component AccountAddMicrosoft inherits VerticalLayout {
         }
     }
 
-    // The arriving state is mounted at its enter rest and moves to "shown" one
-    // frame later: an element created and finished in the same frame has
-    // nothing to animate from, and the enter became a jump.
+    // Mount at the enter rest, then move to "shown" a frame later; otherwise
+    // there is nothing to animate from.
     enter-timer := Timer {
         interval: 16ms;
         running: root.enter-armed;
@@ -115,35 +88,17 @@ export component AccountAddMicrosoft inherits VerticalLayout {
         }
     }
 
-    // The device code's countdown: it simply runs while the code is on screen
-    // and has seconds left.
+    // Runs while the code is on screen and has seconds left.
     countdown := Timer {
         interval: 1000ms;
         running: root.shown == "device-code" && AccountAddState.ms-expires-in > 0;
         triggered => { AccountAddState.ms-expires-in -= 1; }
     }
 
-    // The URL on this screen is only meaningful while something is serving
-    // it: the code comes back on `http://localhost:<port>/callback`, and the
-    // port is the OS's, so the link cannot be written down once. Both "log in"
-    // and "copy the link" send a browser to exactly that URL, so the listener
-    // lives exactly as long as this screen is on show with its host open —
-    // which is also exactly as long as the URL can be used.
-    //
-    // The host is the add-account dialog in the ordinary case, but the setup
-    // wizard mounts this same screen as a step, and there it is neither
-    // `Dialogs.account-add-visible` nor dismissed by the dialog's own close —
-    // closed as a dialog, not hosted, it would never bind the listener, and the
-    // empty URL that left behind is what "Log in" handed to `open_external`,
-    // which opens the file manager. `wizard-host` is the flag that says the
-    // screen is on show without the dialog, so it stands in for the dialog's
-    // visibility.
-    //
-    // `shown` rather than `view`: the swap is out-in, so `view` changes eighty
-    // milliseconds before the arriving screen is mounted, and a listener bound
-    // in that gap would be serving a URL nobody is looking at. Mirrored into a
-    // property of its own because a `changed` handler cannot take a qualified
-    // global (`input.slint` does the same with its focus counter).
+    // The URL is only meaningful while its listener is bound on an OS-assigned
+    // port, so bind it exactly while this screen is on show with its host open.
+    // The wizard mounts the screen without the dialog, so `wizard-host` stands
+    // in for dialog visibility. `shown`, not `view`, because the swap is out-in.
     private property <bool> dialog-visible: Dialogs.account-add-visible;
     private property <bool> browser-flow-on-screen: root.shown == "auth-code"
         && (root.dialog-visible || root.wizard-host);
@@ -155,10 +110,7 @@ export component AccountAddMicrosoft inherits VerticalLayout {
         }
     }
 
-    /// The step a running login is on.
-    ///
-    /// It lives here rather than in the script so that a language change
-    /// re-renders it: Slint re-evaluates `@tr` bindings when the locale changes.
+    /// In the UI so a language change re-renders it.
     pure function progress-text(job: string) -> string {
         if job == "prepare" { return @tr("Preparing to log in"); }
         if job == "request-device-code" { return @tr("Requesting a device code"); }
@@ -171,10 +123,7 @@ export component AccountAddMicrosoft inherits VerticalLayout {
         return "";
     }
 
-    /// How long the device code is still valid.
-    ///
-    /// `floor`, because Slint's `/` is a floating-point division even on two
-    /// integers: 898 seconds would otherwise read as "14.966666 min".
+    /// `floor`, because Slint's `/` is floating-point even on integers.
     pure function countdown-text(seconds: int) -> string {
         if seconds < 60 { return @tr("{} sec", seconds); }
         return @tr("{} min {} sec", floor(seconds / 60), mod(seconds, 60));
@@ -200,13 +149,10 @@ export component AccountAddMicrosoft inherits VerticalLayout {
         VerticalLayout {
             width: 100%;
             height: 120px;
-            // `justify-content: center; align-items: center;
-            // flex-direction: column; gap: 8px`.
             alignment: center;
             spacing: 8px;
 
-            // The arc, in a row with an 8px padding, which a single child would
-            // not see as a `spacing`.
+            // An 8px padding around the arc; a single child gets no `spacing`.
             HorizontalLayout {
                 alignment: center;
                 cross-axis-alignment: center;
@@ -233,10 +179,8 @@ export component AccountAddMicrosoft inherits VerticalLayout {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
 
-        // Carries the verification URI and the way back to the browser flow as
-        // its two links. `StyledText` is the only element that can hold a link
-        // inside a wrapping paragraph — Slint 1.18 has no click target for a
-        // span.
+        // `StyledText` is the only element that can hold a link inside a wrapping
+        // paragraph; Slint 1.18 has no click target for a span.
         StyledText {
             width: 100%;
             text: @markdown("\{@tr("Open a web page on any device — ")}[\{AccountAddState.ms-verification-uri}](conic:open-verification)\{@tr(", enter the device code below and sign in. It expires in {}.", root.countdown-text(AccountAddState.ms-expires-in))} [\{@tr("Click here")}](conic:use-auth-code)\{@tr(" to sign in with your browser instead.")}");
@@ -252,9 +196,8 @@ export component AccountAddMicrosoft inherits VerticalLayout {
             }
         }
 
-        // The link box is centred, with the wizard's 36px margin on both sides;
-        // the 36px of bottom margin is spent below the row instead, where the
-        // button row's own 16px would have collapsed into it.
+        // The wizard's 36px margin is spent below, where the button row's 16px
+        // would have collapsed into it.
         Rectangle {
             height: root.link-margin;
             background: transparent;
@@ -265,17 +208,15 @@ export component AccountAddMicrosoft inherits VerticalLayout {
             height: 48px;
             background: transparent;
 
-            // `ch` is the advance of "0" in the *element's own* font, but the
-            // 20px belongs to the inner code text, not to this box. So the glyph
-            // is measured at the inherited base size.
+            // Measures "0" at the inherited base size, since the 20px belongs to
+            // the inner code text.
             zero-glyph := Text {
                 text: "0";
                 font-size: Theme.font-size-base;
                 visible: false;
             }
 
-            // The box keeps its rounded hairline and adds no padding, so the
-            // code is centred in the 20ch.
+            // No padding, so the code centres in the 20ch.
             code-box := Rectangle {
                 width: zero-glyph.preferred-width * 20;
                 height: parent.height;
@@ -296,8 +237,7 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                     height: parent.height;
                     text: AccountAddState.ms-user-code;
                     font-size: 20px;
-                    // Bolder than the body: the code is the thing to read and
-                    // retype, not part of the prose around it.
+                    // Bolder: the code is meant to be read and retyped.
                     font-weight: 700;
                     letter-spacing: 4px;
                     horizontal-alignment: center;
@@ -312,11 +252,8 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                         AccountAddState.copy-text(AccountAddState.ms-user-code);
                         AccountAddState.ms-copied-code = true;
                     }
-                    // The "Copied!" hint lasts exactly as long as the hover it
-                    // was made in, so the next time the pointer arrives the
-                    // tooltip reads "Click to copy" again. A timer cannot do
-                    // this: it would flip the text back while the pointer was
-                    // still on the code.
+                    // The hint lasts as long as the hover, so leaving resets it.
+                    // A timer would flip it while the pointer is still on the code.
                     changed has-hover => {
                         if !self.has-hover {
                             AccountAddState.ms-copied-code = false;
@@ -333,9 +270,7 @@ export component AccountAddMicrosoft inherits VerticalLayout {
             }
         }
 
-        // This row does not push to the right, unlike the other screens'. Its
-        // own 16px applies only where the link's margin does not already exceed
-        // it.
+        // Its 16px applies only where the link's margin does not already exceed it.
         HorizontalLayout {
             padding-top: max(root.link-margin, 16px);
             spacing: 8px;
@@ -362,10 +297,8 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                 if link == "conic:device-code" {
                     AccountAddState.use-device-code-flow();
                 } else {
-                    // No tooltip here: this paragraph is a `StyledText`, which is
-                    // one element with no children to hang one on. The link box
-                    // below has the same hint and is a plain element, so it
-                    // carries the tooltip instead.
+                    // No tooltip: `StyledText` has no children to hang one on; the
+                    // link box below carries it instead.
                     AccountAddState.copy-text(AccountAddState.auth-code-login-url);
                 }
             }
@@ -414,11 +347,8 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                         AccountAddState.copy-text(AccountAddState.auth-code-login-url);
                         AccountAddState.ms-copied = true;
                     }
-                    // The "Copied!" hint lasts exactly as long as the hover it
-                    // was made in, so the next time the pointer arrives the
-                    // tooltip reads "Click to copy" again. A timer cannot do
-                    // this: it would flip the text back while the pointer was
-                    // still on the link.
+                    // The hint lasts as long as the hover; a timer would flip it
+                    // while the pointer is still on the link.
                     changed has-hover => {
                         if !self.has-hover {
                             AccountAddState.ms-copied = false;
@@ -450,9 +380,8 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                 text: @tr("Log in");
                 button-background: Theme.blue;
                 text-color: Theme.text-inverse;
-                // The URL is one Rust filled in when it bound the listener
-                // above, and the waiting for the code that comes back to it is
-                // already running.
+                // The URL Rust filled in when it bound the listener; the wait for
+                // the callback is already running.
                 clicked => { AccountAddState.open-url(AccountAddState.auth-code-login-url); }
             }
         }

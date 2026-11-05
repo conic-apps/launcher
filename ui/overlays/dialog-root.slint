@@ -16,57 +16,44 @@ import { ConfirmCancelTask } from "dialogs/confirm-cancel-task.slint";
 import { RestartRequired } from "dialogs/restart-required.slint";
 import { ModpackImportDialog } from "dialogs/modpack-import.slint";
 
-// The overlay layer: one instance per dialog, mounted once above the whole app.
-// Each dialog stays hidden until its flag in `Dialogs` is set, and draws its own
-// scrim, so a dialog that is closed lets everything through.
+// The dialog overlay layer. Each dialog hides until its flag is set and draws its
+// own scrim, so a closed dialog lets everything through.
 export component DialogRoot inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;
 
-    /// The "Let me out!" button of `ConfirmQuitApp`, forwarded to the app root
-    /// (which plays the exit animation and closes the window).
+    /// Forwards `ConfirmQuitApp` to the app root, which exits.
     callback confirm-quit();
 
-    /// The "Restart now" button of `RestartRequired`, forwarded to the app root
-    /// (which re-execs the binary).
+    /// Forwards `RestartRequired` to the app root, which re-execs.
     callback restart-app();
 
     CreateInstance { }
-    // The instance settings overlay's "Delete instance" row. It sits right after
-    // `CreateInstance` and ahead of the four launch errors, so a create-instance
-    // dialog that is still open covers it and a launch error covers it in turn.
+    // Delete prompts and launch errors sit above the instance settings overlay;
+    // declaration order is the z-order, and the last instance is on top.
     ConfirmDeleteInstance { }
-    // Slint draws and hit-tests in declaration order. The four launch-error
-    // dialogs come ahead of `MultiplayerExtension` and `AccountAdd`, so a launch
-    // error raised while one of those is open is drawn *over* it — which is the
-    // case that matters, since a launch is what raises one. The last instance is
-    // the top one.
+
     LaunchErrorDialogs { }
 
     MultiplayerExtension { }
 
     AccountAddDialog { }
-    // The saves grid's trash button and the title bar's close button, last: a
-    // delete or a quit is the thing the user reached the app for, so it is asked
-    // over whatever else is open.
+
     ConfirmDeleteSave { }
 
     ConfirmDeleteAccount { }
 
-    // The task centre asks before stopping work that has run for ten seconds.
     ConfirmCancelTask { }
 
     ConfirmQuitApp {
         confirm => { root.confirm-quit(); }
     }
-    // The storage-location restart prompt, after the quit prompt: a restart is
-    // asked for from Settings, never while a quit is already up.
+    // After the quit prompt: a restart is never asked while a quit is up.
     RestartRequired {
         confirm => { root.restart-app(); }
     }
 
-    // A pack dropped on the window can arrive at any time, so its list is the
-    // topmost layer: it is the answer the import is waiting on.
+    // A dropped pack can arrive at any time, so it is the topmost layer.
     ModpackImportDialog { }
 }

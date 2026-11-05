@@ -63,13 +63,8 @@ export component SettingsAccessibility inherits VerticalLayout {
 
             Switch {
                 checked <=> AppConfig.high-contrast;
-                // Swaps the semantic tokens like a palette change does, so it
-                // animates the same way (see `Theme.transitions-enabled`).
-                //
-                // As in the palette row, `Switch` writes `checked` through
-                // the two-way binding first; the tokens are only evaluated from
-                // the event loop's change handlers, so arming here in `toggled`
-                // is early enough.
+                // Arms the palette transition; tokens are evaluated from the
+                // event loop, so setting this in `toggled` is early enough.
                 toggled => {
                     Theme.transitions-enabled = true;
                     AppConfig.changed();

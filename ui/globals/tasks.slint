@@ -2,10 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-/// One running task in the notification centre.
-///
-/// The fields are plain data: `kind` and `stage` are keys the view translates,
-/// and `action-kind` says whether a click on the body has somewhere to go.
+/// One running task in the notification centre. `kind` and `stage` are keys the
+/// view translates; `action-kind` says whether a click on the body has somewhere
+/// to go.
 export struct TaskItem {
     id: int,
     /// "content-download" | "modpack-install" | "game-install" | "library-download"
@@ -23,8 +22,7 @@ export struct TaskItem {
     indeterminate: bool,
     /// The user asked to stop it and the work has not acknowledged that yet.
     cancelling: bool,
-    /// A preview that is leaving after its task ended; the centre's card never
-    /// sets it.
+    /// A preview that is leaving after its task ended.
     closing: bool,
     icon: string,
     /// "content" | "instance" | "launch" | "library" | "none"
@@ -53,11 +51,8 @@ export global TaskState {
     callback expire-all-toasts();
 }
 
-/// The task centre's translated strings.
-///
-/// Kept in Slint for the same reason as `NotificationText`: a string Rust pushed
-/// into a model is fixed at that moment and would not follow a language change,
-/// while an `@tr` binding re-evaluates.
+/// The task centre's translated strings, kept in Slint so they follow a language
+/// change.
 export global TaskText {
     public pure function title(item: TaskItem) -> string {
         if item.kind == "content-download" {
@@ -107,8 +102,7 @@ export global TaskText {
         if item.cancelling {
             return @tr("TaskText" => "Stopping…");
         }
-        // The title already says "Downloading", so the stage line would repeat
-        // it for every content and library download.
+        // The title already says "Downloading", so the stage line would repeat it.
         if item.kind == "content-download" || item.kind == "library-download" {
             return item.context;
         }

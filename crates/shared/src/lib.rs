@@ -2,20 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Process-wide helpers: the running app's version ([`set_app_version`]), the
-//! shared HTTP client and its proxy preference, a disk cache for the images
-//! the UI fetches, and the `Url` extension the API clients use.
-//!
-//! The crate exists on its own — rather than as a module inlined into each
-//! consumer — so every crate that makes requests shares one client: `account`,
-//! `curseforge`, `download`, `install` and `modrinth` all take [`HTTP_CLIENT`]
-//! from here, and the app sets the proxy preference once through
-//! [`set_system_proxy`].
-//!
-//! [`http_cache`] sits beside the client rather than inside it because it caches
-//! something the client knows nothing about: those requests want a stored copy,
-//! a second one behind the same URL refused, and never a peer on the user's own
-//! network. The client is left as the plain transport the API crates expect.
+//! Process-wide helpers shared by the domain crates: the app version, the HTTP
+//! client and its proxy setting, the image disk cache, and the `Url` extension
+//! the API clients use.
 
 pub mod http_cache;
 pub mod notification;
@@ -31,70 +20,43 @@ use once_cell::sync::{Lazy, OnceCell};
 use thiserror::Error;
 use url::Url;
 
-/// The running app's version, recorded once by the app through
-/// [`set_app_version`].
-///
-/// Deliberately a runtime cell rather than `env!("CARGO_PKG_VERSION")`: this
-/// crate's own manifest version is the placeholder `0.0.0`, so reading it here
-/// would stamp `0.0.0` onto the HTTP User-Agent, the JVM's `launcher_version`
-/// and the self-update check. Only the app knows the version it was built as,
-/// and it compiles that in from its own manifest.
+/// The version the app was built as. `env!("CARGO_PKG_VERSION")` would read
+/// this crate's `0.0.0` placeholder, so the app supplies the real value.
 static APP_VERSION: OnceCell<&'static str> = OnceCell::new();
 
-/// Records the app version. Must run before the first request, like
-/// [`set_system_proxy`], because [`HTTP_CLIENT`] bakes it into its User-Agent
-/// when it is built on first use.
+/// Records the app version before the first request, since [`HTTP_CLIENT`]
+/// bakes it into its User-Agent when built.
 pub fn set_app_version(version: &'static str) {
     if APP_VERSION.set(version).is_err() {
-        // The client bakes the *first* version into its User-Agent, so a second
-        // call leaves a stale one in place for the rest of the session.
         log::debug!("the app version was already set to {APP_VERSION:?}; ignoring {version:?}");
     }
 }
 
-/// The app version, or the placeholder when [`set_app_version`] has not run —
-/// which happens only in a crate's own tests, where nothing starts the app.
+/// The app version, or `"0.0.0"` in a crate's own tests.
 pub fn app_version() -> &'static str {
     APP_VERSION.get().copied().unwrap_or_else(|| {
-        // Reached only when nothing started the app — a crate's own tests. In a
-        // real launch it would mean every request goes out as "ConicApps/0.0.0",
-        // which is exactly what this doc comment warns about, so it is worth a
-        // line rather than a silent placeholder.
         log::debug!("the app version was never set; the User-Agent will read 0.0.0");
         "0.0.0"
     })
 }
 
-/// The callback through which a crate reports a task's state to whoever owns
-/// the interface.
+/// The output port every domain crate reports through.
 ///
-/// This is the one shape every inner crate uses for an output port. It is
-/// `Send + Sync` so the use case may report from any worker or task and clone
-/// the handle into several of them, and `'static` because the port outlives any
-/// one call. The crate names a type alias over it for its own event, so the
-/// vocabulary (`InstallSink`, `LoginSink`, …) is the crate's and the mechanism
-/// is not.
-///
-/// The sink must not do the work: a use case reports a *plain snapshot* and
-/// returns, and the sink (in the app) marshals it onto the event loop. A crate
-/// that called `upgrade_in_event_loop` itself would depend on Slint, which is
-/// exactly the dependency the port exists to remove.
+/// `Send + Sync` lets a use case report from any worker, and `'static` lets the
+/// handle outlive a single call. A use case reports a plain snapshot and returns;
+/// the app's sink marshals it onto the event loop.
 pub type Sink<T> = Arc<dyn Fn(T) + Send + Sync + 'static>;
 
-/// A sink that drops every event, for a caller that has no interface to report
-/// to (a headless run, a test).
 pub fn silent<T>() -> Sink<T> {
     Arc::new(|_| {})
 }
 
 /// A [`Sink`] wrapper that drops repeated values.
 ///
-/// The counter half of progress is sampled on a clock, so the same value is
-/// read many times while nothing moves; only a change is worth crossing a
-/// thread boundary and waking the event loop for. `PartialEq` is the change
-/// test, which is why the value has to be a plain snapshot and not a handle: a
-/// struct whose state sits behind `Arc`s compares equal to its own past, which
-/// would drop every update (see `download::progress::DownloadSnapshot`).
+/// Progress counters are sampled on a clock, so only a change is worth waking
+/// the event loop for. The value must be a plain snapshot: state behind shared
+/// handles compares equal to its own past and would drop every update (see
+/// `download::progress::DownloadSnapshot`).
 ///
 /// ```
 /// # use shared::{ChangeReporter, Sink};

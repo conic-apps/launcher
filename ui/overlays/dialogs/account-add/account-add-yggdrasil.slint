@@ -14,34 +14,24 @@ import {
 } from "../../../globals/dialogs.slint";
 import { AvatarMask } from "../../../globals/avatar.slint";
 
-// "Sign in with Yggdrasil" — the second screen of the add-account dialog.
-//
-// Four states, swapped without an animation (unlike the Microsoft screen).
+// "Sign in with Yggdrasil", the add-account dialog's second screen. Four states,
+// swapped without an animation.
 export component AccountAddYggdrasil inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
-    // `start`: the four states have four different heights, so the panel
-    // tweens between them, and a stretching column would spread the surplus
-    // over the rows (see `AccountAdd`).
+    // `start`: a stretching column would spread the height surplus over the rows.
     alignment: start;
 
-    // Mounted inside the setup wizard, which hides the "Cancel" button. See
-    // `AccountAdd`.
+    // The wizard hides the "Cancel" button.
     in property <bool> wizard-host: false;
 
     init => {
-        // The screen is destroyed and rebuilt whenever the dialog switches
-        // services, so this is also what makes a reopened dialog start blank.
+        // The screen is rebuilt whenever the dialog switches services.
         AccountAddState.reset-yggdrasil-form();
     }
 
-    // A sibling of the form's layout rather than its first row: Slint measures a
-    // word-wrapping `Text` for the width it will be given only while the chain
-    // from the layout that owns that width is short enough to resolve it, and
-    // one layout level deeper this one reported a single line for its three.
-    // `AccountAddYggdrasil`'s preferred height came out 40px short, the panel
-    // followed it down, and the buttons were clipped away — the same reason the
-    // other two screens keep their paragraphs as direct children of the column.
+    // A direct child, not a form row: one level deeper, a wrapping `Text`
+    // measured a single line for its three and clipped the buttons away.
     if AccountAddState.yggdrasil-view == "form": Text {
         text: @tr("Sign in to a Minecraft account through a third-party Yggdrasil auth server — for skin sites, self-hosted auth servers and other unofficial account systems.");
         font-size: 14px;
@@ -53,8 +43,7 @@ export component AccountAddYggdrasil inherits VerticalLayout {
     if AccountAddState.yggdrasil-view == "form": VerticalLayout {
         alignment: start;
 
-        // The 8px gap, plus the description's 8px bottom margin as a top
-        // padding, which a layout has no margin for.
+        // The description's 8px bottom margin, since a layout has no margin.
         VerticalLayout {
             padding-top: 8px;
             spacing: 8px;
@@ -160,8 +149,7 @@ export component AccountAddYggdrasil inherits VerticalLayout {
             alignment: center;
             spacing: 8px;
 
-            // An 8px padding around the arc, not the row's `spacing`, which a
-            // single child would not see.
+            // An 8px padding around the arc; a single child gets no `spacing`.
             HorizontalLayout {
                 alignment: center;
                 cross-axis-alignment: center;
@@ -196,10 +184,8 @@ export component AccountAddYggdrasil inherits VerticalLayout {
             spacing: 16px;
             padding-bottom: 8px;
 
-            // `cross-axis-alignment: center` hands over the *unwrapped* width,
-            // which is why this one stretches and the glyphs are centred inside
-            // it — the text's left edge lands where it would either way, and the
-            // wrap has a width to happen at.
+            // Stretches because `cross-axis-alignment: center` would hand over
+            // the unwrapped width, leaving nothing to wrap at.
             Text {
                 text: AccountAddState.yggdrasil-error;
                 font-size: 14px;
@@ -233,10 +219,7 @@ export component AccountAddYggdrasil inherits VerticalLayout {
             background: transparent;
         }
 
-        // The list is as tall as its rows, up to 234px. A row is 44px — the
-        // 28px avatar plus the 8px vertical padding on each side — and the list
-        // puts 8px between them and 2px above and below (see the `padding`
-        // below).
+        // As tall as its 44px rows, up to 234px.
         list-wrapper := Rectangle {
             width: 100%;
             height: min(234px, 4px
@@ -276,10 +259,9 @@ export component AccountAddYggdrasil inherits VerticalLayout {
                             checkbox-enabled: false;
                         }
 
-                        // A bare 28px avatar image — no disc and no ring, unlike
-                        // the account pills elsewhere. The round is cut in the
-                        // pixels by `AvatarMask.rounded`, because a rounded
-                        // `clip` is a no-op on the software renderer.
+                        // No disc or ring here. The round is cut in the pixels
+                        // because a rounded `clip` is a no-op on the software
+                        // renderer.
                         Rectangle {
                             x: 38px;
                             width: 28px;
@@ -339,8 +321,8 @@ export component AccountAddYggdrasil inherits VerticalLayout {
         }
     }
 
-    // Debounced 500 ms: the server's name is looked up after typing stops. It
-    // is cleared when the field runs empty, so the lookup runs on that too.
+    // Debounced 500ms: the name is looked up after typing stops, including when
+    // the field empties.
     server-lookup := Timer {
         interval: 500ms;
         running: false;

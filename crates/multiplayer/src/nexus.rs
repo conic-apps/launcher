@@ -117,7 +117,6 @@ pub struct SessionState {
     pub detail: serde_json::Value,
 }
 
-/// One notice drained from the event queue.
 #[derive(Debug, Clone, Serialize)]
 pub struct SessionEvent {
     pub sequence: u64,
@@ -330,7 +329,6 @@ impl NexusSession {
         }
     }
 
-    /// Queries the active mesh node for its peers and their NAT types.
     pub fn query_peers(&self) -> Result<Vec<PeerInfo>> {
         unsafe {
             let query_peers: Symbol<ConicNexusQueryPeersFn> =
@@ -357,7 +355,6 @@ impl NexusSession {
         }
     }
 
-    /// The `limit` most recent log lines.
     pub fn recent_logs(&self, limit: u32) -> Result<Vec<String>> {
         unsafe {
             let recent_logs: Symbol<ConicNexusRecentLogsFn> =
@@ -440,21 +437,9 @@ unsafe fn read_string(value: &ConicNexusString) -> String {
     // SAFETY: the C ABI guarantees `data`/`len` describe a valid UTF-8 span
     // owned by the library for the duration of the call.
     //
-    // The cast is spelled `as *const u8` and is *not* redundant: `c_char` is
-    // defined as `u8` on aarch64 and `i8` on x86, so the cast is a real type
-    // change on one and a no-op on the other. `clippy::unnecessary_cast`
-    // evaluates against the target being checked, so it fires exactly where
-    // `c_char` is `u8` -- which among this project's targets is Linux aarch64
-    // (macOS, Windows and x86_64 all sign `char`). On the `i8` targets the
-    // expectation below goes unfulfilled and *that* becomes an error under
-    // `-D warnings`, which is why it has to be `allow`: the lint's presence
-    // genuinely depends on the target, so neither `expect` nor a bare `allow` is
-    // right on its own.
-    //
-    // The alternative is declaring the field `*const u8` and dropping the cast,
-    // which is what clippy suggests. That trades an accurate mirror of the C
-    // header (`char *`) for silence on one target, and the mirror is the thing
-    // that has to stay right.
+    // The cast is not redundant: `c_char` is `u8` on aarch64 and `i8` on x86, so
+    // `clippy::unnecessary_cast` fires only on the u8 targets. That is why the
+    // lint is `allow`ed rather than `expect`ed.
     #[allow(clippy::unnecessary_cast)]
     let bytes = unsafe { std::slice::from_raw_parts(value.data as *const u8, value.len as usize) };
     String::from_utf8_lossy(bytes).into_owned()

@@ -4,9 +4,7 @@
 
 //! Data models for discovered Java runtimes.
 //!
-//! The classification scheme (major-version groups plus a normalized vendor) is
-//! inspired by how HMCL presents Java toolchains in its Java management page:
-//! runtimes are grouped by Java major version and shown with a friendly vendor
+//! Runtimes are grouped by Java major version and shown with a friendly vendor
 //! label, so the UI never has to re-parse raw version strings.
 
 use std::{cmp::Ordering, collections::BTreeMap, path::PathBuf};
@@ -45,7 +43,6 @@ impl JavaVendor {
     }
 }
 
-/// CPU architecture of a Java runtime.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum JavaArch {
     X64,

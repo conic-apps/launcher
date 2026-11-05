@@ -4,11 +4,9 @@
 
 //! Applying a staged bundle.
 //!
-//! This runs once, on the way out of the process: the window has closed and
-//! nothing will read the running executable again. Every branch replaces the
+//! This runs once, on the way out of the process: every branch replaces the
 //! running copy in place (or hands it to the platform's installer) so the next
-//! launch starts the new version, which is why the user is never interrupted by
-//! an install.
+//! launch starts the new version, never interrupting the user with an install.
 
 // `Path`/`PathBuf` and `extract_tar_gz` are only reached from the Linux and
 // macOS branches below; on Windows the same work is handed to a script, so the
@@ -23,7 +21,6 @@ use crate::install::InstallKind;
 use crate::staged::extract_tar_gz;
 use crate::staged::{Staged, clear_pending, read_pending, updates_dir};
 
-/// Applies the pending bundle, if any. Returns whether something was applied.
 pub fn apply_pending() -> Result<bool> {
     let Some(staged) = read_pending()? else {
         return Ok(false);
@@ -65,13 +62,9 @@ pub fn apply_pending() -> Result<bool> {
     Ok(true)
 }
 
-/// Removes the staged bundle now that it has been applied.
-///
-/// [`clear_pending`] deliberately drops only the record: on Windows the bundle
-/// has to outlive this process, because a detached script is what consumes it.
-/// On the platforms that apply in-process the artifact is dead weight the moment
-/// the swap succeeds, and leaving it behind would let a used `updates/` directory
-/// keep one tarball per update.
+/// [`clear_pending`] drops only the record: on Windows a detached script still
+/// needs the bundle. In-process applies can remove it, or `updates/` would keep
+/// one tarball per update.
 #[cfg(not(windows))]
 fn discard_artifact(staged: &Staged) {
     if let Err(error) = std::fs::remove_file(&staged.artifact)

@@ -2,93 +2,22 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Windows: the platform's own window controls, over the app's custom title bar.
+//! Windows window controls over the app's custom title bar.
 //!
-//! # What DWM will and will not do
+//! The controls are real non-client area, hit-tested as
+//! `HTMINBUTTON`/`HTMAXBUTTON`/`HTCLOSE`, so Windows supplies the snap-layout
+//! flyout, system menu and accessibility entries. A press posts the same
+//! `WM_SYSCOMMAND` a caption button sends, on release.
 //!
-//! The obvious route — keep a stock `WS_OVERLAPPEDWINDOW` window, answer
-//! `WM_NCCALCSIZE` with "the client area is the whole window", and ask DWM to
-//! paint the caption buttons on top of the app's own drawing — does not work on
-//! any Windows since 8. Verified on Windows 11: with the caption removed from
-//! the non-client area the buttons are simply not drawn, whether or not
-//! `DwmExtendFrameIntoClientArea` is called. (That call succeeds; it is the
-//! Windows 7 Aero Glass hook and has been a no-op for opaque windows ever since.)
-//! Restoring the default `WM_NCCALCSIZE` brings the caption, and the three
-//! buttons, straight back — the buttons live in the non-client area, and that is
-//! the only place they live. Microsoft's own answers agree: both
-//! `Window.ExtendsContentIntoTitleBar` (WinUI 3) and
-//! `AppWindowTitleBar.ExtendsContentIntoTitleBar` remove the frame the same way
-//! and then *draw the caption buttons themselves*.
+//! DWM will not paint caption buttons over a window whose caption was removed,
+//! and `DrawThemeBackground` cannot supply them per theme, so the glyphs come
+//! from the Windows caption font and the hover fills are DWM's colours. The fill
+//! is published separately so the app can animate it.
 //!
-//! # What this does instead
-//!
-//! The controls are real non-client area, so Windows treats them as its own:
-//! `WM_NCHITTEST` answers `HTMINBUTTON` / `HTMAXBUTTON` / `HTCLOSE` for them, and
-//! everything that hangs off those codes comes with them — the Windows 11
-//! snap-layouts flyout, which is DWM's own and appears for a maximizable window
-//! whose maximize button hit tests as `HTMAXBUTTON`; the system menu on a right
-//! click; the buttons' own entries in the accessibility tree. This is what
-//! Chromium, Electron, VS Code and Windows Terminal do, and the reason their
-//! controls feel like the system's.
-//!
-//! What a press *does* is a `WM_SYSCOMMAND` carrying the one command a caption
-//! button ever sends — `SC_MINIMIZE`, `SC_MAXIMIZE`/`SC_RESTORE`, `SC_CLOSE` — so
-//! the window is still minimized, maximized and closed by Windows, with its own
-//! animation and its own idea of where a maximized window goes. It is sent on the
-//! release, and only if the pointer is still on the control, because that is what
-//! makes dragging off a caption button cancel it. `DefWindowProc` is not asked to
-//! do this: it acts on a close press at once, but the other two are acted on from
-//! inside the tracking loop it starts for a button, and a window with no caption
-//! has no button for that loop to track — the press goes in and the release never
-//! comes back out.
-//!
-//! The *artwork* is the platform's too, as far as Windows will give it up: the
-//! glyphs come from the font Windows draws its caption buttons with
-//! ([`GLYPH_FONTS`]), not from paths of our own, and the fills are DWM's. It
-//! cannot come from `DrawThemeBackground`, which is worth writing down because it
-//! looks like the obvious answer and is not usable here:
-//!
-//! * The `Explorer` class — the one the shell draws its own caption with, and the
-//!   one Windows Terminal asks for — does not open at all on Windows 11: there are
-//!   no `.msstyles` files left to load it from, and `OpenThemeData` answers with
-//!   a null handle.
-//! * The `Window` class does open, and does draw `WP_CLOSEBUTTON` and friends, but
-//!   what it draws is the *classic* caption: an opaque button face, filled in even
-//!   in its normal state, with the close button red throughout. It also renders
-//!   light regardless of the system theme, because a process only gets the dark
-//!   variants by opting in per window, and the opt-in is not reachable without
-//!   the class that is missing. On a dark title bar that is a row of pale blocks.
-//!
-//! So the glyphs are rendered with GDI, and the two colours the theme would have
-//! supplied — the subtle fill on hover and press, and the close button's red — are
-//! the ones DWM uses ([`SUBTLE_HOVER`], [`SUBTLE_PRESSED`], [`CLOSE_HOVER`],
-//! [`CLOSE_PRESSED`]). The ink and the subtle fill follow the *app's* palette
-//! rather than the system's, because the title bar they sit on is the app's: a
-//! white glyph is right on Catppuccin Mocha and invisible on Latte.
-//!
-//! # Why the fill is a colour and not part of the bitmap
-//!
-//! The glyph is the only artwork this module renders, and that is what lets the
-//! app *animate* the controls rather than snapping between three finished states.
-//! Hovering and pressing are the fill changing, so a fill that can be interpolated
-//! is the transition; one baked into a bitmap can only be cross-faded against
-//! another bitmap, and three of those cannot be stacked — they composite
-//! additively, which would make a press read as hover *plus* pressed. Publishing
-//! the fill as a pair of colours lets the app drive the whole ramp off one
-//! animated number, and lets the glyph stay perfectly still behind it, which is
-//! what the platform's own buttons do.
-//!
-//! # Where the controls are
-//!
-//! Rust owns the geometry, because it is what the platform hit tests against:
-//! three [`CONTROL_WIDTH`]-wide slots in the client area's top-right corner, as
-//! tall as the app's title bar — read from `App.title-bar-height`, so this module
-//! and the `.slint` side cannot drift apart — and the total is published as
-//! `App.window-controls-inset` for the title bar to lay its own controls out
-//! around. This module also owns the rest of the frameless window: the caption
-//! (gone, see `WM_NCCALCSIZE`), the invisible resize border, and a maximized
-//! window that is exactly the monitor's work area rather than one border too big
-//! for a client area that covers the whole window.
+//! Rust owns the geometry because the platform hit-tests against it: three
+//! [`CONTROL_WIDTH`]-wide slots in the client area's top-right corner, as tall as
+//! `App.title-bar-height`. This module also owns the resize border and the
+//! maximized work-area geometry.
 
 use std::cell::{Cell, RefCell};
 use std::ptr::{addr_of, null_mut};
@@ -127,90 +56,49 @@ use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
 
 use crate::slint_backend::{App, WindowControl};
 
-/// Identifies our subclass. Arbitrary, but it has to be unique per window and
-/// procedure pair — `SetWindowSubclass` keys the chain on it.
+/// `SetWindowSubclass` keys the chain on this; it must be unique per window and
+/// procedure.
 const SUBCLASS_ID: usize = 0x00C0_011C;
 
-/// One control is 46 logical pixels wide, which is what Windows 10 and 11 give a
-/// caption button at 96 DPI, and as tall as the app's title bar — that is the
-/// area the fill on hover and press covers.
-///
-/// It is a logical width because that is the unit the title bar is laid out in,
-/// so it follows the DPI the way every other length in the design does; the
-/// artwork is rendered at the matching physical size (see [`render_controls`]).
+/// Logical width of one control, matching Windows' 46px caption button at 96 DPI.
+/// The height comes from the app's title bar.
 const CONTROL_WIDTH: f64 = 46.0;
 
-/// How many controls there are, and the order they are laid out in — the same
-/// order `App.window-control-hovered` / `-pressed` use, so the app can pick the
-/// right artwork without having to know which one Windows thinks it is on.
 const CONTROL_COUNT: usize = 3;
 
 /// `HTMINBUTTON` / `HTMAXBUTTON` / `HTCLOSE`, by index.
 const CONTROL_HIT_TESTS: [u32; CONTROL_COUNT] = [HTMINBUTTON, HTMAXBUTTON, HTCLOSE];
 
-/// Which control is the close button, and so the one whose fill is an opaque
-/// plate rather than a translucent wash.
 const CLOSE: usize = 2;
 
-/// The caption-button glyphs, in the private-use area the font publishes them
-/// at. Windows draws its caption buttons with these.
+/// Private-use glyphs Windows uses for its caption buttons.
 const GLYPH_MINIMIZE: u16 = 0xE921;
 const GLYPH_MAXIMIZE: u16 = 0xE922;
 const GLYPH_RESTORE: u16 = 0xE923;
 const GLYPH_CLOSE: u16 = 0xE8BB;
 
-/// The faces that caption font is published under: Windows 11 renamed it, and
-/// Windows 10 and the early Windows 11 builds only carry the old name. The
-/// first one that actually draws the glyph wins, so a build that has neither
-/// falls through to the next rather than drawing boxes.
+/// Windows 11 renamed the caption font; older builds only have the old name.
 const GLYPH_FONTS: [windows::core::PCWSTR; 2] = [w!("Segoe Fluent Icons"), w!("Segoe MDL2 Assets")];
 
-/// The point size the caption glyphs are drawn at. It is a point size, converted
-/// to the font's character height at the window's DPI, so it scales with the
-/// display rather than being pinned to a pixel count — which is why 8 stays 8 on
-/// a 4K monitor.
-///
-/// **This is the knob for the glyphs' size.** Try 9 or 11 and re-run to compare;
-/// anything from about 8 to 12 reads well inside the 46px slot. Where the glyphs
-/// *sit* is not set here: that is measured from the rendered ink, see
-/// [`ink_offset`].
+/// Point size of the glyphs. Where they sit is measured from the ink instead.
 const GLYPH_POINTS: i32 = 8;
 
-/// What goes behind a caption button on hover and while it is pressed: the
-/// caption ink at ten and twenty percent. Alpha, because it is a fill over
-/// whatever the title bar is, and the title bar is the app's.
-///
-/// These are the app's numbers, not a platform constant. They read like what
-/// Windows 11 puts there, and ten and twenty are what makes a press legible
-/// against a dark title bar, which six and twelve were not. They are published as
-/// *colours* rather than drawn into the glyph so the app can interpolate between
-/// them — see `WindowControl` in `components/title-bar.slint`.
+/// Caption ink over the app's title bar on hover and press.
 const SUBTLE_HOVER: u8 = 26; // 10% of 255
 const SUBTLE_PRESSED: u8 = 51; // 20% of 255
 
-/// The red Windows 11 fills the close button with on hover, and the shade it
-/// goes to while pressed. These are DWM's own, and what Explorer, Edge and
-/// Windows Terminal all paint.
+/// DWM's own close-button reds.
 const CLOSE_HOVER: (u8, u8, u8) = (0xC4, 0x2B, 0x1C);
 const CLOSE_PRESSED: (u8, u8, u8) = (0xB0, 0x25, 0x18);
 
-/// The ink the close button's glyph takes on once it is on that red plate, which
-/// is white whichever theme the app is in — see [`render_glyph`].
 const CLOSE_INK: (u8, u8, u8) = (255, 255, 255);
 
-/// A fill as Slint wants it: `color` at `alpha` over whatever is behind it.
 fn fill(color: (u8, u8, u8), alpha: u8) -> Color {
     Color::from_argb_u8(alpha, color.0, color.1, color.2)
 }
 
-/// The alpha a press layer needs so that, stacked on the hover layer, it lands on
-/// `pressed` rather than short of it.
-///
-/// Two washes of `a` and `b` composite to `a + b - a·b`, so a layer of `b` on top
-/// of the hover wash only reaches `pressed` when `b` is
-/// `(pressed - hover) / (1 - hover)`. The two close-button reds are both opaque,
-/// where the hover layer already hides whatever is under it and the increment is
-/// simply the colour to fade in.
+/// The alpha a press layer needs to reach `pressed` when stacked on `hover`:
+/// washes composite as `a + b - a·b`.
 fn press_increment(hover: u8, pressed: u8) -> u8 {
     if hover == 255 {
         return pressed;
@@ -219,18 +107,12 @@ fn press_increment(hover: u8, pressed: u8) -> u8 {
     (((to - from) / (1.0 - from)) * 255.0).round() as u8
 }
 
-/// The width the controls take on the right of the title bar, in logical units.
 pub fn controls_inset() -> f32 {
     (CONTROL_WIDTH * CONTROL_COUNT as f64) as f32
 }
 
-/// Where the controls are, in physical screen pixels: the top-left corner of the
-/// row (`left`, `top`), how wide one control is (`unit`) and how tall they are.
-///
-/// They sit in the *client* area's top-right corner, which is where the app's
-/// title bar draws them, and that is deliberately not the same as the window's
-/// corner: a maximized window's client area is the monitor's work area while its
-/// window rectangle is that plus the frame.
+/// Control geometry in physical screen pixels, anchored to the client area, not
+/// the window frame: a maximized window's client area is the work area.
 #[derive(Clone, Copy)]
 struct Controls {
     left: i32,
@@ -245,36 +127,26 @@ impl Controls {
     }
 }
 
-/// What the window procedure knows about the window it is attached to: enough to
-/// tell whether the artwork has to be rendered again, and to report the pointer.
+/// State the window procedure keeps for the window it is attached to.
 #[derive(Clone, Copy)]
 struct Frame {
     hwnd: HWND,
-    /// The title bar's height in logical units, i.e. how tall the controls are.
+    /// Title-bar height in logical units.
     height: f64,
-    /// The scale the artwork was last rendered for, so a DPI change re-renders it.
+    /// Scale the artwork was last rendered for.
     scale: f64,
-    /// The maximize control becomes the restore control while maximized.
     maximized: bool,
-    /// Whether the app's theme is dark, which is what the glyphs and the subtle
-    /// fill take their colour from.
     dark: bool,
     hovered: i32,
     pressed: i32,
 }
 
 thread_local! {
-    /// The app, so the window procedure can report what it sees.
-    ///
-    /// The window procedure runs on the thread that owns the window — the one
-    /// running the Slint event loop — so this needs no locking.
+    // The window procedure runs on the event-loop thread, so no locking.
     static APP: RefCell<Option<Weak<App>>> = const { RefCell::new(None) };
-    /// The window this module is attached to, once there is one. `Frame` is
-    /// `Copy`, so it is read and written by value rather than through a borrow
-    /// that would have to outlive the `RefCell` guard.
     static FRAME: RefCell<Option<Frame>> = const { RefCell::new(None) };
-    /// The palette asked for, remembered for the window that does not exist yet:
-    /// the theme settles while the event loop is still starting up.
+    /// Remembered for a window that does not exist yet: the theme settles while
+    /// the event loop is starting up.
     static DARK: Cell<bool> = const { Cell::new(true) };
 }
 
@@ -296,8 +168,6 @@ fn update_frame(hwnd: HWND, change: impl FnOnce(&mut Frame)) {
     });
 }
 
-/// The pointer's state is the only state the platform reports outward: nothing
-/// redraws the buttons for a window, so nothing else has to be told about them.
 fn set_pointer(hwnd: HWND, hovered: i32, pressed: i32) {
     update_frame(hwnd, |frame| {
         frame.hovered = hovered;
@@ -316,17 +186,12 @@ fn publish_state(hwnd: HWND) {
     }
 }
 
-/// Takes the window frame over, once winit has created the window.
-///
-/// Must be called with the app's root component, like `traffic_lights::install`.
+/// Takes the window frame over once winit has created the window.
 pub fn install(ui: &App) {
     APP.with(|slot| *slot.borrow_mut() = Some(ui.as_weak()));
 
-    // There is no `HWND` until the event loop has created the window, so this
-    // takes the first winit event the window gets rather than polling for one.
-    // The hook is the app's shared one rather than the backend's own single slot
-    // (see `window::on_window_event`), which is what keeps this watcher
-    // alive alongside the others.
+    // There is no `HWND` until the first winit event; the shared filter keeps
+    // this watcher alive alongside the others.
     let weak = ui.as_weak();
     let attached = AtomicBool::new(false);
     window::on_window_event(ui, move |_| {
@@ -338,12 +203,7 @@ pub fn install(ui: &App) {
     });
 }
 
-/// Asks for the window controls to be drawn in the palette the app resolved to.
-///
-/// The glyphs and the subtle fill take their colour from this, so they stay
-/// legible on the app's title bar whatever the system theme is doing. `false` for
-/// Latte, `true` for the three dark flavors — the same rule as
-/// `ThemeProvider.dark`.
+/// Redraws the controls in the app's palette (`false` for Latte).
 pub fn set_dark(window: &slint::Window, dark: bool) {
     DARK.with(|slot| slot.set(dark));
     if let Some(hwnd) = hwnd_of(window) {
@@ -353,9 +213,7 @@ pub fn set_dark(window: &slint::Window, dark: bool) {
 
 fn attach(ui: &App) {
     let Some(hwnd) = hwnd_of(ui.window()) else {
-        // The one path on which this module never attaches at all: without an
-        // `HWND` there is no `Frame`, so every `frame_of` returns `None` and the
-        // controls the app still draws stop being hit-testable.
+        // Without a `Frame`, the controls stop being hit-testable.
         log::warn!(
             target: "shell",
             "windows caption: no window handle yet, so the caption controls will not be \
@@ -451,17 +309,12 @@ fn render_controls(frame: &Frame) {
         return;
     }
     let dpi = unsafe { GetDpiForWindow(frame.hwnd) };
-    // The caption's ink, which the glyph and the wash are both drawn from. On a
-    // dark title bar that is a light glyph over a light wash; on Latte, the
-    // reverse. Close is the one control that stops being caption-coloured, because
-    // its fill is an opaque plate rather than a wash.
     let ink = if frame.dark {
         (255u8, 255u8, 255u8)
     } else {
         (0u8, 0u8, 0u8)
     };
-    // The maximize control becomes the restore control while the window is
-    // maximized, and the platform draws that as a different glyph.
+    // A maximized window draws the restore glyph in place of maximize.
     let glyphs = [
         GLYPH_MINIMIZE,
         if frame.maximized {
@@ -494,8 +347,7 @@ fn render_controls(frame: &Frame) {
             );
             return;
         };
-        // A control with no plate keeps one image for both inks: its glyph never
-        // changes colour, only the wash behind it does.
+        // A control with no plate never changes the glyph's ink.
         let plate_glyph = rendered_plate_glyph.unwrap_or_else(|| glyph_image.clone());
 
         controls.push(WindowControl {
@@ -520,15 +372,11 @@ fn render_controls(frame: &Frame) {
     ui.set_window_controls(model);
 }
 
-/// Renders one control's glyph, in one ink, on a transparent background: the
-/// platform's own glyph, from the font it draws its caption buttons with.
+/// Renders one glyph in one ink on a transparent background. The fill is drawn
+/// separately so the app can animate it.
 ///
-/// The fill is *not* in here — the app draws that as a rectangle so it can animate
-/// it (see [`render_controls`]).
-///
-/// SAFETY: the DIB and the font below belong to this thread; every handle is
-/// released on the way out, and the DIB is only read between the draw and the
-/// release.
+/// SAFETY: the DIB and font belong to this thread; handles are released on the
+/// way out and the DIB is only read between the draw and the release.
 unsafe fn render_glyph(
     glyph: u16,
     ink: (u8, u8, u8),
@@ -537,8 +385,7 @@ unsafe fn render_glyph(
 ) -> Option<Image> {
     // SAFETY: as above.
     unsafe {
-        // A top-down 32-bit DIB, so the pixels come out in the order they are
-        // drawn in and every channel is meaningful.
+        // Top-down 32-bit DIB: pixels come out in draw order.
         let info = BITMAPINFO {
             bmiHeader: BITMAPINFOHEADER {
                 biSize: size_of::<BITMAPINFOHEADER>() as u32,
@@ -559,29 +406,18 @@ unsafe fn render_glyph(
             return None;
         }
         let previous = SelectObject(screen, HGDIOBJ(bitmap.0));
-        // `CreateDIBSection` does not promise zeroed memory, and the glyph's
-        // coverage is read out of the greyscale it is drawn as, so what was there
-        // has to go.
+        // `CreateDIBSection` does not zero; full coverage is read from the ink.
         let bytes = (width * height * 4) as usize;
         slice::from_raw_parts_mut(bits.cast::<u8>(), bytes).fill(0);
 
-        // The caption font, at the caption's own size. The face is a symbol font,
-        // so the glyph comes out white on black and its greyscale *is* its
-        // coverage — which is what the compositing below reads, and what the
-        // centring pass measures.
+        // A symbol font: the glyph is white on black, so its greyscale is its
+        // coverage.
         let character_height = -(GLYPH_POINTS * dpi as i32) / 72;
         let _ = SetBkMode(screen, TRANSPARENT);
         let _ = SetTextColor(screen, COLORREF(0x00FF_FFFF));
-        // `TA_TOP` is zero, so centring horizontally and vertically is `TA_CENTER`
-        // with the bottom half of the vertical pair. Both are relative to the
-        // point that is passed, so the correction below is a plain translation.
         let _ = SetTextAlign(screen, TA_CENTER | TA_BOTTOM);
 
-        // The first face that actually draws the glyph wins, so a Windows 10
-        // build with only the old font name still gets its caption buttons rather
-        // than a row of empty rectangles.
-        // `face` is a `PCWSTR`, which derives `Debug` but not `Display`, so it
-        // cannot be interpolated — hence the index.
+        // The first face that draws the glyph wins.
         for (index, face) in GLYPH_FONTS.into_iter().enumerate() {
             let font = CreateFontW(
                 character_height,
@@ -600,8 +436,6 @@ unsafe fn render_glyph(
                 face,
             );
             if font.is_invalid() {
-                // One per face, not per glyph: a stripped Windows image carries
-                // neither of these, and that must not produce a line per button.
                 log::debug!(
                     target: "shell",
                     "windows caption: caption font #{index} is unavailable"
@@ -611,15 +445,9 @@ unsafe fn render_glyph(
             let previous_font = SelectObject(screen, HGDIOBJ(font.0));
             let _ = TextOutW(screen, width / 2, height / 2, &[glyph]);
 
-            // What the text alignment above centred is the *font's* box, from
-            // ascent to descent, which for a private-use glyph is only near where
-            // the ink is — and near is a different amount for a thin dash than for
-            // a square. So the glyph is measured where it landed and drawn again a
-            // pixel or two away, which centres the ink itself.
+            // The alignment centred the font box, not the ink; measure and redraw.
             let offset = ink_offset(bits, (width, height)).unwrap_or_default();
             if offset != (0, 0) {
-                // `bits` is the DIB this DC has selected, and it is only read and
-                // written between the two draws.
                 slice::from_raw_parts_mut(bits.cast::<u8>(), bytes).fill(0);
                 let _ = TextOutW(
                     screen,
@@ -631,11 +459,6 @@ unsafe fn render_glyph(
             SelectObject(screen, previous_font);
             let _ = DeleteObject(HGDIOBJ(font.0));
 
-            // `as_chunks` rather than `chunks_exact`: the latter iterates a
-            // wrapper that skips the remainder in every step, where `as_chunks`
-            // splits once and hands back a `&[[u8; 4]]`. Clippy prefers it, and
-            // the remainder (`bytes` is `width * height * 4`, so there is none)
-            // is what makes it equivalent here rather than merely tolerated.
             if slice::from_raw_parts(bits.cast::<u8>(), bytes)
                 .as_chunks::<4>()
                 .0
@@ -648,13 +471,10 @@ unsafe fn render_glyph(
                 );
                 break;
             }
-            // This face had no such glyph: clear it before trying the next.
+            // This face had no such glyph: clear before trying the next.
             slice::from_raw_parts_mut(bits.cast::<u8>(), bytes).fill(0);
         }
-        // Both faces ran and neither drew the glyph, so the plate that comes out
-        // below is empty and the button is invisible rather than broken-looking.
-        // The loop above cannot tell that apart from having drawn one, so it is
-        // checked here — once per glyph, not once per frame.
+        // Neither face drew it; the button will be blank.
         if slice::from_raw_parts(bits.cast::<u8>(), bytes)
             .as_chunks::<4>()
             .0
@@ -668,11 +488,7 @@ unsafe fn render_glyph(
             );
         }
 
-        // The ink at the coverage the glyph drew, in premultiplied form, which is
-        // what Slint's pixels are: the colour channels already carry the alpha, so
-        // a pixel with no coverage comes out fully transparent. That is also the
-        // right answer for a build carrying neither caption font — an empty glyph
-        // rather than a broken one.
+        // Slint pixels are premultiplied; zero coverage is transparent.
         let mut buffer = SharedPixelBuffer::<Rgba8Pixel>::new(width as u32, height as u32);
         let raw = slice::from_raw_parts(bits.cast::<u8>(), bytes);
         let pixels = buffer.make_mut_slice();
@@ -693,25 +509,13 @@ unsafe fn render_glyph(
     }
 }
 
-/// How far the glyph has to move from where GDI's text alignment put it for its
-/// *ink* to be centred in the control, or `None` if the DIB holds no ink at all.
-///
-/// The glyph is drawn white on a zeroed black DIB, so its coverage is the pixel's
-/// colour, not the DIB's unwritten alpha; the ink is simply the non-zero pixels.
-/// `TA_CENTER`/`TA_BOTTOM` centre the font's own box
-/// (ascent to descent) rather than that, and a private-use glyph does not fill its
-/// em evenly: a thin horizontal dash sits high in the box, the cross and the square
-/// sit differently again. Measuring is what keeps all three looking centred instead
-/// of nudging all three by one guessed amount.
-///
-/// A glyph whose ink reaches the edge of the DIB has been clipped, so what was
-/// measured is not the whole glyph and the correction would be guesswork; that
-/// returns no offset at all, leaving GDI's centring to do as good a job as it can.
+/// How far to move the glyph so its ink, not its font box, is centred; `None`
+/// when there is no ink or it was clipped at the DIB edge.
 ///
 /// # Safety
 ///
-/// `bits` must be a top-down 32-bit DIB of `(width, height)` that this thread
-/// owns and nobody else is drawing into.
+/// `bits` must be a top-down 32-bit DIB of `(width, height)` owned by this
+/// thread, with nobody else drawing into it.
 unsafe fn ink_offset(
     bits: *mut core::ffi::c_void,
     (width, height): (i32, i32),
@@ -742,23 +546,19 @@ unsafe fn ink_offset(
         return None;
     }
 
-    // Half-open, so the two centres are the middle of each box in the same units:
-    // the slot's middle is between pixels `width / 2` and `width / 2 + 1`.
     let slot = (width / 2, height / 2);
     let ink = ((left + right + 1) / 2, (top + bottom + 1) / 2);
     Some((slot.0 - ink.0, slot.1 - ink.1))
 }
 
-/// Keeps the window rounded, which is what the desktop window manager does for a
-/// top-level window on Windows 11. Asked for explicitly because the frame is the
-/// app's own, and the app draws square corners inside it.
+/// Rounds the window's corners on Windows 11, where the app paints its own
+/// square frame. A no-op on older versions.
 ///
 /// SAFETY: `hwnd` is a live top-level window on this thread.
 unsafe fn round_corners(hwnd: HWND) {
     let preference = DWMWCP_ROUND;
     // SAFETY: `hwnd` is a live top-level window on this thread.
     unsafe {
-        // A no-op before Windows 11, which has no such attribute.
         let _ = DwmSetWindowAttribute(
             hwnd,
             DWMWA_WINDOW_CORNER_PREFERENCE,
@@ -777,8 +577,7 @@ fn control_at(hwnd: HWND, point: POINT) -> Option<usize> {
     {
         return None;
     }
-    // The row runs left to right in the app's own order — minimize, maximize,
-    // close — so the offset from its left edge is the control's index.
+    // Row order is minimize, maximize, close.
     let index = ((point.x - controls.left) / controls.unit) as usize;
     (index < CONTROL_COUNT).then_some(index)
 }
@@ -791,11 +590,8 @@ fn control_of_hit(code: u32) -> Option<i32> {
         .map(|index| index as i32)
 }
 
-/// The control the pointer is on right now, in the app's numbering, or `-1`.
-///
-/// A press that wanders off a control is reported as client mouse messages, which
-/// carry no hit-test code, so the cursor itself is what says where it is — the
-/// same answer `WM_NCHITTEST` would have given.
+/// The control under the cursor, or `-1`. Client mouse messages carry no
+/// hit-test code, so the cursor position is used instead.
 fn control_under_cursor(hwnd: HWND) -> i32 {
     let mut cursor = POINT::default();
     // SAFETY: `cursor` is a local the API only writes to.
@@ -805,9 +601,7 @@ fn control_under_cursor(hwnd: HWND) -> i32 {
     control_at(hwnd, cursor).map_or(-1, |index| index as i32)
 }
 
-/// The system command a control stands for — the one its caption button sends,
-/// and the only thing a caption button does. The maximize control restores a
-/// maximized window, which is why the command depends on the window's state.
+/// The command a control's caption button sends.
 fn system_command(index: i32, maximized: bool) -> u32 {
     match index {
         0 => SC_MINIMIZE,
@@ -817,19 +611,14 @@ fn system_command(index: i32, maximized: bool) -> u32 {
     }
 }
 
-/// Whether the window is maximized, which is a state change in its own right: the
-/// maximize control becomes the restore control.
 fn is_zoomed(hwnd: HWND) -> bool {
     // SAFETY: the window is live and this runs on the thread that owns it.
     unsafe { IsZoomed(hwnd).as_bool() }
 }
 
-/// The `HWND` behind a Slint window, once winit has created it.
 fn hwnd_of(window: &slint::Window) -> Option<HWND> {
     window.with_winit_window(|winit_window| {
         let handle = winit_window.window_handle().ok()?;
-        // `RawWindowHandle::Win32` is the only variant a Win32 window can have,
-        // and its `hwnd` is the pointer this module's `HWND` wraps.
         let RawWindowHandle::Win32(handle) = handle.as_raw() else {
             return None;
         };
@@ -837,11 +626,9 @@ fn hwnd_of(window: &slint::Window) -> Option<HWND> {
     })?
 }
 
-/// The window procedure.
+/// The window procedure. Messages it does not answer are forwarded unchanged.
 ///
-/// SAFETY: called by `SetWindowSubclass` on the thread that owns `hwnd`, with
-/// the arguments Windows passed; every message it does not answer itself is
-/// forwarded to winit's own procedure unchanged.
+/// SAFETY: called by `SetWindowSubclass` on the thread that owns `hwnd`.
 unsafe extern "system" fn subclass(
     hwnd: HWND,
     message: u32,
@@ -860,22 +647,12 @@ unsafe extern "system" fn subclass(
         };
 
         match message {
-            // The client area is the whole window: no caption is reserved, so the
-            // app's title bar reaches the top edge. `wParam` is only non-zero
-            // when `lParam` is an `NCCALCSIZE_PARAMS`, and the proposed client
-            // area already is the whole window — returning `0` takes it.
-            //
-            // A maximized window is the exception. Its proposed rectangle is the
-            // work area (`WM_GETMINMAXINFO` below) grown by the frame, because a
-            // window with a frame is expected to paint *inside* it; taking the
-            // whole proposal would run the app's own drawing over the taskbar, so
-            // the frame is handed back and the client area is the work area.
+            // The client area is the whole window, so the app's title bar reaches
+            // the top edge. A maximized window is the exception: the frame is
+            // handed back so the app does not draw over the taskbar.
             WM_NCCALCSIZE if wparam.0 != 0 => {
                 if is_zoomed(hwnd) {
                     let (border_x, border_y) = frame_thickness(hwnd);
-                    // `wParam` is non-zero, so `lParam` is the
-                    // `NCCALCSIZE_PARAMS` of the message being answered, and the
-                    // rectangle is the one Windows proposed.
                     let proposed = &mut (*(lparam.0 as *mut NCCALCSIZE_PARAMS)).rgrc[0];
                     proposed.left += border_x;
                     proposed.top += border_y;
@@ -885,16 +662,14 @@ unsafe extern "system" fn subclass(
                 LRESULT(0)
             }
 
-            // The controls first: they are the only part of this window that is
-            // non-client area, and answering with their hit-test codes is what
-            // hands the user the system's own behaviour for them.
+            // The controls are the only non-client area; these hit-test codes
+            // give them the system's behaviour.
             WM_NCHITTEST => match control_at(hwnd, point) {
                 Some(index) => LRESULT(CONTROL_HIT_TESTS[index] as isize),
                 None => LRESULT(hit_test(hwnd, point) as isize),
             },
 
-            // The pointer is only ever reported through the non-client messages,
-            // and `TrackMouseEvent` is what gets the leave.
+            // `TrackMouseEvent` is what gets the leave.
             WM_NCMOUSEMOVE => {
                 let frame = frame_of(hwnd);
                 let hovered = control_of_hit(wparam.0 as u32)
@@ -909,9 +684,7 @@ unsafe extern "system" fn subclass(
                     hwndTrack: hwnd,
                     dwHoverTime: 0,
                 };
-                // If this fails, `WM_NCMOUSELEAVE` never arrives and a caption button stays
-                // highlighted forever — a permanently wrong UI state with nothing
-                // in the log to explain it.
+                // Without the leave, a caption button stays highlighted forever.
                 if let Err(error) = TrackMouseEvent(&mut track) {
                     log::debug!(
                         target: "shell",
@@ -926,16 +699,9 @@ unsafe extern "system" fn subclass(
                 DefSubclassProc(hwnd, message, wparam, lparam)
             }
 
-            // A press on a control acts on the *release*: dragging off a caption
-            // button and letting go cancels it. The command that goes out on the
-            // release is the one the platform's own button sends — the app never
-            // maximizes, minimizes or closes a window itself.
-            //
-            // `DefWindowProc` is deliberately not asked to do this. It acts on a
-            // close press at once (`HTCLOSE` becomes `SC_CLOSE`), but the other two
-            // are acted on from inside the tracking loop it starts for a button,
-            // and a window with no caption has no button for that loop to track:
-            // the press goes in and the release never comes back out.
+            // Act on release so dragging off a button cancels it. `DefWindowProc`
+            // cannot do this for a window with no caption: its tracking loop has
+            // no button to track, so the release never comes back.
             WM_NCLBUTTONDOWN => {
                 if let Some(index) = control_of_hit(wparam.0 as u32) {
                     let hovered = frame_of(hwnd).map_or(-1, |frame| frame.hovered);
@@ -947,7 +713,7 @@ unsafe extern "system" fn subclass(
             WM_NCLBUTTONUP => {
                 let pressed = frame_of(hwnd).is_some_and(|frame| frame.pressed >= 0);
                 let Some(index) = control_of_hit(wparam.0 as u32) else {
-                    // Released on the rest of the frame: a cancelled press.
+                    // Released off the control: cancelled press.
                     if pressed {
                         set_pointer(hwnd, -1, -1);
                     }
@@ -955,8 +721,6 @@ unsafe extern "system" fn subclass(
                 };
                 let maximized = frame_of(hwnd).is_some_and(|frame| frame.maximized);
                 set_pointer(hwnd, index, -1);
-                // The release becomes a real `WM_SYSCOMMAND`; logging a failure is
-                // what records a press that did nothing.
                 let command = system_command(index, maximized);
                 if let Err(error) = PostMessageW(
                     Some(hwnd),
@@ -975,9 +739,7 @@ unsafe extern "system" fn subclass(
                 LRESULT(0)
             }
 
-            // A press that wanders off the control and is let go over the app's
-            // own drawing is cancelled too, and stops being highlighted while it
-            // is off: the pointer is over the client area now, not a control.
+            // A press released over the client area is cancelled.
             WM_LBUTTONUP if frame_of(hwnd).is_some_and(|frame| frame.pressed >= 0) => {
                 set_pointer(hwnd, -1, -1);
                 DefSubclassProc(hwnd, message, wparam, lparam)
@@ -988,17 +750,15 @@ unsafe extern "system" fn subclass(
                 DefSubclassProc(hwnd, message, wparam, lparam)
             }
 
-            // winit answers this with the min/max *track* sizes Slint asked for
-            // and leaves the maximized geometry at the system's defaults, so the
-            // two parts do not conflict: only the latter is replaced here.
+            // winit supplies the track sizes; only the maximized geometry is
+            // replaced here.
             WM_GETMINMAXINFO => {
                 let result = DefSubclassProc(hwnd, message, wparam, lparam);
                 fit_work_area(hwnd, lparam);
                 result
             }
 
-            // Maximizing swaps the maximize control for the restore one, and a
-            // DPI change moves and re-scales all of them.
+            // Maximizing changes the glyph; activation clears the pointer.
             WM_SIZE | WM_ACTIVATE => {
                 if message == WM_ACTIVATE {
                     set_pointer(hwnd, -1, -1);
@@ -1018,19 +778,12 @@ unsafe extern "system" fn subclass(
     }
 }
 
-/// The hit test for a window that has no non-client area, once the window
-/// controls have had their say: the invisible resize border, and nothing else.
-///
-/// The top edge between the corners answers `HTCLIENT` rather than `HTTOP` or
-/// `HTCAPTION`. The client area *is* the title bar here, so either of the other
-/// two would take the press away from the app's own controls — and away from
-/// `WindowMoveArea`, which is what starts the window drag.
+/// Hit test for the resize border. The top edge answers `HTCLIENT` so the press
+/// reaches the app's controls and drag area.
 fn hit_test(hwnd: HWND, point: POINT) -> u32 {
-    // SAFETY: the window is live and this runs on the thread that owns it; the
-    // rectangle is a local the API only writes to.
+    // SAFETY: the window is live and this runs on the thread that owns it.
     unsafe {
-        // A maximized window is the work area, edge to edge: there is no border
-        // left to grab, and one would only resize into the taskbar.
+        // A maximized window is the work area; there is no border to grab.
         if IsZoomed(hwnd).as_bool() {
             return HTCLIENT;
         }
@@ -1059,15 +812,10 @@ fn hit_test(hwnd: HWND, point: POINT) -> u32 {
     }
 }
 
-/// The thickness of the invisible border the system keeps around a resizable
-/// window: the resize area, not the hairline DWM draws.
-///
-/// It is the window frame without its caption, which is exactly the part
-/// `WM_NCCALCSIZE` hands back to the non-client area. Asking
-/// `AdjustWindowRectExForDpi` is what makes this follow the DPI.
+/// The resize border's thickness, measured as the frame without its caption at
+/// the window's DPI.
 fn frame_thickness(hwnd: HWND) -> (i32, i32) {
-    // SAFETY: the window is live and this runs on the thread that owns it; the
-    // rectangle is a local the API only writes to.
+    // SAFETY: the window is live and this runs on the thread that owns it.
     unsafe {
         let mut empty = RECT {
             left: 0,
@@ -1087,16 +835,12 @@ fn frame_thickness(hwnd: HWND) -> (i32, i32) {
     }
 }
 
-/// Makes a maximized window exactly the monitor's work area.
-///
-/// Left to itself the system grows the window by the frame thickness on every
-/// side, so that the *client* area lands on the work area. That is right for a
-/// windowed frame and one border too big for this one, whose client area is the
-/// whole window: the extra strip would be app content drawn over the taskbar.
+/// Makes a maximized window exactly the monitor's work area. The system would
+/// grow it by the frame, which for this frameless client area draws over the
+/// taskbar.
 fn fit_work_area(hwnd: HWND, lparam: LPARAM) {
     // SAFETY: the window is live and this runs on the thread that owns it;
-    // `lparam` is the `MINMAXINFO` of the `WM_GETMINMAXINFO` being answered,
-    // which Windows filled in on the way in.
+    // `lparam` is the `MINMAXINFO` Windows filled in.
     unsafe {
         let mut monitor = MONITORINFO {
             cbSize: size_of::<MONITORINFO>() as u32,
