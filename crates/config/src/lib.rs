@@ -87,10 +87,6 @@ pub fn save_config(config: &Config) -> Result<()> {
 }
 
 /// Saves `config` to an arbitrary path.
-///
-/// The setup wizard uses this when the user picks a launcher data directory:
-/// the config has to be written to the new directory before the process
-/// restarts into it, so the choice made in the wizard survives the move.
 pub fn save_config_to(path: &Path, config: &Config) -> Result<()> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
@@ -137,8 +133,7 @@ pub fn remove_background_image() -> Result<()> {
     Ok(())
 }
 
-/// Update channel selection. Serialized as the lowercase values `nightly`,
-/// `stable` and `beta`.
+/// Update channel selection.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum UpdateChannel {
@@ -237,10 +232,6 @@ impl Default for AppearanceConfig {
 pub struct Config {
     pub auto_update: bool,
     /// Whether the first-run setup wizard has been finished or skipped.
-    ///
-    /// An older `config.toml` that predates this field is missing the key, so it
-    /// reads as `false` and the wizard is shown once; the wizard writes it back
-    /// as `true` when it finishes or is dismissed.
     pub setup_completed: bool,
     pub current_account: Option<Account>,
     pub appearance: AppearanceConfig,
@@ -280,9 +271,6 @@ impl Default for Config {
 /// Best-effort mapping from the system locale to a bundled launcher language.
 pub fn get_system_language() -> &'static str {
     let locale = sys_locale::get_locale().unwrap_or_else(|| {
-        // English is the right fallback, but a locale that cannot be read is a
-        // first-launch-only condition worth recording: the app then opens in
-        // English on a machine that is configured for something else.
         log::debug!("the system locale could not be read; falling back to en-US");
         "en-US".to_string()
     });

@@ -43,21 +43,8 @@ update = { path = "./crates/update", version = "0.0.0" }
 # ----- non-local crates -----
 slint = { version = "1.18", default-features = true }
 slint-build = "1.18"
-# The icon generator in `ui/build.rs` parses the SVGs with the same
-# `usvg` Slint's own renderer rasterizes them with, so the generated path data
-# cannot disagree with what is drawn. Pinned to the version `slint` 1.18 pulls
-# in (via resvg) on purpose: a second copy would drag in its own `tiny-skia`.
-# `default-features = false` because the generator only reads geometry, and
-# `slint` already turns on the features the union needs — leaving them on here
-# would add `fontconfig-parser` and `memmap2` to the lockfile for nothing.
 usvg = { version = "0.48", default-features = false }
-# The background music player (crates/music). The app decodes and plays the
-# tracks itself, so the decoders and the output device come from here.
-# `default-features = false` keeps symphonia to a fixed set of decoders instead
-# of pulling every codec in.
 symphonia = { version = "0.5", default-features = false, features = [
-    # `pcm` is a codec of its own, not part of `wav`: without it symphonia reads a
-    # WAV header and then has no decoder for the samples it found.
     "pcm",
     "wav",
     "adpcm",
@@ -70,11 +57,7 @@ symphonia = { version = "0.5", default-features = false, features = [
     "alac",
 ] }
 cpal = "0.15"
-# The spectrum analyser, mirroring the Web Audio `AnalyserNode` (crates/music/analyser.rs).
 rustfft = "6.4"
-
-# Drawing the window background's shaders on the GPU: the notifier hands over
-# `get_proc_address`, and this is the loader (see app/src/ui/components/background/gl.rs).
 glow = "0.18"
 bytemuck = "1"
 # `IntSize` for the borrowed-texture builder — the type Slint asks for.
@@ -84,21 +67,13 @@ chrono = "0.4"
 conic-worldmap = { git="https://github.com/conic-apps/conic-worldmap", rev="a86489bb0cf12c1ce7c8a3e2b07bdb01d5c09cf7" }
 env_logger = "0.11.5"
 futures = "0.3"
-# PNG for the skin textures `account` resolves and webp for the bundled
-# default skins (`ui/assets/skins`). Slint already pulls `image` in
-# for `image-default-formats`; these are the two codecs the app needs by
-# name, so they are requested explicitly rather than inherited.
 image = { version = "0.25", default-features = false, features = ["png", "webp"] }
 log = "0.4"
-# The offline profile's UUID is the MD5 of `OfflinePlayer:<name>` (see
-# `account`'s `get_uuid_from_username`), so the Rust side needs an MD5 digest.
 md-5 = "0.10"
 num_cpus = "1"
 once_cell = "1"
 os_info = "3"
 rayon = "1"
-# `unicode-perl` is what gives `\d`/`\w`/`\s`, which the crash-analyzer rule
-# table (ported from HMCL) leans on; the default feature set omits it.
 regex = { version = "1", default-features = false, features = ["std", "unicode-perl"] }
 reqwest = {version = "0.13", default-features = false, features = ["rustls", "json", "query"]} # NOTE: If it cannot parsr non-utf8 json, add charset feature
 serde = { version = "1", features = ["derive"] }
@@ -107,29 +82,10 @@ serde_with = "3"
 sha1_smol = "1"
 sha2 = { version = "0.10", default-features = false }
 semver = "1"
-# The launcher's self-updater verifies minisign signatures over the downloaded
-# bundle in a streaming pass, so the whole AppImage never has to be held in
-# memory. Pure Rust, no external dependencies (the `minisign` crate that also
-# *signs* is only pulled in on the release machine, not by the app).
 minisign-verify = "0.3"
 sys-locale = "0.3"
-# Native file/folder pickers. The default features (no `gtk3`) mean AppKit on
-# macOS, the common file dialog on Windows and the XDG desktop portal on Linux,
-# so the app no longer drives `osascript`/`zenity`/PowerShell itself.
 rfd = "0.17"
-# The system clipboard. The app only ever copies short strings (device codes,
-# login URLs, room codes), so the `image-data` default is off and the macOS /
-# Windows image machinery it would pull in stays out of the build.
-# `wayland-data-control` is on so a Wayland session uses the data-control
-# protocol; without it `arboard` only speaks X11, which a Wayland session has no
-# native answer for outside XWayland.
 arboard = { version = "3", default-features = false, features = ["wayland-data-control"] }
-# Opening URLs and local paths with the platform's default handler. The app used
-# to drive `open`, `cmd /c start` and `xdg-open` itself; the crate selects the
-# right launcher per platform and detaches it, and with
-# `shellexecute-on-windows` goes through `ShellExecuteExW` on Windows instead of
-# a shell command line, so a target with spaces, quotes or shell metacharacters
-# cannot be split or interpreted as syntax.
 open = { version = "5", features = ["shellexecute-on-windows"] }
 thiserror = "2"
 toml = "1"
@@ -139,19 +95,10 @@ zip = { version = "4", default-features = false, features = ["deflate"]}
 libloader = "0.1"
 tokio = { version = "1", features = ["macros", "rt", "time", "fs", "process"]}
 flate2 = "1"
-# Unpacking the `.app.tar.gz` / Linux portable `.tar.gz` update bundles (crates/update).
 tar = "0.4"
 fastnbt = "2"
 png = "0.18"
 sysinfo = "0.38"
-# The Markdown/HTML body of a content detail panel (app/src/ui/components/markdown).
-# `parley` and `fontique` are the text engine Slint itself renders with, and
-# they are already in the tree as Slint's own dependencies: reusing the same
-# versions is not an optimisation but a requirement, because the engine is handed
-# Slint's own font collection and two `fontique` versions would be two unrelated
-# `Collection` types. `comrak` parses the body; `default-features = false` drops
-# its `cli` (clap, xdg) and `syntect`, the latter of which would pull an oniguruma
-# C library into a GUI app.
 comrak = { version = "0.18", default-features = false }
 parley = "0.11"
 fontique = "0.11"
@@ -166,9 +113,6 @@ debug = false
 [profile.dev.package.conic-launcher]
 debug = "line-tables-only"
 
-# The generated interface is compiled here, and it is the largest crate in the
-# workspace; the same reduced debug info keeps its rlib and the linked PDB from
-# dwarfing everything else.
 [profile.dev.package.conic-ui]
 debug = "line-tables-only"
 

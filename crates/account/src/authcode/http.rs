@@ -2,20 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Just enough HTTP/1.1 to answer a browser's redirect.
-//!
-//! A request is read up to the blank line that ends the headers, and the
-//! request line is all that is looked at; every header is skipped. The response
-//! is a status line, a fixed set of headers including `Content-Length`, and the
-//! body, then the socket is shut down. There is no keep-alive, no chunked
-//! decoding, no request body and no compression — a browser redirect carries
-//! none of those, and every one of them would be code that nothing here can
-//! exercise.
-//!
-//! Every read is bounded, in both size and time: the listener is reachable by
-//! anything on the machine (and, on a machine that forwards, by anything on the
-//! network), so a connection that never sends a request line, or sends one that
-//! never ends, must not be able to hold a task open or a buffer growing.
+//! A simple HTTP/1.1 implement to answer a browser's redirect.
 
 use std::io;
 use std::time::Duration;
@@ -23,30 +10,17 @@ use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 
-/// The blank line every HTTP request ends its headers with.
 const HEADER_END: &[u8] = b"\r\n\r\n";
-
-/// How much of a request is read before giving up on the header block. A
-/// redirect's headers are a few hundred bytes; 8 KiB is a browser's default
-/// request line plus a full default header set with room to spare.
 const MAX_HEAD: usize = 8 * 1024;
-
-/// How long one connection has to send its request. The browser that is being
-/// redirected has the request ready before it opens the socket, so anything
-/// slower than this is not that browser.
 const READ_TIMEOUT: Duration = Duration::from_secs(10);
 
-/// The request line, and nothing else.
-pub struct Request {
-    /// The method, uppercased by the client.
+pub struct RequestLine {
     pub method: String,
-    /// The path, percent-decoding applied.
     pub path: String,
-    /// The query string, if the target carried one.
     pub query: String,
 }
 
-impl Request {
+impl RequestLine {
     /// The first value of `name` in the query string, percent-decoded.
     ///
     /// `+` is left as it is. A query string has no `+`-is-a-space rule —
@@ -88,7 +62,7 @@ impl Request {
 /// that never ends within [`MAX_HEAD`]. None of the three is worth a page: the
 /// browser is never the one at fault, so the caller logs and drops the
 /// connection.
-pub async fn read_request(stream: &mut TcpStream) -> io::Result<Request> {
+pub async fn read_request(stream: &mut TcpStream) -> io::Result<RequestLine> {
     let mut head = Vec::with_capacity(1024);
     let mut chunk = [0u8; 1024];
     loop {
@@ -115,9 +89,6 @@ pub async fn read_request(stream: &mut TcpStream) -> io::Result<Request> {
         }
     }
 
-    // `GET /callback?code=… HTTP/1.1`. A request line is ASCII by definition,
-    // and the one field that is not — the query — is handled as bytes below, so
-    // a request line that is somehow not UTF-8 still parses rather than fails.
     let line = String::from_utf8_lossy(
         head.split(|byte| *byte == b'\n')
             .next()
@@ -132,11 +103,6 @@ pub async fn read_request(stream: &mut TcpStream) -> io::Result<Request> {
             "the request line is not `METHOD TARGET VERSION`",
         ));
     }
-    // Browsers send the origin form (`/callback?code=…`); `curl`, and anything
-    // configured to go through a proxy, sends the absolute form
-    // (`http://localhost:1234/callback?code=…`). Both name the same resource,
-    // so the authority is dropped when it is there — from the slash that ends
-    // it, which has to stay: the path is matched against `/callback`.
     let target = match target.strip_prefix("http://") {
         Some(absolute) => match absolute.find('/') {
             Some(slash) => &absolute[slash..],
@@ -145,18 +111,13 @@ pub async fn read_request(stream: &mut TcpStream) -> io::Result<Request> {
         None => target,
     };
     let (path, query) = target.split_once('?').unwrap_or((target, ""));
-    Ok(Request {
+    Ok(RequestLine {
         method: method.to_string(),
         path: percent_decode(path),
         query: query.to_string(),
     })
 }
 
-/// Writes a complete response and closes the connection.
-///
-/// `Connection: close` is what lets the body end the exchange: without a
-/// `Content-Length` the browser would read until the socket closed, and with
-/// one it can paint the page before that happens.
 pub async fn write_response(
     stream: &mut TcpStream,
     status: u16,
@@ -172,6 +133,7 @@ pub async fn write_response(
          Cache-Control: no-store\r\n\
          X-Content-Type-Options: nosniff\r\n\
          Referrer-Policy: no-referrer\r\n\
+         Server: Conic Launcher\r\n\
          {allow}\
          Connection: close\r\n\
          \r\n",
@@ -179,17 +141,9 @@ pub async fn write_response(
     );
     stream.write_all(head.as_bytes()).await?;
     stream.write_all(body.as_bytes()).await?;
-    // Flushes what is buffered and then closes, so the browser is not left
-    // reading a page the launcher has already stopped writing.
     stream.shutdown().await
 }
 
-/// One read, bounded by a deadline rather than by the caller's own timeout: a
-/// `TcpStream` is not itself wrapped in one, and a read that is never answered
-/// is the case the bound exists for.
-///
-/// `buffer` is already trimmed to what is still allowed, so a read that lands
-/// exactly on the limit is the end of the head and not a truncation of it.
 async fn read_within(stream: &mut TcpStream, buffer: &mut [u8]) -> io::Result<usize> {
     tokio::time::timeout(READ_TIMEOUT, stream.read(buffer))
         .await
@@ -201,11 +155,6 @@ async fn read_within(stream: &mut TcpStream, buffer: &mut [u8]) -> io::Result<us
         })?
 }
 
-/// Decodes `%XX` escapes, and nothing else.
-///
-/// A malformed escape is left as it is: a query value that is not valid
-/// percent-encoding is not a value this listener can use anyway, and guessing
-/// at it is how a parser ends up accepting something the author did not mean.
 fn percent_decode(value: &str) -> String {
     let bytes = value.as_bytes();
     let mut out = Vec::with_capacity(bytes.len());
@@ -249,8 +198,10 @@ mod tests {
         assert_eq!(percent_decode("/callback"), "/callback");
         assert_eq!(percent_decode("a%20b"), "a b");
         assert_eq!(percent_decode("%2F%2Foauth2"), "//oauth2");
-        // Base64url's alphabet survives untouched, which is the case that
-        // matters: an authorization code is mostly `A-Za-z0-9-_`.
+    }
+
+    #[test]
+    fn authorization_code_untouch() {
         assert_eq!(percent_decode("0.AAe-9_x"), "0.AAe-9_x");
     }
 
@@ -263,7 +214,7 @@ mod tests {
 
     #[test]
     fn reads_one_parameter_out_of_a_query() {
-        let request = Request {
+        let request = RequestLine {
             method: "GET".to_string(),
             path: "/callback".to_string(),
             query: "code=0.AAe-9&state=abc%2Ddef&session_state=zzz".to_string(),
@@ -276,9 +227,7 @@ mod tests {
 
     #[test]
     fn a_valueless_parameter_is_not_a_parameter() {
-        // `error` arrives bare on some refusals; the callback reads it by name
-        // and must not mistake `code` for it.
-        let request = Request {
+        let request = RequestLine {
             method: "GET".to_string(),
             path: "/callback".to_string(),
             query: "error=access_denied".to_string(),
@@ -286,7 +235,7 @@ mod tests {
         assert_eq!(request.param("error").as_deref(), Some("access_denied"));
         assert_eq!(request.param("code"), None);
 
-        let bare = Request {
+        let bare = RequestLine {
             method: "GET".to_string(),
             path: "/callback".to_string(),
             query: "error".to_string(),

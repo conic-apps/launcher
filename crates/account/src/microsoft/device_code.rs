@@ -40,9 +40,6 @@ pub async fn request_device_code() -> Result<DeviceCodeResponse> {
         });
     }
     let code: DeviceCodeResponse = serde_json::from_str(&body)?;
-    // The interval and the expiry drive the countdown the dialog shows, and a
-    // wrong value here is the whole explanation for a code that "expired" while
-    // the user was still typing it.
     log::info!(
         "the device code was issued: verify at {}, expiring in {} seconds, polling every \
          {}",
@@ -62,15 +59,6 @@ pub struct DeviceCodePollResult {
 }
 
 /// Polls the token endpoint once for a device code.
-///
-/// Every state of the flow other than success — `authorization_pending` and
-/// `slow_down` while the user is still in the browser, but also
-/// `authorization_declined` and `expired_token` — comes back as
-/// `400 Bad Request` with an OAuth `error` in the body. Those are answers, not
-/// failed requests, so the body is read before the status is judged and the
-/// `error` is handed back as the [`DeviceCodePollResult::status`] for the
-/// caller to keep polling on. Only a response without a readable OAuth error
-/// (a proxy's HTML error page, an empty 5xx) is a real [`Error::HttpResponse`].
 pub async fn poll_device_code(device_code: &str) -> Result<DeviceCodePollResult> {
     let raw_response = HTTP_CLIENT
         .post("https://login.microsoftonline.com/consumers/oauth2/v2.0/token")
@@ -88,15 +76,10 @@ pub async fn poll_device_code(device_code: &str) -> Result<DeviceCodePollResult>
     poll_result_from_response(status, body)
 }
 
-/// The body half of [`poll_device_code`], split out so the states the endpoint
-/// answers with can be tested without a network round trip.
 fn poll_result_from_response(status: StatusCode, body: String) -> Result<DeviceCodePollResult> {
     let response: Value = match serde_json::from_str(&body) {
         Ok(response) => response,
         Err(_) if !status.is_success() => {
-            // No OAuth error in an answer that was not a success: a proxy's HTML
-            // page, or a 5xx with an empty body. Nothing here is an OAuth state,
-            // so it is a failed request rather than "keep polling".
             let shown: String = body.chars().take(512).collect();
             log::warn!("the device code poll answered {status} with no OAuth error: {shown}");
             return Err(Error::HttpResponse {
@@ -107,10 +90,6 @@ fn poll_result_from_response(status: StatusCode, body: String) -> Result<DeviceC
         Err(error) => return Err(error.into()),
     };
     if let Some(error) = response["error"].as_str() {
-        // Every state of the flow other than success arrives as a `400` with an
-        // OAuth error in it, and the caller decides which of them keep it going.
-        // `authorization_pending` is the ordinary one and would be noise per
-        // poll; the rest change what happens next, so they are recorded.
         match error {
             "authorization_pending" => {}
             state => log::debug!("the device code poll answered {state}"),
@@ -147,8 +126,6 @@ mod tests {
         poll_result_from_response(status, body.to_string())
     }
 
-    /// The states that keep the flow going all arrive as `400`s; reading one as
-    /// a failed request would end the login on the first poll.
     #[test]
     fn oauth_errors_are_statuses_even_on_a_bad_request() {
         for error in [

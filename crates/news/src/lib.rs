@@ -38,7 +38,6 @@ use error::*;
 use serde::Deserialize;
 use shared::HTTP_CLIENT;
 
-/// The host both documents and every image are served from.
 const BASE_URL: &str = "https://launchercontent.mojang.com";
 
 /// One entry of the news feed.

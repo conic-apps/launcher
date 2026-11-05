@@ -107,14 +107,14 @@ pub(crate) fn prepare_auth_code_flow(ui: &App) {
         return;
     }
     let state = ui.global::<AccountAddState>();
-    let callback = match authcode::AuthCallback::start(callback_palette(ui), callback_messages(ui))
-    {
-        Ok(callback) => callback,
-        Err(error) => {
-            log::error!("cannot listen for the Microsoft sign-in callback: {error}");
-            return;
-        }
-    };
+    let callback =
+        match authcode::BoundAuthCallback::start(callback_palette(ui), callback_messages(ui)) {
+            Ok(callback) => callback,
+            Err(error) => {
+                log::error!("cannot listen for the Microsoft sign-in callback: {error}");
+                return;
+            }
+        };
 
     // The authorize URL carries the listener's `redirect_uri`, and the `state`
     // is added — OAuth's own CSRF token, which the callback is checked against
@@ -153,13 +153,17 @@ pub(crate) fn release_auth_code_flow(ui: &App) {
         .set_auth_code_login_url("".into());
 }
 
-pub(crate) fn auth_code_flow_finished(ui: &App, redirect_uri: &str, outcome: Outcome) {
+pub(crate) fn auth_code_flow_finished(
+    ui: &App,
+    redirect_uri: &str,
+    outcome: BrowserRedirectOutcome,
+) {
     // The listener has served its one request, or given up; either way the port
     // is the screen's to give back. Done first, so a bind of the port again is
     // not waiting behind the release.
     release_auth_code_flow(ui);
     match outcome {
-        Outcome::Code(code) => start_microsoft_login(
+        BrowserRedirectOutcome::AuthorizationCode(code) => start_microsoft_login(
             ui.as_weak(),
             LoginRequest::AuthCode {
                 code,
@@ -183,12 +187,12 @@ pub(crate) fn auth_code_flow_finished(ui: &App, redirect_uri: &str, outcome: Out
         // does for the same kind of answer (`DeviceCodeExpired` asks for a new
         // code without a word), and the screen's own handler binds a fresh
         // listener for it, so "Log in" is one click away.
-        Outcome::Declined(reason) => {
+        BrowserRedirectOutcome::Declined { reason } => {
             log::info!("the browser refused the sign-in: {reason}");
             ui.global::<AccountAddState>()
                 .set_ms_view("auth-code".into());
         }
-        Outcome::Nothing => {
+        BrowserRedirectOutcome::NoRedirect => {
             log::info!("no browser came back to the sign-in callback in {AUTH_CODE_TIMEOUT:?}");
             ui.global::<AccountAddState>()
                 .set_ms_view("auth-code".into());
