@@ -12,6 +12,16 @@ use regex::Regex;
 
 const TEMPLATE: &str = include_str!("page.html");
 
+/// `page.html` carries the license header hawkeye requires, but the document
+/// served to the browser has to start with its doctype, so the leading comment
+/// is dropped here.
+fn template() -> &'static str {
+    TEMPLATE
+        .strip_prefix("<!--")
+        .and_then(|rest| rest.split_once("-->"))
+        .map_or(TEMPLATE, |(_, rest)| rest.trim_start())
+}
+
 /// One `{{ name }}` placeholder, however it is spaced.
 ///
 /// The whitespace is optional on purpose. For example, `{{ name }}`, `{{name}}`
@@ -148,7 +158,7 @@ fn fill_template_placeholder(
     let fields = template_fields(screen, palette, title, body, messages);
 
     let page = PLACEHOLDER_REGEX
-        .replace_all(TEMPLATE, |captures: &regex::Captures<'_>| {
+        .replace_all(template(), |captures: &regex::Captures<'_>| {
             let name = captures.get(1).expect("the pattern has one group").as_str();
             match fields.iter().find(|(field, _)| field == name) {
                 Some((_, value)) => value.clone(),
@@ -173,9 +183,9 @@ fn fill_template_placeholder(
 }
 
 fn asked_for(name: &str) -> bool {
-    PLACEHOLDER_REGEX.is_match(TEMPLATE)
+    PLACEHOLDER_REGEX.is_match(template())
         && PLACEHOLDER_REGEX
-            .captures_iter(TEMPLATE)
+            .captures_iter(template())
             .any(|captures| captures.get(1).is_some_and(|group| group.as_str() == name))
 }
 
@@ -241,7 +251,7 @@ mod tests {
                     "'{name}' is provided but the page never asks for it ({screen:?})"
                 );
             }
-            for captures in PLACEHOLDER_REGEX.captures_iter(TEMPLATE) {
+            for captures in PLACEHOLDER_REGEX.captures_iter(template()) {
                 let name = captures.get(1).expect("the pattern has one group").as_str();
                 let provided = template_fields(screen, &palette, title, body, &messages)
                     .into_iter()
