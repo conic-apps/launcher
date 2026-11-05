@@ -15,6 +15,8 @@ on:
       - "tools/dmg-ds-store.py"
       - "tools/generate-icons.py"
       - "tools/generate-ico.py"
+  # A push to `dev` always starts the run, but only a bump in `app/Cargo.toml`
+  # reaches the build and release jobs — see `version_changed` in `get-version`.
   push:
     branches:
       - dev
@@ -34,16 +36,25 @@ jobs:
           test -n "$version" || { echo "no version in app/Cargo.toml" >&2; exit 1; }
           echo "text=$version" >> "$GITHUB_OUTPUT"
 
-      - name: Get previous version
+      - name: Compare against the previous commit
         id: previous_version
+        env:
+          CURRENT: ${{ steps.current_version.outputs.text }}
         run: |
-          echo "text=$(git show HEAD~1:app/Cargo.toml | sed -n 's/^version = "\(.*\)"$/\1/p' | head -1)" >> $GITHUB_OUTPUT
+          previous="$(git show HEAD~1:app/Cargo.toml | sed -n 's/^version = "\(.*\)"$/\1/p' | head -1)"
+          echo "previous=${previous:-none}"
+          if [ "$previous" = "$CURRENT" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
     outputs:
       app_version: ${{ steps.current_version.outputs.text }}
-      previous_app_version: ${{ steps.previous_version.outputs.text }}
+      version_changed: ${{ steps.previous_version.outputs.changed }}
 
   build-linux:
     needs: [get-version]
+    if: github.event_name != 'push' || needs.get-version.outputs.version_changed == 'true'
     permissions:
       contents: write
     strategy:
@@ -218,6 +229,7 @@ jobs:
   # `--universal` is still available locally for a hand-built single image.
   build-macos:
     needs: [get-version]
+    if: github.event_name != 'push' || needs.get-version.outputs.version_changed == 'true'
     permissions:
       contents: write
     strategy:
@@ -310,6 +322,7 @@ jobs:
   # build script and the MSI install there.
   build-windows:
     needs: [get-version]
+    if: github.event_name != 'push' || needs.get-version.outputs.version_changed == 'true'
     permissions:
       contents: write
     strategy:
@@ -511,7 +524,7 @@ jobs:
     permissions:
       contents: write
     runs-on: ubuntu-22.04
-    if: github.event_name == 'push' && needs.get-version.outputs.app_version != needs.get-version.outputs.previous_app_version
+    if: github.event_name == 'push' && needs.get-version.outputs.version_changed == 'true'
     steps:
       - uses: actions/checkout@v7
       - name: Download artifacts

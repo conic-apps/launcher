@@ -98,9 +98,10 @@ Machine translation is welcome in both places — see the [AI Policy](./AI_POLIC
 ## Versioning & releases
 
 The app version is `version` in **`app/Cargo.toml`** — the single source. `build.yml` reads it with
-`sed` (no toolchain needed in the version job), builds the Linux packages on push to `master`, and
-publishes a release only when the version differs from `HEAD~1`. Pull requests target `dev`;
-releases are cut from `master`.
+`sed` (no toolchain needed in the version job) and compares it against the previous commit: a push to
+`dev` builds and publishes only when the version moved, so a `release: v<version>` pull request is
+what cuts a version. Pull requests build without publishing, which is what the check on that pull
+request reports.
 
 `CURSEFORGE_API_KEY` is read at build time by `crates/curseforge/build.rs`; without it the official
 CurseForge API is simply unauthenticated.
