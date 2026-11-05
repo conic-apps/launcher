@@ -4,21 +4,10 @@
 
 //! The Modrinth API client.
 //!
-//! The requests depend on three base URLs (the MCIM mirror for everything the
-//! mirror serves, the official API when the mirror does not answer), the
-//! `shared` HTTP client and URL builder, and response handling in which
-//! `get_versions_from_hashes` treats a client error as "no hash matched".
-//!
-//! Two deliberate choices shape the public surface:
-//!
-//!   * `get_multiple_projects` is omitted: it is broken upstream. It hands a
-//!     `&[&str]` to `RequestBuilder::query`, and reqwest serializes a top-level
-//!     sequence through `serde_urlencoded`'s pair serializer, which rejects a
-//!     bare string, so the request never carries a query string and the call
-//!     always fails. `get_projects`, which takes the same ids as one JSON
-//!     parameter, works and is what `crates/content/src/remote/mod.rs` uses.
-//!   * The two request structs' fields are `pub` so the app can build them
-//!     directly.
+//! Requests go to the MCIM mirror first and fall back to the official API.
+//! `get_multiple_projects` is deliberately omitted: it is broken upstream
+//! (`RequestBuilder::query` cannot serialize a top-level `&[&str]`), so use
+//! `get_projects`.
 
 pub mod error;
 
@@ -40,25 +29,10 @@ fn build_url(base_url: &str, segments: &[&str]) -> Result<Url> {
     Ok(Url::parse(base_url)?.append_path(segments.iter().copied())?)
 }
 
-/// Sends `request` and decodes the answer, recording what happened along the way.
+/// Sends `request`, logs the URL and status, and decodes the answer.
 ///
-/// Every entry point in this crate is one request and one decode, and the ways
-/// that can go wrong are otherwise indistinguishable from the caller: `send()`
-/// and `.json()` both yield a `reqwest::Error` and neither carries the URL, and
-/// a non-2xx is not an error at all unless somebody looks for it. A mirror that
-/// answers `429` and a mirror that answers an HTML error page would reach the
-/// caller as the same variant, so the status is recorded here.
-///
-/// `url` is passed separately because `RequestBuilder` cannot be asked what it is
-/// about to send, and the URL is the one thing every one of these lines needs.
-///
-/// Any non-2xx is returned as an error rather than decoded. That is what lets
-/// [`get_json_with_fallback`] ask the official API when the mirror answers with
-/// an error page, instead of treating the page as a successful (but empty)
-/// result.
-///
-/// A successful decode is not logged. The callers that care about the *shape* of
-/// the answer (a hit count, a match count) log that themselves.
+/// Any non-2xx is returned as an error rather than decoded, so
+/// [`get_json_with_fallback`] can tell a mirror error page from an empty result.
 async fn get_json(url: &Url, request: reqwest::RequestBuilder) -> Result<Value> {
     let url = url.as_str();
     let response = request.send().await.map_err(|error| {
@@ -87,7 +61,6 @@ async fn get_json(url: &Url, request: reqwest::RequestBuilder) -> Result<Value> 
     })
 }
 
-/// Sends one request to `base_url` and decodes it.
 async fn get_json_at<F>(base_url: &str, segments: &[&str], build: F) -> Result<Value>
 where
     F: Fn(&Url) -> reqwest::RequestBuilder,
@@ -98,10 +71,8 @@ where
 
 /// Queries the MCIM mirror first and the official API when the mirror fails.
 ///
-/// The mirror is a cache, not the source of truth, so a transport error, a
-/// non-2xx answer or an undecodable body is a reason to ask the official API
-/// rather than to report the failure. A successful answer is used as-is, even
-/// when it is empty: an empty result is a legitimate answer to a search.
+/// A transport error, non-2xx answer, or undecodable body falls back; an empty
+/// successful answer is legitimate and used as-is.
 async fn get_json_with_fallback<F>(segments: &[&str], build: F) -> Result<Value>
 where
     F: Fn(&Url) -> reqwest::RequestBuilder,
@@ -115,8 +86,7 @@ where
     }
 }
 
-/// Fetch the translated descriptions of the given Modrinth projects. Projects
-/// without a translation are simply absent from the response.
+/// Projects without a translation are absent from the response.
 ///
 /// The translation service has no official counterpart, so this endpoint never
 /// falls back.
@@ -191,15 +161,10 @@ pub async fn list_project_versions(
 
 /// Look up the versions matching the given file hashes.
 ///
-/// `algorithm` is the hash algorithm the API is asked for; this crate passes
-/// `sha512`.
-/// The response maps each requested hash to its version. Hashes that did not
-/// match are simply absent; when none of the hashes match the API answers with
-/// a client error, which is treated as an empty result here.
-///
-/// The mirror is asked first and the official API second, because the caller
-/// writes the empty map into `content`'s identity cache with a 24-hour
-/// lifetime: a mirror outage must not pin "these mods are unknown" for a day.
+/// Hashes that did not match are absent; when none match the API answers with a
+/// client error, treated here as an empty result. The mirror is asked first
+/// because the caller caches the empty map for 24 hours, and a mirror outage
+/// must not pin "these mods are unknown" for a day.
 pub async fn get_versions_from_hashes(
     hashes: &[String],
     algorithm: &str,

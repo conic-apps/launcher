@@ -118,7 +118,6 @@ pub(crate) fn claim(launches: Sender<Launch>) -> Result<Guard, AlreadyRunning> {
     Ok(Guard { path: Some(path) })
 }
 
-/// Hands this launch to the instance that is already running, if there is one.
 fn notify(path: &Path) -> io::Result<()> {
     let mut stream = UnixStream::connect(path)?;
     write!(stream, "{}", encode(&current_launch()))?;
@@ -127,7 +126,6 @@ fn notify(path: &Path) -> io::Result<()> {
     stream.shutdown(std::net::Shutdown::Write)
 }
 
-/// Accepts reports until the process goes away, handing each to the app.
 fn serve(listener: UnixListener, launches: Sender<Launch>) {
     for stream in listener.incoming() {
         let mut stream = match stream {

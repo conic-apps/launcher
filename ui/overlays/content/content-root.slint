@@ -13,27 +13,16 @@ import {
 } from "panels.slint";
 import { DetailPanels } from "details.slint";
 
-// The content overlay layer. `GameView` mounts it, so the panels sit below the
-// title bar and inside the screen that opens them.
-//
-// Each list panel gets its own `ContentOverlay`: only one is ever open, and a
-// panel is shown and hidden (`visible`) rather than added and removed with `if`,
-// so a panel that is closed and reopened keeps its scroll position. A closed
-// overlay is invisible, and Slint's layout skips an invisible child, so the open
-// one fills the container.
-//
-// The detail overlay is drawn *after* them, so a detail panel covers the list it
-// was opened from, which leaves the list underneath untouched when the detail
-// closes.
+// The content overlay layer. Panels are shown/hidden rather than added/removed
+// with `if`, so a reopened panel keeps its scroll position. Details are drawn
+// last, so they cover the list they came from without disturbing it.
 export component ContentRoot inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;
 
-    // One overlay **per panel**: a wrapper each, with its own visibility and its
-    // own enter/leave. That is what makes a switch between two panels play both
-    // animations — a single overlay swapping its contents would show the new
-    // panel the instant the state changed.
+    // One overlay per panel, each with its own enter/leave, so switching panels
+    // plays both animations.
     saves-overlay := ContentOverlay {
         overlay-visible: ContentState.open-panel == "saves";
         closed => { ContentState.close(); }
@@ -64,8 +53,7 @@ export component ContentRoot inherits Rectangle {
         }
     }
 
-    // The screenshots viewer is mounted *without* the sliding container, so it
-    // spans the window and only the scrim fades.
+    // Mounted without the sliding container, so it spans the window.
     screenshots-overlay := ContentOverlay {
         overlay-visible: ContentState.open-panel == "screenshots";
         slide: false;
@@ -79,7 +67,6 @@ export component ContentRoot inherits Rectangle {
         }
     }
 
-    // Declared last: a detail panel covers the list it came from.
     packs-overlay := ContentOverlay {
         overlay-visible: ContentState.open-panel == "packs";
         closed => { ContentState.close(); }

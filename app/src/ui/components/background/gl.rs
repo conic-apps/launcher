@@ -2,30 +2,12 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The 3D world, drawn on the GPU.
+//! The 3D world, drawn on the GPU through Slint's rendering notifier, which
+//! hands over the current OpenGL context and a borrowed texture for Slint to
+//! composite.
 //!
-//! Slint's declarative API has no custom-shader hook, but it has an escape
-//! hatch meant for exactly this: `Window::set_rendering_notifier` calls back
-//! with the OpenGL context *current*, and hands over `get_proc_address`, so the
-//! same code loads the GL entry points on every platform — and
-//! `BorrowedOpenGLTextureBuilder` lets Slint composite a texture we drew into:
-//! the shaders run on the GPU, and only the final compositing belongs to
-//! Slint.
-//!
-//! The two passes, shader for shader: the fills are blended with
-//! `ONE, ONE_MINUS_SRC_ALPHA` into a depth buffer and are *premultiplied*, the
-//! outlines are screen-space quads drawn over them with blending off. Both
-//! write into an offscreen framebuffer that Slint then samples, so there is no
-//! per-frame copy back to the CPU.
-//!
-//! The geometry comes from [`Scene`], the verified terrain; only the projection
-//! and the outline expansion happen on the GPU here.
-//!
-//! The callback runs inside Slint's own render pass, so whatever GL state it
-//! touches has to be put back before returning. Everything here is saved and
-//! restored for that reason. (femtovg re-establishes most of what it needs at
-//! the top of every flush, but the framebuffer, the program, the vertex array
-//! and the buffer bindings are not among them.)
+//! The callback runs inside Slint's render pass, so every GL binding it touches
+//! is saved and restored before returning.
 
 use std::cell::{Cell, RefCell};
 use std::num::NonZeroU32;
@@ -44,33 +26,24 @@ use slint::{
 use super::scene::{self, CAMERA_SPEED, Scene};
 use crate::slint_backend::{App, Background};
 
-/// How far the parallax wrapper scales the background past the window — the
-/// images are rendered this much larger so the scaling lands them 1:1 on device
+/// The parallax wrapper is scaled up by this so the images land 1:1 on device
 /// pixels.
 const WRAPPER_SCALE: f32 = 1.08;
 
-/// Whether the GPU renderer is drawing the world.
-///
-/// The CPU rasteriser starts the app off and keeps drawing until the first GPU
-/// frame has actually reached the window. Only then does it stand down: a
-/// renderer that turns out not to have OpenGL — the software renderer on a
-/// Windows machine without a GL driver, say — simply leaves this at `Pending`
-/// (or sets `Failed`) and the fallback is already on screen.
+/// Whether the GPU renderer is drawing the world. The CPU rasteriser keeps
+/// drawing until the first GPU frame reaches the window, so a renderer without
+/// OpenGL leaves the fallback already on screen.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u8)]
 pub enum Gpu {
-    /// Registered, but no frame drawn yet.
     Pending,
-    /// Drawing; the CPU rasteriser is out of a job.
     Running,
-    /// Setup failed. The CPU rasteriser is the renderer.
     Failed,
 }
 
-/// The handover flag. The render callback and the controller both run on the UI
-/// thread, but the rasteriser's worker has to read it too when a frame it
-/// rendered arrives late, so it is an atomic behind an `Arc` rather than a cell
-/// in the controller.
+/// The handover flag. The render callback and controller share the UI thread,
+/// but the rasteriser's worker reads it too when a late frame arrives, so it is
+/// an atomic behind an `Arc`.
 pub struct Flag(AtomicU8);
 
 impl Flag {
@@ -91,19 +64,14 @@ impl Flag {
     }
 }
 
-/// What the render callback and the controller share. They both run on the UI
-/// thread, but never inside each other's borrows, so these are cells rather
-/// than part of the controller's `RefCell`.
+/// What the render callback and the controller share; they never borrow each
+/// other, so these are cells rather than part of the controller's `RefCell`.
 pub struct Shared {
     pub gpu: Arc<Flag>,
-    /// The camera. The GPU renderer advances it as it draws, so its speed is
-    /// the rate frames actually arrive at, so a frame that never happens also
-    /// never moves the camera.
+    /// The GPU advances the camera as it draws, so a frame that never happens
+    /// also never moves it.
     pub cam_z: Cell<f32>,
-    /// Whether the camera is meant to be running at all (the setting, and the
-    /// world being what the window shows).
     pub moving: Cell<bool>,
-    /// Frames drawn since the renderer started, for the debug log.
     pub frames: Cell<u64>,
 }
 
@@ -121,18 +89,13 @@ impl Shared {
 pub type Handle = Rc<Shared>;
 
 thread_local! {
-    /// The GL objects, alive between the notifier's calls. It runs on the UI
-    /// thread throughout, so a thread-local is where they belong.
     static RENDERER: RefCell<Option<Renderer>> = const { RefCell::new(None) };
 }
 
 /// Registers the notifier. Returns false when the renderer cannot do OpenGL at
-/// all — `set_rendering_notifier` itself rejects a renderer that has no such
-/// hook, which is the software one's case.
+/// all, which is the software renderer's case.
 pub fn install(ui: &App, shared: Handle) -> bool {
-    // `CONIC_FORCE_CPU=1` (debug builds) keeps the GPU out of the way, which is
-    // how the rasteriser's path gets exercised on a machine that does have
-    // OpenGL.
+    // Exercises the rasteriser's path on a machine that does have OpenGL.
     #[cfg(debug_assertions)]
     if std::env::var("CONIC_FORCE_CPU").is_ok() {
         return false;
@@ -142,18 +105,12 @@ pub fn install(ui: &App, shared: Handle) -> bool {
         let Some(ui) = weak.upgrade() else { return };
         match state {
             RenderingState::RenderingSetup => {
-                // A borrowed texture from a previous context is dead now, so
-                // the layer goes back to the sky until the first draw below
-                // hands over a fresh one. It is cleared here rather than in
-                // `RenderingTeardown` on purpose: femtovg fires teardown from
-                // inside the winit adapter's `suspend()`, which holds the
-                // adapter's window `RefCell` mutably. Setting a Slint property
-                // there marks the window dirty and calls `request_redraw`,
-                // which re-borrows that same cell and panics with
-                // "RefCell already mutably borrowed" — the crash on `⌘W`. Setup
-                // runs from `draw()`, with no borrow held, and always precedes
-                // the first frame of the new context, so nothing ever samples
-                // the stale texture.
+                // A borrowed texture from the previous context is dead now, so
+                // the layer falls back to the sky until the first draw hands
+                // over a fresh one. This cannot move to `RenderingTeardown`:
+                // femtovg fires that from inside the adapter's `suspend()`,
+                // which holds the window `RefCell` mutably, and setting a Slint
+                // property there re-borrows it and panics (the crash on `⌘W`).
                 ui.global::<Background>().set_world_image(Image::default());
                 let size = target_size(&ui);
                 match Renderer::new(api, size) {
@@ -185,16 +142,14 @@ pub fn install(ui: &App, shared: Handle) -> bool {
             }
             RenderingState::RenderingTeardown => {
                 RENDERER.with(|slot| *slot.borrow_mut() = None);
-                // The image property is not touched here: this state is
-                // delivered from inside the adapter's `suspend()` and any
-                // write would panic. `RenderingSetup` clears it instead.
+                // No property writes here: this runs inside `suspend()` and
+                // would panic; `RenderingSetup` clears the image instead.
             }
             _ => {}
         }
     });
-    // A renderer with no OpenGL hook at all — the software one — makes this fail,
-    // and the caller only saw a `false` it had to interpret. That is the ordinary
-    // "no GPU here" case, so it is `debug` rather than a warning.
+    // A renderer with no OpenGL hook is the ordinary "no GPU here" case, so
+    // this is a debug message rather than a warning.
     let installed = result.is_ok();
     if !installed {
         log::debug!(target: "background", "the renderer has no OpenGL hook; using the CPU path");
@@ -202,12 +157,9 @@ pub fn install(ui: &App, shared: Handle) -> bool {
     installed
 }
 
-/// The pixels the world is drawn at: the window's physical size times the
-/// parallax wrapper's scale, which is what the image is stretched over. No
-/// downscaling: the GPU does not care how many pixels these are.
+/// The window's physical size times the wrapper's scale, with no downscaling:
+/// the GPU does not care how many pixels these are.
 fn target_size(ui: &App) -> (i32, i32) {
-    // `Window::size()` is already in physical pixels; the wrapper's 1.08 is on
-    // top of that, so the texture lands 1:1 on device pixels.
     let size = ui.window().size();
     (
         (size.width as f32 * WRAPPER_SCALE).round().max(1.0) as i32,
@@ -215,10 +167,9 @@ fn target_size(ui: &App) -> (i32, i32) {
     )
 }
 
-// The four shaders, with two differences: the corner-radius clipping is gone
-// (Slint rounds the window's corners when it composites the image), and the
-// layer's 0.3 opacity is folded in, because this image is one layer of Slint's
-// composite rather than an element of its own.
+// The layer's 0.3 opacity is folded in here: this image is one layer of Slint's
+// composite rather than an element of its own, and Slint rounds the window's
+// corners when it composites.
 
 const FILL_VERTEX: &str = r#"
 layout(location = 0) in vec3 aPos;
@@ -243,10 +194,9 @@ void main() {
 }
 "#;
 
-// Premultiplied. Slint hands a borrowed texture to
-// femtovg *without* `ImageFlags::PREMULTIPLIED`, so femtovg multiplies by alpha
-// as it samples — the framebuffer therefore holds premultiplied colour and a
-// resolve pass divides it back out (see `RESOLVE_FRAGMENT`).
+// Premultiplied. Slint hands the borrowed texture to femtovg without
+// `ImageFlags::PREMULTIPLIED`, so femtovg multiplies by alpha as it samples;
+// the resolve pass divides it back out (see `RESOLVE_FRAGMENT`).
 const FILL_FRAGMENT: &str = r#"
 in float vAlpha;
 uniform vec4 uBgColor;
@@ -330,8 +280,8 @@ void main() {
 }
 "#;
 
-/// `#version 330 core` on a desktop context, `#version 300 es` on an ES one.
-/// The bodies are the same language above that line.
+/// The version line differs between desktop and ES contexts; the shader bodies
+/// are the same above it.
 struct Dialect {
     version: &'static str,
     precision: &'static str,
@@ -359,14 +309,10 @@ impl Dialect {
     }
 }
 
-/// The GL state a pass here changes, so it can be put back.
-///
-/// The notifier's callback runs inside Slint's own render pass, so anything
-/// left changed leaks into the UI's drawing — and the UI is drawn with the same
-/// context, right after this returns. femtovg re-establishes most of what it
-/// needs at the top of every flush (its vertex array, attributes 0 and 1,
-/// blending on, the depth test off); the framebuffer, the program, the vertex
-/// array and the buffer bindings are what it does not.
+/// The GL state a pass changes, saved so it can be put back. Anything left
+/// changed leaks into the UI's drawing, which uses the same context right
+/// after; femtovg re-establishes some state but not the framebuffer, program,
+/// vertex array or buffer bindings.
 struct State {
     framebuffer: i32,
     program: i32,
@@ -415,10 +361,6 @@ impl State {
                 NonZeroU32::new(self.framebuffer as u32).map(glow::NativeFramebuffer),
             );
             gl.use_program(NonZeroU32::new(self.program as u32).map(glow::NativeProgram));
-            // The element buffer binding is part of the vertex array's state,
-            // so it goes back with the array that was current — and only for an
-            // array that existed: with none bound, the binding is the default
-            // array's, which none of this touches.
             let vertex_array =
                 NonZeroU32::new(self.vertex_array as u32).map(glow::NativeVertexArray);
             gl.bind_vertex_array(vertex_array);
@@ -426,13 +368,14 @@ impl State {
                 glow::ARRAY_BUFFER,
                 NonZeroU32::new(self.array_buffer as u32).map(glow::NativeBuffer),
             );
+            // The element buffer is part of the vertex array's state; with no
+            // array bound, the default array's binding is none of this.
             if vertex_array.is_some() {
                 gl.bind_buffer(
                     glow::ELEMENT_ARRAY_BUFFER,
                     NonZeroU32::new(self.element_buffer as u32).map(glow::NativeBuffer),
                 );
             }
-            // The texture binding is per unit, so the unit comes back first.
             gl.active_texture(self.active_texture as u32);
             gl.bind_texture(
                 glow::TEXTURE_2D,
@@ -465,7 +408,6 @@ impl State {
     }
 }
 
-/// A linked program and where its uniforms live.
 struct Program {
     id: glow::Program,
     uniforms: std::collections::HashMap<&'static str, glow::UniformLocation>,
@@ -530,9 +472,7 @@ impl Program {
     }
 }
 
-/// The fill pass's vertex layout: `x y z alpha`.
 const FILL_STRIDE: i32 = 16;
-/// The outline pass's: `x y z mix other_x other_y other_z side`.
 const EDGE_STRIDE: i32 = 32;
 
 struct Renderer {
@@ -546,10 +486,9 @@ struct Renderer {
     resolved: Option<glow::Texture>,
     resolve: Program,
     resolve_vao: glow::VertexArray,
-    /// Owned so the vertex array's buffer stays alive (the array keeps the
-    /// binding, not the object).
+    /// Owned so the vertex array's buffer stays alive; the array keeps only the
+    /// binding.
     _resolve_vertices: glow::Buffer,
-    /// The image Slint composites, rebuilt whenever the framebuffer is.
     image: Option<Image>,
     fill: Program,
     edge: Program,
@@ -560,9 +499,7 @@ struct Renderer {
     edge_vertices: glow::Buffer,
     scene: Scene,
     started: Instant,
-    /// When the last frame was drawn, for the camera's step.
     last_draw: Option<Instant>,
-    /// Whether `CONIC_GL_DUMP` has been served.
     dumped: bool,
 }
 
@@ -652,7 +589,6 @@ impl Renderer {
             gl.vertex_attrib_pointer_f32(0, 3, glow::FLOAT, false, FILL_STRIDE, 0);
             gl.enable_vertex_attrib_array(1);
             gl.vertex_attrib_pointer_f32(1, 1, glow::FLOAT, false, FILL_STRIDE, 12);
-            // The element buffer is part of the vertex array's state.
             gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(fill_indices));
 
             gl.bind_vertex_array(Some(edge_vao));
@@ -702,7 +638,6 @@ impl Renderer {
         Ok(renderer)
     }
 
-    /// (Re)builds the offscreen target everything is drawn into.
     fn resize(&mut self, size: (i32, i32)) -> Result<(), String> {
         if self.size == size && self.framebuffer.is_some() {
             return Ok(());
@@ -767,9 +702,7 @@ impl Renderer {
             };
             let texture = make_texture()?;
             let resolved = make_texture()?;
-            // The world is drawn in a depth buffer and never sampled from, so a
-            // renderbuffer is enough. (A 16-bit one was measured and changes
-            // nothing.)
+            // The depth buffer is never sampled, so a renderbuffer is enough.
             let renderbuffer = gl.create_renderbuffer()?;
             gl.bind_renderbuffer(glow::RENDERBUFFER, Some(renderbuffer));
             gl.renderbuffer_storage(glow::RENDERBUFFER, glow::DEPTH_COMPONENT24, size.0, size.1);
@@ -812,12 +745,7 @@ impl Renderer {
         Ok(())
     }
 
-    /// Draws one frame. Returns whether the window now has a fresh world image.
     fn draw(&mut self, ui: &App, shared: &Shared) -> bool {
-        // `resize` carries readable reasons — "incomplete framebuffer: …", "the
-        // renderer is not using OpenGL" — and the identical error class *is*
-        // logged on the first `Renderer::new`. Dropping it here made a window
-        // resize or a scale change fail into the same silence as the first build.
         if let Err(error) = self.resize(target_size(ui)) {
             log::warn!(target: "background", "no GPU background: {error}");
             shared.gpu.set(Gpu::Failed);
@@ -829,11 +757,8 @@ impl Renderer {
             return false;
         };
         let background = ui.global::<Background>();
-        // While a custom background covers the world there is nothing to draw:
-        // the texture keeps the frame it has, and the layer's `visible` binding
-        // decides whether Slint looks at it at all. Reporting no frame keeps the
-        // handover honest — this renderer has not put anything on screen yet —
-        // and the world is drawn on the first frame after it comes back.
+        // While a custom background covers the world there is nothing to draw,
+        // and reporting no frame keeps the handover honest.
         if !background.get_world_shown() {
             return false;
         }
@@ -857,8 +782,6 @@ impl Renderer {
         let focal = half_w / scene::FOV_HALF_TAN;
         let aspect = height / width;
 
-        // The geometry only changes when the camera crosses a block boundary or
-        // the window does; between rebuilds this is a no-op.
         let cam_z = self.advance(shared);
         let started = Instant::now();
         if self.scene.update(cam_z, aspect, true) {
@@ -951,13 +874,10 @@ impl Renderer {
         }
         state.restore(&self.gl);
 
-        // The image is only rebuilt when the texture is: Slint composites the
-        // same borrowed texture every frame, and its contents are what change.
         if self.image.is_none() {
             let Some(id) = NonZeroU32::new(resolved.0.get()) else {
-                // Permanent for this context: `draw` answers false from here on
-                // and `Gpu` never reaches `Running`, so the controller logs "no
-                // OpenGL renderer" — a wrong diagnosis. This is the real one.
+                // Permanent for this context, and the controller would otherwise
+                // report a missing OpenGL renderer.
                 log::warn!(
                     target: "background",
                     "the borrowed OpenGL texture handle is not valid; the GPU world cannot \
@@ -996,13 +916,8 @@ impl Renderer {
         true
     }
 
-    /// Writes the frame this renderer just drew to `CONIC_GL_DUMP`, so the
-    /// GPU's world can be inspected as a PNG without a window.
-    ///
-    /// The frame is read back from the framebuffer rather than grabbed off the
-    /// window, so what is compared is the world on its own — no layer opacity,
-    /// no rounding, no UI over it. Only the first frame is written, which with
-    /// `CONIC_GL_CAM_Z` pinned is the frame worth looking at.
+    /// Writes the first frame this renderer drew to `CONIC_GL_DUMP`, read back
+    /// from the framebuffer so it is the world alone without the UI over it.
     #[cfg(debug_assertions)]
     fn dump(&self, cam_z: f32) {
         let Ok(path) = std::env::var("CONIC_GL_DUMP") else {
@@ -1044,10 +959,8 @@ impl Renderer {
     #[cfg(not(debug_assertions))]
     fn dump(&self, _cam_z: f32) {}
 
-    /// Steps the camera for this frame, by the time since the last one. Nothing
-    /// else moves it: a window that is not being repainted — occluded, or a
-    /// compositor that has stopped asking — does not move the world either, so
-    /// it is where it was when the frames come back rather than a jump ahead.
+    /// Steps the camera by the time since the last frame, so a window nobody is
+    /// repainting does not move the world either.
     fn advance(&mut self, shared: &Shared) -> f32 {
         #[cfg(debug_assertions)]
         if let Ok(pinned) = std::env::var("CONIC_GL_CAM_Z")
@@ -1071,7 +984,6 @@ impl Renderer {
         cam_z
     }
 
-    /// Uploads the buffers [`Scene`] has just rebuilt.
     fn upload(&mut self) {
         unsafe {
             let gl = &self.gl;
@@ -1106,9 +1018,8 @@ impl Renderer {
         }
     }
 
-    /// The camera's half of the uniforms. Both programs name these the same, so
-    /// the two passes are set up by the same code — with the program already
-    /// current, which is what makes the writes land.
+    /// Both programs name these uniforms the same, so one function sets up both
+    /// passes; the program must already be current.
     fn set_common_uniforms(
         &self,
         program: &Program,

@@ -3,22 +3,14 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 // The overlay layer's state: one visibility flag per dialog plus the form state
-// each dialog keeps.
-//
-// This is a global because Slint components can only be reached from Rust
-// through a global, and the script that fills the version lists and creates the
-// instance (`app/src/ui/overlays/dialogs/create_instance/`) has to read and write that state.
-
-// For the OAuth callback page's palette, which is handed to `authcode`
-// rather than drawn here.
+// each dialog keeps. A global is the only way Rust can reach a component.
 import { Theme } from "../theme.slint";
 
 /// A row of the Minecraft version chooser.
 export struct MinecraftVersionItem {
     /// The version id, e.g. "1.20.1".
     id: string,
-    /// `version.type` as the manifest spells it: "release", "snapshot",
-    /// "old_beta" or "old_alpha".
+    /// "release" | "snapshot" | "old_beta" | "old_alpha".
     kind: string,
     /// The release date, split so `GameTime` can format it.
     year: int,
@@ -31,42 +23,31 @@ export struct YggdrasilProfileItem {
     /// The profile UUID, which the selection is keyed on.
     id: string,
     name: string,
-    /// Whether the launcher already holds this profile on this server, which
-    /// the row shows as an " (added)" suffix and does not let you pick.
+    /// Whether the launcher already holds this profile, shown as " (added)".
     added: bool,
     selected: bool,
-    /// The head `AccountAvatar` draws. Rust builds it from the profile's
-    /// `textures` property, because Slint cannot crop an image itself.
+    /// The head `AccountAvatar` draws, built by Rust because Slint cannot crop
+    /// an image itself.
     avatar: image,
 }
 
-/// The six sentences of the page the browser lands on when the OAuth redirect
-/// fires (`crates/authcode/page.html`).
-///
-/// They live here rather than in the catalog's Rust side because this is where
-/// every other string in the app lives: a `@tr` in a `.slint` file, which is
-/// what the `.po` files are written against. Rust reads the struct and hands it
-/// to the callback, and the page template has no sentence of its own.
+/// The six sentences of the OAuth callback page (`crates/authcode/page.html`),
+/// kept here because a `@tr` in a `.slint` file is what the `.po` files target.
 export struct AuthCodePageText {
-    /// Shown on `/` — the page a browser reaches without the OAuth parameters.
+    /// Shown on `/`, the page reached without the OAuth parameters.
     waiting-title: string,
     waiting-body: string,
     /// Shown once the code has been taken.
     success-title: string,
     success-body: string,
-    /// Shown when the sign-in was refused, or the callback was not ours.
+    /// Shown when the sign-in was refused or the callback was not ours.
     failure-title: string,
     failure-body: string,
 }
 
-/// The colours that page is drawn in, straight off the `Theme` tokens.
-///
-/// A struct like this rather than a read of `Theme` in Rust: `Theme` is a
-/// global of the UI thread, and the listener is built on the UI thread and
-/// serves from a worker, so the theme is snapshotted where it is defined
-/// rather than read across that boundary. The tokens are named here so the two
-/// sides cannot drift: `window` is the window's own `crust`, the `card` fields
-/// are the dialog, and `success`/`danger` are the two states.
+/// The colours that page is drawn in, off the `Theme` tokens. The theme is
+/// snapshotted here rather than read in Rust, since the listener serves from a
+/// worker thread while `Theme` belongs to the UI thread.
 export struct AuthCodePageTheme {
     window: color,
     card: color,
@@ -75,23 +56,18 @@ export struct AuthCodePageTheme {
     body: color,
     success: color,
     danger: color,
-    /// Whether the palette is one of the three dark flavors, which sets the
-    /// page's `color-scheme` to dark.
+    /// Whether the palette is dark, setting the page's `color-scheme`.
     dark: bool,
-    /// The page's `font-family` stack. The fonts in it are embedded in the
-    /// launcher binary rather than installed, so a browser resolves this to the
-    /// system UI font.
+    /// The page's `font-family` stack; the embedded launcher fonts resolve to the
+    /// system UI font in a browser.
     font-family: string,
 }
 
-// One visibility flag per dialog, written by whoever opens it (the footer's
-// "New instance", the launch view's errors …) and by Rust (an action that
-// finishes and dismisses the dialog).
+// One visibility flag per dialog, written by whoever opens it and by Rust.
 export global Dialogs {
     in-out property <bool> create-instance-visible: false;
     in-out property <bool> account-add-visible: false;
-    // The launch view's error dialogs. Rust raises them when a launch is
-    // refused before it starts.
+    // Launch-view errors, raised by Rust when a launch is refused.
     in-out property <bool> no-account-error-visible: false;
     in-out property <bool> no-microsoft-account-error-visible: false;
     in-out property <bool> account-refresh-failed-visible: false;
@@ -102,26 +78,20 @@ export global Dialogs {
     in-out property <bool> confirm-delete-save-visible: false;
     // The title bar's close button, while a task is running.
     in-out property <bool> confirm-quit-app-visible: false;
-    // Settings → Data storage, after a location changed: the launcher has to be
-    // restarted before the new root is used.
+    // Settings → Data storage, after a location changed.
     in-out property <bool> restart-required-visible: false;
     // The account view's "Delete from Conic Launcher" row.
     in-out property <bool> confirm-delete-account-visible: false;
-    // The task centre's X on a task that has already run for 10 seconds.
+    // The task centre's X after a task has run for 10 seconds.
     in-out property <bool> confirm-cancel-task-visible: false;
 }
 
-// A dropped CurseForge pack, before it is installed.
-//
-// The prompt appears as soon as the manifest is read and the file list is
-// resolved in the background (`checking`), so the user can set the instance
-// name while the metadata is fetched. If files cannot be downloaded, they are
-// listed and the confirm button means "install anyway".
+// A dropped CurseForge pack, before it is installed. The file list resolves in
+// the background, so the user can name the instance while metadata is fetched.
 export global ModpackImportState {
     in-out property <bool> visible: false;
     in-out property <bool> checking: false;
-    /// The file lookup failed; the dialog stays open showing the error and a
-    /// Retry button instead of the Install controls.
+    /// The lookup failed; the dialog shows the error and a Retry button.
     in-out property <bool> failed: false;
     in-out property <string> error-message: "";
     in-out property <string> pack-name: "";
@@ -129,7 +99,7 @@ export global ModpackImportState {
     in-out property <bool> has-loader: false;
     in-out property <string> loader-type: "";
     in-out property <string> loader-version: "";
-    /// The editable instance name, seeded with the pack name by Rust.
+    /// The editable instance name, seeded with the pack name.
     in-out property <string> instance-name: "";
     /// The manifest files that cannot be downloaded, with their reason.
     in-out property <[string]> files: [];
@@ -157,10 +127,8 @@ export global ModpackImportState {
     out property <string> cancel-text: @tr("ModpackImport" => "Cancel");
 }
 
-// The "delete instance" dialog.
-//
-// Rust fills the fields below from the instance that was current when the row
-// was pressed, so there is no placeholder instance to render before it opens.
+// The "delete instance" dialog. Rust fills these from the instance that was
+// current when the row was pressed.
 export global DeleteInstanceState {
     in-out property <string> id: "";
     in-out property <string> name: "";
@@ -168,91 +136,78 @@ export global DeleteInstanceState {
     in-out property <string> loader: "";
     in-out property <string> minecraft-version: "";
     in-out property <bool> has-background: false;
-    /// The instance's background picture, loaded by Rust for the same reason the
-    /// settings overlay's is.
+    /// The instance's background picture, loaded by Rust.
     in-out property <image> background;
-    /// The play time, as `GameTime.play-time`'s two parts — the card's third
-    /// detail row draws them as one string.
+    /// The play time, as `GameTime.play-time`'s two parts.
     in-out property <string> playtime-kind: "";
     in-out property <string> playtime-value: "";
-    /// The card's playtime label. It is a `@tr` so the sentence can be
-    /// translated, with the Chinese kept as the source text.
+    /// The card's playtime label, kept as a `@tr` so it can be translated.
     out property <string> playtime-label: @tr("ConfirmDeleteInstance" => "游戏时间：");
-    /// The dialog's warning sentence, likewise.
+    /// The dialog's warning sentence.
     out property <string> warning: @tr(
         "ConfirmDeleteInstance" => "是否确认删除此实例？实例下存档、资源包、Mod 等文件也将永久丢失 (真的很久！)"
     );
 
     /// A delete is running: the confirm button is disabled.
     in-out property <bool> deleting: false;
-    /// The "Cancel" button.
     callback cancel();
-    /// The "Confirm delete" button. Rust deletes the instance, refreshes the
-    /// game view and closes the dialog.
+    /// Rust deletes the instance, refreshes the game view and closes the dialog.
     callback confirm();
 }
 
-// The "delete save" dialog.
-//
-// Rust fills the two below from the card whose trash button was pressed.
+// The "delete save" dialog. Rust fills these from the card whose trash button
+// was pressed.
 export global DeleteSaveState {
     /// The save's folder under `saves/`, which is what gets deleted.
     in-out property <string> folder: "";
-    /// `level.dat`'s `Data.LevelName`, which is what the dialog names. Empty
-    /// when the save has none, in which case the dialog shows the folder.
+    /// `level.dat`'s `Data.LevelName`, which the dialog names; falls back to the
+    /// folder when empty.
     in-out property <string> level-name: "";
     /// A delete is running: the confirm button is disabled.
     in-out property <bool> deleting: false;
     /// The "Wait a moment…" button.
     callback cancel();
-    /// The "Confirm delete" button. Rust deletes the save, reloads the saves
-    /// grid and closes the dialog.
+    /// Rust deletes the save, reloads the grid and closes the dialog.
     callback confirm();
 }
 
-// The "delete account" dialog.
-//
-// The account view's danger row sets `key`/`name` from the account it is
-// showing and raises `Dialogs.confirm-delete-account-visible`.
+// The "delete account" dialog. The account view's danger row sets `key`/`name`
+// and raises `Dialogs.confirm-delete-account-visible`.
 export global DeleteAccountState {
     /// The account's stable key (`microsoft-<uuid>` etc.), which is what gets
     /// deleted.
     in-out property <string> key: "";
-    /// The profile name the dialog names.
+    /// The profile name the dialog shows.
     in-out property <string> name: "";
     /// A delete is running: the confirm button is disabled.
     in-out property <bool> deleting: false;
     callback cancel();
-    /// Rust deletes the account, refreshes the account list and closes both the
-    /// dialog and, if the account was the last one, the account view.
+    /// Rust deletes the account, refreshes the list and closes the dialog (and
+    /// the account view if it was the last account).
     callback confirm();
 }
 
 // The "create instance" dialog.
 export global CreateInstanceState {
     /// "settings" | "minecraft-choose" | "mod-loader-choose"; empty while the
-    /// dialog is closed, so the step machine in `CreateInstance` unmounts
-    /// everything.
+    /// dialog is closed, unmounting every step.
     in-out property <string> step: "";
 
     in-out property <string> minecraft-version: "";
     /// "None" | "Fabric" | "Quilt" | "Neoforge" | "Forge"
     in-out property <string> mod-loader-type: "None";
     in-out property <string> mod-loader-version: "";
-    /// What the user typed; an empty value falls back to `default-name`.
+    /// What the user typed; empty falls back to `default-name`.
     in-out property <string> custom-name: "";
     in-out property <bool> name-editing: false;
     in-out property <bool> creating: false;
-    /// The picked background file, empty when none. Rust loads it into
-    /// `background-image`, because Slint can only load an image from a runtime
-    /// path through Rust.
+    /// The picked background file. Rust loads it into `background-image`, because
+    /// Slint cannot load an image from a runtime path.
     in-out property <string> background-path: "";
     in-out property <image> background-image;
 
     in-out property <bool> minecraft-loading: false;
-    /// The versions of the selected category, filtered by the script from the
-    /// manifest. It holds ~900 versions, so they are not all instantiated as
-    /// rows.
+    /// The versions of the selected category (~900, not all instantiated as rows).
     in-out property <[MinecraftVersionItem]> minecraft-versions: [];
     /// "releases" | "snapshot" | "old".
     in-out property <string> version-category: "releases";
@@ -265,17 +220,14 @@ export global CreateInstanceState {
     in-out property <bool> quilt-available: false;
     in-out property <bool> forge-available: false;
     in-out property <bool> neoforge-available: false;
-    /// Fabric loader versions for the chosen Minecraft version.
+    /// Loader versions for the chosen Minecraft version. Forge strips the
+    /// Minecraft part of the version string.
     in-out property <[string]> fabric-versions: [];
     in-out property <[string]> quilt-versions: [];
-    /// Forge versions of the chosen Minecraft version, without the Minecraft
-    /// part of the version string.
     in-out property <[string]> forge-versions: [];
-    /// Neoforge versions of the chosen Minecraft version.
     in-out property <[string]> neoforge-versions: [];
 
-    /// The name offered when the user did not type one. Rust reads it when it
-    /// creates the instance.
+    /// The name offered when the user did not type one.
     out property <string> default-name: (minecraft-version != ""
         ? minecraft-version
         : @tr("CreateInstance" => "Unnamed instance"))
@@ -287,12 +239,9 @@ export global CreateInstanceState {
     out property <bool> mod-loader-loading: fabric-loading || quilt-loading || forge-loading
         || neoforge-loading;
 
-    /// Which options of the mod loader select can be picked — the loaders that
-    /// answered with an empty list are unavailable.
-    ///
-    /// Slint arrays have no `contains` — only the experimental `index-of` — so
-    /// the select takes a list of flags parallel to its options instead. The
-    /// order matches the select in `create-instance/create-instance.slint`.
+    /// Which mod loader options can be picked; the loaders that answered with an
+    /// empty list are unavailable. Slint arrays have no `contains`, so the select
+    /// takes these flags parallel to its options.
     public pure function loader-option-enabled() -> [bool] {
         return [
             true,
@@ -303,68 +252,54 @@ export global CreateInstanceState {
         ];
     }
 
-    /// Fetches the Mojang version manifest.
     callback load-minecraft-versions();
     /// The version category changed: re-filter the list.
     callback set-version-category(string);
-    /// A version was picked: stores it and refreshes the mod loader lists.
+    /// A version was picked: store it and refresh the mod loader lists.
     callback select-minecraft-version(string);
-    /// The "Create instance" button: Rust creates the instance, refreshes the
-    /// game view and closes the dialog.
+    /// Rust creates the instance, refreshes the game view and closes the dialog.
     callback create();
-    /// The "Set background image" row. The native picker's filter label is
-    /// translated, so the UI passes it along.
+    /// The "Set background image" row; the UI passes the translated picker label.
     callback pick-background(string);
-    /// The `about` button of a version row: opens the Minecraft wiki for it.
+    /// The version row's `about` button: opens the Minecraft wiki.
     callback open-version-wiki(string);
 }
 
 // The "add account" dialog.
 export global AccountAddState {
-    /// Which auth service's screen is mounted: "microsoft" | "yggdrasil" |
-    /// "offline".
+    /// "microsoft" | "yggdrasil" | "offline".
     in-out property <string> auth-service: "microsoft";
-    /// Whether the service selector is frozen — the Microsoft screen sets it
-    /// while a login runs, so its progress cannot be lost by switching away
-    /// (the selector is dimmed while it is set).
+    /// The service selector is frozen while a Microsoft login runs, so its
+    /// progress cannot be lost by switching away.
     out property <bool> switch-disabled: self.ms-view == "processing";
 
     in-out property <string> offline-username: "";
     in-out property <string> offline-uuid: "";
     in-out property <bool> offline-advanced: false;
-    /// Whether the typed UUID is malformed; only ever true in advanced mode.
-    /// Rust computes it — Slint has no regular expressions.
+    /// Whether the typed UUID is malformed; only true in advanced mode. Rust
+    /// computes it because Slint has no regular expressions.
     in-out property <bool> offline-uuid-invalid: false;
-    /// Whether "Create offline profile" can be pressed. Rust computes it too:
-    /// the test trims the username, and Slint has no `trim`.
+    /// Whether "Create offline profile" can be pressed, computed by Rust because
+    /// Slint has no `trim`.
     in-out property <bool> offline-can-submit: false;
 
     /// "auth-code" | "processing" | "device-code" | "error".
     in-out property <string> ms-view: "auth-code";
-    /// Which login step is running, named after its `LoginEvent` ("prepare",
-    /// "request-device-code", …). The screen turns it into text, so the
-    /// translation stays in the UI.
+    /// The running login step, named after its `LoginEvent`; the screen turns it
+    /// into text so the translation stays in the UI.
     in-out property <string> ms-progress: "";
     in-out property <string> ms-error: "";
     in-out property <string> ms-user-code: "";
     in-out property <string> ms-verification-uri: "";
     /// Seconds left on the device code, counted down by the screen.
     in-out property <int> ms-expires-in: 0;
-    /// The two "copied!" hints, one per copy target: the link box and the device
-    /// code box.
-    ///
-    /// Each is set on a click and cleared when the pointer leaves the box it
-    /// belongs to, so the tooltip reads "Click to copy" again the next time it
-    /// is hovered. The screen does that from the box's own `changed has-hover`.
+    /// The two "copied!" hints, one per copy target. They clear when the pointer
+    /// leaves the box.
     in-out property <bool> ms-copied: false;
     in-out property <bool> ms-copied-code: false;
-    /// The URL the browser flow opens.
-    ///
-    /// It is not a constant: the code comes back on a loopback listener this app
-    /// owns, and the port is the OS's choice, so Rust fills this in when it binds
-    /// the listener and empties it when the flow is over. The `redirect_uri`
-    /// inside it is repeated verbatim at the token endpoint (RFC 6749 §4.1.3),
-    /// which is why the one string is kept whole.
+    /// The URL the browser flow opens. It is not a constant: the code returns on
+    /// a loopback listener whose port the OS chooses, and the `redirect_uri` is
+    /// repeated verbatim at the token endpoint (RFC 6749 §4.1.3).
     in-out property <string> auth-code-login-url: "";
 
     /// The callback page's six sentences, in the launcher's language.
@@ -376,8 +311,7 @@ export global AccountAddState {
         failure-title: @tr("AccountAddMicrosoft" => "Sign-in failed"),
         failure-body: @tr("AccountAddMicrosoft" => "Conic Launcher did not receive a valid sign-in. Close this tab and try again."),
     };
-    /// Its colours, off the live `Theme`. Read when the listener is bound, so
-    /// the tab and the window the login came from are the same palette.
+    /// Its colours, off the live `Theme`, read when the listener is bound.
     out property <AuthCodePageTheme> auth-code-page-theme: {
         window: Theme.crust,
         card: Theme.dialog-background,
@@ -398,24 +332,20 @@ export global AccountAddState {
     in-out property <string> yggdrasil-error: "";
     /// The `meta.serverName` the API root answered with, shown under the field.
     in-out property <string> yggdrasil-server-name: "";
-    /// The profiles the chooser offers.
     in-out property <[YggdrasilProfileItem]> yggdrasil-profiles: [];
     /// Whether any row is selected.
     in-out property <bool> yggdrasil-has-selection: false;
-    /// Whether "Verify and add profile" can be pressed — the three fields are
-    /// non-blank, after trimming, which is what Rust checks.
+    /// Whether "Verify and add profile" can be pressed: the three fields are
+    /// non-blank after trimming, which Rust checks.
     in-out property <bool> yggdrasil-can-submit: false;
-    /// What the screen reports when a server answered with no profiles at all.
-    /// It is read by the script so the sentence stays translatable.
+    /// Reported when a server answered with no profiles at all.
     out property <string> no-profile-message: @tr("AccountAddYggdrasil" => "This account has no game profile");
 
     /// A service button of the selector.
     callback select-auth-service(string);
-    /// A "Cancel" button.
     callback close();
-    /// Puts every field back to its initial state and cancels any running flow.
-    /// The dialog calls it as it opens, so a previous session — including one
-    /// that ended in the "saving" state — does not bleed into the next.
+    /// Puts every field back and cancels any running flow, so the previous
+    /// session does not bleed into the next.
     callback reset();
     /// Copies `text` to the system clipboard.
     callback copy-text(string);
@@ -423,30 +353,25 @@ export global AccountAddState {
     callback open-url(string);
 
     callback reset-offline-form();
-    /// The advanced switch was flipped: mirror the new mode into the button's
-    /// state and reset the UUID field.
+    /// The advanced switch was flipped: mirror the mode and reset the UUID field.
     callback toggle-offline-advanced();
-    /// The username or the UUID field changed: recompute the derived UUID and
-    /// its validity.
+    /// The username or UUID changed: recompute the derived UUID and its validity.
     callback sync-offline-uuid();
     /// "Create offline profile".
     callback add-offline-account();
 
-    /// The "log in with a device code" link. Starts a login when none is
-    /// running.
+    /// The "log in with a device code" link; starts a login when none is running.
     callback use-device-code-flow();
-    /// The "back to the browser" link: cancels a running device-code login and
-    /// shows the browser screen again.
+    /// The "back to the browser" link: cancels a device-code login and shows the
+    /// browser screen again.
     callback use-auth-code-flow();
     /// A "Cancel" button of the Microsoft screen.
     callback cancel-microsoft-login();
-    /// The browser screen is on show and the dialog is open: bind the loopback
-    /// listener the code will come back on, and put its URL in
-    /// `auth-code-login-url`. Does nothing when one is already bound, so the
-    /// screen can ask for this every time it is shown.
+    /// The browser screen is on show: bind the loopback listener and put its URL
+    /// in `auth-code-login-url`. Idempotent, so the screen can ask every time.
     callback prepare-auth-code-flow();
-    /// The browser screen is off, or the dialog is closed: drop the listener and
-    /// the URL with it, which frees the port.
+    /// The browser screen is off or the dialog closed: drop the listener, freeing
+    /// the port.
     callback release-auth-code-flow();
 
     callback reset-yggdrasil-form();

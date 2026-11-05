@@ -8,10 +8,8 @@ import { AppConfig } from "../../globals/settings.slint";
 import { SetupWizardState } from "../../globals/setup.slint";
 import { WizardTitle, WizardMessage } from "wizard-text.slint";
 
-// The storage step: the three roots, defaulted to the platform's own. Choosing a
-// folder here only updates the row; Rust applies the choice when the wizard
-// finishes, because a launcher-data change moves `config.toml` and the process
-// has to restart into the new location anyway.
+// The storage step. Picking a folder only updates the row; Rust applies it at
+// finish, since a launcher-data change moves `config.toml` and needs a restart.
 export component SetupStorage inherits VerticalLayout {
     width: 100%;
     spacing: 16px;

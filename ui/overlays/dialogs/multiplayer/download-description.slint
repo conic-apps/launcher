@@ -50,10 +50,8 @@ export component MultiplayerDownloadDescription inherits VerticalLayout {
         background: transparent;
     }
 
-    // The paragraph is measured by its wrap width rather than by a nested
-    // layout: a `Text` one layout level away from the column that owns its width
-    // reports a single line (see the account dialog's Yggdrasil note), so the
-    // box takes its height from the text and the text is placed by hand.
+    // Placed by hand: one layout level deeper, a wrapping `Text` measures a
+    // single line.
     important := Rectangle {
         width: 100%;
         height: important-text.preferred-height + 18px;

@@ -2,21 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The launcher's background music player.
-//!
-//! Everything the player needs — decoding, the output device, the analyser, the
-//! transport, the playlist, the saved position — lives here, split by
-//! responsibility:
-//!
-//!   * [`decode`] turns a file into PCM.
-//!   * [`analyser`] is the frequency analyser the footer visualizer reads, down
-//!     to the Blackman window and the smoothing constant.
-//!   * [`player`] is the audio graph (`source → gain → destination`, with the
-//!     analyser tapping the post-gain output) and the transport driving it.
-//!   * [`session`] persists the current track and position.
-//!
-//! [`list_music_files`] reads the shared music folder
-//! (`storage::LOCATIONS.launcher.music`).
+//! The launcher's background music player: decoding, the output device, the
+//! analyser, the transport, and the saved position.
 
 use std::path::Path;
 

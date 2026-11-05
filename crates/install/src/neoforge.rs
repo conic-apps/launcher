@@ -99,8 +99,6 @@ pub async fn install(
 
     let status = child.wait().await?;
     let success = success.load(AtomicOrdering::SeqCst);
-    // The temp file is named by a bare UUID, so naming the version is the only
-    // thing tying a leftover jar to an install.
     tokio::fs::remove_file(&installer_path)
         .await
         .map_err(|error| {
@@ -165,7 +163,6 @@ where
     }
 }
 
-/// Downloads the Neoforge installer JAR to a temp file and returns its path.
 pub async fn download_installer(
     neoforge_version: &str,
     reporter: &ModLoaderReporter,

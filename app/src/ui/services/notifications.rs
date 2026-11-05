@@ -2,14 +2,11 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The cross-surface notification centre.
-//!
-//! Notifications are kept in Slint models owned by this service so a producer
-//! can keep reporting after the user navigates away from the page that started
-//! it. A Slint model only carries plain data, so the card's action cannot live
-//! in it: the controller keeps an `id -> action` table beside the model and the
-//! view calls back with that id. All functions except the [`NoticeSink`] are
-//! called on the event-loop thread; the sink marshals from any thread.
+//! The cross-surface notification centre, whose models live here so a producer
+//! can keep reporting after the user navigates away. A Slint model carries only
+//! plain data, so actions sit in an `id -> action` table beside it; everything
+//! except the [`NoticeSink`] runs on the event-loop thread, and the sink
+//! marshals from any thread.
 
 use std::{
     cell::{Cell, RefCell},
@@ -154,7 +151,6 @@ fn mark_spent_in(model: &VecModel<NotificationItem>, id: i32) -> bool {
     true
 }
 
-/// Registers the Slint callbacks and returns the port a producer posts through.
 pub(crate) fn setup(ui: &App) -> NoticeSink {
     CONTROLLER.with(|controller| {
         let state = ui.global::<NotificationState>();

@@ -3,28 +3,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! A disk cache for the images and other binary resources the UI fetches over
-//! HTTP — project icons, galleries, the images a README references.
+//! HTTP: project icons, galleries, README images.
 //!
-//! It exists because the alternatives were both worse. Fetching every icon
-//! again on each launch means a page of sixty costs sixty round-trips before
-//! anything is drawn, and holding them in memory only means the *next* launch
-//! pays it again. Caching the bytes on disk between the two is what the
-//! in-memory `Image` memo in `content/icon.rs` cannot do.
-//!
-//! The callers are the content overlays' icon pipeline and the news overlay's
-//! cover pipeline; anything that fetches a URL in order to show it goes through
-//! here, so they share one format, one eviction policy and one set of limits.
-//!
-//! # What is stored
-//!
-//! One file per URL, named after the URL's SHA-512, holding the body **exactly
-//! as it came off the wire** plus the few headers needed to ask whether it is
-//! still current. Storing the wire bytes rather than a decoded bitmap is what
-//! keeps the format independent of whatever decodes it later — a 67 kB JPEG is
-//! 67 kB, where the decoded 72×72 RGBA the UI holds is a size this would have
-//! to guess.
-//!
-//! The file is a `u32`, that many bytes of JSON metadata, then the body:
+//! One file per URL, named after the URL's SHA-512. The file is a `u32`, that
+//! many bytes of JSON metadata, then the body exactly as it came off the wire:
 //!
 //! ```text
 //! ┌───────────────┬────────────────────┬────────────────────────────┐
@@ -32,28 +14,9 @@
 //! └───────────────┴────────────────────┴────────────────────────────┘
 //! ```
 //!
-//! One file rather than a body and a sidecar because a crash between two writes
-//! leaves one of them describing nothing: the body would sit on disk with no
-//! metadata to find it by, forever. And raw rather than base64, which is what
-//! earns the layout — base64 costs a third of every byte.
-//!
-//! # Freshness
-//!
-//! [`Cache-Control`](https://www.rfc-editor.org/rfc/rfc9111#section-5.2) is
-//! obeyed where the server gave one. Where it did not, the cache asks rather
-//! than assumes: a response carrying an `ETag` or a `Last-Modified` is
-//! revalidated with a conditional request, and a `304` costs a few hundred
-//! bytes — cheaper than resending the body and cheaper than guessing a
-//! lifetime. The mcimirror proxy sends an `ETag` and nothing else, and every
-//! request through here is answered by one.
-//!
-//! # What is refused
-//!
-//! Only `http` and `https`, and only to an address that is not the user's own
-//! network — see `is_reachable`. These URLs are written by whoever published
-//! the mod, since they are whatever a Modrinth README or a CurseForge
-//! description points at. This is the line between fetching an image and
-//! reaching into the machine the launcher runs on.
+//! `Cache-Control` is obeyed where given; otherwise an `ETag` or `Last-Modified`
+//! drives a conditional request. Only `http`/`https` URLs outside the user's own
+//! network are fetched — see `is_reachable`.
 
 use std::{
     net::{IpAddr, Ipv4Addr, Ipv6Addr},
@@ -71,45 +34,24 @@ use url::Url;
 
 use crate::HTTP_CLIENT;
 
-/// How long a network fetch may take. The shared client sets no timeout of its
-/// own, so a host that accepts the connection and then says nothing would hold
-/// a card's icon open indefinitely — and this is the path that fills a whole
-/// page of them.
+/// The shared client has no timeout of its own; without this a silent host
+/// would hold a card's icon open indefinitely.
 const TIMEOUT: Duration = Duration::from_secs(15);
 
-/// The largest body written to disk.
-///
-/// The largest thing that goes through here in normal use is a Minecraft news
-/// cover, around 70 kB, or a wiki screenshot at a few megabytes. Past this an
-/// entry is served but not stored: a cache is not worth a disk, and a response
-/// too big to be a thumbnail is not one a refresh should be holding on to.
+/// Bodies larger than this are served but not stored.
 const MAX_ITEM_BYTES: usize = 16 * 1024 * 1024;
 
-/// What the whole directory may occupy.
-///
-/// Sized for a long browsing session's worth of everything: Modrinth's full icon
-/// set runs to tens of megabytes at the median icon size this project measures,
-/// and a wiki or news image is orders of magnitude larger than that. Past this
-/// the oldest entries go.
 const MAX_TOTAL_BYTES: u64 = 128 * 1024 * 1024;
 
-/// What a prune cuts down to.
-///
-/// Pruning to exactly [`MAX_TOTAL_BYTES`] would re-run on the very next write;
-/// four fifths amortizes the walk over the writes that follow.
+/// Pruning to exactly [`MAX_TOTAL_BYTES`] would re-run on the next write.
 const PRUNE_TO: u64 = MAX_TOTAL_BYTES / 5 * 4;
 
-/// Where the entries live. Until the app points this somewhere the cache is
-/// inert and every [`fetch`] is a plain request — which is also what keeps it
-/// out of the way in a test.
+/// Until the app sets a directory the cache is inert and every [`fetch`] is a
+/// plain request.
 static CACHE_DIR: OnceCell<PathBuf> = OnceCell::new();
 
-/// Points the cache at a directory, creating it if it is not there.
-///
-/// Settled once, like [`crate::set_system_proxy`]: both have to be in place
-/// before the first request and neither can be changed afterwards. Nothing here
-/// reads `config`, so a missing directory is not something the user has to
-/// configure — it is somewhere to put files.
+/// Points the cache at a directory. Settled once, like
+/// [`crate::set_system_proxy`], before the first request.
 pub fn set_dir(dir: PathBuf) {
     if let Err(error) = std::fs::create_dir_all(&dir) {
         warn!("Failed to create the HTTP cache directory {dir:?}: {error}");
@@ -118,28 +60,16 @@ pub fn set_dir(dir: PathBuf) {
     let _ = CACHE_DIR.set(dir);
 }
 
-/// The bytes of `url`: from the cache when the copy there is still current, from
-/// the network otherwise.
+/// The bytes of `url`, from the cache when fresh and from the network otherwise.
 ///
-/// `None` for anything this cache will not serve — an empty URL, a `data:` URL,
-/// a scheme other than `http`/`https`, a host the user's own network answers
-/// for, and a request that failed. Callers that can decode nothing from the
-/// result draw their fallback, so which of those it was is only worth a log
-/// line.
-///
-/// A `data:` URL is not so much refused as not this cache's business: it is a
-/// payload the caller already holds, and decoding one is the caller's to do
-/// because only the caller knows which base64 padding to expect.
+/// `None` for a URL this cache will not serve or a request that failed; callers
+/// draw their fallback. A `data:` URL is the caller's to decode.
 pub async fn fetch(url: &str) -> Option<Vec<u8>> {
     get(url, false).await
 }
 
-/// [`fetch`], ignoring what the cache has and asking the server.
-///
-/// The way out of an entry that is on disk but will not decode — a truncated
-/// write, a body that was never an image — since re-reading it would only
-/// produce the same bytes again. What comes back replaces the entry, so this is
-/// also how a user-visible refresh would be built.
+/// [`fetch`], ignoring the cache and asking the server. Used to recover from an
+/// entry that is on disk but will not decode.
 pub async fn force_fetch(url: &str) -> Option<Vec<u8>> {
     get(url, true).await
 }
@@ -171,9 +101,6 @@ async fn get(url: &str, reload: bool) -> Option<Vec<u8>> {
         debug!("{url} is cached but stale; asking the server again");
     }
 
-    // Everything past this point touches the network, so this is the first
-    // moment the URL has to be one we are willing to send. A cache hit never
-    // gets here, which is why an entry that is merely stale costs no lookup.
     if !is_reachable(url).await {
         return None;
     }
@@ -191,9 +118,8 @@ async fn get(url: &str, reload: bool) -> Option<Vec<u8>> {
     };
 
     if response.status() == reqwest::StatusCode::NOT_MODIFIED {
-        // "What you have is current." Keep the body but take the new validators
-        // and the new clock: a server that rotates its ETag without changing the
-        // body would otherwise have this ask again on every single fetch.
+        // Keep the body but refresh the clock, or a server rotating its ETag
+        // would make every later fetch ask again.
         let Some(entry) = cached else {
             warn!("{url} answered 304 with nothing cached");
             return None;
@@ -211,10 +137,6 @@ async fn get(url: &str, reload: bool) -> Option<Vec<u8>> {
     let response = match response.error_for_status() {
         Ok(response) => response,
         Err(error) => {
-            // `warn`, not `debug`: a released log has to be able to say *why* an
-            // icon is missing, and the status is the one fact that separates a
-            // proxy error page from the upstream refusing. A 429 is called out
-            // because it is the one answer that says "come back later".
             if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
                 warn!("{url} answered 429; treating it as a failure and serving the stale copy");
             } else {
@@ -227,8 +149,6 @@ async fn get(url: &str, reload: bool) -> Option<Vec<u8>> {
         "Fetched {url}: {status}, {} bytes",
         response.content_length().unwrap_or(0)
     );
-    // Read the headers before the body: `bytes` consumes the response, and the
-    // validators are what make the next call cheap.
     let headers = response.headers().clone();
     let Ok(body) = response.bytes().await else {
         warn!("{url} answered {status} but its body could not be read");
@@ -245,19 +165,12 @@ async fn get(url: &str, reload: bool) -> Option<Vec<u8>> {
     Some(entry.bytes)
 }
 
-/// The cached copy, for a request that did not land.
-///
-/// A stale icon beats no icon, which is the one case where answering for a
-/// failed fetch is better than reporting the failure.
+/// A stale icon beats no icon when a request fails.
 fn stale(cached: Option<Entry>) -> Option<Vec<u8>> {
     cached.map(|entry| entry.bytes)
 }
 
 /// Writes an entry and keeps the directory inside its limit.
-///
-/// A body over [`MAX_ITEM_BYTES`] is returned to the caller but not kept: the cap
-/// belongs on the storage, not on the request, and a response too big to be a
-/// thumbnail is not one a later refresh should re-read.
 async fn store(url: &str, path: Option<PathBuf>, entry: &Entry) {
     let Some(path) = path else {
         return;
@@ -276,8 +189,6 @@ async fn store(url: &str, path: Option<PathBuf>, entry: &Entry) {
     prune_if_over().await;
 }
 
-/// Puts the cached entry's validators on a request, so the server can answer
-/// `304` instead of resending the body.
 fn add_validators(request: reqwest::RequestBuilder, entry: &Entry) -> reqwest::RequestBuilder {
     let request = match &entry.etag {
         Some(etag) => request.header(IF_NONE_MATCH, etag),
@@ -289,43 +200,33 @@ fn add_validators(request: reqwest::RequestBuilder, entry: &Entry) -> reqwest::R
     }
 }
 
-/// One cached response: the body as it came off the wire, and the headers that
-/// say whether it still is.
+/// One cached response. Validators are kept verbatim: reformatting an opaque
+/// `ETag` would turn a `304` into a resend.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Entry {
-    /// `Cache-Control: max-age=…`, in seconds. `None` where the server gave no
-    /// explicit freshness, which is not the same as zero: such an entry is
-    /// revalidated rather than served straight away.
+    /// `Cache-Control: max-age=…`, in seconds. `None` means revalidate rather
+    /// than serve without asking.
     max_age: Option<u64>,
-    /// `ETag`, verbatim. It is an opaque token, and reformatting it would only
-    /// turn a `304` into a resend.
     etag: Option<String>,
-    /// `Last-Modified`, verbatim, for the same reason.
     last_modified: Option<String>,
-    /// When this body was received, in unix seconds — the age that
-    /// [`Entry::is_fresh`] measures against.
+    /// Unix seconds.
     stored_at: u64,
-    /// The body, after the metadata length prefix.
     #[serde(skip)]
     bytes: Vec<u8>,
 }
 
 impl Entry {
-    /// Whether this body can be served without asking the server.
     fn is_fresh(&self, now: u64) -> bool {
         let Some(max_age) = self.max_age else {
             return false;
         };
-        // A clock that has gone backwards says nothing about the entry's age, so
-        // the safe reading is "ask". `saturating_sub` would turn a negative age
-        // into zero and call the entry brand new, which is the one answer a
-        // backwards clock must not produce.
+        // A backwards clock must make the entry "ask", never look brand new.
         now >= self.stored_at && now - self.stored_at < max_age
     }
 }
 
-/// A header as text, dropping one that is not — it cannot be sent back, and a
-/// lossy version of a validator only turns a `304` into a resend.
+/// A non-text validator cannot be sent back, so it is dropped rather than made
+/// lossy.
 fn header_of(
     headers: &reqwest::header::HeaderMap,
     name: &reqwest::header::HeaderName,
@@ -337,11 +238,8 @@ fn header_of(
 }
 
 /// The `max-age` of a `Cache-Control` header, ignoring every other directive.
-///
-/// A `no-store` arrives here as no `max-age`, which lands on the revalidate path
-/// rather than being stored silently — the entry exists but is never served
-/// without asking, which is as close to not storing it as a cache that also
-/// answers offline can get.
+/// `no-store` arrives as no `max-age`, so the entry is revalidated rather than
+/// served without asking.
 fn max_age_of(headers: &reqwest::header::HeaderMap) -> Option<u64> {
     headers
         .get(CACHE_CONTROL)?
@@ -358,18 +256,11 @@ fn max_age_of(headers: &reqwest::header::HeaderMap) -> Option<u64> {
 
 fn entry_path(url: &str) -> Option<PathBuf> {
     let dir = CACHE_DIR.get()?;
-    // Named after the URL's own hash rather than the URL itself: a path
-    // component like Modrinth's base62 id is case-sensitive, and macOS and
-    // Windows collapse case — `data/k8iIgzXE/…` and `data/k8iigzxe/…` would
-    // otherwise share one file and show the wrong icon.
+    // The URL is hashed because case-sensitive path components such as
+    // Modrinth's base62 id would collide on case-insensitive filesystems.
     Some(dir.join(format!("{:x}", Sha512::digest(url.as_bytes()))))
 }
 
-/// Reads one entry, or `None` if there is nothing usable there.
-///
-/// A file that vanishes mid-run is ordinary, so its I/O error is `debug`; a file
-/// that is there and malformed is `warn`, because that is the one that repeats
-/// forever.
 async fn read_entry(path: &Path) -> Option<Entry> {
     let bytes = match tokio::fs::read(path).await {
         Ok(bytes) => bytes,
@@ -435,28 +326,17 @@ async fn write_entry(path: &Path, entry: &Entry) -> std::io::Result<()> {
     Ok(())
 }
 
-/// What this process believes the directory holds.
-///
-/// Counted in memory rather than derived from the directory on every write,
-/// because that is a `stat` per entry per fetch and this is the path a page of
-/// cards walks. It can drift — a user deleting files behind our back, or a
-/// second launcher instance — but only towards being wrong about the total, and
-/// the next prune re-measures it.
+/// The directory size this process believes it has. Counted in memory because a
+/// `stat` per entry per fetch is too expensive; drift only matters until the
+/// next prune re-measures it.
 struct Usage {
-    /// `None` until something has measured the directory.
     bytes: Option<u64>,
 }
 
-/// Only ever held for arithmetic — never across an `.await`, and never while the
-/// filesystem is being walked.
+/// Only held for arithmetic, never across an `.await`.
 static USAGE: Lazy<Mutex<Usage>> = Lazy::new(|| Mutex::new(Usage { bytes: None }));
 
 /// Cuts the directory back to [`PRUNE_TO`] once it is over [`MAX_TOTAL_BYTES`].
-///
-/// Runs after a write, so at the limit nothing happens at all and the walk is
-/// paid only when entries are actually going out — which, at 128 MB against
-/// kilobyte entries, is every few hundred fetches. That is why it can afford to
-/// be a plain `read_dir` rather than a maintained index.
 async fn prune_if_over() {
     let Some(dir) = CACHE_DIR.get() else {
         return;
@@ -479,10 +359,8 @@ async fn prune_if_over() {
             return;
         }
     };
-    // `while let Ok(Some(..))` ends the walk on a read error as well as on the
-    // end of the directory, and a truncated walk *under*-counts the usage — so
-    // the folder then looks smaller than it is and pruning stops happening. The
-    // error is named so that is visible rather than looking like a small cache.
+    // A read error ends the walk and makes the total an under-estimate, so the
+    // warning below is what keeps that from looking like a small cache.
     loop {
         match reader.next_entry().await {
             Ok(Some(entry)) => {
@@ -507,7 +385,6 @@ async fn prune_if_over() {
             }
         }
     }
-    // Oldest first, so the front of the list is what goes.
     entries.sort_unstable();
     debug!(
         "The HTTP cache is over {MAX_TOTAL_BYTES} bytes across {} entries; pruning",
@@ -530,8 +407,6 @@ async fn prune_if_over() {
     }
 }
 
-/// Records a write against the running total, seeding it from the directory the
-/// first time. Called after every successful write.
 fn note_written(size: u64) {
     let Ok(mut usage) = USAGE.lock() else {
         return;
@@ -542,32 +417,18 @@ fn note_written(size: u64) {
     }
 }
 
-/// Whether the launcher may send this URL.
-///
-/// These URLs are written by whoever published the mod, so this is the line
-/// between fetching an image and reaching into the machine the launcher runs
-/// on. A name that resolves to `127.0.0.1` or to a LAN address is the whole of
-/// it, and it needs no exploit: the description simply says so.
-///
-/// A hostname is resolved first and *every* address it resolves to is checked,
-/// because one name can point anywhere, and a name that answers publicly today
-/// can answer privately on the next lookup.
-///
-/// The address is not pinned to the connection that follows, so a hostile
-/// server could still rebind between this lookup and reqwest's own. Closing
-/// that needs the resolver and the client to share one answer, which is more
-/// than this is worth: rebinding needs a name the launcher was going to fetch
-/// from anyway, and the two ways it is actually abused — a literal private
-/// address, and a name that resolves to one — are caught here.
+/// Whether the launcher may send this URL. These URLs come from mod
+/// descriptions, so a private address would let a publisher reach the user's
+/// machine. Every address a name resolves to is checked. A rebind between this
+/// lookup and the connection is accepted: closing it would need the resolver
+/// and client to share an answer, which is more than this is worth.
 async fn is_reachable(url: &str) -> bool {
     let Ok(parsed) = Url::parse(url) else {
         debug!("Refusing {url}: not a URL");
         return false;
     };
     if !scheme_allows(&parsed) {
-        // A refusal is a security decision, so `warn` rather than the `debug` the
-        // other refusals use: a release log has to be able to show that a URL was
-        // rejected for naming something other than http(s).
+        // Security refusals stay at `warn` so a release log can show them.
         warn!("Refusing {url}: only http and https are fetched");
         return false;
     }
@@ -575,7 +436,6 @@ async fn is_reachable(url: &str) -> bool {
         warn!("Refusing {url}: it names no host to resolve");
         return false;
     };
-    // `Url` keeps the brackets around an IPv6 host literal.
     let host = host.trim_start_matches('[').trim_end_matches(']');
     match host.parse::<IpAddr>() {
         Ok(address) => is_public(address),
@@ -589,9 +449,8 @@ async fn is_reachable(url: &str) -> bool {
                 }
                 true
             }
-            // A name that resolves to nothing is not a reason to refuse; it is
-            // a request that will fail on its own, and refusing it here would
-            // lose the cached copy along the way.
+            // A name that resolves to nothing will fail on its own; refusing it
+            // here would lose the cached copy.
             Err(error) => {
                 debug!("Failed to resolve {host}: {error}");
                 true

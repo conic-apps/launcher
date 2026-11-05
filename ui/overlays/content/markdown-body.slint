@@ -4,24 +4,12 @@
 
 // The README body of a project detail panel.
 //
-// Headings, lists, code blocks, links and images all come out styled here: the
-// same `surface0` fill, the same 8px radius, the same 16px of padding, and the
-// same 14px body with a 1.6 line height.
+// The `markdown` crate draws it, because Slint 1.18 lacks CSS line-height,
+// strikethrough, link-underline control, and runtime `@markdown`. The crate
+// measures with Slint's text engine, lays out every run, and hands this
+// component positioned boxes to paint.
 //
-// What draws the body is the `markdown` crate, which is not Slint's own text.
-// Slint 1.18 has no CSS `line-height` — `Text` grew `line-height-factor`, but
-// that multiplies the font's *natural* line height rather than the font size, so
-// it is not a drop-in for the `1.6` this box is set at — and it has no
-// strikethrough, no way to turn a link's underline off, and `@markdown` is a
-// compile-time literal the parser reads out of the source, so it cannot take a
-// string that arrives at runtime. So the crate parses the body and measures it
-// with the same text engine Slint renders with, lays every run out itself, and
-// hands this component a flat list of positioned boxes to paint. The crate's
-// `README.md` covers it.
-//
-// One thing the box has to do itself: the padding. The engine lays out the
-// *content* of the box, because that is what a width means, so the 16px is
-// applied here and added back into the height.
+// The crate lays out the content, so the 16px padding is applied here.
 
 import { Theme } from "../../theme.slint";
 import { Icons } from "../../icons.slint";
@@ -29,49 +17,27 @@ import { ContentState } from "../../globals/content.slint";
 import { MarkdownView } from "../../components/markdown/markdown-view.slint";
 
 export component MarkdownBody inherits Rectangle {
-    /// The scroll offset of whatever scrolls this box, in the same sign the
-    /// shared `ScrollView` reports: negative scrolled down, so it is added to an
-    /// item's own y to find out whether it is on screen. The panel passes it in
-    /// because this component is a grandchild of the scroller and cannot reach
-    /// it.
+    /// The scroller's offset, passed in because this box cannot reach it.
     in property <length> scroll-y: 0px;
-    /// Where this box sits inside that scrolled content. The view measures its
-    /// culling window from its *own* top, so the scroller's offset on its own
-    /// would cull away everything above this box — a blank band at the top of
-    /// the body whenever the panel is shorter than the header and the action
-    /// row it sits under.
+    /// This box's position in the scrolled content; the view culls from its own
+    /// top, so without it everything above this box would be culled.
     in property <length> top-in-scroll: 0px;
-    /// How tall the scroller is, which is what the view compares the offset
-    /// against. Not this box's own height: the box is as tall as the document, so
-    /// using it here would make the visible window as tall as the document and
-    /// skip nothing.
+    /// The scroller's height, not this box's (which is the document height and
+    /// would cull nothing).
     in property <length> viewport-height: 0px;
-    /// 16px of padding. Stated once: the height, the view's box and the culling
-    /// offset all need it, and three copies of the number are three chances to
-    /// change one of them.
+    /// 16px of padding, stated once for the height, the view box and culling.
     private property <length> inset: 16px;
 
     width: 100%;
-    // The box's height is the document's height plus the padding on both sides.
-    // It has to be stated rather than measured: a component whose children are
-    // all absolutely positioned measures zero (`gen_layout_info_prop` skips a
-    // child that sets `x` or `y`), and the view below positions every item by
-    // hand. So the height comes from the view. The view's *shown* height rather
-    // than the engine's: a document with a `<details>` in it is laid out open,
-    // and the view shrinks this as the sections close. Sizing the box from the
-    // engine's height would leave a band of empty space under the document as
-    // tall as everything that is closed — and it would scroll, which is the part
-    // a reader notices.
+    // Must be stated: all-positioned children measure zero. The view's shown
+    // height, not the engine's, so closed `<details>` do not leave a scrollable
+    // empty band.
     height: view.shown-height + 2 * root.inset;
     background: Theme.surface-0;
     border-radius: 8px;
 
-    // A link that moved out from under a stationary pointer keeps its rule until
-    // the pointer moves again: a wheel scroll emits no pointer-move, so nothing
-    // re-hit-tests it. Clearing on the scroll is therefore what the browser's own
-    // `a:hover` does, and a press is no help — a press that lands outside every
-    // link box is by definition a press where no link was hovered, so a click
-    // handler is inert in the only case it could matter.
+    // A wheel scroll emits no pointer-move, so a link that moved out from under
+    // the pointer would keep its hover. Clear it on scroll, as the browser does.
     changed scroll-y => { ContentState.detail-body-hovered = ""; }
 
     view := MarkdownView {
@@ -81,39 +47,30 @@ export component MarkdownBody inherits Rectangle {
         height: parent.height - 2 * root.inset;
         chunks: ContentState.detail-body-chunks;
         section-open: ContentState.detail-body-section-open;
-        // The launcher's own chevron, handed over as path data because the crate
-        // has no icon set. `chevron-forward` rather than `chevron-down`: the two
-        // are the same glyph, and a quarter turn from the right-pointing one lands
-        // on the down-pointing one an open section shows.
+        // The crate has no icon set, so this is path data. `chevron-forward` is
+        // rotated a quarter turn when the section opens.
         marker-icon: {
             commands: Icons.stroke-commands("chevron-forward"),
             viewbox: Icons.viewbox("chevron-forward"),
             stroke-width: Icons.stroke-width("chevron-forward"),
         };
         family: Theme.font-family;
-        // The same family the engine shaped the code with. Handing this a
-        // generic name instead puts the view in a different face from the
-        // engine, which is both the wrong typeface and the wrong advances.
+        // The family the engine shaped the code with; a generic name would use the
+        // wrong face and advances.
         mono-family: ContentState.detail-body-mono-family;
-        // The view skips the items that are scrolled out of sight, which is what
-        // keeps a long README from instantiating a `Text` per line for a panel
-        // showing a screenful of them.
+        // Skip off-screen items so a long README does not create a `Text` per line.
         viewport-y: root.scroll-y - root.top-in-scroll;
         viewport-height: root.viewport-height;
         cull: true;
-        // Two-way, because the view writes it: a one-way binding is dropped the
-        // first time the view assigns, and the global would go write-only.
+        // Two-way because the view assigns it; a one-way binding would be dropped.
         hovered-link <=> ContentState.detail-body-hovered;
-        // A link in a description opens the href itself rather than navigating
-        // the app away. It is the same `open-url` the header's repository link
-        // uses.
+        // Open the href rather than navigating the app away.
         link-clicked(url) => { ContentState.open-url(url); }
-        // The engine has to hear about a width change or the document never
-        // re-wraps; this is the whole of the resize story.
+        // The engine must hear about width changes or the document never re-wraps.
         resized(width) => { ContentState.body-resized(width); }
         section-toggled(id) => { ContentState.body-section-toggled(id); }
-        // A palette change repaints without the display list changing, which is
-        // why the palette is bound here rather than baked into the items.
+        // Bound rather than baked into items, so a palette change repaints without
+        // rebuilding the display list.
         palette: {
             text: Theme.text,
             heading: Theme.text,
@@ -128,18 +85,12 @@ export component MarkdownBody inherits Rectangle {
             table-head-text: Theme.text,
             table-head-background: Theme.mantle,
             rule: Theme.surface-1,
-            // Strikethrough keeps the text's own colour rather than turning red:
-            // red would be GitHub's choice, not this app's.
+            // Keep the text colour, not GitHub's red.
             strike: Theme.text,
-            // The bullet and a broken image's alt text keep the text's own
-            // colour rather than being dimmed.
+            // Bullets and broken-image alt text keep the text colour.
             marker: Theme.text,
             placeholder: Theme.text,
-            // A `<details>` is a control, and it is drawn like the one control
-            // the app already has: `SettingItem`'s three row states, its 17px
-            // chevron and its title colour. GitHub's own `<summary>` is a bare
-            // triangle at body size, which in a body already carrying the
-            // launcher's typography reads as an unstyled leftover.
+            // Drawn like `SettingItem`, so it does not read as an unstyled leftover.
             details-head: Theme.setting-item-background,
             details-head-hover: Theme.setting-item-background-hover,
             details-head-active: Theme.setting-item-background-active,

@@ -14,14 +14,8 @@ import { Loading } from "../../../components/controls/loading.slint";
 import { Dialogs, CreateInstanceState } from "../../../globals/dialogs.slint";
 import { GameTime } from "../../../globals/game.slint";
 
-// The Minecraft version chooser: a category filter, the version list and a
-// Cancel button.
-//
-// The list is the dialog's own `ScrollView`, so it keeps that component's slim
-// scrollbar.
-//
-// The filter and the button keep the heights their padding and content ask for,
-// and the list takes what is left.
+// The Minecraft version chooser: a category filter, a virtualized version list
+// and a Cancel button. The list takes the height the filter and button leave.
 export component MinecraftChoose inherits ZoomTransition {
     /// The dialog's inner area minus its title: what this screen has to fill.
     in property <length> screen-height: 0px;
@@ -30,8 +24,7 @@ export component MinecraftChoose inherits ZoomTransition {
     padding: 8px;
     spacing: 8px;
 
-    /// The row icon: the release texture, the command block for a snapshot and
-    /// the ancient debris for everything older.
+    /// Release, snapshot or older-version icon.
     pure function version-icon(kind: string) -> image {
         if kind == "release" {
             return @image-url("../../../assets/images/minecraft.webp");
@@ -48,10 +41,8 @@ export component MinecraftChoose inherits ZoomTransition {
         border-radius: 8px;
         background: Theme.surface-0;
 
-        // The label takes the free space, the select keeps its own width — the
-        // same shape the settings rows use. Giving the select a fixed width would
-        // leave the strip the options do not fill empty, which showed to the
-        // right of the last one.
+        // The label takes the free space; a fixed select width left an empty
+        // strip to its right.
         HorizontalLayout {
             padding-left: 16px;
             padding-right: 16px;
@@ -76,16 +67,10 @@ export component MinecraftChoose inherits ZoomTransition {
         }
     }
 
-    // A row is 54px tall (see `ListItem`), which is what lets the list's
-    // height and the visible range be computed without measuring anything.
+    // Matches `ListItem`'s height, so the visible range needs no measuring.
     private property <length> row-height: 54px;
-    // The part of the list the scroll area can show, with two rows of slack on
-    // each side so a scroll never reveals a slot before its row is built.
-    //
-    // Slint would otherwise build every row: the "snapshot" category alone runs
-    // to some 600 versions, and past roughly 150 rows drawn in a frame the
-    // renderer gives up mid-frame, taking the whole dialog down with it. Only
-    // these rows are drawn.
+    // The visible slice plus two rows of slack. Building every row (600+ snapshots)
+    // makes the renderer give up past roughly 150 rows in a frame.
     private property <length> window-top: max(
         0px,
         -versions-scroll.content-y - 2 * root.row-height);
@@ -95,7 +80,6 @@ export component MinecraftChoose inherits ZoomTransition {
     list := Rectangle {
         width: 100%;
         vertical-stretch: 1;
-        // CSS `border: 1px solid rgba(0, 0, 0, 0.16)`.
         border-width: 1px;
         border-color: #00000029;
         border-radius: 8px;
@@ -103,9 +87,8 @@ export component MinecraftChoose inherits ZoomTransition {
         background: transparent;
 
         versions-scroll := ScrollView {
-            // The rows live in a box of their own — a row's `visible` cannot be
-            // used to drop it from the scroll content, or the list would
-            // collapse. See `window-top`.
+            // A row's `visible` cannot drop it from the scroll content, or the
+            // list would collapse; hence the full-height box.
             list-content := Rectangle {
                 width: 100%;
                 height: root.row-height * CreateInstanceState.minecraft-versions.length;
@@ -125,8 +108,7 @@ export component MinecraftChoose inherits ZoomTransition {
                         CreateInstanceState.select-minecraft-version(version.id);
                         CreateInstanceState.step = "settings";
                     }
-                    // Every version has a Minecraft wiki page, under a different
-                    // URL per language.
+                    // Every version has a wiki page, localized per language.
                     button-clicked(name) => { CreateInstanceState.open-version-wiki(version.id); }
                 }
             }

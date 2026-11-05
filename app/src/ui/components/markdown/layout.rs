@@ -2,33 +2,12 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The block tree → a positioned display list.
+//! Block tree → positioned display list. Slint's `Text` cannot report where a
+//! line breaks, mix styles on one baseline or draw decorations, so the geometry
+//! is computed here and the view only places runs.
 //!
-//! # Why the geometry is all here
-//!
-//! Slint's `Text` draws one run in one style and reports the box it needs, but it
-//! cannot tell a caller *where* a line of mixed styles breaks, and it has no
-//! strikethrough, no underline and no text background. So the work a browser's
-//! layout engine does — deciding the line breaks, aligning several runs of
-//! different sizes on one baseline, hanging a rule under a struck-through run —
-//! is done here, and the view is left with nothing but "put these runs at these
-//! coordinates".
-//!
-//! The result is a flat list in paint order, which is also what makes the view
-//! cheap: one `for` loop, and a view that only wants the visible part of a long
-//! document can skip the rest with a `visible` binding on each item's `y`.
-//!
-//! # Line breaking
-//!
-//! Runs are measured one at a time (see [`crate::ui::components::markdown::measure`]) and the breaks are
-//! found here, which is what keeps a measured width and a drawn width the same
-//! number. The break opportunities are the ones a browser uses for the scripts
-//! this renderer sees: after a space, after a hyphen or a slash, and between two
-//! ideographs — with the small sets of "never start a line with this" and "never
-//! end one with that" characters that keep CJK punctuation off a line's edge. It
-//! is not a full UAX #14 implementation, and it does not try to be: a line that
-//! comes out a little different from Chromium's is invisible, whereas a wrong
-//! *width* would not be.
+//! Runs are measured with the same engine the view draws with, and line breaks
+//! approximate a browser's rather than implementing all of UAX #14.
 
 use crate::ui::components::markdown::doc::{Align, Block, Cell, Inline};
 use crate::ui::components::markdown::measure::{Measurer, SpanMetrics, SpanStyle};
@@ -36,18 +15,13 @@ use crate::ui::components::markdown::model::{
     ColorRole, DisplayList, HeadingRule, ImageStore, ItemKind, MdChunk, MdItem, MdSection, MdStyle,
 };
 
-/// LINE SEPARATOR, which a hard line break is turned into so that it survives
-/// being flattened into a run of text on its way to the layout pass. It is
-/// never shaped: the pass splits the run set on it first.
+/// Line separator: a hard break that survives being flattened into a run. The
+/// pass splits the run set on it before shaping.
 const HARD_BREAK: char = '\u{2028}';
 const HARD_BREAK_STRING: &str = "\u{2028}";
 
-/// Lays a document out and returns the display list.
-///
-/// `avail` is the width the document is laid out for. Anything wider — a table
-/// that has been given a minimum width, a code block that does not wrap — is
-/// allowed to exceed it, and the excess shows up in
-/// [`DisplayList::content_width`].
+/// Anything wider than `avail` (a minimum-width table, a non-wrapping code
+/// block) overflows into [`DisplayList::content_width`].
 pub fn layout(
     blocks: &[Block],
     style: &MdStyle,
@@ -75,21 +49,14 @@ pub fn layout(
     for block in blocks {
         y = ctx.block(block, 0.0, y, avail);
     }
-    // In document order, which is the order a view stacks them in. A section is
-    // recorded once its content is laid out, and a nested one is finished before
-    // the section around it, so the order they come out in is the wrong way round
-    // for a nested pair.
+    // A nested section finishes before its parent, so re-sort into paint order.
     let mut sections = std::mem::take(&mut ctx.sections);
     sections.sort_by(|a, b| a.head_y.total_cmp(&b.head_y));
 
     let height = round(y);
     let content_width = round(ctx.content_width);
     let chunks = runs(&ctx.items, &sections, height);
-    // This module is ~6,700 lines with no logging of any kind, and this is the
-    // one function every rendered document passes through. A summary here is what
-    // makes a document that came out empty — an unparseable fragment, a missing
-    // font, a zero-width measurement — distinguishable from one that rendered and
-    // happened to be short. `debug`, because it fires on every re-layout.
+    // Makes an empty render distinguishable from a short one.
     log::debug!(
         "laid out {} block(s) into {} item(s) at {height}px across {} section(s)",
         blocks.len(),
@@ -105,23 +72,16 @@ pub fn layout(
     }
 }
 
-/// Splits a laid-out document into the runs a view stacks.
-///
-/// The document is one flow, so the runs are the stretches between the sections'
-/// own extents: a section's items, then whatever came between it and the next
-/// section, then that section, and so on. A document with no sections in it is a
-/// single run of everything, which is what keeps the common case — a long README
-/// with no `<details>` — on exactly the path it was on.
+/// Splits a document into the runs a view stacks; a document with no sections is
+/// one run of everything.
 fn runs(items: &[MdItem], sections: &[MdSection], height: f32) -> Vec<MdChunk> {
     let mut out: Vec<MdChunk> = Vec::with_capacity(sections.len() * 2 + 1);
     let mut first = 0usize;
     let mut top = 0.0f32;
 
     for section in sections {
-        // A run of ordinary blocks, if there is one between here and the section.
-        // The boundary is the first item that reaches *into* the section rather
-        // than the first that starts at it, so a line whose box overlaps the
-        // summary row goes with the row instead of being cropped above it.
+        // Use the first item that reaches into the section rather than the first
+        // that starts at it, so an overlapping line goes with the row.
         let section_first = first_reaching(items, section.head_y, first);
         if section_first > first {
             out.push(MdChunk {
@@ -131,8 +91,6 @@ fn runs(items: &[MdItem], sections: &[MdSection], height: f32) -> Vec<MdChunk> {
                 items: first..section_first,
             });
         }
-        // And the section itself: everything from its first item up to wherever
-        // its own flow ends, which is its content plus the margin under it.
         let section_last = first_past(items, section.flow_bottom, section_first);
         out.push(MdChunk {
             section: Some(section.clone()),
@@ -144,7 +102,6 @@ fn runs(items: &[MdItem], sections: &[MdSection], height: f32) -> Vec<MdChunk> {
         top = section.flow_bottom;
     }
 
-    // Whatever is left over, which for a document with no sections is all of it.
     if first < items.len() {
         out.push(MdChunk {
             section: None,
@@ -171,7 +128,6 @@ fn first_past(items: &[MdItem], y: f32, from: usize) -> usize {
         .unwrap_or(items.len())
 }
 
-/// The style of one run, as far as layout is concerned.
 #[derive(Debug, Clone)]
 struct RunStyle {
     size: f32,
@@ -179,34 +135,21 @@ struct RunStyle {
     italic: bool,
     mono: bool,
     color: ColorRole,
-    /// The link this run belongs to, as `(id, url)`, and nothing else is ever a
-    /// link. A link's id is shared by every line it appears on, which is how a
-    /// view reveals the rule under all of them from one piece of pointer state.
+    /// `(id, url)` shared by every line of the same link.
     link: Option<(String, String)>,
-    /// Draw the inline-code capsule behind this run.
     chip: bool,
     strike: bool,
     pad_x: f32,
-    /// The capsule's own padding and the space outside it, relative to the code
-    /// font's size, carried here so an inline code span can be built without the
-    /// whole `MdStyle` in reach — `flatten` sees one run's style and nothing else.
     code_padding_x: f32,
     code_margin_x: f32,
     code_padding_y: f32,
     code_font_scale: f32,
-    /// Space *outside* the capsule, between it and the text beside it.
-    ///
-    /// Padding is inside the capsule and a margin is not, and the difference is
-    /// the whole of it: `pad_x` belongs to the code run alone, while this has to
-    /// be room in the line, or the capsule is drawn straight over the glyphs next
-    /// to it. Half a space, which is what reads as "this is code" without opening
-    /// a hole in the paragraph.
+    /// Space outside the capsule, which has to be room in the line or the
+    /// capsule is drawn over the glyphs beside it.
     margin_x: f32,
     pad_y: f32,
-    /// The line-height multiplier of the box this run is in, so a heading's runs
-    /// and a paragraph's differ even at the same size.
     line_factor: f32,
-    /// Keep every space. A code block's indentation is the code.
+    /// A code block's indentation is the code.
     preserve_whitespace: bool,
 }
 
@@ -261,9 +204,6 @@ impl RunStyle {
         }
     }
 
-    /// A `<summary>`'s own text, which is a settings row's title: the body's size
-    /// is `font_size` and a row's is `details_head_font_size`, and the row is the
-    /// thing the reader is being asked to click.
     fn details_head(style: &MdStyle) -> Self {
         Self {
             size: style.details_head_font_size,
@@ -292,20 +232,12 @@ impl RunStyle {
 struct Run {
     text: String,
     style: RunStyle,
-    /// The URL of an inline image this run stands for, when the caller has
-    /// handed over a bitmap for it.
-    ///
-    /// `text` is kept alongside it rather than replaced by it, and that is what
-    /// makes an inline image need no separate code path: before the bitmap
-    /// arrives the run is ordinary text and reads as its alternative, and once it
-    /// arrives the same run becomes a picture in the same place. A badge row that
-    /// loads late therefore reads as its alt text first and fills in after, which
-    /// is what a browser does.
+    /// The URL of an inline image. `text` is kept as its alt text, so the same
+    /// run reads as alt text until the bitmap arrives and as the picture after.
     image: Option<String>,
 }
 
 impl Run {
-    /// A run of text.
     fn text(text: impl Into<String>, style: RunStyle) -> Self {
         Self {
             text: text.into(),
@@ -319,12 +251,8 @@ impl Run {
     }
 }
 
-/// Flattens the inline tree into the runs a line is made of.
-///
-/// `links` counts the links met on the way, so that each gets an id. The id is
-/// what ties one link's pieces together across its lines, and a run that is *not*
-/// inside a link gets none — a box full of text that happens to sit next to a
-/// link is not part of it.
+/// `links` numbers the links so one id ties a link's pieces together across
+/// lines; a run outside a link gets none.
 fn flatten(inlines: &[Inline], style: &RunStyle, out: &mut Vec<Run>, links: &mut u32) {
     for inline in inlines {
         match inline {
@@ -353,9 +281,7 @@ fn flatten(inlines: &[Inline], style: &RunStyle, out: &mut Vec<Run>, links: &mut
                 flatten(inner, &nested, out, links);
             }
             Inline::Sup(inner) => {
-                // Slint has no baseline shift, so a superscript is set smaller;
-                // the line box is the paragraph's either way, which is what
-                // `vertical-align: super` amounts to at these sizes.
+                // Slint has no baseline shift, so a superscript is just smaller.
                 let mut nested = style.clone();
                 nested.size = style.size * 0.7;
                 flatten(inner, &nested, out, links);
@@ -368,8 +294,6 @@ fn flatten(inlines: &[Inline], style: &RunStyle, out: &mut Vec<Run>, links: &mut
                 nested.mono = true;
                 nested.chip = true;
                 nested.color = ColorRole::CodeText;
-                // An inline span sits on the paragraph's baseline, so it keeps the
-                // paragraph's line height and only the glyphs shrink.
                 nested.size = style.size * style.code_font_scale;
                 nested.pad_x = nested.size * style.code_padding_x;
                 nested.margin_x = nested.size * style.code_margin_x;
@@ -384,9 +308,7 @@ fn flatten(inlines: &[Inline], style: &RunStyle, out: &mut Vec<Run>, links: &mut
             } => {
                 let mut nested = style.clone();
                 nested.color = ColorRole::Link;
-                // A link nested inside a link is not something CommonMark allows
-                // and a browser flattens to the outermost one, which is what
-                // keeping the outer id does.
+                // A nested link keeps the outermost one's id, as a browser does.
                 if nested.link.is_none() {
                     *links += 1;
                     nested.link = Some((format!("l{links}"), url.clone()));
@@ -394,12 +316,8 @@ fn flatten(inlines: &[Inline], style: &RunStyle, out: &mut Vec<Run>, links: &mut
                 flatten(label, &nested, out, links);
             }
             Inline::Image { url, alt, .. } => {
-                // The alternative text is kept as the run's text *and* the URL is
-                // kept alongside it, so the run reads as the alternative until the
-                // bitmap arrives and as the picture afterwards. A badge row is
-                // almost always a row of images inside links, and rendering those
-                // as a wall of alt text is the single most visible way a Markdown
-                // body can read as broken.
+                // The alt text stays as the run's text so an unfetched badge row
+                // still reads, rather than showing nothing.
                 let mut nested = style.clone();
                 nested.color = ColorRole::Placeholder;
                 let text = if alt.is_empty() {
@@ -433,11 +351,8 @@ fn push_run(out: &mut Vec<Run>, text: &str, style: &RunStyle) {
     }
 }
 
-/// A run of whitespace is one space, as in HTML — but the space at either end of
-/// a run is kept, because it is the only thing between two runs.
-///
-/// A code block asks for its whitespace back (`preserve_whitespace` on the run's
-/// style), where the indentation and the runs of spaces *are* the code.
+/// A run of whitespace is one space, but the space at either end is kept because
+/// it separates two runs. Code blocks keep their whitespace instead.
 fn collapse_whitespace(text: &str) -> String {
     if !text.contains(char::is_whitespace) || text.chars().all(char::is_whitespace) {
         return text.to_string();
@@ -468,16 +383,11 @@ struct Atom {
     /// Byte range within that run's text.
     start: usize,
     end: usize,
-    /// The cluster's own advance, plus [`Self::leading`]. Baked in rather than
-    /// added by every reader, so the line breaker, the line's width and the
-    /// drawing all agree without each of them knowing about it.
+    /// The cluster's advance plus [`Self::leading`], baked in so every reader
+    /// agrees without knowing about it.
     advance: f32,
-    /// Space this atom claims *before* its glyphs, and which is not ink: an
-    /// inline-code capsule's margin, on the run's first cluster. It is part of
-    /// `advance` — the line has to make room for it — but it is not part of the
-    /// box anything draws, so a run's glyphs start after it.
+    /// The capsule's margin before the glyphs: part of `advance`, but not ink.
     leading: f32,
-    /// The same, *after* the glyphs, on the run's last cluster.
     trailing: f32,
     /// A line may start here.
     break_before: bool,
@@ -490,22 +400,15 @@ struct Metrics {
     measured: Vec<SpanMetrics>,
 }
 
-/// Builds the atom stream of a run set.
-///
-/// `hard_breaks` turns every newline into a break of its own, which is what a
-/// code block needs: its source lines are lines, not a paragraph's soft breaks.
+/// `hard_breaks` turns every newline into its own break, which a code block
+/// needs.
 fn build_atoms(metrics: &Metrics, hard_breaks: bool) -> Vec<Atom> {
     let mut atoms: Vec<Atom> = Vec::new();
     for index in 0..metrics.runs.len() {
-        // Which of this run's atoms are the ends, so the capsule's margin lands on
-        // them and nowhere else. Taken before the atoms are pushed, because it is
-        // the run's *own* ends that matter, not the ends of a line it is later
-        // split across.
+        // The run's own ends, not the ends of a line it is later split across.
         let first_of_run = atoms.len();
         let margin_x = metrics.runs[index].style.margin_x;
-        // An inline image has no glyphs, so the shaper gave it none, and it needs
-        // exactly one atom of its own: the whole picture, `max-width: 100%` wide,
-        // is one unbreakable thing on the line.
+        // An image has no glyphs, so it is one unbreakable atom.
         if metrics.measured[index].clusters.is_empty() {
             let advance = metrics.measured[index].width;
             if advance > 0.0 {
@@ -523,14 +426,9 @@ fn build_atoms(metrics: &Metrics, hard_breaks: bool) -> Vec<Atom> {
             }
             continue;
         }
-        // The shaper's text, not the run's: parley collapsed the whitespace, and
-        // the cluster ranges index into what it produced.
         let laid_out = &metrics.measured[index].text;
         for cluster in &metrics.measured[index].clusters {
             let raw = &laid_out[cluster.start..cluster.end];
-            // A code block's own newlines are its line breaks, and they are kept
-            // by the shaper because a code run asks for its whitespace to be
-            // preserved.
             let hard_after = hard_breaks && raw.contains('\n');
             let text = if hard_after {
                 raw.replace('\n', "")
@@ -555,8 +453,6 @@ fn build_atoms(metrics: &Metrics, hard_breaks: bool) -> Vec<Atom> {
                 hard_after,
             });
         }
-        // The margin goes on this run's two ends now that they are known. A run
-        // the shaper gave nothing is already whole above.
         let end_of_run = atoms.len();
         if end_of_run > first_of_run {
             atoms[first_of_run].leading += margin_x;
@@ -572,19 +468,13 @@ fn build_atoms(metrics: &Metrics, hard_breaks: bool) -> Vec<Atom> {
 
 fn mark_breaks(atoms: &mut [Atom], metrics: &Metrics) {
     for index in 1..atoms.len() {
-        // An image is a replaced element with no letters around it, so the rules
-        // that read the neighbouring characters have nothing to read. A line may
-        // start and end either side of one: that is what lets a row of badges
-        // wrap the way a browser wraps it. It is a little generous in the one case
-        // where an image sits flush against a word with no space, which in a real
-        // document does not happen.
+        // A line may start and end either side of an image, which is what lets a
+        // badge row wrap.
         if is_image_atom(metrics, &atoms[index - 1]) || is_image_atom(metrics, &atoms[index]) {
             atoms[index].break_before = true;
             continue;
         }
         if atoms[index - 1].hard_after || atoms[index].space {
-            // A hard break is not a choice, and a line never starts with the
-            // space that follows one.
             continue;
         }
         if atoms[index - 1].space {
@@ -686,36 +576,19 @@ fn allow_breaks_inside_long_units(atoms: &mut [Atom], avail: f32) {
     }
 }
 
-/// Greedy line filling.
-///
-/// The decision is made a *unit* at a time, not a cluster at a time: a unit is
-/// everything between two break opportunities (a word and the space after it, a
-/// run of ideographs, a hyphenated piece), and a line takes a unit only if the
-/// whole of it fits. Deciding per cluster instead would let a line run over by
-/// up to a word, which is the one thing a line breaker must not do.
-///
-/// `wrap` false keeps everything on one line and honours only the hard breaks,
-/// which is what a non-wrapping code block wants.
+/// Greedy line filling by unit (everything between two break opportunities): a
+/// line takes a unit only if the whole of it fits. `wrap` false honours only
+/// hard breaks, which is what a non-wrapping code block wants.
 fn break_lines(atoms: &[Atom], avail: f32, wrap: bool) -> Vec<Vec<usize>> {
-    // A word that is exactly as wide as the line it is on fits on it. Without
-    // this, it does not, and the failure is invisible in the source: a table
-    // column's width is its widest word plus the cell's padding, and the padding
-    // is added and then subtracted again, so the round trip through `f32` can land
-    // a few thousandths short. "State" then breaks to "Stat" / "e" in the middle of
-    // a row of one-word headings, for a margin no eye could ever see. A twentieth
-    // of a pixel is far below anything an eye could see, so it changes nothing
-    // that is drawn and everything about whether a word breaks.
+    // The width is the widest word plus padding added and subtracted again, so
+    // f32 rounding can make a word miss by a few thousandths and break mid-word
+    // for no visible reason.
     const FITS: f32 = 0.05;
     let limit = avail + FITS;
     let mut lines: Vec<Vec<usize>> = Vec::new();
     let mut current: Vec<usize> = Vec::new();
-    // The width of the line so far, the hanging space of its last unit
-    // included: the space between two words is part of the line, and only the
-    // last one may hang past the edge — which is what a browser does, and the
-    // reason a line can end a hair over the width.
+    // Includes the last unit's hanging space; only that space may pass the edge.
     let mut line_pen = 0.0f32;
-    // The unit being gathered, its width, and the space that ends it. A unit is
-    // committed to the line only once the whole of it is known to fit.
     let mut unit: Vec<usize> = Vec::new();
     let mut unit_text = 0.0f32;
     let mut unit_space = 0.0f32;
@@ -806,13 +679,9 @@ fn segment_of(atoms: &[Atom], line: &[usize], run: usize) -> Option<Vec<usize>> 
     (!indices.is_empty()).then_some(indices)
 }
 
-/// The text of a run's slice of one line, and its width.
-///
-/// `hangs` is whether this run's slice reaches the end of the line. Such a run
-/// may drop the whitespace at its end, because a browser hangs that whitespace
-/// past the line and a rule drawn under it would be a rule under nothing. A run
-/// in the *middle* of a line may not: `A **bold** word` is three runs, and the
-/// spaces that separate them are the only thing between the words.
+/// The text of a run's slice of one line, and its width. A slice that hangs at
+/// the line's end drops trailing whitespace; one in the middle keeps it, because
+/// it separates the runs.
 fn trim_segment(
     metrics: &Metrics,
     atoms: &[Atom],
@@ -824,8 +693,6 @@ fn trim_segment(
     let full = &metrics.measured[first.run].text[first.start..last.end];
     let trimmed = if hangs { full.trim_end() } else { full };
     let keep = first.start + trimmed.len();
-    // The margins are room in the line, not in the box: every caller of this wants
-    // the glyphs' own width, and the line's width is the atoms' business.
     let width: f32 = segment
         .iter()
         .map(|index| {
@@ -838,60 +705,43 @@ fn trim_segment(
     (trimmed.to_string(), width.max(0.0))
 }
 
-/// A run set that has been measured, broken into lines and had its height
-/// computed — everything needed to draw it, so a caller can size a box around it
-/// first.
-///
-/// A hard line break ends one of these, so a plan is a *list* of them: a
-/// paragraph with two breaks has three, and the atoms of one do not address the
-/// runs of another. Splitting here rather than inside the atom stream is also
-/// what keeps a break out of the shaper's hands — a paragraph is shaped with
-/// whitespace collapsed, and a break is not whitespace the shaper may touch.
+/// A run set measured, broken into lines and with its height computed. A hard
+/// break ends a plan part, so a paragraph with two breaks has three parts.
 struct Plan {
     parts: Vec<Part>,
     height: f32,
     widest: f32,
 }
 
-/// One stretch of a plan between two hard line breaks.
 struct Part {
     metrics: Metrics,
     atoms: Vec<Atom>,
     lines: Vec<Vec<usize>>,
 }
 
-/// A table cell that has been measured once and kept, because both the natural
-/// width pass and the wrapping pass need it.
+/// A table cell measured once, because both the natural-width pass and the
+/// wrapping pass need it.
 struct CellPlan {
     metrics: Metrics,
-    /// The width the cell's content wants, the way `width: max-content` asks
-    /// for it. The column is as wide as the widest cell in it.
+    /// The width the content wants, as `width: max-content` asks for it.
     natural: f32,
-    /// `text-align` of the column this cell is in.
     align: Align,
     head: bool,
 }
 
 struct Ctx<'a> {
     style: &'a MdStyle,
-    /// The width the document is laid out for. Blocks are told their own `avail`
-    /// as they are walked, because a list, a quote or a table narrows it, so
-    /// this is only what a top-level block gets.
     #[allow(dead_code)]
     avail: f32,
     images: &'a ImageStore,
     measurer: &'a mut Measurer,
     items: Vec<MdItem>,
-    /// How many links the document has, which is what a link's id is made of.
     links: u32,
-    /// The widest thing drawn, which is what a shrink-to-fit view wants.
+    /// The widest thing drawn, for a shrink-to-fit view.
     content_width: f32,
-    /// The `<details>` sections, in paint order.
     sections: Vec<MdSection>,
-    /// How many sections have been numbered so far, which is what a section's id
-    /// is counted off. It restarts with every layout, so an id is stable for as
-    /// long as the document is — which is all a view holding open/closed state
-    /// against it needs, since a different document resets that state anyway.
+    /// Section ids restart with every layout, so they are stable for the
+    /// document's lifetime, which is all a view's open/closed state needs.
     section_seq: u32,
 }
 
@@ -910,7 +760,6 @@ impl Ctx<'_> {
         self.items.push(item);
     }
 
-    /// Lays a block out and returns the y below it, margins included.
     fn block(&mut self, block: &Block, x: f32, y: f32, avail: f32) -> f32 {
         match block {
             Block::Paragraph { inlines } => {
@@ -977,11 +826,8 @@ impl Ctx<'_> {
             }
 
             Block::Table { head, rows, .. } => {
-                // `table` walks the rows from the `y` it is given and returns
-                // the bottom of the last one, so what comes back is already an
-                // absolute y. Adding `y` to it a second time pushes everything
-                // after the table down by a whole table's worth of offset, and
-                // the error compounds with every later table.
+                // `table` returns an absolute bottom, so adding `y` again would
+                // push everything after it down, compounding per table.
                 self.table(head, rows, x, y, avail) + self.style.table_margin_bottom
             }
 
@@ -996,8 +842,6 @@ impl Ctx<'_> {
             } => self.details(*open, summary, blocks, x, y, avail),
 
             Block::RawText { text } => {
-                // Markup the tree does not model, as the text of it, one source
-                // line per output line.
                 let inlines: Vec<Inline> = text
                     .split('\n')
                     .flat_map(|line| [Inline::Text(line.to_string()), Inline::HardBreak])
@@ -1008,8 +852,8 @@ impl Ctx<'_> {
             }
 
             Block::Footnote { number, blocks, .. } => {
-                // GitHub separates the collected definitions with a rule of its
-                // own and numbers them as a list.
+                // GitHub separates the definitions with a rule and numbers them
+                // as a list.
                 let margin = self.style.footnote_rule_margin;
                 let mut rule = MdItem::rect(x, y + margin, avail, self.style.rule_thickness);
                 rule.color = ColorRole::Rule;
@@ -1043,8 +887,6 @@ impl Ctx<'_> {
         let content_avail = (avail - indent).max(1.0);
         let mut y = y;
         for (index, item) in items.iter().enumerate() {
-            // `li { margin-top: 0.25em }` applies to the first item too, which is
-            // what the launcher's stylesheet says.
             y += self.style.list_item_spacing;
             match item.task {
                 Some(checked) => {
@@ -1061,7 +903,6 @@ impl Ctx<'_> {
         y + self.style.list_margin_bottom
     }
 
-    /// A block inside a list item: a tight list's paragraph is not a paragraph.
     fn item_block(&mut self, block: &Block, x: f32, y: f32, avail: f32, tight: bool) -> f32 {
         if tight && let Block::Paragraph { inlines } = block {
             if inlines.is_empty() {
@@ -1074,8 +915,6 @@ impl Ctx<'_> {
         self.block(block, x, y, avail)
     }
 
-    /// A block inside a block quote. The quote's own padding is a left inset the
-    /// caller already applied; a nested quote stacks another one on top of it.
     fn quote_block(&mut self, block: &Block, x: f32, y: f32, avail: f32) -> f32 {
         if let Block::Paragraph { inlines } = block {
             let base = RunStyle::quote(self.style);
@@ -1085,14 +924,8 @@ impl Ctx<'_> {
         self.block(block, x, y, avail)
     }
 
-    /// A `<details>`: a summary row that is always drawn, and the blocks under
-    /// it that a view hides until the row is clicked.
-    ///
-    /// The content is laid out either way, and what comes back is the height the
-    /// section takes **open**. A view that wanted the document re-measured to
-    /// close would get a jump rather than an animation, and one that hid the
-    /// content by re-laying out would watch every line below it shift; so the
-    /// engine reports the geometry and the view does the hiding. See `MdSection`.
+    /// A `<details>` is laid out **open** either way, so a view can animate the
+    /// reveal without re-measuring and shifting every line below it.
     fn details(
         &mut self,
         open: bool,
@@ -1104,9 +937,7 @@ impl Ctx<'_> {
     ) -> f32 {
         let style = self.style;
         if summary.is_empty() {
-            // No summary means no control to click, and a control with no label is
-            // not one: GitHub draws the content and nothing else, so there is no
-            // section here for a view to hide anything behind.
+            // No summary means no control to click, so there is no section.
             let mut inner = y;
             for block in blocks {
                 inner = self.block(block, x, inner, avail);
@@ -1117,8 +948,6 @@ impl Ctx<'_> {
         let id = self.section_seq;
         self.section_seq += 1;
 
-        // A settings row with a title and no description: the title's own line box
-        // between two paddings. The chevron is centred in what is left.
         let head = RunStyle::details_head(style);
         let marker_size = style.details_marker_size;
         let head_height = head.size * style.line_height + 2.0 * style.details_head_padding_y;
@@ -1132,8 +961,6 @@ impl Ctx<'_> {
             false,
         );
 
-        // The content is indented from the section's left edge by
-        // `details_content_inset`, which defaults to the row's own padding.
         let content_x = x + style.details_content_inset;
         let content_y = y + head_height + style.details_gap;
         let mut inner = content_y;
@@ -1184,10 +1011,8 @@ impl Ctx<'_> {
         height
     }
 
-    /// Measures a run set, finds its breaks and works out how tall it is.
-    ///
-    /// `hard_breaks` is the code block's own newlines. A paragraph's hard line
-    /// breaks arrive as [`HARD_BREAK`] runs and split the plan into parts.
+    /// `hard_breaks` is a code block's own newlines; a paragraph's hard breaks
+    /// arrive as [`HARD_BREAK`] runs and split the plan into parts.
     fn plan(&mut self, runs: Vec<Run>, avail: f32, wrap: bool, hard_breaks: bool) -> Plan {
         let mut parts: Vec<Part> = Vec::new();
         let mut part: Vec<Run> = Vec::new();
@@ -1239,16 +1064,8 @@ impl Ctx<'_> {
         }
     }
 
-    /// An inline image's own metrics, in place of its alt text's.
-    ///
-    /// A replaced element has no glyphs to shape: its box is the bitmap's, capped
-    /// the way `.markdown-body img { max-width: 100% }` caps one, and it sits on
-    /// the baseline with nothing below it — which is what makes a line of badges
-    /// as tall as the badges rather than as tall as the text.
-    ///
-    /// A bitmap with no size is left to the alt text: a caller that hands over an
-    /// image with no dimensions has not really handed over an image, and guessing
-    /// a box for it would push everything after it around.
+    /// An inline image's metrics in place of its alt text's: its box is the
+    /// bitmap capped at `max-width: 100%`. A bitmap with no size stays alt text.
     fn measure_placed_image(&mut self, run: &Run, avail: f32) -> SpanMetrics {
         let url = run.image.as_deref().unwrap_or_default();
         let Some(asset) = self.images.get(url) else {
@@ -1282,9 +1099,8 @@ impl Ctx<'_> {
         }
     }
 
-    /// Draws a plan at `x`, `y`. Items come out in paint order: the capsules
-    /// first, then the glyphs on them, then the decorations, then the link boxes
-    /// that take the presses.
+    /// Items come out in paint order: capsules, glyphs, decorations, then the
+    /// link boxes that take the presses.
     fn draw(&mut self, plan: &Plan, x: f32, y: f32) {
         let mut y = y;
         for part in &plan.parts {
@@ -1320,13 +1136,7 @@ impl Ctx<'_> {
                 let measured = &plan.metrics.measured[index];
                 let ascent = measured.ascent;
                 let height = measured.ascent + measured.descent;
-                // The padding is symmetric, but it may not push the capsule past
-                // the glyphs' own ink: a `0.2em` of vertical padding on a
-                // 12px code run is 2.4px, and a tall glyph has room for it.
                 let pad_y = run.style.pad_y;
-                // `left` is the glyphs' start and `advance` their width, the
-                // margin being neither — so the capsule is the code and its own
-                // padding, and the gap the text beside it gets is still there.
                 let mut chip = MdItem::rect(
                     left - run.style.pad_x,
                     baseline - ascent - pad_y,
@@ -1338,9 +1148,6 @@ impl Ctx<'_> {
                 self.push(chip);
             }
 
-            // The pictures of the line, in the same pass as the glyphs so that a
-            // badge between two words lands between them rather than in a layer
-            // of its own.
             for (index, run) in plan.metrics.runs.iter().enumerate() {
                 if !run.is_placed_image(self.images) {
                     continue;
@@ -1350,9 +1157,6 @@ impl Ctx<'_> {
                 if measured.width <= 0.0 {
                     continue;
                 }
-                // The guard, not the segment: a run that did not land on this line
-                // has no position here, and `advance_of_before` would answer zero
-                // for it and put the picture at the start of the line.
                 if segment_of(&plan.atoms, line, index).is_none() {
                     continue;
                 }
@@ -1449,10 +1253,8 @@ impl Ctx<'_> {
                 let last_of_run = *segment.last().unwrap();
                 let (text, trimmed) =
                     trim_segment(&plan.metrics, &plan.atoms, &segment, hangs(last_of_run));
-                // A linked image has no text to trim and no clusters to add up, so
-                // `trim_segment` reports nothing for it — and without a box of its
-                // own a badge would draw and not be clickable. Its advance is its
-                // measured width, which is the bitmap's.
+                // A linked image has no clusters, so its measured width is the
+                // advance; without a box of its own a badge would not be clickable.
                 let is_image = run.is_placed_image(self.images);
                 let advance = if is_image {
                     plan.metrics.measured[index].width
@@ -1469,31 +1271,16 @@ impl Ctx<'_> {
                 let left = x + advance_of_before(&plan.atoms, line, index);
                 let top = baseline - measured.ascent;
                 let box_height = measured.ascent + measured.descent;
-                // One item: the transparent box that takes the press, carrying
-                // where its rule belongs so that a view does not have to guess.
-                // The rule sits under the descender, which is where a browser
-                // puts `text-decoration: underline`, and `underline_offset` is
-                // the font's own answer to that question.
                 let mut hit = MdItem::rect(left, top, advance, box_height);
                 hit.color = ColorRole::Link;
-                // Never a fill: this is a hit area and the rule's anchor, and the
-                // glyphs under it are already drawn in the link colour.
+                // Never a fill: the glyphs are already drawn in the link colour.
                 hit.filled = false;
                 hit.link_id = id;
                 hit.link_url = url;
-                // The rule sits under the descender, which is where a browser puts
-                // `text-decoration: underline`, and `underline_offset` — measured
-                // from the baseline *downwards* — is the font's own answer to
-                // where that is. The box's top is the baseline less the ascent, so
-                // the distance down from the box's top is the ascent plus the
-                // offset. `underline_offset - descent` would be negative for every
-                // font and clamp to zero, landing the rule on the box's top edge —
-                // a line through the tops of the letters rather than under them.
-                //
-                // A font with no underline position in its metrics reports zero,
-                // and a rule *on* the baseline touches the letters instead of
-                // sitting under them, so a zero falls back to what a browser uses
-                // in the same case: a small fraction of the em.
+                // `underline_offset` is measured downwards from the baseline, so
+                // from the box top it is the ascent plus the offset. It is zero
+                // for a font with no underline metrics; fall back to a small
+                // fraction of the em rather than draw on the baseline.
                 let offset = if measured.underline_offset > 0.0 {
                     measured.underline_offset
                 } else {
@@ -1509,8 +1296,6 @@ impl Ctx<'_> {
         }
     }
 
-    /// The `pre` box: the code in the code font, on the code block's background
-    /// fill, inside `code_block_padding` of padding.
     fn code_block(&mut self, code: &str, x: f32, y: f32, avail: f32) -> f32 {
         let padding = self.style.code_block_padding;
         let wrap = self.style.code_block_wrap;
@@ -1529,9 +1314,8 @@ impl Ctx<'_> {
         height
     }
 
-    /// A table. Column widths come from the cells' own widths, the way
-    /// `width: max-content` does; a table that is still too wide shares the
-    /// shortfall between its columns and wraps inside them.
+    /// Column widths come from `width: max-content`; a table still too wide
+    /// shares the shortfall between its columns and wraps inside them.
     fn table(&mut self, head: &[Cell], rows: &[Vec<Cell>], x: f32, y: f32, avail: f32) -> f32 {
         let style = self.style;
         let columns = head.len().max(rows.iter().map(Vec::len).max().unwrap_or(0));
@@ -1539,9 +1323,7 @@ impl Ctx<'_> {
             return 0.0;
         }
 
-        // Measure every cell once and keep it: the natural-width pass and the
-        // wrapping pass both need it, and a cell's runs are what the view ends
-        // up drawing.
+        // Every cell is measured once and kept for both width passes.
         let source: Vec<&[Cell]> = std::iter::once(head)
             .chain(rows.iter().map(Vec::as_slice))
             .collect();
@@ -1598,23 +1380,14 @@ impl Ctx<'_> {
         let total: f32 = column_widths.iter().sum();
         if total > avail {
             // Every column keeps a share of what its cells need, and the cells
-            // wrap inside it. A view that cannot scroll sideways gets this
-            // instead; see the crate's README for why.
+            // wrap inside it, because a view cannot scroll sideways.
             let factor = avail / total;
             let floor = style.font_size * 2.0;
             for width in &mut column_widths {
                 *width = (*width * factor).max(floor);
             }
-            // Sharing the shortfall in proportion is how a *header* gets broken:
-            // a column sized for its share of a long cell comes out narrower than
-            // its own heading, and "State" wraps to "Stat" / "e" in the middle of
-            // a row of one-word headings. A column cannot usefully be narrower
-            // than its longest word, so each is raised to that, and the columns
-            // with slack above their own longest word give up the difference. Only
-            // a table whose every column is one long word comes out still too
-            // wide, and then the words break, which is unavoidable.
-            // The chrome counts: a column has to hold its longest word *and* the
-            // padding around it, or the word breaks to make room for the padding.
+            // A column cannot usefully be narrower than its longest word plus
+            // chrome, so raise each to that and let the columns with slack pay.
             let mut minimums = vec![0.0f32; columns];
             for row in &plans {
                 for (index, cell) in row.iter().enumerate() {
@@ -1640,9 +1413,6 @@ impl Ctx<'_> {
                         if *width < minimum {
                             *width = minimum;
                         } else {
-                            // The columns that are already wider than their own
-                            // longest word pay for the ones that are not, each by
-                            // the same fraction of the slack it holds.
                             *width -= (*width - minimum) / slack * wanted;
                         }
                     }
@@ -1650,13 +1420,9 @@ impl Ctx<'_> {
             }
         }
 
-        // A column the fit above squeezed down can end up narrower than the
-        // cell's own padding, and padding the text out of existence wraps it one
-        // character to a line: a five-word cell becomes fifty lines tall. The
-        // text is the point of a cell and the padding is decoration, so the text
-        // keeps a character's width and the padding takes whatever is left of
-        // the column. A column narrow enough to lose its padding entirely still
-        // reads; one narrow enough to lose the text does not.
+        // The text keeps at least a character's width; the padding takes what
+        // is left, because a cell with no padding still reads and one with no
+        // text does not.
         let column_chrome: Vec<f32> = column_widths
             .iter()
             .map(|width| chrome.min((*width - style.font_size).max(0.0)))
@@ -1664,14 +1430,8 @@ impl Ctx<'_> {
 
         let mut y = y;
         for row in plans.iter_mut() {
-            // The text is planned before anything is drawn, because the row's
-            // height comes from its tallest cell and the fills go around it.
             let mut laid_out: Vec<(f32, Plan)> = Vec::with_capacity(row.len());
-            // The content's height, before the cell's own padding. The row is
-            // this plus that padding, so a cell's text is inside its cell: the
-            // padding moves the content down, and a height that ignored it would
-            // put the text half a line below the fill that is meant to be
-            // behind it.
+            // The row height is the tallest content plus the cell padding.
             let mut content_height = 0.0f32;
             for (index, cell) in row.iter_mut().enumerate() {
                 let column = column_widths.get(index).copied().unwrap_or(0.0);
@@ -1693,31 +1453,19 @@ impl Ctx<'_> {
                     continue;
                 }
                 let cell = &row[index];
-                // The cell's fill and border. With `border-collapse: collapse`
-                // neighbours share an edge, and they share it exactly here: two
-                // cells of the same width meet on the same pixel, so the border
-                // is one pixel and not two.
                 let mut background = MdItem::rect(cell_x, y, *column, row_height);
                 background.border_width = style.cell_border;
                 background.border_color = ColorRole::TableBorder;
                 if cell.head {
                     background.color = ColorRole::TableHeadBackground;
                 } else {
-                    // A body cell has no background of its own: GitHub paints the
-                    // `tr`, and the row here sits on the container, which has
-                    // none. So a body cell is its outline and nothing else.
                     background.color = ColorRole::TableBorder;
                     background.filled = false;
                 }
                 self.push(background);
-                // The column's alignment is the slack between the cell's box and
-                // its content, so a right-aligned column reads as right-aligned
-                // rather than as text that happens to be wide.
                 let cell_chrome = column_chrome.get(index).copied().unwrap_or(chrome);
                 let slack = (*column - cell_chrome - plan.widest).max(0.0);
                 let offset = cell.align.align_factor() * slack;
-                // The same chrome the plan was given, so a cell that gave up its
-                // padding keeps its text at the inset it planned for.
                 let inset = (cell_chrome * 0.5).max(0.0);
                 self.draw(
                     plan,
@@ -1731,11 +1479,8 @@ impl Ctx<'_> {
         y
     }
 
-    /// A block image: its own size, capped to the width of the line it is on.
     fn image(&mut self, url: &str, alt: &str, x: f32, y: f32, avail: f32) -> f32 {
         let Some(asset) = self.images.get(url) else {
-            // Nothing fetched, or nothing fetchable: the alt text, which is what
-            // a browser shows for an image that did not load.
             if alt.is_empty() {
                 return 0.0;
             }
@@ -1748,8 +1493,7 @@ impl Ctx<'_> {
             return 0.0;
         }
         let ratio = natural_width as f32 / natural_height as f32;
-        // `img { max-width: 100% }` and no height constraint, so a wide image
-        // comes down to the line's width and keeps its proportions.
+        // `max-width: 100%`, so a wide image scales down and keeps its ratio.
         let width = (natural_width as f32).min(avail);
         let height = width / ratio;
         let mut item = MdItem::rect(x, y, width, height);
@@ -1762,9 +1506,8 @@ impl Ctx<'_> {
         height
     }
 
-    /// `•` or `1.`, where a user agent's list marker would sit: a gap of
-    /// `0.5em` to the left of the content, right-aligned against it, and
-    /// centred on the first line of the item.
+    /// The marker a user agent would place left of the content, centred on the
+    /// item's first line.
     fn list_marker(&mut self, ordered: bool, number: u64, x: f32, y: f32, content_x: f32) {
         let text = if ordered {
             format!("{number}.")
@@ -1801,7 +1544,6 @@ impl Ctx<'_> {
         self.push(item);
     }
 
-    /// A task list's checkbox: a box, and a tick in it when it is checked.
     fn task_marker(&mut self, checked: bool, x: f32, y: f32, content_x: f32) {
         let size = self.style.task_marker_size;
         let line = self.style.font_size * self.style.line_height;
@@ -1811,11 +1553,8 @@ impl Ctx<'_> {
         box_item.radius = 3.0;
         box_item.border_width = 1.0;
         box_item.color = ColorRole::Marker;
-        // An outline, never a fill. A filled box in the marker's colour with a
-        // tick in the marker's colour is a tick you cannot see, which is what a
-        // checked task looked like: two identical solid squares. A browser's
-        // checkbox is an outline with a tick in it, and that is also the one shape
-        // that reads in a theme of any colours.
+        // An outline, never a fill: a tick in the marker's colour on a fill of
+        // the same colour would be invisible.
         box_item.filled = false;
         box_item.border_color = ColorRole::Marker;
         self.push(box_item);
@@ -1856,12 +1595,8 @@ fn empty_plan() -> Plan {
     }
 }
 
-/// Where the given run's glyphs start on this line.
-///
-/// The sum of the atoms before it, plus its own first atom's leading margin: that
-/// margin is room in the line, so it is part of the advance, but it is *before* the
-/// first glyph rather than inside it, and everything that draws a run wants the
-/// glyphs' position rather than the margin's.
+/// Where the run's glyphs start: the atoms before it plus its leading margin,
+/// because that margin is before the first glyph rather than inside it.
 fn advance_of_before(atoms: &[Atom], line: &[usize], run: usize) -> f32 {
     let mut x = 0.0;
     for index in line {
@@ -1878,8 +1613,6 @@ fn line_advance(atoms: &[Atom], line: &[usize]) -> f32 {
     line.iter().map(|index| atoms[*index].advance).sum()
 }
 
-/// The natural width of a run set: every run's advance, plus the padding and
-/// margin of the inline-code capsules.
 fn natural_width(metrics: &Metrics) -> f32 {
     let mut width = 0.0;
     for (index, run) in metrics.runs.iter().enumerate() {
@@ -1891,14 +1624,7 @@ fn natural_width(metrics: &Metrics) -> f32 {
     width
 }
 
-/// The width of the widest single word in a cell, which is how narrow a column
-/// can usefully be.
-///
-/// A browser lays a table's cells out at their *min-content* width when the
-/// table has to be squeezed, and min-content is the widest unbreakable run. This
-/// is that, summed over the runs' clusters: a word that the shaper split across
-/// clusters still adds up, because a cluster boundary is not a place a line may
-/// break, and one that falls inside a word is not a place at all.
+/// The widest unbreakable word, which is a column's min-content width.
 fn min_content_width(metrics: &Metrics) -> f32 {
     let mut widest = 0.0f32;
     for (index, run) in metrics.runs.iter().enumerate() {
@@ -1928,8 +1654,7 @@ fn min_content_width(metrics: &Metrics) -> f32 {
     widest
 }
 
-/// Snaps to a 1/64th of a pixel: a hundredth of a pixel of drift is enough to
-/// put a run a hair away from the box drawn behind it.
+/// Snaps to 1/64th of a pixel, enough to keep a run on the box behind it.
 fn round(value: f32) -> f32 {
     (value * 64.0).round() / 64.0
 }

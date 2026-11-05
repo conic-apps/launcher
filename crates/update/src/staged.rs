@@ -29,7 +29,6 @@ pub struct DownloadProgress {
     pub total: Option<u64>,
 }
 
-/// A verified bundle waiting to be applied.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Staged {
     pub version: String,
@@ -38,7 +37,6 @@ pub struct Staged {
     pub sha256: String,
 }
 
-/// The directory downloaded bundles (and `pending.json`) live in.
 pub fn updates_dir() -> PathBuf {
     storage::LOCATIONS.launcher.root.join("updates")
 }
@@ -47,7 +45,6 @@ fn pending_path() -> PathBuf {
     updates_dir().join("pending.json")
 }
 
-/// The staged bundle from a previous run, if one is waiting.
 pub fn read_pending() -> Result<Option<Staged>> {
     let path = pending_path();
     match std::fs::read(&path) {
@@ -89,8 +86,6 @@ pub fn artifact_name(url: &str) -> Option<String> {
     Some(last)
 }
 
-/// Streams `info.url` into the staging directory, verifying its signature and
-/// (when the server sent one) its checksum, then records it as pending.
 pub async fn download_and_stage(
     info: &UpdateInfo,
     kind: InstallKind,
@@ -227,7 +222,6 @@ fn hex(bytes: &[u8]) -> String {
     out
 }
 
-/// Extracts a `.tar.gz` archive into `dest`, creating `dest` first.
 pub fn extract_tar_gz(archive: &Path, dest: &Path) -> Result<()> {
     std::fs::create_dir_all(dest)?;
     let file = std::fs::File::open(archive)?;

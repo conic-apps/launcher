@@ -20,44 +20,35 @@ export component GameView inherits Rectangle {
     height: 100%;
     background: transparent;
 
-    // The exit: the whole page fades at once. The entrance is still the
-    // per-element `GameIntro` stagger, so this leaves `opacity` alone except on
-    // "leave" — an "enter" here would double the intro.
+    // Only the exit uses this; the entrance is the `GameIntro` stagger, so an
+    // "enter" here would double the intro.
     opacity: PageMotion.phase("game") == "leave" ? 0.0 : 1.0;
     animate opacity {
         duration: 200ms;
         easing: ease-out-quad;
     }
 
-    // The screen is recreated on every navigation to it (the page stack uses a
-    // conditional), so the intro replays on every visit.
+    // The page stack recreates this screen per navigation, so the intro replays.
     init => {
         GameIntro.played = false;
     }
 
-    // The intro is a single beat: once the first frame has been rendered, centre
-    // the current instance without animating (so the list opens on the selected
-    // instance rather than gliding to it) and then play every intro at once by
-    // flipping the shared flag — each element's `animate` carries its own delay,
-    // which is how the timeline positions are reproduced.
+    // Centre the current instance without animating, then flip the shared flag
+    // so every element plays its own delayed `animate`.
     intro-timer := Timer {
         interval: 50ms;
         running: true;
         triggered => {
             instance-list.scroll-to-current(false);
-            // The entrance is ordered against the window the list settled on, so
-            // the list has to be told where that is *after* the centring and
-            // before the flag flips — otherwise the cards stagger from the top of
-            // the whole list and a list opened on its last instance has every
-            // visible card waiting the same step.
+            // Tell the list its window after centring, before the flag flips,
+            // so cards stagger from the visible area rather than the list top.
             instance-list.begin-intro();
             GameIntro.played = true;
             intro-timer.running = false;
         }
     }
 
-    // A click on the page's empty space blurs a focused field, as on the
-    // settings page.
+    // Clicking empty space blurs a focused field.
     background-touch := TouchArea {
         width: parent.width;
         height: parent.height;
@@ -78,17 +69,12 @@ export component GameView inherits Rectangle {
         y: parent.height - self.height;
     }
 
-    // The instance settings overlay. Declared before `ContentRoot` because it
-    // paints first, and their order is what decides which of the two is on top
-    // when both are open.
+    // Declaration order is the z-order: settings below content, account on top.
     InstanceSettingsRoot { }
 
-    // The content overlays. Mounted here rather than at the app root so the
-    // panels sit below the title bar and only exist on the game screen.
+    // Mounted here, not at the app root, so the panels sit below the title bar
+    // and exist only on the game screen.
     ContentRoot { }
 
-    // The account view. Declared last so it is the topmost of the game view's
-    // overlays: it is opened from the footer and nothing inside it opens another
-    // overlay underneath.
     AccountViewRoot { }
 }

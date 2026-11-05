@@ -46,11 +46,6 @@ impl LoginTaskState {
         self.task.lock().expect("Internal error").is_some()
     }
 
-    /// Starts the login task and awaits it, reporting its progress through
-    /// `reporter`.
-    ///
-    /// A call while another task is running fails with
-    /// [`Error::LoginInProgress`].
     pub async fn spawn(
         &self,
         request: LoginRequest,

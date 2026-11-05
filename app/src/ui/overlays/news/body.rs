@@ -4,15 +4,8 @@
 
 //! The changelog detail's HTML body and its layout.
 //!
-//! The engine is the app's one Markdown/HTML renderer
-//! (`app/src/ui/components/markdown`); only the properties the display list
-//! lands in are the news surface's own. The body is laid out for a width the
-//! view reports and re-laid out whenever that width changes.
-//!
-//! Two deliberate simplifications over the content detail's body, both because
-//! of what a changelog is: it has no `<details>` (so there are no collapsible
-//! sections to animate or remember) and no images (an image item has no bitmap
-//! to draw and is skipped, not reserved as an empty box).
+//! A changelog has no `<details>` and no images, so image items are skipped
+//! rather than reserved as empty boxes.
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -24,12 +17,8 @@ use crate::ui::components::markdown::{ItemKind, MdStyle, Renderer, SourceFormat}
 use crate::ui::overlays::content::{monospace_family, theme_font_family};
 
 thread_local! {
-    /// The Markdown engine behind the changelog body.
-    ///
-    /// A `thread_local` for the same reason the content body's is one: a
-    /// `fontique::Collection` is not `Send`, and the engine holds one. Keeping
-    /// it between changelogs also keeps the font cache, which a fresh engine
-    /// would re-read from every font file.
+    /// A `fontique::Collection` is not `Send`, and keeping the engine between
+    /// changelogs also keeps the font cache.
     static BODY: RefCell<Option<Body>> = const { RefCell::new(None) };
 }
 
@@ -38,15 +27,12 @@ struct Body {
     width: f32,
     /// The family the engine measured code with; the view draws with it too.
     mono: String,
-    /// The runs the view stacks.
     chunks: Rc<VecModel<MdChunk>>,
-    /// A run's items, kept beside it so a re-layout rewrites them in place.
+    /// Kept beside their run so a re-layout rewrites them in place.
     run_items: Vec<Rc<VecModel<MdItem>>>,
-    /// Which runs are open, index-aligned with `chunks`. A changelog has no
-    /// `<details>`, so every value is false — but the view indexes against the
-    /// model, so it still has to exist.
+    /// A changelog has no `<details>`, so every value is false — but the view
+    /// indexes against the model, so it still has to exist.
     section_open: Rc<VecModel<bool>>,
-    /// Whether the models have been handed to the global yet.
     bound: bool,
 }
 

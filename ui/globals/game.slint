@@ -2,41 +2,35 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// Game view state.
-//
-// Domain state (the instance list, the current instance, accounts) lives in
-// Rust and is pushed into this global; pure-UI state (search query, sort/group
-// mode, selected account) is written here by the view and read back by Rust
-// through the callbacks. This keeps the crate layer free of any Slint types.
+// Game view state. Domain state lives in Rust and is pushed in; pure-UI state
+// (search, sort/group mode, selected account) is written here and read back by
+// Rust through callbacks.
 
-/// A single flattened row of the instance list: either a group header or an
-/// instance card. Rust expands the favorites/loader grouping so the view can
-/// render the list with a single `for`.
+/// A flattened row of the instance list: a group header or an instance card.
+/// Rust expands the grouping so the view can render with a single `for`.
 export struct GameRow {
     /// "group" or "instance".
     kind: string,
-    /// Group key or instance id (what `toggle-group` / `select-instance` take).
+    /// Group key or instance id.
     key: string,
-    /// Identity of the *rendered* row, `<group-key>:<instance-id>` for cards and
-    /// the group key for headers. A starred instance is listed twice (in its
-    /// group and in "all"), so the instance id alone is not unique.
+    /// Identity of the rendered row. A starred instance is listed twice, so the
+    /// instance id alone is not unique.
     uid: string,
-    /// Row position and height inside the list content (Rust lays the list out
-    /// so the view can position rows absolutely and compute the parallax rail).
-    /// `row-y` (not `y`) to avoid clashing with the element `y` property.
+    /// Row position and height inside the list content. `row-y` avoids clashing
+    /// with the element `y` property.
     row-y: length,
     height: length,
     /// Instance name (instance rows only).
     name: string,
-    /// Group title kind: "favorites", "all" or "literal" (group rows only).
+    /// "favorites" | "all" | "literal" (group rows only).
     title-kind: string,
-    /// Group title when `title-kind == "literal"` (group rows only).
+    /// Group title when `title-kind == "literal"`.
     title-literal: string,
-    /// Number of instances in the group (group rows only).
+    /// Number of instances in the group.
     count: int,
-    /// Display name of the mod loader, or "Vanilla" (instance rows only).
+    /// Loader display name, or "Vanilla" (instance rows only).
     loader: string,
-    /// Lower-case loader key used for the tag/group accent colour.
+    /// Lower-case loader key used for the accent colour.
     loader-key: string,
     /// Relative-time kind for `GameTime.last-played`.
     last-played-kind: string,
@@ -46,25 +40,19 @@ export struct GameRow {
     last-played-year: int,
     starred: bool,
     current: bool,
-    /// Whether the group is collapsed (group rows only).
+    /// Whether the group is collapsed.
     collapsed: bool,
-    /// Row opacity target. Cards of a collapsed group stay in the model — parked
-    /// on their group's slot with opacity 0 — so the view's `for` items are never
-    /// destroyed and can glide along the rail (and fade) when the group toggles.
+    /// Row opacity target. A collapsed group's cards stay in the model with
+    /// opacity 0 so their `for` items survive and can glide/fade.
     opacity: float,
-    /// False until a row that was just added (search, sort, grouping, starring)
-    /// has been revealed; the view slides such rows in along the rail from +24px.
-    /// Rust flips it one frame after the row appears in the model, which is what
-    /// triggers the animation.
+    /// False until a newly added row has been revealed; the view slides it in.
     appear: bool,
-    /// Whether this row's next position change animates the 400ms
-    /// `cubic-bezier(0.22,1,0.36,1)` a reordered list travels with, rather than
-    /// the 300ms `cubic-bezier(0.33,1,0.68,1)` of a group collapse.
+    /// Whether the next position change animates a reorder rather than a group
+    /// collapse.
     flip: bool,
-    /// Whether the instance has a custom background (instance rows only).
+    /// Whether the instance has a custom background.
     has-background: bool,
-    /// The instance's decoded custom background, drawn on the card's right half
-    /// (instance rows only). Empty for a group row or an instance without one.
+    /// The decoded custom background, drawn on the card's right half.
     background: image,
 }
 
@@ -73,20 +61,17 @@ export struct AccountItem {
     /// Stable account key (`microsoft-<uuid>` etc.).
     key: string,
     name: string,
-    /// "Microsoft" / "Offline" / "Yggdrasil".
+    /// "Microsoft" | "Offline" | "Yggdrasil".
     kind: string,
-    /// The head the row's 18px avatar shows, built by Rust (only it can crop a
-    /// skin).
+    /// The head the row's avatar shows, built by Rust because only it can crop a
+    /// skin.
     avatar: image,
 }
 
-/// Relative time / play time formatting helpers.
-///
-/// Slint evaluates `@tr` bindings again when the locale changes, so keeping the
-/// formatting here (rather than in Rust) preserves runtime language switching.
+/// Relative-time and play-time formatting helpers, kept here so `@tr` re-evaluates
+/// on a locale change.
 export global GameTime {
-    /// A year-month-day date, used for the relative times below and for the
-    /// release dates in the version chooser.
+    /// A year-month-day date, used for relative times and version release dates.
     public pure function year-month-day(month: int, day: int, year: int) -> string {
         return @tr("GameTime" => "{}/{}/{}", month, day, year);
     }
@@ -126,30 +111,24 @@ export global GameTime {
     }
 }
 
-/// Entrance animation state of the game view.
-///
-/// `GameView` resets `played` to false on every instantiation and flips it true
-/// once the list has been measured. Every animated intro property in the game
-/// view reads it; the ordering of the intro (the list starting 50ms in, the
-/// cards 115ms after that, the footer's inner rows staggered) is expressed as
-/// the `delay` of each `animate`.
+/// Entrance animation state of the game view. `GameView` resets `played` on every
+/// instantiation and flips it true once the list has been measured.
 export global GameIntro {
     in-out property <bool> played: false;
 }
 
 export global GameState {
     in-out property <[GameRow]> rows: [];
-    /// Total scrollable height of the instance list content (gap top + rows +
-    /// gap bottom).
+    /// Total scrollable height of the instance list content.
     in-out property <length> list-content-height: 0px;
-    /// Bumped after the current instance changes from the keyboard or
-    /// Alt/Option + the wheel, so the list can glide to its row.
+    /// Bumped when the current instance changes from the keyboard or
+    /// Alt/Option + wheel, so the list can glide to its row.
     in-out property <int> selection-serial: 0;
-    /// A group header's content position and the serial that asks the list to
-    /// put it just below the sort/group bar after the group is expanded.
+    /// A group header's content position, and the serial that asks the list to
+    /// bring it below the sort/group bar after expansion.
     in-out property <length> group-scroll-y: 0px;
     in-out property <int> group-scroll-serial: 0;
-    /// Position/size of the current instance's row, used to center it on open.
+    /// The current instance's row position and size, used to centre it on open.
     in-out property <length> current-row-y: -1px;
     in-out property <length> current-row-height: 0px;
     in-out property <bool> has-instances: false;
@@ -179,32 +158,25 @@ export global GameState {
     in-out property <string> current-playtime-value: "";
     in-out property <bool> current-starred: false;
 
-    // The instance's four content counts. Each is the length of the list the
-    // content overlay draws from — the same parsed list, counted, not a second
-    // scan of the folder. Rust writes them from `overlays/content/cache.rs`.
+    // The four content counts: lengths of the same parsed lists the content
+    // overlay draws from, not a second scan of the folder.
     in-out property <int> content-saves: 0;
     in-out property <int> content-mods: 0;
     in-out property <int> content-resourcepacks: 0;
     in-out property <int> content-screenshots: 0;
-    /// The icons the game view's preview rows draw — up to five of each kind,
-    /// in a 20px circle. The first slice of the same lists the panels draw,
-    /// fetched one at a time as each icon decodes.
+    /// The icons the game view's preview rows draw, up to five of each kind.
     in-out property <[image]> preview-saves: [];
     in-out property <[image]> preview-mods: [];
     in-out property <[image]> preview-resourcepacks: [];
     in-out property <[image]> preview-screenshots: [];
-/// Whether a kind's list is still being parsed, one flag per kind.
-    ///
-    /// They settle at very different times — a mods folder is a SHA-512 per jar
-    /// while a screenshot folder is a `read_dir` — so one flag for all four
-    /// would hold three numbers hostage to the slowest, showing a row's preview
-    /// icons next to a spinner that has nothing to do with them.
+    /// Whether a kind's list is still being parsed, one flag per kind because
+    /// they settle at very different times.
     in-out property <bool> content-loading-saves: false;
     in-out property <bool> content-loading-mods: false;
     in-out property <bool> content-loading-resourcepacks: false;
     in-out property <bool> content-loading-screenshots: false;
-    // Suffix shown after a content count. Only Chinese uses one ("个"/"個");
-    // Rust derives it from the language so it is not a gettext key.
+    // Suffix after a content count. Only Chinese uses one; Rust derives it from
+    // the language so it is not a gettext key.
     in-out property <string> count-unit: "";
 
     in-out property <[AccountItem]> accounts: [];
@@ -212,26 +184,22 @@ export global GameState {
     in-out property <string> current-account-key: "";
     in-out property <string> current-account-name: "";
     in-out property <string> current-account-kind: "";
-    /// The 56px head on the footer's avatar. The wide Steve while no account is
-    /// selected.
+    /// The head on the footer's avatar; the wide Steve when no account is selected.
     in-out property <image> current-account-avatar;
 
-    // Called once at startup and whenever something changed on disk.
+    /// Called once at startup and whenever something changed on disk.
     callback refresh();
-    // Reloads the list and selects the given instance as it lands. Used after a
-    // create, where the instance is only in the *new* listing: plain `refresh`
-    // would keep the previous selection and `select-instance` would clear the
-    // summary until the reload completes.
+    /// Reloads the list and selects the given instance as it lands. Used after a
+    /// create, where the instance is only in the new listing.
     callback refresh-selecting(string);
-    // An account was added or removed: pick one when none is selected. Rust
-    // owns the config, so this runs there rather than in the dialog's script.
+    /// An account was added or removed: pick one when none is selected.
     callback select-first-account();
-    // An instance card was clicked.
+    /// An instance card was clicked.
     callback select-instance(string);
-    /// Moves the current instance by one in the displayed order: -1 previous,
-    /// 1 next. Used by Up/Down and by Alt/Option + a mouse wheel notch.
+    /// Moves the current instance by one in the displayed order: -1 previous, 1
+    /// next. Used by Up/Down and Alt/Option + wheel.
     callback move-selection(int);
-    // A group header was clicked.
+    /// A group header was clicked.
     callback toggle-group(string);
     callback set-sort(string);
     callback set-group-mode(string);

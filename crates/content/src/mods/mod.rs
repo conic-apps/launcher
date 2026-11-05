@@ -2,13 +2,12 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Mods parser. It supports `forge`, `neoforge`, `fabric`, `quilt` and `liteloader`.
+//! Mods parser for `forge`, `neoforge`, `fabric`, `quilt` and `liteloader`.
 //!
-//! [`parse_mod`] resolves every mod contained in a single archive (including
-//! jar-in-jar dependencies), while [`parse_folder`] resolves all mods inside a
-//! directory. Files that can't be recognized as a mod are skipped, and files
-//! that look like a mod but fail to parse are kept as a fallback entry with
-//! [`ModLoader::Unknown`] so they don't silently disappear from the list.
+//! [`parse_mod`] resolves every mod in one archive (including jar-in-jar
+//! dependencies) and [`parse_folder`] resolves a directory. Files that are not
+//! mods are skipped; ones that look like mods but fail to parse are kept as
+//! [`ModLoader::Unknown`] entries so they do not silently disappear.
 //!
 //! # Example
 //!
@@ -157,10 +156,8 @@ impl ResolvedMod {
     }
 }
 
-/// Mods parser. It supports `forge`, `neoforge`, `fabric`, `quilt` and `liteloader`.
-///
-/// It will parse the mod using a parser that is suitable for the mod, and returns
-/// every mod found inside the archive, including jar-in-jar dependencies.
+/// Parses with the loader's own parser, returning every mod in the archive,
+/// including jar-in-jar dependencies.
 ///
 /// - `Ok(..)`: the file was recognized as a mod (or several).
 /// - `Err(Error::NotAModFile)`: the file is not a mod at all.

@@ -10,15 +10,8 @@ import { NewsState, NewsText } from "../../globals/news.slint";
 import { ContentTitleBar } from "../content/content-title-bar.slint";
 import { NewsBody } from "news-body.slint";
 
-// The changelog detail panel: the entry's header and hero, then the full body
-// the launcher-content crate fetched.
-//
-// It uses the content panels' own title bar rather than a bespoke header with a
-// back button: a detail is dismissed by its scrim (or Escape) exactly as the
-// content details are, so the back affordance was the one thing that set it
-// apart.
+// The changelog detail panel: header and hero, then the full body.
 export component NewsDetailPanel inherits Rectangle {
-    /// The overlay container's size, passed in rather than read off `parent`.
     in property <length> panel-width: 0px;
     in property <length> panel-height: 0px;
 
@@ -113,8 +106,7 @@ export component NewsDetailPanel inherits Rectangle {
                                 }
 
                                 Text {
-                                    // The app's localized absolute date; see
-                                    // `GameTime.year-month-day`.
+                                    // The localized absolute date.
                                     text: GameTime.year-month-day(
                                         NewsState.detail-month,
                                         NewsState.detail-day,
@@ -131,9 +123,8 @@ export component NewsDetailPanel inherits Rectangle {
                     body := NewsBody {
                         scroll-y: scroller.content-y;
                         viewport-height: scroller.height;
-                        // The scroller's offset is not enough on its own: the
-                        // view culls from its own top, so the two layout steps
-                        // above it are added back.
+                        // The view culls from its own top, so add the two layout
+                        // steps above.
                         top-in-scroll: details-column.y
                             + details-inner.y
                             + body.y;

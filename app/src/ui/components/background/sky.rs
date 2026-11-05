@@ -2,45 +2,32 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The hyperbola sky.
+//! The hyperbola sky: six anti-aliased curves rotated -40°, erased through a
+//! gradient below a band so they dissolve into the terrain rather than being cut
+//! off at the horizon.
 //!
-//! Six hyperbolae (`x²/a² - y²/b² = 1`, a = 40 … 640, b = 200) are stroked in
-//! all four branches, the whole set rotated -40° about a point a quarter of the
-//! way down the window, each curve fainter than the last and all of them
-//! anti-aliased at 0.6 CSS pixels wide. Below a band centred at 60.6% of the
-//! height the sky is erased with a `destination-out` gradient, which is what
-//! lets the hyperbolae run past the horizon and dissolve into the terrain
-//! instead of being cut off at it.
-//!
-//! The result is cached: it only depends on the size and the palette, so it is
-//! rebuilt when the window resizes or the flavour changes and uploaded once,
-//! unlike the world's per-frame image.
+//! The result depends only on size and palette, so it is cached and uploaded
+//! once rather than re-rendered per frame.
 
 use slint::{Rgba8Pixel, SharedPixelBuffer};
 
 use super::raster;
 use super::scene::LAYER_ALPHA;
 
-/// The hyperbolae's semi-major axes, faintest last.
+/// The curves' semi-major axes, faintest last.
 const CURVES: [f32; 6] = [40.0, 110.0, 180.0, 280.0, 420.0, 640.0];
-/// The semi-minor axis shared by every curve.
 const B: f32 = 200.0;
-/// Stroke width in CSS pixels.
 const LINE_WIDTH: f32 = 0.6;
-/// The rotation of the whole figure, in degrees.
 const ROTATION_DEGREES: f32 = -40.0;
-/// Where the figure's centre sits vertically, as a fraction of the height.
+/// The figure's centre, as a fraction of the height.
 const CENTER_Y_PERCENT: f32 = 0.25;
-/// The stroke opacity of the first curve; each following one loses 0.055.
+/// The first curve's opacity; each following one loses `LINE_ALPHA_STEP`.
 const LINE_ALPHA: f32 = 0.45;
 const LINE_ALPHA_STEP: f32 = 0.055;
-/// Height of the fade-out band, as a fraction of the window height.
 const SKY_FADE_HEIGHT_RATIO: f32 = 0.14;
-/// The band is centred at `height / 1.65` (60.6%), which is below the horizon.
+/// The band's centre is below the horizon, at `height / 1.65`.
 const SKY_FADE_CENTER_DIVISOR: f32 = 1.65;
 
-/// What the sky needs to be drawn: the buffer size in pixels and how many
-/// buffer pixels one CSS pixel is.
 pub struct SkyRequest {
     pub width: u32,
     pub height: u32,
@@ -50,35 +37,26 @@ pub struct SkyRequest {
     pub dark: bool,
 }
 
-/// Renders the sky into a premultiplied RGBA buffer, with the layer's 0.3
-/// opacity baked in like the world's.
+/// Renders the sky into a premultiplied RGBA buffer with the layer's opacity
+/// baked in.
 pub fn render(request: &SkyRequest) -> SharedPixelBuffer<Rgba8Pixel> {
     let width = request.width.max(1);
     let height = request.height.max(1);
     let length = (width * height) as usize;
     let pixel_count = width as usize;
 
-    // Coverage of the curve being stroked, and the alpha accumulated over the
-    // curves already composited. Each curve is meant to be stroked in one path
-    // and the paths composited with `source-over`; blending per segment instead
-    // would double-count the joins, where the polyline's points crowd together
-    // near the asymptote. Both are bytes — a 255th of accuracy is invisible on
-    // a line this faint, and it is a quarter of the memory traffic.
+    // Per-segment blending would double-count the joins near the asymptote, so
+    // coverage is kept per curve and composited once. Bytes suffice on a line
+    // this faint.
     let mut coverage = vec![0u8; length];
     let mut accumulated = vec![0u8; length];
 
     let center = (width as f32 / 2.0, height as f32 * CENTER_Y_PERCENT);
     let radians = ROTATION_DEGREES.to_radians();
     let (sin, cos) = radians.sin_cos();
-    // The sky is specified in CSS pixels, as the design is; here the buffer is
-    // addressed directly, so everything is scaled by how many buffer pixels a
-    // CSS pixel is.
     let scale = request.scale;
     let range = width.max(height) as f32 / scale * 1.5;
 
-    // Curves are drawn one at a time, and only over the rows they actually
-    // reach — they all live in the upper part of the window, so the passes that
-    // walk the buffer skip most of it.
     let half_width = LINE_WIDTH * scale / 2.0;
     let mut top = height;
     let mut bottom = 0u32;
@@ -93,8 +71,6 @@ pub fn render(request: &SkyRequest) -> SharedPixelBuffer<Rgba8Pixel> {
                 let y = sign_y * B * ((x * x) / (a * a) - 1.0).sqrt();
                 if y.is_finite() {
                     let real_x = sign_x * x;
-                    // translate(center) then rotate, in CSS pixels, then the
-                    // device scale.
                     let point = (
                         center.0 + (real_x * cos - y * sin) * scale,
                         center.1 + (real_x * sin + y * cos) * scale,
@@ -138,12 +114,10 @@ pub fn render(request: &SkyRequest) -> SharedPixelBuffer<Rgba8Pixel> {
         }
     }
 
-    // The `destination-out` gradient: transparent at the top of the band and
-    // fully opaque at its bottom, then carried on to the bottom of the window.
+    // `destination-out`: transparent at the top of the band, opaque below it.
     let band = height as f32 * SKY_FADE_HEIGHT_RATIO;
     let fade_top = height as f32 / SKY_FADE_CENTER_DIVISOR - band / 2.0;
     let fade_bottom = fade_top + band;
-    // Line colour: white on the dark flavours, black on Latte.
     let line = if request.dark { 1.0 } else { 0.0 };
 
     let mut buffer = SharedPixelBuffer::<Rgba8Pixel>::new(width, height);
@@ -183,9 +157,8 @@ pub fn render(request: &SkyRequest) -> SharedPixelBuffer<Rgba8Pixel> {
     buffer
 }
 
-/// Paints one anti-aliased segment into `coverage`, keeping the maximum — the
-/// union of the segments is the stroked polyline — and returns the rows it
-/// touched, so the passes that composite the curve can skip the rest.
+/// Paints one anti-aliased segment into `coverage`, keeping the maximum so the
+/// segments form the union of the polyline. Returns the rows it touched.
 #[must_use]
 fn draw_segment(
     coverage: &mut [u8],

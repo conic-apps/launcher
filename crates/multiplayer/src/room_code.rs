@@ -4,13 +4,13 @@
 
 //! The room-code format check.
 //!
-//! The Conic Nexus library exposes `conic_nexus_room_code_is_valid`, but the UI
-//! needs the check before a session exists, so the same algorithm lives here:
-//! a `U/XXXX-XXXX-XXXX-XXXX` shape over the 34-character alphabet and a modulo-7
-//! checksum over the little-endian digit value of the four groups.
+//! The UI needs this before a session exists, so it duplicates the library's
+//! `conic_nexus_room_code_is_valid`: a `U/XXXX-XXXX-XXXX-XXXX` shape over the
+//! 34-character alphabet with a modulo-7 checksum over the little-endian digit
+//! value of the four groups.
 
-/// The alphabet's value for a code character, or `None` when it is not part of
-/// it. `0`–`9`, `A`–`H`, `J`–`N` and `P`–`Z` skip `I` and `O`.
+/// The alphabet's value for a code character. `0`–`9`, `A`–`H`, `J`–`N` and
+/// `P`–`Z` skip `I` and `O`.
 fn char_value(ch: char) -> Option<u32> {
     match ch {
         '0'..='9' => Some(ch as u32 - '0' as u32),
@@ -21,7 +21,6 @@ fn char_value(ch: char) -> Option<u32> {
     }
 }
 
-/// Whether `input` has the room-code shape and a valid checksum.
 pub fn is_room_code_valid(input: &str) -> bool {
     let chars: Vec<char> = input.chars().collect();
     if chars.len() != 21 {
@@ -30,7 +29,6 @@ pub fn is_room_code_valid(input: &str) -> bool {
     if chars[0] != 'U' || chars[1] != '/' {
         return false;
     }
-    // The three separators sit between the four groups.
     if chars[6] != '-' || chars[11] != '-' || chars[16] != '-' {
         return false;
     }

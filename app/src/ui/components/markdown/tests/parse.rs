@@ -2,9 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The block tree, before any measurement: what the two front ends make of a
-//! document. These tests are the ones that can run without a font collection,
-//! which is why the layout tests live in `layout.rs` and need one.
+//! The block tree before measurement: what the two front ends make of a document.
 
 use crate::ui::components::markdown::doc::{Align, Block, Inline, Inlines, plain_text};
 use crate::ui::components::markdown::{SourceFormat, parse};
@@ -110,8 +108,6 @@ fn an_image_alone_is_a_block() {
             alt: "the logo".into()
         }]
     );
-    // Inside a sentence it stays inline, because a paragraph with text in it is
-    // a paragraph.
     let blocks = md("see ![the logo](logo.png) here\n");
     assert!(matches!(blocks[0], Block::Paragraph { .. }));
 }
@@ -317,7 +313,6 @@ fn html_entities_and_self_closing_tags() {
         other => panic!("expected a paragraph, got {other:?}"),
     };
     assert_eq!(text(0), "a & b — c — d");
-    // A hard break flattens to a space; the layout turns it back into a break.
     assert_eq!(text(1), "one two");
     assert!(matches!(blocks[2], Block::Paragraph { .. }));
 }

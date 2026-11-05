@@ -2,7 +2,6 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-/// Errors produced while reading or writing game instances.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]

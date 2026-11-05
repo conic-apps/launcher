@@ -6,24 +6,11 @@ import { Theme } from "../../theme.slint";
 import { AppIcon } from "../../components/display/app-icon.slint";
 import { Button } from "../../components/controls/button.slint";
 
-// The body shared by the two "are you sure?" dialogs that are a warning icon, a
-// two-line message and a blue/red button pair:
+// The body shared by the warning dialogs: icon, two-line message and a blue/red
+// button pair. Strings are passed in so each dialog catalogues its own.
 //
-//   ConfirmDeleteSave
-//   ConfirmQuitApp
-//
-// The two dialogs differ only in what the four strings say, which is why they are
-// one here. (The launch error dialogs in `launch-errors.slint` share the icon and
-// the message as well, but end in a single button, so they are not part of this.)
-//
-// The strings are passed in rather than `@tr`'d here, so each dialog's sentences
-// are catalogued under its own context and a translator can tell which of the
-// two a "Confirm delete" belongs to.
-//
-// **Both callbacks have to be handled by the dialog that mounts this.** Slint
-// lets a consumer leave a `callback` unhandled without a word, and a button whose
-// callback nobody answers is a button that does nothing — which is exactly what
-// an unhandled `cancel` is.
+// Both callbacks must be handled by the mounting dialog: Slint accepts an
+// unhandled callback silently, leaving a dead button.
 export component ConfirmWarningBody inherits VerticalLayout {
     in property <length> content-width: 0px;
     in property <string> title-text: "";
@@ -41,8 +28,7 @@ export component ConfirmWarningBody inherits VerticalLayout {
     padding: 8px;
     alignment: start;
 
-    // The row around the icon and the message. The 50px icon is the taller of the
-    // two, and the message column centres itself in it.
+    // The 50px icon sets the row height; the message centres in it.
     HorizontalLayout {
         height: 50px;
         spacing: 16px;
@@ -86,8 +72,7 @@ export component ConfirmWarningBody inherits VerticalLayout {
             clicked => { root.cancel(); }
         }
 
-        // The 8px between the two buttons: both stretch equally, which leaves the
-        // gap between them.
+        // The 8px gap between the equally stretched buttons.
         Rectangle {
             width: 8px;
             background: transparent;

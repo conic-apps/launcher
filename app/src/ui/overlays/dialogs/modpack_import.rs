@@ -4,21 +4,13 @@
 
 //! Drag-and-drop CurseForge modpack import.
 //!
-//! Dropping a pack's `.zip` or extracted folder on the window opens the
-//! confirmation dialog: it shows the pack's name, Minecraft version and loader,
-//! lets the user name the instance, and resolves the manifest's CurseForge file
-//! list in the background. Confirming creates the instance and installs its
-//! game, loader, files and overrides in the background.
+//! The drop opens a confirmation dialog and resolves the manifest in the
+//! background; confirming creates the instance and installs it as a task-centre
+//! card, so progress survives the dialog closing. A failed lookup keeps the
+//! dialog open so the pack name and the typed instance name are not lost.
 //!
-//! The install itself runs as a task-centre card, so its progress survives the
-//! dialog closing and can be cancelled from the notification centre.
-//!
-//! A failed file lookup keeps the dialog open with the error and a Retry button:
-//! the drop already named the pack and the user may have typed an instance name,
-//! so closing the prompt on a network failure would throw that away.
-//!
-//! The OS file drop only reaches Rust through `window::on_window_event`, so the
-//! filter is registered here; the actual work stays on the tokio runtime.
+//! The OS drop only reaches Rust through `window::on_window_event`, so the
+//! filter is registered here; the work stays on the tokio runtime.
 
 use std::cell::RefCell;
 use std::rc::Rc;

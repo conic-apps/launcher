@@ -47,7 +47,6 @@ fn current_instance(ui: &App) -> String {
     ui.global::<GameState>().get_current_id().to_string()
 }
 
-/// One save's card, from the summary read out of `level.dat`.
 pub(crate) fn save_card(
     folder: &str,
     level: &content::saves::LevelSummary,

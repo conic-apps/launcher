@@ -4,14 +4,10 @@
 
 //! App configuration.
 //!
-//! `config.toml` lives in the launcher's data directory (`conic`, or
-//! `conic-debug` for a debug build; the exact path is platform-dependent), whose
-//! layout comes from [`storage::LOCATIONS`]. Every key the launcher models is
-//! named here, and [`Config::extra`] is the catch-all for anything it does not,
-//! kept so a load/save round-trip cannot drop a key a newer build wrote.
-//!
-//! Everything is synchronous: the app loads the config before building the UI
-//! and writes it back from a debounced timer.
+//! `config.toml` lives in the launcher's data directory (see
+//! [`storage::LOCATIONS`]). [`Config::extra`] catches keys this build does not
+//! model, so a load/save round-trip cannot drop one a newer build wrote. Loading
+//! and saving are synchronous, before the UI exists and from a debounced timer.
 
 use std::{collections::BTreeMap, fs::File, path::Path, time::SystemTime};
 
@@ -75,7 +71,6 @@ pub fn load_config_file() -> Result<Config> {
     }
 }
 
-/// Writes a default configuration to disk and returns it.
 pub fn reset_config() -> Result<Config> {
     let default_config = Config::default();
     save_config(&default_config)?;
@@ -86,7 +81,6 @@ pub fn save_config(config: &Config) -> Result<()> {
     save_config_to(&LOCATIONS.launcher.config, config)
 }
 
-/// Saves `config` to an arbitrary path.
 pub fn save_config_to(path: &Path, config: &Config) -> Result<()> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
@@ -109,11 +103,8 @@ pub fn set_background_image(path: &Path) -> Result<String> {
     Ok("background_image".to_string())
 }
 
-/// Stamps `path` as modified now, so a replacement is a distinct revision.
-///
-/// `fs::copy` carries the source's timestamp over on macOS: replacing the stored
-/// background with an image sharing its mtime would look unchanged to the loader
-/// and the new wallpaper would not appear until a restart.
+/// `fs::copy` carries the source's timestamp over on macOS, so a replacement
+/// sharing its mtime would look unchanged to the loader.
 fn stamp_now(path: &Path) {
     if let Err(error) = File::options()
         .write(true)
@@ -133,7 +124,6 @@ pub fn remove_background_image() -> Result<()> {
     Ok(())
 }
 
-/// Update channel selection.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum UpdateChannel {

@@ -2,12 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The launch view's adapter: it runs the [`crate::usecases::launch`] use case
-//! on the app's runtime and turns its [`LaunchUpdate`]s into `LaunchState`.
-//!
-//! The use case is UI-neutral; this module builds the output port it reports
-//! through, gated by a [`Token`] so a cancelled or superseded run cannot draw.
-//! Cancelling aborts the task.
+//! The launch view's adapter: runs the [`crate::usecases::launch`] use case on
+//! the app's runtime and turns its [`LaunchUpdate`]s into `LaunchState`, gated
+//! by a [`Token`] so a cancelled or superseded run cannot draw.
 
 use std::{
     cell::RefCell,

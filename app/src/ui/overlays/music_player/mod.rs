@@ -2,21 +2,11 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The music "script": drives [`music::Player`] and pushes what it reports
-//! into the `MusicState` global.
+//! The music "script": drives [`music::Player`] and pushes what it reports into
+//! the `MusicState` global.
 //!
-//! Three things live here rather than in the crate, because they belong to the
-//! app and not to the player:
-//!
-//!   * the *configuration* — the two volumes and the enable switch — and the
-//!     window focus the background volume follows;
-//!   * [`BeatMap`]'s mapping of the analyser's bins onto bars, which is UI maths
-//!     (see that type for why it is not in the .slint file);
-//!   * the *clock* that decides how often the UI is refreshed.
-//!
-//! The player itself is not `Send` — cpal's stream is not — so it lives in a
-//! `thread_local` and is only ever touched from the event loop's thread, the same
-//! reason `content` keeps its caches there.
+//! The player is not `Send` — cpal's stream is not — so it lives in a
+//! `thread_local` and is only touched from the event-loop thread.
 
 use std::cell::RefCell;
 use std::sync::{
@@ -29,11 +19,8 @@ use slint::{ComponentHandle, ModelRc, VecModel, Weak};
 
 use crate::slint_backend::{App, AppConfig, MusicState, MusicTrack};
 
-/// The cadence the UI is refreshed at.
-///
-/// The analyser smooths on a 60Hz clock (see `music::player`) and the
-/// visualizer reads it once per frame, so this is the visualizer's frame rate.
-/// 16ms is also comfortably faster than the progress bar needs.
+/// The visualizer's frame rate: the analyser smooths on 60Hz and the visualizer
+/// reads it once per frame.
 pub(crate) const TICK_MS: u64 = 16;
 
 mod player;
@@ -43,44 +30,34 @@ pub(crate) use player::*;
 pub(crate) use wiring::*;
 
 thread_local! {
-    /// The player and the visualizer's mapping. `None` when the platform has no
-    /// output device, in which case the panel still opens — with an empty
-    /// playlist, as a failed load leaves behind.
+    /// `None` when the platform has no output device; the panel still opens with
+    /// an empty playlist.
     static CONTROLLER: RefCell<Option<Controller>> = const { RefCell::new(None) };
 }
 
 pub(crate) struct Controller {
     player: music::Player,
     beat_map: BeatMap,
-    /// The playlist the model was last built from, so the rows are not rebuilt
-    /// (and the popup's scroll position dropped) on every tick. The player hands
-    /// out an `Arc` that is only replaced when the folder is re-listed, so the
-    /// check is a pointer comparison rather than a hundred string comparisons
-    /// sixty times a second.
+    /// The playlist the model was last built from, so rows are not rebuilt (and
+    /// the popup's scroll position dropped) on every tick. The `Arc` is replaced
+    /// only when the folder is re-listed, making this a pointer comparison.
     playlist: Option<Arc<Vec<music::MusicFile>>>,
     /// The volume the device was last given, for the same reason.
     volume: Option<u8>,
-    /// The last frame of bar heights, kept so that reading the analyser sixty
-    /// times a second does not allocate sixty times a second. The idle branch
-    /// leaves it alone, so the next live frame reuses whatever capacity it has.
+    /// Kept so reading the analyser sixty times a second does not allocate sixty
+    /// times a second.
     levels: Vec<f32>,
     focused: bool,
-    /// Whether the clock is running (see [`start_clock`]).
     ticking: Arc<AtomicBool>,
 }
 
 /// The mapping of the analyser's bins onto bar heights.
 ///
-/// It is here rather than in the component's `.slint` file because it cannot be
-/// written as a Slint binding: every bar is normalised against the loudest *bar
-/// of the frame*, which needs a pass over all of them before any of them can be
-/// drawn, and the decaying peak is state only a callback may write. Slint
-/// expressions can do neither. The same bins, logarithmic spread, dB floor and
-/// 0.97 peak decay produce `levels`.
+/// It cannot be a Slint binding: every bar is normalised against the loudest bar
+/// of the frame, which needs a pass over all of them first, and the decaying peak
+/// is state only a callback may write.
 pub(crate) struct BeatMap {
-    /// How many bars the visualizer asked for, derived from its own width.
     bar_count: usize,
-    /// The decaying peak the bars are scaled against.
     peak_level: f32,
 }
 
@@ -111,14 +88,10 @@ impl BeatMap {
         size.min(Self::MAX_FFT_SIZE)
     }
 
-    /// One frame of bars: `bins` in dB (the analyser's own output) turned into
-    /// `bar_count` levels in 0..1, spread logarithmically over the frequency
-    /// range the visualizer shows.
+    /// One frame of bars: `bins` in dB turned into `bar_count` levels in 0..1.
     ///
-    /// `out` is the caller's and is cleared first, so the caller can hand the
-    /// same buffer to every frame: this runs sixty times a second, and a fresh
-    /// `Vec` each time would be sixty allocations a second for a few hundred
-    /// bytes.
+    /// `out` is the caller's and is cleared first, so the same buffer can be
+    /// reused every frame rather than allocating sixty times a second.
     fn sample(&mut self, bins: &[f32], sample_rate: f64, out: &mut Vec<f32>) {
         out.clear();
         if self.bar_count == 0 || bins.is_empty() || sample_rate <= 0.0 {
@@ -171,8 +144,6 @@ impl BeatMap {
         }
     }
 
-    /// The lower end of the frequency range, rounded and clamped to
-    /// `max_bin - 1`.
     fn min_bin(bin_count: usize, nyquist: f64, max_bin: usize) -> usize {
         let bin = ((bin_count as f64) * (Self::MIN_FREQUENCY / nyquist))
             .round()
@@ -181,7 +152,6 @@ impl BeatMap {
     }
 }
 
-/// Formats a time in seconds as the panel's `mm:ss` clock.
 pub(crate) fn format_time(seconds: f64) -> String {
     if !seconds.is_finite() || seconds < 0.0 {
         return "00:00".to_string();

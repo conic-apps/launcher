@@ -10,25 +10,18 @@ import {
 import { GameState } from "../../globals/game.slint";
 import { WizardTitle, WizardMessage } from "wizard-text.slint";
 
-// The screen is one of two: no account yet, so the add-account body fills it; an
-// account, so the profile card the wizard promises to have made the default.
-//
-// `GameState` holds the account the game view already has: Rust owns it, and a
-// finished add-account writes the config and then asks that view to reload, so
-// the card appears on its own once the sign-in is through.
+// Two states: the add-account body with no account, or the new profile card.
+// `GameState` is reloaded by Rust once sign-in writes the config.
 export component SetupAddAccount inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
     alignment: start;
-    // Both paragraphs below are full width, so the centring is only visible on
-    // the card.
+    // The paragraphs are full width, so this only centres the card.
     cross-axis-alignment: center;
 
     if !GameState.has-account: AccountAdd {
         content-width: root.width;
-        // The wizard's own padding is the dialog's 8px, and the wizard's
-        // close/next buttons replace the hidden "Cancel" ones — see
-        // `AccountAdd`.
+        // The wizard's close/next buttons replace the dialog's hidden "Cancel".
         wizard-host: true;
     }
 
@@ -41,8 +34,7 @@ export component SetupAddAccount inherits VerticalLayout {
         message: @tr("SetupAddAccount" => "The following profile has been set as default. The launcher will use this profile to log in to the game when no profile is assigned to an instance");
     }
 
-    // The card uses the raw surface0, not the setting-item background, which
-    // Latte remaps onto its mantle.
+    // Raw surface0: the setting-item background is remapped to mantle in Latte.
     if GameState.has-account: Rectangle {
         width: 320px;
         height: card-rows.preferred-height + 48px;
@@ -56,12 +48,8 @@ export component SetupAddAccount inherits VerticalLayout {
             alignment: start;
             spacing: 0px;
 
-            // The 56px head, centred by the card.
-            //
-            // A drop shadow is **not** drawn: Slint's `drop-shadow-*` follows the
-            // element's *box*, so on a round avatar it puts a square 56x56 shadow
-            // behind a circle — worse than no shadow at all. There is no way to
-            // soften a shape Slint has no mask for, so the shadow is dropped.
+            // No drop shadow: Slint shadows follow the box, giving a square
+            // shadow behind a round avatar.
             Rectangle {
                 width: 100%;
                 height: 56px;
@@ -76,8 +64,7 @@ export component SetupAddAccount inherits VerticalLayout {
                 }
             }
 
-            // The name's 16px top margin as a spacer, which a layout has none
-            // of.
+            // A layout has no margin, so the 16px gap is a spacer.
             Rectangle {
                 width: 100%;
                 height: 16px;
@@ -93,7 +80,7 @@ export component SetupAddAccount inherits VerticalLayout {
                 horizontal-alignment: center;
             }
 
-            // The profile type's 8px top margin as a spacer.
+            // The profile type's 8px gap.
             Rectangle {
                 width: 100%;
                 height: 8px;
@@ -109,9 +96,7 @@ export component SetupAddAccount inherits VerticalLayout {
                     : @tr("SetupAddAccount" => "No auth service (Offline account)");
                 font-size: 13px;
                 font-weight: Theme.font-weight-normal;
-                // `&.microsoft { color: green } &.yggdrasil { color: yellow }
-                // &.offline { color: red }` — the same three colours
-                // `AccountAvatar` rings a head with.
+                // Matches the ring colours `AccountAvatar` uses.
                 color: GameState.current-account-kind == "Microsoft" ? Theme.green
                     : GameState.current-account-kind == "Yggdrasil" ? Theme.yellow
                     : Theme.red;
@@ -120,8 +105,7 @@ export component SetupAddAccount inherits VerticalLayout {
         }
     }
 
-    // A 24px spacer after the card, which a layout has no margin for. It is a
-    // sibling `Rectangle` rather than part of the card.
+    // A layout has no margin, so the 24px gap is a sibling spacer.
     if GameState.has-account: Rectangle {
         width: 0px;
         height: 24px;

@@ -2,45 +2,24 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// Global page navigation.
-//
-// Every component can read `Navigation.current-page` and call
-// `Navigation.navigate(page)` without prop drilling, which is what lets the
-// title bar, the main view stack and any overlay drive navigation.
-//
-// `Page` values are "setup" | "game" | "launch" | "settings". The account view
-// is an overlay on the game screen, not a page. Only the one-level
-// `previous-page` is tracked, which is all `back()` needs.
+// Global page navigation. Page values are "setup" | "game" | "launch" |
+// "settings"; the account view is an overlay, not a page.
 export global Navigation {
     in-out property <string> current-page: "game";
     in-out property <string> previous-page: "";
 
-    /// The page being left while a swap plays, "" at rest.
-    ///
-    /// Written *synchronously* by `navigate`/`back` — unlike a `changed`
-    /// handler, which Slint queues for a later event-loop pass — because the
-    /// page stack reads it in a binding to keep the outgoing page mounted. A
-    /// queued write would leave a frame in which neither page is mounted, and
-    /// the incoming one would flash at rest before its entrance.
+    /// The page being left while a swap plays, "" at rest. Written
+    /// synchronously because the page stack reads it in a binding to keep the
+    /// outgoing page mounted; a queued write would leave a frame with neither
+    /// page mounted.
     in-out property <string> leaving-page: "";
-    /// Whether the in-flight navigation is a `back`. Offered to a view that
-    /// wants a directional animation; a plain fade ignores it.
+    /// Whether the in-flight navigation is a `back`, for directional animations.
     in-out property <bool> back-navigation: false;
-    /// The page-swap lifecycle the `App` timers drive: "idle" (at rest),
-    /// "starting" (the incoming view held one frame at its start values) or
-    /// "running" (the animation plays).
-    ///
-    /// It lives here rather than in a component because it is set on the same
-    /// synchronous beat as `current-page`: a view bound only to a queued
-    /// notification would miss the first frame. What each stage *looks like* is
-    /// not decided here — `PageMotion` names the phases and each view draws its
-    /// own.
+    /// The page-swap lifecycle the `App` timers drive: "idle" | "starting"
+    /// (incoming view held one frame) | "running".
     in-out property <string> transition-stage: "idle";
 
-    /// Fired whenever `current-page` changes, so a screen can run its
-    /// teardown without polling. The launch view is the first user: leaving it
-    /// has to cancel a running install/launch, and the title bar can navigate
-    /// away from it without going through the back button.
+    /// Fired whenever `current-page` changes, so a screen can run its teardown.
     callback page-changed(string);
 
     /// The app-wide Escape shortcut: close transient UI and go home.
@@ -54,8 +33,8 @@ export global Navigation {
         if (self.current-page == page) {
             return;
         }
-        // `previous-page` is left alone when leaving `launch`, so the back
-        // button returns to where the launch was started from.
+        // Leave `previous-page` alone when leaving `launch`, so back returns to
+        // where the launch was started from.
         if (self.current-page != "launch") {
             self.previous-page = self.current-page;
         }

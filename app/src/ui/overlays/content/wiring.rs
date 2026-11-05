@@ -7,8 +7,6 @@
 
 use super::*;
 
-/// Registers every content-overlay callback on `ContentState` / `ContentSearch`
-/// and takes over `GameState.open-content`.
 pub fn setup(ui: &App) {
     push_grid_models(ui);
     push_preview_models(ui);
@@ -98,7 +96,6 @@ pub(crate) fn setup_open_content(ui: &App) {
     });
 }
 
-/// `GameState.open-packs` — the footer's "install pack" button.
 pub(crate) fn setup_open_packs(ui: &App) {
     let weak = ui.as_weak();
     ui.global::<GameState>().on_open_packs(move || {
@@ -143,7 +140,6 @@ pub(crate) fn setup_open_packs(ui: &App) {
     });
 }
 
-/// The source switcher (Local / Modrinth / CurseForge).
 pub(crate) fn setup_source_switch(ui: &App) {
     let weak = ui.as_weak();
     ui.global::<ContentState>().on_set_source(move |source| {
@@ -232,7 +228,6 @@ pub(crate) fn setup_source_switch(ui: &App) {
     });
 }
 
-/// Closing the panel, and closing a detail panel back to its list.
 pub(crate) fn setup_close(ui: &App) {
     {
         let weak = ui.as_weak();
@@ -293,7 +288,6 @@ pub(crate) fn setup_card_selection(ui: &App) {
     }
 }
 
-/// The detail panel's body: its width, its collapsible sections and its links.
 pub(crate) fn setup_detail_body(ui: &App) {
     {
         // The view reports the width it was given rather than waiting to be

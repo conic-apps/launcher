@@ -9,47 +9,23 @@ import { ScrollInput, ScrollSource } from "../../globals/scroll.slint";
 
 // Vertical scroll container with a slim custom scrollbar.
 //
-// Scrolling
-// =========
-// The wrapper's offset eases towards the wheel target: every frame it closes a
-// share of the remaining distance, scaled by the frame time. That is a `Timer`
-// easing `scroll-y` towards `target-y` — the same machinery as
-// `views/game/instances-list.slint`, and the reason this is not a `Flickable`:
-// one would layer its own fixed-duration wheel animation (and its own momentum)
-// on top of the easing, and it would clamp a programmatic scroll on the frame
-// the content changes height instead of easing to the new end.
+// The offset eases towards the wheel target over a frame-time-scaled lerp. This
+// is not a `Flickable`, which would layer its own fixed-duration animation on top
+// and clamp a programmatic scroll when the content changes height.
 //
-// Wheel events are captured by the `TouchArea` that *wraps* the content: the
-// controls inside it never handle scroll events and Slint's `EventResult`
-// defaults to reject, so the wheel bubbles up to that area.
+// Wheel events are captured by the `TouchArea` wrapping the content; controls
+// inside never handle scroll events, so the wheel bubbles up. Touchpads apply
+// their deltas — and macOS momentum — as they arrive, never eased: easing them
+// would drop the inherited momentum's velocity on release.
 //
-// Touchpads take a different path (see `globals/scroll.slint`): their deltas —
-// the fingers' *and* the momentum macOS keeps sending after the fingers lift —
-// are applied as they arrive, never eased towards.
+// There is no drag-panning: the wheel is the only scroll input.
 //
-// # Why the momentum is not eased
-//
-// Easing it is what a trackpad gesture cannot afford. macOS derives its
-// momentum from the velocity the gesture ended at, so it continues the motion
-// the fingers were driving; by then the offset has no distance left to cover,
-// and an easing that starts with nothing to cover starts at zero velocity —
-// the content drops to a standstill on release and ramps back up over the
-// lerp's time constant. Keeping the momentum's own velocity and extending the
-// tail instead would mean travelling further than the gesture asked for
-// (a first-order filter cannot do both: matching the velocity it inherits
-// either discards distance or adds ~tau·v of it). So the glide is left to the
-// system, which is what every native macOS scroll view and Chromium do.
-//
-// There is no drag-panning: the wheel is the only scroll input, and a pannable
-// scroll area makes the controls inside it react late to presses.
-//
-// `content-y` is the offset in the sign its callers use — the `Flickable`
-// convention: 0 at the top, negative when scrolled down. Everything below works
-// with its positive twin, `scroll-y`.
+// `content-y` is in the `Flickable` sign (0 at top, negative scrolled down);
+// `scroll-y` is its positive twin.
 export component ScrollView inherits Rectangle {
     in property <length> scrollbar-top: 8px;
     in property <length> scrollbar-bottom: 8px;
-    /// Hides the scrollbar without touching the scrolling. The offset still moves.
+    /// Hides the scrollbar without touching the scrolling.
     in property <bool> scrollbar-disabled: false;
 
     width: 100%;
@@ -57,10 +33,8 @@ export component ScrollView inherits Rectangle {
     clip: true;
     background: transparent;
 
-    /// Height of the scrollable content: the natural height of what was put in,
-    /// or the viewport when that is shorter. Read off the layout directly, the
-    /// same `height: layout.preferred-height` idiom
-    /// `views/game/instance-summary.slint` uses.
+    /// Height of the scrollable content: the natural height of what was put in, or
+    /// the viewport when that is shorter.
     out property <length> content-height: max(root.height, content-layout.preferred-height);
     /// Smoothed scroll offset, negative when scrolled down.
     out property <length> content-y: -root.scroll-y;
@@ -70,40 +44,26 @@ export component ScrollView inherits Rectangle {
     private property <length> track-height: max(0px, root.height - root.scrollbar-top - root.scrollbar-bottom);
 
     /// Smoothed offset: 0 at the top, growing as the content scrolls down.
-    /// Drives the content's position and the scrollbar thumb.
     private property <length> scroll-y: 0px;
-    /// Where `scroll-y` is heading (wheel input, `scroll-to`, dragging). Always
-    /// clamped to the list, so the easing never has to clamp it again — unlike
-    /// the instance list, which holds a collapsing list's offset while its rows
-    /// are still travelling.
+    /// Where `scroll-y` is heading, always clamped to the list.
     private property <length> target-y: 0px;
     private property <length> max-scroll: max(0px, root.content-height - root.height);
-    /// Wheel distance multiplier. A winit notch is `LineDelta * 60` — about
-    /// 60px — so 2 brings it to the ~120px a notch is normally taken as.
+    /// Wheel distance multiplier: a winit notch is about 60px, so 2 brings it to
+    /// the usual ~120px.
     private property <float> wheel-step: 2;
 
-    // The share of the remaining distance covered per 60Hz frame, scaled by the
-    // frame time so the glide looks the same on a 120Hz display as on a 60Hz one
-    // (`1 - (1 - lerp)^(dt * 60)`): Slint fires the timer at whatever rate it
-    // can, so the step has to be derived from the elapsed time rather than
-    // fixed. The timer only runs while there is distance left to cover.
-    //
-    // The horizontal and vertical containers share one value so they glide at
-    // the same rate.
+    // Share of the remaining distance covered per 60Hz frame, scaled by elapsed
+    // time for the same glide on any refresh rate. Shared with the horizontal
+    // container.
     private property <float> lerp: 0.16;
     private property <float> last-tick-ms: 0;
 
-    /// A click on the scroll area that no control inside it took. Slint's
-    /// `TouchArea` stops a click from bubbling, so the intent is forwarded
-    /// explicitly instead.
+    /// A click on the scroll area that no control inside it took.
     callback background-clicked();
 
-    /// Whether the offset still has to catch up with the target. Held in its own
-    /// property because a `changed` handler can only observe a property of this
-    /// element (or a global), and the moment the glide *starts* has to be caught:
-    /// the timer stops once the offset settles, so without this the first tick
-    /// after an idle period would read that whole gap as its frame time and start
-    /// the glide with a jump sized for a second-long frame.
+    /// Whether the offset still has to catch up with the target. Held separately
+    /// so the glide's start can be caught before the first tick reads a long idle
+    /// gap as its frame time.
     private property <bool> scrolling: abs(root.target-y - root.scroll-y) > 0.5px;
     private property <bool> dropdown-open: Dropdown.open;
 
@@ -123,12 +83,8 @@ export component ScrollView inherits Rectangle {
         interval: 8ms;
         running: root.scrolling;
         triggered => {
-            // The step is scaled by the *real* elapsed time, so the glide lasts
-            // the same even when Slint is running at a low frame rate (a debug
-            // build sits at 25-50ms per frame, and a fixed step would stretch the
-            // glide by as much). The upper bound only guards a
-            // stall of the whole event loop, which would otherwise be spent in one
-            // visible jump.
+            // Scale by real elapsed time so the glide lasts the same at any frame
+            // rate; the upper bound only guards a whole-event-loop stall.
             root.scroll-y = root.scroll-y + (root.target-y - root.scroll-y) * (1 - pow(
                 1 - root.lerp,
                 clamp((ScrollInput.now-ms() - root.last-tick-ms) / 1000, 0.004, 0.05) * 60,
@@ -137,16 +93,13 @@ export component ScrollView inherits Rectangle {
         }
     }
 
-    // Resizing the window (or the content itself changing height) can leave the
-    // offset past the end of the list, so the *target* is pulled back to the
-    // recomputed limit once, and the offset glides after it.
+    // A resize or content height change can leave the offset past the end, so
+    // pull the target back to the new limit.
     changed max-scroll => {
         root.target-y = clamp(root.target-y, 0px, root.max-scroll);
     }
 
-    /// Scrolls so that `y` — the same sign as `content-y` — ends up at the top of
-    /// the viewport. `smooth` glides there along the lerp; `!smooth` moves the
-    /// offset with the target.
+    /// Scrolls so `y` (same sign as `content-y`) is at the top of the viewport.
     public function scroll-to(y: length, smooth: bool) {
         if smooth {
             root.target-y = clamp(-y, 0px, root.max-scroll);
@@ -155,8 +108,7 @@ export component ScrollView inherits Rectangle {
         }
     }
 
-    /// Moves the offset without easing: both the offset and the target, so a
-    /// glide in flight is dropped rather than resumed.
+    /// Moves both offset and target without easing, dropping any glide in flight.
     function jump-to(offset: length) {
         root.scroll-y = clamp(offset, 0px, root.max-scroll);
         root.target-y = root.scroll-y;
@@ -174,12 +126,9 @@ export component ScrollView inherits Rectangle {
             width: parent.width;
             height: parent.height;
 
-            // A `TouchArea` grabs every press inside it, so the page behind it
-            // stops seeing clicks that land on the scroll area. That is what the
-            // settings page's background layer relies on (it blurs the focused
-            // field when empty space is clicked), so the same is done here —
-            // after the controls inside the content, which handle their own
-            // clicks first.
+            // A `TouchArea` grabs every press inside it, so the page behind never
+            // sees clicks landing here. Blur the focused field, as the settings
+            // background does.
             clicked => {
                 FocusManager.clear();
                 root.background-clicked();
@@ -189,25 +138,23 @@ export component ScrollView inherits Rectangle {
                 if Dropdown.open {
                     return accept;
                 }
-                // A wheel over the scroll area is *always* consumed, whether or
-                // not there is anything to scroll, so a wheel over a panel never
-                // reaches the instance list behind it and never chains to an
-                // outer scroller.
+                // Always consume a wheel over the scroll area, even with nothing
+                // to scroll, so it never reaches a panel behind or an outer
+                // scroller.
                 if root.max-scroll <= 0px {
                     return accept;
                 }
                 if ScrollInput.source() == ScrollSource.wheel {
-                    // A wheel notch is a *distance*, not a motion: it goes into
-                    // the target and the offset eases after it.
+                    // A notch is a distance, so it goes into the target and the
+                    // offset eases after it.
                     root.target-y = clamp(
                         root.target-y - event.delta-y * root.wheel-step,
                         0px,
                         root.max-scroll,
                     );
                 } else {
-                    // A trackpad, fingers down or coasting: the deltas *are* the
-                    // motion, so the content goes exactly where they put it —
-                    // which also drops a wheel glide that was still in flight.
+                    // A trackpad's deltas are the motion itself, so apply them
+                    // directly; this also drops any wheel glide in flight.
                     root.jump-to(root.scroll-y - event.delta-y);
                 }
                 return accept;
@@ -244,7 +191,7 @@ export component ScrollView inherits Rectangle {
             width: track-touch.has-hover || track-touch.pressed ? 10px : 8px;
             x: track-touch.has-hover || track-touch.pressed ? -2px : 0px;
             height: root.thumb-height;
-            // Follows the *smoothed* offset, so the thumb glides with the content.
+            // Follows the smoothed offset, so the thumb glides with the content.
             y: parent.thumb-track > 0px
                 ? clamp(root.scroll-y / root.max-scroll, 0, 1) * parent.thumb-track
                 : 0px;
@@ -260,16 +207,10 @@ export component ScrollView inherits Rectangle {
             animate transform-scale-x, transform-scale-y { duration: 120ms; }
         }
 
-        // Grabbing the thumb drags it; pressing the track elsewhere jumps so the
-        // thumb centres under the cursor and then keeps dragging it, moving the
-        // offset without animating.
-        //
-        // The drag state has to be tracked here rather than keyed off the event's
-        // button: Slint reports a *move* with `PointerEventButton.other`, so
-        // `button == left` only ever matches the press. The touch area is as wide
-        // as the *hovered* thumb (10px, hanging 2px off each side of the 6px
-        // track) so grabbing the overhang does not shrink the thumb out from under
-        // the cursor.
+        // Grabbing the thumb drags it; pressing the track centres the thumb under
+        // the cursor first. The drag state is tracked here because a Slint move
+        // arrives with `PointerEventButton.other`. The touch area is as wide as
+        // the hovered thumb so grabbing the overhang does not shrink it.
         track-touch := TouchArea {
             x: -2px;
             width: parent.width + 4px;
@@ -286,7 +227,7 @@ export component ScrollView inherits Rectangle {
                     }
                     FocusManager.clear();
                     // Pressing the thumb keeps the grab point; pressing the track
-                    // brings the thumb's centre to the cursor.
+                    // centres the thumb on the cursor.
                     root.drag-anchor = self.mouse-y >= thumb.y && self.mouse-y <= thumb.y + thumb.height
                         ? self.mouse-y - thumb.y
                         : thumb.height / 2;
@@ -304,8 +245,7 @@ export component ScrollView inherits Rectangle {
         : root.track-height;
 
     private property <bool> dragging: false;
-    /// Where inside the thumb the pointer grabbed it, so dragging does not make
-    /// the thumb jump under the cursor.
+    /// Where inside the thumb the pointer grabbed it, so dragging does not jump.
     private property <length> drag-anchor: 0px;
 
     function drag-scrollbar(mouse-y: length) {

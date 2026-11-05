@@ -4,10 +4,8 @@
 
 //! Errors for the launcher-content client.
 //!
-//! Unlike the Modrinth and CurseForge clients, nothing here is handed to the
-//! frontend: a failed news fetch only makes the panel show its empty state, and
-//! the reason goes to the log. So the error stays a plain `thiserror` enum and
-//! carries no `Serialize` shape.
+//! Nothing here reaches the frontend: a failed fetch only makes the panel show
+//! its empty state, so the error carries no `Serialize` shape.
 
 use thiserror::Error;
 

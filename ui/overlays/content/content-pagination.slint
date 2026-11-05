@@ -35,12 +35,7 @@ component PageNumber inherits Rectangle {
     }
 }
 
-// The remote lists' page bar, drawn only when there is more than one page.
-//
-// 30px-tall buttons in a centred row with a 6px gap and 20px / 32px padding;
-// the current page takes the lavender fill and stops taking clicks, an ellipsis
-// is a plain label in the same slot, and the two arrows are disabled at the
-// ends.
+// A 30px arrow button, disabled at the ends of the range.
 component ArrowButton inherits Rectangle {
     in property <bool> flipped: false;
     in property <bool> disabled: false;
@@ -74,15 +69,8 @@ export component ContentPagination inherits Rectangle {
     in property <[PageButton]> pages: [];
     in property <int> current-page: 1;
     in property <int> total-pages: 0;
-    /// Whether this list's bar is the one on screen.
-    ///
-    /// Each remote list owns a bar, so a panel holds one per list and only one
-    /// of them is ever shown. `visible` alone is not enough to take the others
-    /// out of the layout: a hidden `ContentPagination` would still take its 82px
-    /// in the scroller, leaving a blank under the page buttons (and under a
-    /// *local* list's last row, where both bars are hidden). The height is
-    /// therefore stated rather than inherited from `self.preferred-height`,
-    /// which cannot be read while overriding it.
+    /// Whether this list's bar is the one on screen. The height must collapse to
+    /// zero, because a hidden bar would still take its 82px in the scroller.
     in property <bool> shown: true;
 
     callback page-change(int);
@@ -107,11 +95,8 @@ export component ContentPagination inherits Rectangle {
         }
 
         for page in root.pages: Rectangle {
-            // 30px is what every slot comes to in practice, since a page button
-            // has no horizontal padding and its number is a few characters wide.
-            // It has to be given rather than measured: both of this wrapper's
-            // children are conditionals, and Slint measures such an element as
-            // zero, which stacked every number on top of the first.
+            // Must be given: both children are conditionals, which Slint measures
+            // as zero, stacking every number on the first.
             width: 30px;
             height: 30px;
             background: transparent;

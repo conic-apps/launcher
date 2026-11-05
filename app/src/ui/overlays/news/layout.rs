@@ -2,13 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The news flow's geometry.
-//!
-//! Pure arithmetic, apart from Slint, so it can be tested without a window. The
-//! card heights and their stacked positions are computed here rather than
-//! measured by the flow's layout: the flow positions its cards absolutely (so it
-//! can cull them), and a Slint layout cannot be asked which part of a
-//! four-hundred-entry list a viewport is over.
+//! The news flow's geometry, kept as pure arithmetic so it can be tested
+//! without a window. The flow positions its cards absolutely so it can cull
+//! them, and a Slint layout cannot be asked which part of a long list a viewport
+//! is over.
 
 /// The gap between two cards, and the flow's top and bottom padding. The
 /// `.slint` flow draws the same numbers — Rust stacks the cards, so the two
@@ -58,8 +55,7 @@ pub(crate) fn positions(heights: &[f32], gap: f32, top: f32) -> Vec<f32> {
         .collect()
 }
 
-/// The flow's total height: the top padding, the cards and their gaps, and the
-/// bottom padding. An empty flow keeps just the padding.
+/// An empty flow keeps just the padding.
 pub(crate) fn total_height(heights: &[f32], gap: f32, top: f32, bottom: f32) -> f32 {
     if heights.is_empty() {
         return top + bottom;
@@ -94,8 +90,7 @@ pub(crate) fn visible_range(
     start..end.max(start)
 }
 
-/// The width a filter row's chips wrap inside: the panel less the search
-/// panel's padding and the row's label column.
+/// The width a filter row's chips wrap inside.
 pub(crate) fn filter_available(list_width: f32) -> f32 {
     (list_width - SEARCH_PANEL_PAD - CHIP_LABEL).max(0.0)
 }

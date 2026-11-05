@@ -2,30 +2,11 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The player-head image `AccountAvatar` draws, plus the 18 default skins
-//! bundled in `ui/assets/skins`.
+//! The player-head image `AccountAvatar` draws, plus the bundled default skins.
 //!
-//! The head is cropped out of the skin texture: the 8x8 face region is drawn
-//! inset into the square, then the 8x8 hat layer is stretched over the whole of
-//! it — both nearest-neighbour, which is what `image-rendering: pixelated`
-//! shows. This reproduces that in a pixel buffer, including the source-over
-//! blend where the hat is opaque.
-//!
-//! The square is left square here. The corner rounding happens in [`round_image`],
-//! which the `AvatarMask.rounded` callback (`ui/globals/avatar.slint`)
-//! runs as `AccountAvatar` draws, so each caller picks its own radius. It cannot
-//! be Slint's `clip: true` + `border-radius`: a clipped box is clipped
-//! **rectangularly** by Slint's software renderer (`i-slint-renderer-software`'s
-//! `combine_clip` ignores the radius), and the winit backend falls back to that
-//! renderer without a word when femtovg's OpenGL context cannot be created — a
-//! VM, an RDP session, a disabled or outdated GPU driver. Slint's `Rectangle`
-//! takes no `background-image` and `Image` takes no `border-radius`, so a
-//! rounded *fill* cannot stand in for a rounded *image* either: the alpha is the
-//! only mask a software renderer will honour.
-//!
-//! It lives in the app rather than in `account` because it produces a Slint
-//! `Image` and reads the app's bundled assets; `filter_neoforge_version_list`
-//! lives in `app/src` for the same reason.
+//! The head is cropped from the skin texture and rounded in pixels: Slint's
+//! software renderer clips a rounded box rectangularly, and a rounded fill cannot
+//! mask an image, so the alpha is the only mask it honours.
 
 use account::Account;
 use base64::{Engine, engine::general_purpose};
@@ -34,22 +15,15 @@ use slint::{ComponentHandle, Image, SharedPixelBuffer};
 
 use crate::slint_backend::{App, AvatarMask};
 
-/// A skin of the bundled default set.
-///
-/// It carries the two names and the texture bytes together, so
-/// `bundled_skin_image` can look a skin up by name and still hand out the
-/// bytes without a second table to keep in step.
 #[derive(Clone, Copy)]
 pub struct DefaultSkin {
-    // The two names `bundled_skin_image` looks a skin up by.
     pub texture_name: &'static str,
     pub model_type: &'static str,
     texture: &'static [u8],
 }
 
-/// The slim models first, then the wide ones, each in the same order.
-/// `get_default_skin` indexes into this, so the order is part of the mapping and
-/// must not be sorted.
+/// Slim models first, then wide, each in the same order; `get_default_skin`
+/// indexes into this, so it must not be sorted.
 const DEFAULT_SKINS: [DefaultSkin; 18] = [
     DefaultSkin {
         texture_name: "alex",
@@ -144,31 +118,24 @@ const DEFAULT_SKINS: [DefaultSkin; 18] = [
 ];
 
 impl DefaultSkin {
-    /// The skin texture bytes, for callers that draw more than the head.
     pub fn texture_bytes(&self) -> &'static [u8] {
         self.texture
     }
 
-    /// Whether this is one of the slim (3px-arm) models.
     pub fn is_slim(&self) -> bool {
         self.model_type == "slim"
     }
 }
 
-/// The default skin a UUID picks.
-///
-/// The UUID is hashed the way Java's `UUID.hashCode()` does — the two halves of
-/// the 128 bits XORed together, then folded to an `int` — and reduced modulo the
-/// 18 skins, so the index is always in range. `None` for a UUID that does not
-/// parse, and the caller then leaves the placeholder up.
+/// The default skin a UUID picks, hashed the way Java's `UUID.hashCode()` does.
+/// `None` for a UUID that does not parse.
 pub fn get_default_skin(uuid: &str) -> Option<DefaultSkin> {
     let hash = uuid_hash_code(uuid)?;
     Some(DEFAULT_SKINS[hash.rem_euclid(DEFAULT_SKINS.len() as i32) as usize])
 }
 
 /// The image `AccountAvatar` shows for a profile: its own skin when it has one,
-/// the default skin of its UUID otherwise. A skin wins; the default skin is only
-/// reached without one.
+/// otherwise the UUID's default.
 pub fn avatar_image(skin_url: Option<&str>, uuid: &str, size: u32) -> Option<Image> {
     let texture = match skin_url {
         Some(url) => decode_skin_url(url)?,
@@ -177,11 +144,8 @@ pub fn avatar_image(skin_url: Option<&str>, uuid: &str, size: u32) -> Option<Ima
     Some(head(&texture, size))
 }
 
-/// The head of one of the bundled default skins, by the two names a
-/// [`DefaultSkin`] carries.
-///
-/// The footer reaches for the wide Steve this way for its logged-out avatar;
-/// every other caller goes through [`account_head`].
+/// The head of a bundled default skin, by the two names a [`DefaultSkin`]
+/// carries.
 pub fn bundled_skin_image(texture_name: &str, model_type: &str, size: u32) -> Option<Image> {
     let skin = DEFAULT_SKINS
         .iter()
@@ -189,13 +153,8 @@ pub fn bundled_skin_image(texture_name: &str, model_type: &str, size: u32) -> Op
     Some(head(&decode(skin.texture)?, size))
 }
 
-/// The head the footer draws for an account.
-///
-/// `None` is the logged-out branch, where the Steve head is dimmed with the CSS
-/// `filter: grayscale(1)`, which Slint has no equivalent of — so the pixels are
-/// desaturated here instead. A skin that cannot be turned into pixels (a URL the
-/// crate failed to download, a UUID that does not parse) falls back to the
-/// caller's placeholder disc.
+/// The head the footer draws; `None` is logged out, where the Steve head is
+/// desaturated because Slint has no `grayscale` filter.
 pub fn account_head(account: Option<&Account>, size: u32) -> Option<Image> {
     let Some(account) = account else {
         return Some(grayscale(bundled_skin_image("steve", "wide", size)?));
@@ -209,8 +168,6 @@ pub fn account_head(account: Option<&Account>, size: u32) -> Option<Image> {
 
 /// `filter: grayscale(1)`, in the CSS filter's own luminance weights.
 fn grayscale(image: Image) -> Image {
-    // `to_rgba8` already hands back a buffer of its own, so the pixels are
-    // desaturated where they are.
     let Some(mut buffer) = image.to_rgba8() else {
         return image;
     };
@@ -225,7 +182,6 @@ fn grayscale(image: Image) -> Image {
     Image::from_rgba8(buffer)
 }
 
-/// The texture URL an account's own skin lives at, if it has one.
 pub fn account_skin_url(account: &Account) -> Option<String> {
     match account {
         Account::Microsoft(account) => account.profile.skins.first().map(|skin| skin.url.clone()),
@@ -234,11 +190,8 @@ pub fn account_skin_url(account: &Account) -> Option<String> {
     }
 }
 
-/// Decodes a `data:` URL — what the account crates store a skin as once they
-/// have downloaded it.
-///
-/// A skin the crate could *not* download is left as the URL it came with; Slint
-/// cannot fetch an image itself, so those fall back to the placeholder head.
+/// Decodes a `data:` URL, which is how a downloaded skin is stored. A skin that
+/// could not be downloaded stays a URL, and Slint cannot fetch those.
 pub(crate) fn decode_skin_url(url: &str) -> Option<image::RgbaImage> {
     if !url.starts_with("data:") {
         return None;
@@ -251,19 +204,15 @@ pub(crate) fn decode_skin_url(url: &str) -> Option<image::RgbaImage> {
     decode(&bytes)
 }
 
-/// Decodes encoded image bytes (a PNG/WebP skin or cape) into pixels.
 pub(crate) fn decode(bytes: &[u8]) -> Option<image::RgbaImage> {
     image::load_from_memory(bytes)
         .ok()
         .map(|image| image.into_rgba8())
 }
 
-/// Draws the head of `skin` into a `size`x`size` buffer.
-///
-/// The face is inset by `round(size / 18)` on every side, then the hat is
-/// stretched over the whole square and blended on top. The result is square and
-/// premultiplied; [`round_image`] cuts the corners, and does that at draw time
-/// rather than here so the radius is the caller's to choose.
+/// Draws the head of `skin` into a `size`x`size` buffer, square and
+/// premultiplied; [`round_image`] cuts the corners at draw time so the radius is
+/// the caller's to choose.
 fn head(skin: &image::RgbaImage, size: u32) -> Image {
     let size = size.max(1);
     // An HD skin crops the same face: the texture is scaled from its 64px width.
@@ -304,21 +253,10 @@ fn head(skin: &image::RgbaImage, size: u32) -> Image {
     Image::from_rgba8(SharedPixelBuffer::clone_from_slice(&pixels, size, size))
 }
 
-/// Cuts `image` to a rounded rectangle of `radius`, the way the
-/// `AvatarMask.rounded` callback asks for. It is square for the account pills'
-/// heads and portrait for the capes.
-///
-/// `draw-size` is the width the caller draws the image at, so `radius` is
-/// measured on screen rather than in the source's pixels: `AccountAvatar`
-/// generates the head at its own `size` but insets it 4px as it draws, and a
-/// radius in source pixels would come out proportionally small. The mask runs in
-/// the source's pixel space with the radius carried into it, so the two sizes
-/// agree. A radius of half the shorter side or more is the inscribed pill (a
-/// circle on a square).
-///
-/// The pixels are premultiplied, so the mask multiplies every channel by the
-/// coverage rather than only the alpha — which is what keeps the rim from
-/// reading too bright, the same reason [`premultiply`] exists below.
+/// Cuts `image` to a rounded rectangle of `radius`. `draw_size` is the width it
+/// is drawn at, so the radius is measured on screen rather than in source pixels.
+/// The premultiplied pixels are scaled in every channel, not just alpha, so the
+/// rim does not read too bright.
 pub fn round_image(image: &Image, radius: f32, draw_size: f32) -> Image {
     let Some(mut buffer) = image.to_rgba8() else {
         return image.clone();
@@ -345,14 +283,9 @@ pub fn round_image(image: &Image, radius: f32, draw_size: f32) -> Image {
     Image::from_rgba8(buffer)
 }
 
-/// CSS `filter: drop-shadow(0 <offset-y> <blur> <color>)` of `image`, on a canvas
-/// grown by `pad` on every side.
-///
-/// Slint's `drop-shadow-*` follows an element's box, so a head with transparent
-/// corners would carry a square shadow; this blurs the image's own alpha
-/// instead. The caller draws the result behind the head at `(-pad, -pad)`, which
-/// is why the canvas is grown rather than the blur being clipped at the head's
-/// edge. The three box passes below stand in for the Gaussian CSS specifies.
+/// CSS `filter: drop-shadow(0 <offset-y> <blur> <color>)` of `image`, on a
+/// canvas grown by `pad` on every side. Slint's `drop-shadow-*` follows an
+/// element's box, so this blurs the image's own alpha instead.
 pub fn drop_shadow(
     image: &Image,
     blur: f32,
@@ -395,8 +328,6 @@ pub fn drop_shadow(
     let color_alpha = color.alpha() as f32 / 255.0;
     let mut pixels = vec![0u8; (out * out * 4) as usize];
     for (index, coverage) in alpha.iter().enumerate() {
-        // The shadow is the colour at `blurred * alpha`, premultiplied: the
-        // colour is scaled by that alpha so the black of `#00000066` stays black.
         let coverage = coverage * color_alpha;
         let pixel = [red * coverage, green * coverage, blue * coverage, coverage];
         pixels[index * 4..index * 4 + 4].copy_from_slice(&to_bytes(pixel));
@@ -404,10 +335,9 @@ pub fn drop_shadow(
     Image::from_rgba8(SharedPixelBuffer::clone_from_slice(&pixels, out, out))
 }
 
-/// One separable box blur of `radius` over the square `data`.
-///
-/// Naive on purpose: the avatars are tens of pixels, so the O(radius) window is
-/// cheaper than the scratch space and bookkeeping a running sum would need.
+/// One separable box blur of `radius` over the square `data`. Naive on purpose:
+/// the avatars are tens of pixels, so the O(radius) window is cheaper than a
+/// running sum.
 fn box_blur(data: &mut [f32], width: u32, height: u32, radius: i32) {
     if radius <= 0 {
         return;
@@ -444,13 +374,8 @@ fn box_blur(data: &mut [f32], width: u32, height: u32, radius: i32) {
     }
 }
 
-/// Wires the `AvatarMask` global (`ui/globals/avatar.slint`) to the two pixel
-/// effects above.
-///
-/// The callbacks are how the radius and the shadow reach the pixels: Slint cannot
-/// round an `Image` or shadow its alpha itself (see the module doc), so
-/// `AccountAvatar`'s `corner-radius` and the account view's CSS-like
-/// `drop-shadow` are answered here.
+/// Wires the `AvatarMask` global to the pixel effects above; Slint cannot round
+/// an `Image` or shadow its alpha itself.
 pub fn setup(ui: &App) {
     let mask = ui.global::<AvatarMask>();
     mask.on_rounded(|image, radius, draw_size| round_image(&image, radius, draw_size));
@@ -459,14 +384,8 @@ pub fn setup(ui: &App) {
     });
 }
 
-/// How much of the pixel at (`x`, `y`) a `width`x`height` rectangle with corners
-/// of `radius` covers, from 0 to 1.
-///
-/// The signed distance to a rounded rectangle, ramped over one pixel so the rim
-/// is antialiased. `radius` 0 is the full rectangle and `radius` half the shorter
-/// side is the inscribed pill, so one function serves every corner the avatars
-/// and capes round. The half pixel of slack is what makes the rim a ramp rather
-/// than a hard cut, matching the rounded fill the image is drawn on.
+/// How much of the pixel at (`x`, `y`) a rounded rectangle covers: a signed
+/// distance ramped over one pixel so the rim is antialiased.
 fn rounded_rect_coverage(width: u32, height: u32, radius: f32, x: u32, y: u32) -> f32 {
     let half_w = width as f32 / 2.0;
     let half_h = height as f32 / 2.0;
@@ -478,14 +397,9 @@ fn rounded_rect_coverage(width: u32, height: u32, radius: f32, x: u32, y: u32) -
     (0.5 - (outside + inside - radius)).clamp(0.0, 1.0)
 }
 
-/// The straight-alpha pixel the layers were composed into, made premultiplied.
-///
-/// `SharedPixelBuffer` is premultiplied and every renderer reads it that way
-/// (`TexturePixelFormat::RgbaPremultiplied`), so this is what the channel
-/// convention asks for. It is the identity on the head's opaque interior — the
-/// hat layer over the face leaves nothing translucent — so it only shows at the
-/// circle's rim, where a straight colour read as premultiplied comes out too
-/// bright and the head would wear a halo.
+/// Makes the straight-alpha composed pixel premultiplied. `SharedPixelBuffer`
+/// is read as premultiplied by every renderer, and a straight colour at the rim
+/// would come out too bright and leave a halo.
 fn premultiply(pixel: [f32; 4]) -> [f32; 4] {
     [
         pixel[0] * pixel[3],
@@ -498,20 +412,12 @@ fn premultiply(pixel: [f32; 4]) -> [f32; 4] {
 /// One draw layer: the source region in skin pixels, and where the destination
 /// square sits in the image.
 struct Layer {
-    /// The region's top-left in skin pixels (8x8 of them).
     region: (f32, f32),
-    /// The image coordinate the destination square starts at.
     origin: u32,
     side: u32,
 }
 
 impl Layer {
-    /// Nearest-neighbour sample for the destination pixel (`dest_x`, `dest_y`).
-    ///
-    /// A destination pixel is sampled at its centre, which is what makes the
-    /// mapping line up instead of being half a pixel off everywhere; the region
-    /// is 8 skin pixels wide and the destination square is `self.side` wide, so
-    /// the two are scaled by `scale` in between.
     fn sample(
         &self,
         skin: &image::RgbaImage,
@@ -553,10 +459,7 @@ fn over(source: [f32; 4], destination: [f32; 4]) -> [f32; 4] {
     [channel(0), channel(1), channel(2), alpha]
 }
 
-/// Java's `UUID.hashCode()`: the two halves XORed, then folded to an `int`.
-///
-/// Both the hyphenated and the plain form are accepted, so the separators are
-/// dropped first.
+/// Java's `UUID.hashCode()`, accepting both the hyphenated and plain forms.
 fn uuid_hash_code(uuid: &str) -> Option<i32> {
     let hex: String = uuid.chars().filter(|character| *character != '-').collect();
     if hex.len() != 32 || !hex.chars().all(|character| character.is_ascii_hexdigit()) {

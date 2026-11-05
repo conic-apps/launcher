@@ -19,14 +19,10 @@ import { Dialogs, CreateInstanceState } from "../../../globals/dialogs.slint";
 import { MinecraftChoose } from "minecraft-choose.slint";
 import { ModLoaderChoose } from "mod-loader-choose.slint";
 
-// The dialog's "settings" step.
-//
-// It is a component of its own (rather than markup in `CreateInstance`) because
-// of the swap: each screen mounts fresh when the step changes, which is what
-// lets its zoom animation start from the right place. See `CreateInstance`.
+// The dialog's "settings" step. Its own component so the step swap mounts it
+// fresh and the zoom starts from the right place.
 component SettingsStep inherits ZoomTransition {
     spacing: 0px;
-    // The blocks are inset by 8px.
     padding-left: 8px;
     padding-right: 8px;
 
@@ -57,8 +53,8 @@ component SettingsStep inherits ZoomTransition {
             background: transparent;
         }
 
-        // A 16px lavender bar at 80%, drawn over the hairline, which Slint
-        // cannot leave out of one edge only.
+        // A 16px lavender bar over the hairline, since Slint borders cover all
+        // four edges.
         Rectangle {
             x: 0;
             y: 0;
@@ -67,13 +63,9 @@ component SettingsStep inherits ZoomTransition {
             background: Theme.lavender.with-alpha(0.8);
         }
 
-        // The picked background, under a left-to-right fade. Slint has no masks,
-        // so the card's own colour is laid over the image and fades out to the
-        // right instead.
-        //
-        // The image is shown once it has loaded; a Slint image that failed to
-        // load reports a zero width, which is the same test. Rust loads the file,
-        // because Slint can only read a runtime path through Rust.
+        // Slint has no masks, so the card colour is laid over the image and fades
+        // right. A failed load reports zero width, which is the same test; Rust
+        // loads the file because Slint cannot read a runtime path.
         if CreateInstanceState.background-path != ""
             && CreateInstanceState.background-image.width > 0: Rectangle {
             x: 116px;
@@ -105,9 +97,8 @@ component SettingsStep inherits ZoomTransition {
                 text: CreateInstanceState.custom-name != ""
                     ? CreateInstanceState.custom-name
                     : CreateInstanceState.default-name;
-                // The name takes its own width, elided once it would reach the
-                // edit icon. A bare `Text` outside a layout is centred by Slint,
-                // so it is pinned left here, with the edit icon next to it.
+                // Pinned left because a bare `Text` is centred by Slint; elides
+                // before the edit icon.
                 x: 0;
                 width: min(self.preferred-width, parent.width - 30px);
                 height: 16px;
@@ -147,29 +138,24 @@ component SettingsStep inherits ZoomTransition {
             font-size: 16px;
             font-weight: Theme.font-weight-normal;
             color: Theme.default-text-color.transparentize(0.1);
-            // The macOS backend paints the caret with the selection colour, so
-            // a translucent tint gives a text-coloured caret.
+            // The macOS caret uses the selection colour, so keep it translucent.
             selection-background-color: Theme.default-text-color.with-alpha(0.3);
             selection-foreground-color: Theme.default-text-color;
             single-line: true;
             vertical-alignment: center;
-            // The field takes focus as soon as it appears, and leaves edit mode
-            // when it loses it.
+            // Focus on appearance; losing focus ends editing.
             init => { self.focus(); }
             changed has-focus => {
                 if !self.has-focus && CreateInstanceState.name-editing {
                     CreateInstanceState.name-editing = false;
                 }
             }
-            // Clicking any control elsewhere in the dialog drops the focus (see
-            // `FocusManager`), which ends the edit as well.
+            // Clicking another control drops focus, which ends the edit.
             private property <int> clear-sequence: FocusManager.clear-sequence;
             changed clear-sequence => { self.clear-focus(); }
         }
 
-        // The default name while the field is empty. Slint's `TextInput` has no
-        // placeholder of its own, so it is drawn over the field like `Input`
-        // does.
+        // `TextInput` has no placeholder, so it is drawn over the field.
         if CreateInstanceState.name-editing && CreateInstanceState.custom-name == "": Text {
             x: 32px;
             y: 9px;
@@ -244,8 +230,7 @@ component SettingsStep inherits ZoomTransition {
             navigable: CreateInstanceState.background-path == "";
             clicked => { CreateInstanceState.pick-background(@tr("CreateInstance" => "Images")); }
 
-            // The chevron is replaced by a red "Remove image" button once a file
-            // is picked.
+            // Once a file is picked, a "Remove image" button replaces the chevron.
             if CreateInstanceState.background-path != "": Button {
                 text: @tr("CreateInstance" => "Remove image");
                 text-color: Theme.red;
@@ -299,8 +284,7 @@ component SettingsStep inherits ZoomTransition {
         SettingItem {
             group-last: true;
             title: @tr("CreateInstance" => "Loader version");
-            // The version the rest of the row is about, shown as a suffix to the
-            // title.
+            // Shown as a title suffix.
             title-suffix: CreateInstanceState.minecraft-version;
             icon: "extension-puzzle";
             description: CreateInstanceState.minecraft-version != ""
@@ -323,22 +307,13 @@ component SettingsStep inherits ZoomTransition {
         background: transparent;
     }
 
-    // The step insets its children by 8px (see its padding), so this row adds
-    // none: its buttons line up with the setting rows above.
-    // The default `stretch`, not `alignment: start`: a main-axis alignment other
-    // than `stretch` sizes every child to its *preferred* width and distributes
-    // the free space to nobody, which would pack both buttons at the left of the
-    // row instead of splitting it.
+    // The step already insets by 8px. The default `stretch` splits the row;
+    // another main-axis alignment would pack both buttons left.
     actions := HorizontalLayout {
         spacing: 12px;
 
-        // Both buttons ask for the whole row and shrink by the same factor, so
-        // they come out the same width whatever their labels. `horizontal-stretch`
-        // only hands out the *extra* space, so on its own it leaves them differing
-        // by the difference in label widths ("Cancel" against "Create instance").
-        // An equal `button-width` on both restores the split, and naming the row
-        // lets it be the real half of the row rather than a magic number: the two
-        // stay equal at any width, and neither can outgrow the row into the gap.
+        // Equal explicit widths keep the buttons equal despite different labels;
+        // stretch alone only distributes extra space.
         Button {
             button-width: (actions.width - actions.spacing) / 2;
             horizontal-stretch: 1;
@@ -352,8 +327,7 @@ component SettingsStep inherits ZoomTransition {
             text: CreateInstanceState.creating
                 ? @tr("CreateInstance" => "Creating...")
                 : @tr("CreateInstance" => "Create instance");
-            // Disabled while creating and until both a Minecraft version and (for
-            // a modded instance) a loader version are set.
+            // Needs a version, and a loader version when modded.
             button-enabled: !CreateInstanceState.creating
                 && CreateInstanceState.minecraft-version != ""
                 && (CreateInstanceState.mod-loader-type == "None"
@@ -363,45 +337,26 @@ component SettingsStep inherits ZoomTransition {
     }
 }
 
-// The create-instance dialog: a 480×480 panel that swaps between three screens.
+// The create-instance dialog: a 480×480 panel swapping between three screens.
 //
-// The swap is an out-in transition: the outgoing screen plays its 80ms zoom-out
-// first, then the incoming one plays its 250ms zoom-in. Slint has no transition
-// component, so the state machine below drives it with the `phase` the screens
-// read: the mounted screen plays its leave first (`shown` stays put for the 80ms
-// beat), then the `shown` slot changes — which destroys the old element and
-// creates the new one, so the arriving screen starts from the enter rest state
-// instead of animating away from the previous screen's — and its `phase` moves to
-// "shown" one frame later.
-//
-// The direction is picked from the screen being left: into the version chooser
-// and back from the loader chooser are `zoom-in`, into the loader chooser and back
-// from the version chooser are `zoom-out`.
+// The swap is out-in: the mounted screen leaves, then the next is created at its
+// enter rest and moves to "shown" a frame later. The direction comes from the
+// screen being left.
 export component CreateInstance inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;
 
     private property <length> title-height: 40px;
-    // The version chooser is `height: calc(100% - 42px)` and the mod loader one
-    // is `height: 100%`, so each screen gets its own number here rather than one
-    // shared with the title, so that neither is quietly the other's. The mod
-    // loader one is the normalized reading: a `height: 100%` child in a column
-    // with a title above it overflows by the title, which the dialog's scroller
-    // absorbs.
+    // The version chooser is the inner area minus 42px; the loader chooser fills
+    // it entirely.
     private property <length> version-screen-height: 42px;
     private property <bool> open: Dialogs.create-instance-visible;
     // The step the user asked for; the title follows it at once.
     private property <string> step: CreateInstanceState.step;
-    // The screen actually mounted. It follows `step` only once the mounted screen
-    // has played its leave: the outgoing component stays until the incoming one
-    // is mounted.
-    //
-    // Driving the leave from the mounted screen (instead of from a copy of it
-    // mounted ahead of time) is what makes it play: Slint only advances an
-    // `animate` while the property is read, so a copy that is kept out of
-    // sight — `visible: false`, or clipped away — jumps straight to the leave
-    // values the moment it is shown, without animating.
+    // The screen actually mounted, following `step` only after the leave. Driving
+    // the leave from the mounted screen is what makes it play: a hidden copy would
+    // jump straight to the leave values.
     private property <string> shown: "";
     private property <bool> leaving: false;
     private property <string> arrive-phase: "shown";
@@ -413,8 +368,7 @@ export component CreateInstance inherits Rectangle {
         if open {
             CreateInstanceState.step = "minecraft-choose";
         } else {
-            // Clean the form on close: clearing the step unmounts the screens so
-            // the next open builds them again.
+            // Clearing the step unmounts the screens so the next open rebuilds.
             CreateInstanceState.step = "";
             CreateInstanceState.custom-name = "";
             CreateInstanceState.name-editing = false;
@@ -435,22 +389,18 @@ export component CreateInstance inherits Rectangle {
             root.arrive-phase = "shown";
             root.direction = "in";
         } else {
-            // The direction comes from the screen being left: into the version
-            // chooser and back from the loader chooser are `zoom-in`, into the
-            // loader chooser and back from the version chooser are `zoom-out`.
+            // The direction comes from the screen being left.
             root.direction = (root.step == "minecraft-choose"
                 || (root.step == "settings" && root.shown == "mod-loader-choose"))
                 ? "in"
                 : "out";
 
-            // Entering the chooser fetches the manifest again (the crate caches
-            // it for 30 minutes).
+            // The crate caches the manifest for 30 minutes.
             if root.step == "minecraft-choose" {
                 CreateInstanceState.load-minecraft-versions();
             }
             if root.shown == "" {
-                // The first screen of this open just appears; mounting is not
-                // animated.
+                // The first screen just appears; mounting is not animated.
                 root.shown = root.step;
             } else if root.step == root.shown {
                 // Switching back to the screen that is leaving calls it off.
@@ -464,8 +414,7 @@ export component CreateInstance inherits Rectangle {
         }
     }
 
-    // The out-in beat: the mounted screen plays its 80ms leave, and the arriving
-    // one is mounted when that is over.
+    // The out-in beat: mount the arriving screen after the leave.
     leave-timer := Timer {
         interval: 80ms;
         running: root.leave-armed;
@@ -480,10 +429,7 @@ export component CreateInstance inherits Rectangle {
         }
     }
 
-    // The arriving screen is mounted at the enter rest and moves to "shown" one
-    // frame later: an element created and finished in the same frame has nothing
-    // to animate from, and the enter became a jump. Long enough for a frame,
-    // short enough not to be seen.
+    // Mount at the enter rest, then move to "shown" a frame later.
     enter-timer := Timer {
         interval: 16ms;
         running: root.enter-armed;
@@ -493,37 +439,31 @@ export component CreateInstance inherits Rectangle {
         }
     }
 
-    // A `Dialog` instance rather than a base to inherit from: inside an
-    // inherited component a `parent` reference resolves against the *root* of
-    // the base (the whole window) instead of the element that hosts the
-    // `@children` slot, which would size everything below to the window.
+    // An instance, not a base: in an inherited component `parent` would resolve
+    // against the base's root (the whole window), not the `@children` slot.
     dialog := Dialog {
         dialog-visible: Dialogs.create-instance-visible;
         dialog-width: 480px;
         dialog-height: 480px;
 
-        // The dialog's inner area, inset 4px. Its size comes from `Dialog` —
-        // a `parent` reference here is the dialog's root (the window), not the
-        // slot the content is laid out in.
+        // Sized from `Dialog`: `parent` here is the window, not the content slot.
         scroll := Rectangle {
             x: 4px;
             y: 4px;
             width: dialog.content-width - 8px;
             height: dialog.content-height - 8px;
             background: transparent;
-            // The Flickable cannot clip itself (only a Rectangle can), and without
-            // it the screen would draw over the panel's rounded edges.
+            // Only a `Rectangle` can clip; without it the screen draws over the
+            // panel's rounded edges.
             clip: true;
 
-            // The dialog's scroll area: `overflow-y: auto`, and its scrollbar is
-            // hidden globally.
+            // The dialog's scroll area; its scrollbar is hidden globally.
             flick := Flickable {
                 width: 100%;
                 height: 100%;
                 interactive: !Dropdown.open;
                 mouse-drag-pan-enabled: false;
-                // Pin the content to the dialog's inner width, like `ScrollView` does —
-                // without it the column would be laid out at its preferred width.
+                // Without this the column lays out at its preferred width.
                 content-width: scroll.width;
 
                 VerticalLayout {
@@ -549,11 +489,8 @@ export component CreateInstance inherits Rectangle {
                         }
                     }
 
-                    // One slot per screen, keyed on the screen that is *mounted*
-                    // (`shown`) rather than on the one asked for: that is what
-                    // keeps the element alive (and its animation running) while it
-                    // plays its leave, and what makes the arriving screen a fresh
-                    // element that starts at its enter rest.
+                    // Keyed on the mounted screen, so the leaving screen stays
+                    // alive to animate and the arriving one mounts freshly.
                     if root.shown == "settings": SettingsStep {
                         phase: root.leaving ? "leave" : root.arrive-phase;
                         direction: root.direction;
@@ -561,15 +498,13 @@ export component CreateInstance inherits Rectangle {
                     if root.shown == "minecraft-choose": MinecraftChoose {
                         phase: root.leaving ? "leave" : root.arrive-phase;
                         direction: root.direction;
-                        // The chooser is the dialog's inner area less the title.
+                        // The inner area less the title.
                         screen-height: flick.height - root.version-screen-height;
                     }
                     if root.shown == "mod-loader-choose": ModLoaderChoose {
                         phase: root.leaving ? "leave" : root.arrive-phase;
                         direction: root.direction;
-                        // The screen fills what the title leaves of the dialog's
-                        // inner area (see `version-screen-height`). It scrolls
-                        // its own list either way.
+                        // Fills what the title leaves; it scrolls its own list.
                         screen-height: flick.height - root.title-height;
                     }
                 }

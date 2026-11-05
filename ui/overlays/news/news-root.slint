@@ -8,12 +8,8 @@ import { ContentOverlay } from "../content/content-overlay.slint";
 import { NewsListPanel } from "news-panel.slint";
 import { NewsDetailPanel } from "news-detail.slint";
 
-// The news overlay layer.
-//
-// Two `ContentOverlay`s on the shared shell: the list, and the changelog detail
-// drawn *after* it so the detail covers the list it was opened from. Both slide
-// up and fade their scrim exactly as the content, account and instance-settings
-// panels do; closing the detail leaves the list untouched underneath.
+// The news overlay layer: the list, and the changelog detail drawn after it so
+// the detail covers the list.
 export component NewsRoot inherits Rectangle {
     width: 100%;
     height: 100%;

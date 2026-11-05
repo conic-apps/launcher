@@ -4,12 +4,9 @@
 
 //! The Conic Nexus cross-LAN multiplayer session.
 //!
-//! [`NexusService`] owns the domain layer: it lazily loads the library, creates
-//! and configures the session, and runs the background poll loop that drains the
-//! library's event queue and reconciles its state. Every notice is handed to an
-//! [`EventSink`] the app installs, and the app forwards them into the UI on the
-//! Slint event loop. The download task's abort handle is owned by the app, which
-//! aborts the tokio task it spawned (like the launch view's cancel handles).
+//! [`NexusService`] owns the session, its background poll loop, and the
+//! reconciler. The download task's abort handle is owned by the app, which
+//! aborts the tokio task it spawned.
 
 use std::{
     sync::{
@@ -47,13 +44,10 @@ pub const CONIC_NEXUS_EVENT_STATE_CHANGED: i32 = 0;
 pub const EVENT_POLL_INTERVAL: Duration = Duration::from_millis(100);
 pub const RECONCILE_EVERY: u32 = 5;
 
-/// Receives every notice the poll loop drains. It is called from the poll
-/// thread, so whatever it closes over has to be `Send + Sync`; the app marshals
-/// the event onto the Slint event loop itself.
+/// Called from the poll thread, so whatever it closes over has to be
+/// `Send + Sync`; the app marshals the event onto the Slint event loop itself.
 pub type EventSink = shared::Sink<SessionEvent>;
 
-/// The lazily loaded session, its background poll thread and the reconciler's
-/// bookkeeping.
 pub struct NexusService {
     session: Mutex<Option<Arc<NexusSession>>>,
     poll_thread: Mutex<Option<thread::JoinHandle<()>>>,
@@ -63,8 +57,6 @@ pub struct NexusService {
 }
 
 impl NexusService {
-    /// Builds the service. `events` is called from the poll thread for every
-    /// drained notice.
     pub fn new(events: EventSink) -> Self {
         NexusService {
             session: Mutex::new(None),
@@ -75,8 +67,8 @@ impl NexusService {
         }
     }
 
-    /// Stops the poll thread and destroys the session. Called on the app's exit
-    /// event.
+    /// Stopping is called on the app's exit event; the poll thread must be
+    /// joined before the session is destroyed.
     pub fn shutdown(&self) {
         info!("Shutting down multiplayer plugin");
         self.shutdown_flag.store(true, Ordering::SeqCst);
@@ -202,10 +194,9 @@ impl Drop for NexusService {
     }
 }
 
-/// Drains the Conic Nexus event queue and hands every notice to the sink. A
-/// periodic `get_state` reconciliation covers events dropped by the bounded
-/// queue by synthesising a STATE_CHANGED notice when the version advanced
-/// without the queue reporting it.
+/// Drains the event queue and hands every notice to the sink. The periodic
+/// `get_state` reconciliation synthesises a STATE_CHANGED notice for events the
+/// bounded queue dropped.
 fn poll_loop(
     session: Arc<NexusSession>,
     shutdown: Arc<AtomicBool>,
@@ -254,9 +245,6 @@ fn poll_loop(
                         events(event);
                     }
                 }
-                // This is the read that decides whether the panel's room state is
-                // current at all, so a failure deserves a line rather than being
-                // the one unlogged result in the loop.
                 Err(error) => {
                     log::debug!("the Conic Nexus session state could not be read: {error}")
                 }

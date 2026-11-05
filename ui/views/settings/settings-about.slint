@@ -69,14 +69,11 @@ export component SettingsAbout inherits VerticalLayout {
     version-info := VerticalLayout {
         width: 100%;
         padding-top: 16px;
-        // Center the logo and text horizontally. In a `VerticalLayout`,
-        // `cross-axis-alignment` controls the horizontal axis (`alignment`
-        // would only affect the vertical packing).
+        // `cross-axis-alignment` is the horizontal axis here; `alignment`
+        // only packs vertically.
         cross-axis-alignment: center;
 
-        // The logo has no fixed height: an SVG's height follows its own ratio,
-        // which for `logo-flat.svg` is `886.371 / 840.793`, so a 24px width is
-        // 25.31px tall. A 24 × 24 box letterboxes it to 22.77px wide.
+        // An SVG keeps its own ratio; a fixed 24 × 24 box would letterbox it.
         logo := Image {
             source: @image-url("../../assets/images/logo-flat.svg");
             colorize: Theme.text;
@@ -133,12 +130,8 @@ export component SettingsAbout inherits VerticalLayout {
             height: disclaimer-text.height;
             background: transparent;
 
-            // Only "Brand and Asset Guidelines" is a link; the click handler
-            // opens the URL only for anchor targets.
-            // The sentence is split into before/link/after translations so the
-            // link can hug the translated label. Slint always underlines
-            // `Style::Link` spans (1.18 has no link-hover state), so the
-            // underline is always visible.
+            // The sentence is split so the link can hug the translated label.
+            // Slint 1.18 always underlines `Style::Link` spans (no hover state).
             disclaimer-text := StyledText {
                 width: 100%;
                 text: @markdown("\{@tr("Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios ")}[\{@tr("Brand and Asset Guidelines")}](https://www.minecraft.net/en-us/usage-guidelines)\{@tr(".")}");

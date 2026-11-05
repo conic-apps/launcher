@@ -8,10 +8,8 @@ use super::*;
 
 /// Registers every command-palette callback on `CommandPaletteState`.
 ///
-/// The two openers are wired in the view, the way the title bar's other actions
-/// are: `CommandPaletteState.open()` for the search field's click and
-/// `CommandPaletteState.toggle()` for the `Ctrl`/`⌘` + `/` shortcut, which the
-/// app-level key scope in `app.slint` binds.
+/// The two openers are wired in the view: `open()` for the search field's click
+/// and `toggle()` for the `Ctrl`/`⌘` + `/` shortcut bound in `app.slint`.
 pub fn setup(ui: &App) {
     setup_visibility(ui);
     setup_selection(ui);
@@ -58,7 +56,6 @@ pub(crate) fn setup_selection(ui: &App) {
             controller.borrow_mut().click(&ui, index.max(0) as usize);
         });
     }
-    // Enter, which acts on the selection rather than on a row.
     {
         let controller = Rc::clone(&controller);
         let weak = ui.as_weak();
@@ -72,7 +69,6 @@ pub(crate) fn setup_selection(ui: &App) {
     {
         let controller = Rc::clone(&controller);
         let weak = ui.as_weak();
-        // The pointer marks a row; it does not choose it.
         ui.global::<CommandPaletteState>().on_hover(move |index| {
             let Some(ui) = weak.upgrade() else { return };
             let index = if index < 0 {
@@ -132,7 +128,6 @@ pub(crate) fn setup_selection(ui: &App) {
     }
 }
 
-/// The 250ms debounce elapsed, so the search itself runs.
 pub(crate) fn setup_search(ui: &App) {
     let controller = controller();
     {

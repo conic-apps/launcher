@@ -2,18 +2,11 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The account view's script: builds the account-details overlay's state and
-//! answers its callbacks.
+//! The account-details overlay: builds its state and answers its callbacks.
 //!
-//! The overlay is opened from the footer's avatar (`game`), which only calls
-//! [`open()`]; everything the panel shows — the head, the auth details, the launch
-//! contribution graph, the recent activity and the skin / cape preview — is
-//! assembled here from the account files and `statistics.json`.
-//!
-//! The account files are read synchronously (`account::list_accounts` is a few
-//! kilobytes), so the header can be drawn in the same frame the overlay opens.
-//! The two slower reads — the statistics and a Yggdrasil server's name — run on
-//! the runtime and land later.
+//! The account files are read synchronously so the header can be drawn in the
+//! same frame the overlay opens; the slower statistics and Yggdrasil server-name
+//! reads run on the runtime and land later.
 
 mod skin;
 
@@ -32,12 +25,11 @@ use crate::slint_backend::{
 };
 use crate::ui::services::report::report;
 
-// The account the overlay is showing. Kept here rather than in the global: the
-// global carries the *rendered* fields, and an `Account` is not a Slint type.
+// Kept here rather than in the global: the global carries the rendered fields,
+// and an `Account` is not a Slint type.
 thread_local! {
     static VIEWED: RefCell<Option<Account>> = const { RefCell::new(None) };
-    /// The launcher's config, for the "set as default" and delete paths. Set by
-    /// [`setup`]; accessed on the UI thread only.
+    /// The launcher's config, accessed on the UI thread only.
     static CONFIG: RefCell<Option<Rc<RefCell<config::Config>>>> = const { RefCell::new(None) };
 }
 
@@ -118,7 +110,6 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     }
 }
 
-/// Every stored account, flattened into the order the UI lists them.
 fn all_accounts() -> Vec<Account> {
     let accounts = account::list_accounts();
     accounts
@@ -130,8 +121,7 @@ fn all_accounts() -> Vec<Account> {
         .collect()
 }
 
-/// Opens the overlay on the launcher's current account (or the first stored
-/// one).
+/// Opens the overlay on the launcher's current account, or the first stored one.
 pub fn open(ui: &App) {
     let accounts = all_accounts();
     let current = config().and_then(|config| config.borrow().current_account.clone());
@@ -399,8 +389,6 @@ fn build_skin(ui: &App, account: &Account) {
     let uuid = account.get_profile_uuid();
     let own_skin = decode_skin(account);
 
-    // The model: the account's own skin when it has a decodable one, otherwise
-    // the default skin its UUID picks.
     let (model, has_own_skin) = match own_skin {
         Some(skin) => {
             let slim = slim_for(account, &skin);
@@ -460,14 +448,11 @@ fn decode_skin(account: &Account) -> Option<image::RgbaImage> {
     None
 }
 
-/// The account's capes, each cut to its rounded front face, active one flagged
-/// and prefixed by the leading "no cape" entry.
+/// The account's capes, each cut to its front face, and the leading "no cape"
+/// entry the view draws a ban glyph for.
 ///
-/// Only a Microsoft profile carries capes; the other kinds store a remote URL
-/// the launcher cannot decode, so they list none. A cape whose texture cannot be
-/// decoded is dropped rather than shown as a blank. The "no cape" entry carries
-/// no texture; the view draws a ban glyph for it, and it is only present when
-/// the account owns at least one cape to take off.
+/// Only a Microsoft profile carries capes, and one whose texture cannot be
+/// decoded is dropped rather than shown as a blank.
 fn cape_items(account: &Account) -> Vec<CapeItem> {
     let Account::Microsoft(account) = account else {
         return Vec::new();
@@ -505,13 +490,11 @@ fn cape_items(account: &Account) -> Vec<CapeItem> {
     items
 }
 
-/// Sets the cape `index` picks on Mojang's side while the view spins: every cape
-/// dims and a loader covers the row until the server answers.
+/// Applies the cape `index` picks on Mojang's side.
 ///
-/// Only a Microsoft cape can be applied (a Yggdrasil profile's textures are its
-/// server's to change), and only from a Microsoft account, so anything else is
-/// ignored. The account and the list are rebuilt from the server's own answer,
-/// so a request that fails leaves the previous selection in place.
+/// Only a Microsoft cape can be applied, and the list is rebuilt from the
+/// server's own answer, so a failed request leaves the previous selection in
+/// place.
 fn select_cape(ui: &App, index: i32) {
     let Some(Account::Microsoft(account)) = VIEWED.with(|cell| cell.borrow().clone()) else {
         return;
@@ -604,7 +587,6 @@ fn fetch_server_name(ui: &App, account: &Account) {
     });
 }
 
-/// The statistics profile a stored account logs its launches under.
 fn statistics_profile(account: &Account) -> StatisticsProfile {
     match account {
         Account::Microsoft(account) => StatisticsProfile::Microsoft(account.profile.uuid),
@@ -639,8 +621,8 @@ fn fetch_stats(ui: &App, account: &Account) {
     });
 }
 
-/// Builds the 1-year contribution window, the month captions and the recent
-/// activity rows. Ported from the Vue build's `ActivityCalendar`.
+/// Builds the one-year contribution window, the month captions and the recent
+/// activity rows.
 fn apply_stats(ui: &App, entries: &[StatisticsEntry], names: &HashMap<String, String>) {
     let state = ui.global::<AccountViewState>();
 
@@ -722,7 +704,6 @@ fn apply_stats(ui: &App, entries: &[StatisticsEntry], names: &HashMap<String, St
     state.set_activities(ModelRc::new(VecModel::from(activities)));
 }
 
-/// A launch count's GitHub-style level, 0 through 4.
 fn level(count: u32) -> i32 {
     match count {
         0 => 0,

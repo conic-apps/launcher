@@ -4,30 +4,15 @@
 
 //! The generic tooltip's pointer position (`ui/globals/tooltip.slint`).
 //!
-//! Slint has no global cursor accessor. A `TouchArea` knows where the pointer is
-//! only while it is the one receiving events, and the tooltip has to follow the
-//! pointer no matter which control raised it — including the ones that never see
-//! a move. The window does know: winit reports every `CursorMoved`, so this
-//! watches the window's events through the shared fan-out
-//! (`window::on_window_event`, the same hook the focus watcher uses) and writes
-//! both coordinates into `TooltipState`.
-//!
-//! The pointer is tracked for the whole session rather than only while a panel
-//! is up: `TooltipState` has no way to ask winit for the position once, and the
-//! first value a panel read would be stale until the next move.
-//!
-//! The filter runs on the event loop's thread — the one that owns the window —
-//! so the write happens right there, the way the focus watcher does it.
+//! Slint has no global cursor accessor, and a `TouchArea` only knows the pointer
+//! while it receives events, so winit's `CursorMoved` fan-out is tracked for the
+//! whole session; it runs on the event loop's thread and writes `TooltipState`
+//! directly.
 
 use slint::ComponentHandle;
 
 use crate::slint_backend::{App, TooltipState};
 
-/// Installs the cursor tracker on the app window.
-///
-/// The one event stream in the app with no logging at all: a tooltip that stops
-/// following the pointer pins to a stale position, and there is no symptom
-/// anywhere else that says the tracker stopped.
 pub fn setup(ui: &App) {
     let weak = ui.as_weak();
     log::debug!(target: "shell", "tooltip: tracking the pointer for tooltips");

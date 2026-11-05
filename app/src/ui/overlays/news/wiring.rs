@@ -3,11 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The news overlay's callbacks, registered on the `App`, `NewsState` and
-//! `NewsSearch` globals.
-//!
-//! Each callback upgrades the one `Weak<App>` — a strong handle cannot cross
-//! into the event-loop closure — and hands the work to a function in the parent
-//! module. Nothing here holds state of its own.
+//! `NewsSearch` globals. Each upgrades the one `Weak<App>` and hands the work to
+//! the parent module; nothing here holds state of its own.
 
 use super::*;
 

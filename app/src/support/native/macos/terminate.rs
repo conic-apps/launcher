@@ -2,34 +2,11 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Routes AppKit's terminate requests through the window's own close flow.
-//!
-//! `⌘Q`, the application menu's Quit and a system logout do not go through the
-//! window: AppKit's `terminate:` asks the application delegate's
-//! `applicationShouldTerminate:` whether it may proceed, and then exits. The
-//! close-requested callback never runs and `ui.run` never returns, so the work
-//! `main` does after it would be skipped. `⌘W`, the traffic light and this app's
-//! own close button all run `root.close()`, which is where the "a task is
-//! running" confirm lives.
-//!
-//! Winit's application delegate does not implement `applicationShouldTerminate:`,
-//! so this adds one to its class with the runtime. No selector winit owns is
-//! swapped, and no `⌘Q` keyboard shortcut is registered — the platform's own
-//! Quit is intercepted where AppKit already asks. The added method returns
-//! `NSTerminateCancel` and asks the shell to run its close flow: a confirm the
-//! user accepts hides the window and lets `ui.run` return normally, exactly as
-//! `⌘W` does, while a confirm the user dismisses leaves the app running and `⌘Q`
-//! can be asked again.
-//!
-//! The delegate has to exist before the method can be added, and both the
-//! delegate and the method run on the main thread. Both hold: `install` runs
-//! from `main` before `ui.run`, and winit creates and sets its delegate when its
-//! event loop is built, during the backend setup.
-//!
-//! `applicationShouldTerminate:` is not the place to run the exit-time work
-//! itself, and `NSApplicationWillTerminateNotification` is kept for the paths
-//! that really do terminate (a call this module did not intercept, or a
-//! `class_addMethod` that lost the selector to a future winit).
+//! Routes AppKit's terminate requests (`⌘Q`, the application menu's Quit, a
+//! system logout) through the window's own close flow: `applicationShouldTerminate:`
+//! is added to winit's delegate to cancel and replay the quit as a close, so the
+//! "a task is running" confirm still runs. Both the delegate and the added method
+//! run on the main thread; `install` runs from `main` before `ui.run`.
 
 use core::ffi::{CStr, c_char, c_void};
 use core::ptr::NonNull;

@@ -3,24 +3,14 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The game view's four preview rows: the first few icons of each content list.
-//!
-//! A separate pass from the parse, on purpose. Parsing decides *what* the
-//! instance holds and the summary's counts follow from it immediately; the icons
-//! are images that have to be fetched and decoded, and making the number wait for
-//! the fifth thumbnail would be the wrong trade in a row that is read at a
-//! glance. So this is a request, not a load: every icon goes out through the
-//! same memo the cards use, so a preview that has been drawn once costs a map
-//! lookup and a preview that has not costs a read of an already-parsed list.
-//!
-//! The rows are kept as `VecModel`s rather than replaced wholesale, so an icon
-//! landing fills one circle instead of re-creating all five — which is what
-//! would otherwise make the row flicker once per icon.
+//! A separate pass from the parse so the counts do not wait on thumbnails; icons
+//! go through the same memo the cards use, and the rows are kept as `VecModel`s so
+//! a landing icon fills one circle instead of re-creating all five.
 
 use futures::{StreamExt, stream};
 
 use super::*;
 
-/// How many icons a preview row shows.
 pub(crate) const PREVIEW_ICONS: usize = 5;
 
 /// The model's index for a kind. The order matches `GameState.preview-*`.
@@ -56,14 +46,10 @@ thread_local! {
     static SAVES: RefCell<Option<(String, Vec<String>)>> = const { RefCell::new(None) };
 }
 
-/// The four rows' models. Handed to the summary once and borrowed where needed —
-/// cloning the array is four `Rc` bumps, not a copy of anything.
 fn models() -> [Rc<VecModel<Image>>; 4] {
     MODELS.with(|models| models.borrow().clone())
 }
 
-/// Hands the four models to the summary. Called once, where the rest of the
-/// callbacks are registered.
 pub(crate) fn push_preview_models(ui: &App) {
     let models = models();
     let state = ui.global::<GameState>();

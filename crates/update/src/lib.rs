@@ -4,14 +4,11 @@
 
 //! The launcher's self-updater.
 //!
-//! The protocol is the one served by `conic-apps/conic-updater-server`: a
-//! dynamic endpoint that answers `204`/JSON (see [`manifest`]), a minisign
-//! signature over every bundle (see [`staged`]), and a per-platform apply step
-//! that runs as the process exits (see [`apply`]).
-//!
-//! What this crate deliberately does not own: *when* to check, how to surface
-//! progress, and whether the user opted in. Those are the use case's and the
-//! interface's, so this crate only exposes the mechanism.
+//! The protocol is served by `conic-apps/conic-updater-server`: a dynamic endpoint
+//! answering `204`/JSON (see [`manifest`]), a minisign signature over every bundle
+//! (see [`staged`]), and a per-platform apply step that runs as the process exits
+//! (see [`apply`]). When to check and whether the user opted in are the caller's
+//! concern; this crate only exposes the mechanism.
 
 pub mod applied;
 pub mod apply;

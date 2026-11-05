@@ -2,46 +2,18 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! A z-buffered software rasteriser for the window background.
+//! A z-buffered software rasteriser for the window background, matching the GPU
+//! path's two draw calls: premultiplied quad fills that write depth, then
+//! screen-space outline quads.
 //!
-//! This is the CPU path for the 3D world, which the GPU path in
-//! [`gl`](super::gl) also draws; the two implement the same pipeline. Only two
-//! primitives are needed, matching the GPU path's two draw calls:
-//!
-//! * [`Canvas::fill_quad`] — the world pass: convex quads (one per block face,
-//!   split into the two triangles the index buffer names: `(0,1,2)` and
-//!   `(0,2,3)`) blended premultiplied source-over into the buffer, writing
-//!   depth. The faces are emitted far-to-near, so a nearer face blends over a
-//!   farther one covering the same pixel.
-//! * [`Canvas::edge_quad`] — the stroke pass: the same quads, expanded to the
-//!   2px screen-space outlines, drawn afterwards with a *less-or-equal* depth
-//!   test, blending disabled (they overwrite) and no depth write — the GPU
-//!   path's `disable(BLEND); depthFunc(LEQUAL); depthMask(false);`.
-//!
-//! Depth is stored as `1 / dz`, where `dz` is the vertex's distance along the
-//! view axis. The projection divides by `dz`, so `1 / dz` is what varies
-//! *linearly* across a planar quad in screen space: interpolating it
-//! barycentrically reproduces what the GPU's perspective-correct interpolation
-//! hands the depth test. Comparing reciprocals inverts the test — "greater or
-//! equal" is the GPU path's `LEQUAL` — and a cleared buffer of zeroes means
-//! "infinitely far", which is where a cleared depth buffer starts.
-//!
-//! Triangles are rasterised as per-row spans: each row's x interval comes from
-//! solving the three edge functions for x, and inside it the edge values and
-//! the depth advance by a constant per pixel. Walking a bounding box instead
-//! costs a thin, steep quad its whole rectangle — which is most of the outlines
-//! and the fill of every face seen at a grazing angle.
-//!
-//! A `discard` outside the window's bottom two rounded corners would be needed
-//! if the compositor could not clip the layer. It is not done: the window's
-//! container in `app.slint` already clips the background to its 16px radius, and
-//! the canvas there is larger than the window (the parallax wrapper scales it by
-//! 1.08), so the discard would land 4% outside the visible corners anyway.
+//! Depth is stored as `1 / dz` so it interpolates linearly across a planar quad,
+//! and triangles are rasterised as per-row spans so a thin, steep quad costs its
+//! length rather than its bounding box.
 
 use slint::{Rgba8Pixel, SharedPixelBuffer};
 
-/// A projected vertex: window coordinates in device pixels (y downwards, the
-/// horizon at `height / 2`) plus the reciprocal view depth used for the test.
+/// A projected vertex in device pixels, with the reciprocal view depth used for
+/// the test.
 #[derive(Clone, Copy, Default, Debug)]
 pub struct Vertex {
     pub x: f32,
@@ -49,11 +21,8 @@ pub struct Vertex {
     pub inv_depth: f32,
 }
 
-/// Packs a premultiplied colour the way [`Rgba8Pixel`] stores it.
-///
-/// `from_ne_bytes` keeps this endian-neutral: the bytes are laid out r, g, b, a
-/// in memory exactly like the pixel struct, so writing a packed colour into the
-/// buffer is a single 32-bit store.
+/// Packs a premultiplied colour the way [`Rgba8Pixel`] stores it: the bytes are
+/// laid out r, g, b, a, so writing one is a single 32-bit store.
 #[inline]
 pub fn color(r: f32, g: f32, b: f32, alpha: f32) -> u32 {
     let channel = |value: f32| (value * alpha * 255.0 + 0.5).clamp(0.0, 255.0) as u8;
@@ -68,18 +37,14 @@ pub fn color(r: f32, g: f32, b: f32, alpha: f32) -> u32 {
 /// How a rasterised quad meets what is already in the buffer.
 #[derive(Clone, Copy, PartialEq)]
 enum Write {
-    /// Premultiplied source-over, writing depth — the fill pass.
     Blend,
-    /// Replace, depth-tested but not written — the stroke pass.
     Overwrite,
 }
 
 /// The offscreen buffer the world and the sky are drawn into.
 ///
-/// The pixel buffer is double-buffered: the finished frame is handed to Slint by
-/// value (a cheap refcount bump) and the next frame is drawn into the other one,
-/// so a buffer Slint still holds is never written to — which would make
-/// `make_mut_slice` copy the whole thing.
+/// Double-buffered: Slint keeps the finished frame while the next draws into the
+/// other buffer, so a held buffer is never copied by `make_mut_slice`.
 pub struct Canvas {
     width: u32,
     height: u32,
@@ -100,7 +65,6 @@ impl Canvas {
                 SharedPixelBuffer::new(width, height),
             ],
             depth: vec![0.0; (width * height) as usize],
-            // Starts at 1 so the first `begin` swaps in buffer 0.
             parity: 1,
         }
     }
@@ -113,7 +77,6 @@ impl Canvas {
         self.height
     }
 
-    /// Rebuilds the buffers for a new size.
     pub fn resize(&mut self, width: u32, height: u32) {
         if self.width == width && self.height == height {
             return;
@@ -121,60 +84,39 @@ impl Canvas {
         *self = Self::new(width, height);
     }
 
-    /// Starts a frame: clears colour to transparent and depth to "infinitely
-    /// far", and swaps in the write buffer.
     pub fn begin(&mut self) {
         self.parity ^= 1;
         for pixel in self.pixels[self.parity].make_mut_slice() {
             *pixel = Rgba8Pixel::default();
         }
-        // 1/dz = 0 is dz = infinity — a cleared depth buffer — and zeroing is a
-        // plain `memset`.
+        // 1/dz = 0 is dz = infinity, which is a cleared depth buffer.
         self.depth.fill(0.0);
     }
 
-    /// The frame just drawn, as a premultiplied pixel buffer. Slint turns this
-    /// into an `Image` on the UI thread.
     pub fn finish(&self) -> SharedPixelBuffer<Rgba8Pixel> {
         self.pixels[self.parity].clone()
     }
 
-    /// Blends one convex quad into the colour buffer and writes depth.
     pub fn fill_quad(&mut self, quad: &[Vertex; 4], packed: u32) {
-        // The index buffer draws `(0,1,2)` and `(0,2,3)`; the two
-        // triangles meet on the `(0,2)` diagonal, where the pixel centres fall
-        // on one side or the other and so are painted once.
         self.quad(quad, packed, Write::Blend);
     }
 
-    /// Overwrites one convex quad's pixels where the depth test passes, without
-    /// writing depth — the stroke pass.
-    ///
-    /// An outline is drawn as its own quad, so its interpolated depth and the
-    /// depth the face left behind are two roundings of the same plane. The
-    /// tolerance is what keeps a shared boundary from coming out dotted; it is
-    /// far smaller than the gap between any two faces (blocks are a whole unit
-    /// apart).
+    /// Overwrites a quad's pixels where the depth test passes, without writing
+    /// depth. The tolerance keeps a shared boundary from coming out dotted; it is
+    /// far smaller than the gap between any two faces.
     pub fn edge_quad(&mut self, quad: &[Vertex; 4], packed: u32) {
         self.quad(quad, packed, Write::Overwrite);
     }
 
     fn quad(&mut self, quad: &[Vertex; 4], packed: u32, mode: Write) {
-        // The second triangle's first edge is the diagonal the two share. It is
-        // tested strictly, so a pixel whose centre lands exactly on it is
-        // painted by one of them and not twice — a doubled blend would draw a
-        // faint seam down every translucent face.
+        // The second triangle's first edge is the shared diagonal; testing it
+        // strictly paints each pixel once rather than blending it twice.
         self.triangle([quad[0], quad[1], quad[2]], packed, mode, false);
         self.triangle([quad[0], quad[2], quad[3]], packed, mode, true);
     }
 
-    /// Rasterises one triangle as per-row spans.
-    ///
-    /// The triangle is scanned along whichever axis it is longer, so a thin,
-    /// steep quad — a wall seen edge-on, or a block outline — costs roughly its
-    /// length instead of the area of its bounding box. The row coordinate is
-    /// `u` and the span runs along `v`; in buffer memory the pixel index is
-    /// `u * width + v` when `v` is x, and `v * width + u` when it is y.
+    /// Rasterises one triangle as per-row spans, scanned along its longer axis
+    /// so a thin, steep quad costs its length rather than its bounding box.
     fn triangle(
         &mut self,
         triangle: [Vertex; 3],
@@ -409,8 +351,7 @@ mod tests {
         Vertex { x, y, inv_depth }
     }
 
-    /// A quad covering a known area fills it, paint included — and the two
-    /// triangles do not both paint the diagonal between them.
+    /// The two triangles do not both paint the diagonal between them.
     #[test]
     fn fills_a_quad_once() {
         let mut canvas = Canvas::new(64, 64);
@@ -421,13 +362,9 @@ mod tests {
             vertex(40.0, 56.0, 1.0),
             vertex(12.0, 40.0, 1.0),
         ];
-        // Alpha 1.0 (opaque in the buffer, whatever the layer does with it), so
-        // a pixel painted twice stands out immediately.
         canvas.fill_quad(&quad, color(1.0, 1.0, 1.0, 1.0));
         let pixels = canvas.finish();
         let painted = pixels.as_slice().iter().filter(|p| p.a > 0).count();
-        // The quad's area by the shoelace formula; a pixel centre inside it is
-        // painted, so the count should be close to it.
         let area: f32 = (0..4)
             .map(|i| {
                 let a = quad[i];
@@ -454,8 +391,7 @@ mod tests {
         assert_eq!(doubled, 0, "a pixel was painted twice along the diagonal");
     }
 
-    /// A thin band — what every block outline is — paints its length and not
-    /// its bounding box.
+    /// A thin band paints its length and not its bounding box.
     #[test]
     fn paints_a_thin_band() {
         for (dx, dy) in [
@@ -488,8 +424,8 @@ mod tests {
         }
     }
 
-    /// Depth decides: a farther quad drawn afterwards leaves the nearer one
-    /// alone, and the outline pass replaces what it lands on.
+    /// The farther quad drawn afterwards leaves the nearer one alone, and the
+    /// outline pass replaces what it lands on.
     #[test]
     fn depth_orders_the_passes() {
         let quad = |inv| {
@@ -509,7 +445,6 @@ mod tests {
         assert_eq!((centre.r, centre.g), (255, 0), "the farther quad won");
         assert!(centre.a > 0);
 
-        // The stroke pass overwrites the fill where its depth allows.
         let mut canvas = Canvas::new(64, 64);
         canvas.begin();
         canvas.fill_quad(&quad(1.0), color(1.0, 0.0, 0.0, 1.0));

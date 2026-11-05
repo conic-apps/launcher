@@ -8,27 +8,19 @@ import { Input } from "../../../components/controls/input.slint";
 import { Switch } from "../../../components/controls/switch.slint";
 import { AccountAddState } from "../../../globals/dialogs.slint";
 
-// "Create an offline profile" — the third screen of the add-account dialog.
-//
-// The UUID is derived from the username unless "advanced settings" is on, in
-// which case the field is typed into and validated; both live in Rust
-// (`sync-offline-uuid`), because Slint has no regular expressions to test the
-// UUID's two accepted spellings with.
+// "Create an offline profile", the add-account dialog's third screen. The UUID is
+// derived or validated in Rust, since Slint has no regular expressions.
 export component AccountAddOffline inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
-    // `start`: the description wraps to a different number of lines per
-    // language, and a stretching column would spread that over the rows (see
-    // `AccountAdd`).
+    // `start`: a stretching column would spread the wrapped height over the rows.
     alignment: start;
 
-    // Mounted inside the setup wizard, which hides the "Cancel" button. See
-    // `AccountAdd`.
+    // The wizard hides the "Cancel" button.
     in property <bool> wizard-host: false;
 
     init => {
-        // Also what makes a reopened dialog start blank: the screen is destroyed
-        // and rebuilt whenever the dialog switches services.
+        // The screen is rebuilt whenever the dialog switches services.
         AccountAddState.reset-offline-form();
     }
 
@@ -40,8 +32,7 @@ export component AccountAddOffline inherits VerticalLayout {
         color: Theme.default-text-color.transparentize(0.1);
     }
 
-    // The 8px gap between rows, plus the description's 8px bottom margin as a
-    // top padding, which a layout has no margin for.
+    // The description's 8px bottom margin, since a layout has no margin.
     form := VerticalLayout {
         padding-top: 8px;
         spacing: 8px;
@@ -74,16 +65,14 @@ export component AccountAddOffline inherits VerticalLayout {
                 color: Theme.default-text-color.transparentize(0.1);
             }
 
-            // The switch does not write the state itself: the script handles the
-            // toggle, because switching it on hands the UUID field over empty.
+            // The script handles the toggle because it empties the UUID field.
             Switch {
                 checked: AccountAddState.offline-advanced;
                 toggled => { AccountAddState.toggle-offline-advanced(); }
             }
         }
 
-        // `&.disabled { opacity: 0.4 }`: the whole row fades while the field is
-        // left to its derived value.
+        // The whole row fades while the field uses its derived value.
         HorizontalLayout {
             alignment: space-between;
             cross-axis-alignment: center;

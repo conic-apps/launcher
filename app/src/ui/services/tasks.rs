@@ -169,7 +169,6 @@ fn close_confirmation(ui: &App) {
         .set_confirm_cancel_task_visible(false);
 }
 
-/// Registers the task globals and returns the handle the rest of the app uses.
 pub(crate) fn setup(ui: &App, notices: NoticeSink) -> Rc<TaskService> {
     CONTROLLER.with(|controller| {
         ui.global::<TaskState>()
@@ -300,11 +299,8 @@ fn apply_event(ui: &App, event: TaskEvent) {
     });
 }
 
-/// Mirrors a content task's progress into an open detail panel.
-///
-/// The panel's button used to be driven by its own download sink. The task
-/// centre is now the single source of that progress, so a panel reopened while
-/// a download runs sees the same numbers as the task card.
+/// Mirrors a content task's progress into an open detail panel so a panel
+/// reopened during a download sees the same numbers as the task card.
 fn apply_content_progress(ui: &App, target: &TaskTarget, progress: &TaskProgress, operating: bool) {
     let TaskTarget::Content { project_id, .. } = target else {
         return;

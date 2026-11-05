@@ -4,11 +4,9 @@
 
 //! CRUD for game instances: the data model and the filesystem logic.
 //!
-//! The app calls these functions directly and owns the UI state itself.
-//!
-//! The CRUD path stays `async` and on `tokio::fs`: listing instances reads and
-//! parses one `instance.toml` per instance, which has no business running on
-//! the thread that draws.
+//! The CRUD path stays `async` and on `tokio::fs`, because listing instances
+//! reads and parses one `instance.toml` per instance and must not run on the
+//! thread that draws.
 
 use std::{
     cmp::Ordering,
@@ -124,13 +122,9 @@ fn candidate_id(base: &str, suffix: u32) -> String {
 
 #[derive(Clone, Copy, Deserialize)]
 pub enum SortBy {
-    /// Ascending by name.
     Name,
-    /// Newest version first.
     Version,
-    /// Most played first.
     Playtime,
-    /// Most recently played first.
     LastPlayed,
 }
 

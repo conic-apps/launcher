@@ -4,16 +4,9 @@
 
 //! Delivering a background result onto the Slint event loop.
 //!
-//! Everything a background task produces has to reach the UI through
-//! `Weak::upgrade_in_event_loop`: Slint is not thread-safe, and the strong
-//! handle cannot cross a thread. The two helpers here are the one way the app
-//! does that, so a task reports through a [`Token`]
-//! rather than open-coding the same marshalling, and a superseded request
-//! cannot draw over a newer one.
-//!
-//! The token itself lives in `usecases::generation` — it is a use-case concern.
-//! A task that produces a *stream* of progress reports through a crate's `Sink`
-//! instead, and its sink implementation calls [`deliver`] here.
+//! Slint is not thread-safe and a strong handle cannot cross a thread, so every
+//! result arrives through `Weak::upgrade_in_event_loop`; a [`Token`] lets a
+//! superseded request be dropped before it draws over a newer one.
 
 use slint::Weak;
 
@@ -21,10 +14,6 @@ use crate::slint_backend::App;
 use crate::usecases::generation::Token;
 
 /// Runs `apply` on the event loop if `token` is still current.
-///
-/// `apply` receives the component by value, exactly as
-/// `Weak::upgrade_in_event_loop` hands it over, so a caller can keep using the
-/// same body it would have written for that call.
 pub(crate) fn deliver<F>(weak: &Weak<App>, token: &Token, apply: F)
 where
     F: FnOnce(App) + Send + 'static,
@@ -35,11 +24,10 @@ where
             apply(ui);
         }
     }) {
-        // The event loop is gone, so a result had nowhere to land. `debug!` and not
-        // `warn!`: window teardown is the ordinary cause, and a callback firing at
-        // shutdown is not a fault the user can act on. It is recorded because the
-        // other cause — the loop outliving the component but no longer accepting —
-        // looks exactly like a task that silently did nothing.
+        // The event loop is gone, so the result had nowhere to land. Window
+        // teardown is the ordinary cause; the other cause looks like a task
+        // that silently did nothing, so record it at `debug!` rather than
+        // `warn!`.
         log::debug!(target: "shell", "a background result had nowhere to land: {error}");
     }
 }

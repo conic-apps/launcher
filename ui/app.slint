@@ -31,9 +31,7 @@ import { LaunchView } from "views/launch-view.slint";
 import { SetupView } from "views/setup-view.slint";
 import { TodoPlaceholder } from "views/todo-placeholder.slint";
 
-// Re-export so the Rust side can access the globals and build the Java runtime
-// model (`slint_backend::AppConfig` / `slint_backend::JavaRuntime` /
-// `slint_backend::GameState`).
+// Re-export so the Rust side can access the globals and the runtime model.
 export { AppConfig, JavaRuntime } from "globals/settings.slint";
 export { Navigation } from "globals/navigation.slint";
 export { Dropdown } from "globals/dropdown.slint";
@@ -100,79 +98,62 @@ export {
 export { TaskState, TaskItem, TaskText } from "globals/tasks.slint";
 
 // Application root window. macOS keeps the native traffic lights, Linux draws
-// the window controls itself, and Windows draws the platform's own over the
-// title bar (`app/src/support/native/windows/caption.rs`) — neither of the last two leaves a
-// system title bar behind.
+// its own window controls, and Windows draws the platform's own over the title
+// bar (`app/src/support/native/windows/caption.rs`).
 export component App inherits Window {
     title: @tr("Conic Launcher");
-    // Window/taskbar icon for Windows and Linux WMs (see the shared asset). macOS
-    // is handled separately (`native/macos/dock_icon.rs`): winit's window icon
-    // path is a no-op there.
+    // Window/taskbar icon for Windows and Linux WMs. macOS uses its dock icon
+    // instead: winit's window icon path is a no-op there.
     icon: @image-url("assets/images/app-icon.png");
     default-font-family: Theme.font-family;
     default-font-size: Theme.font-size-base;
     default-font-weight: Theme.font-weight-normal;
     // macOS blends its native title bar into the client area; Linux leaves the
     // corners transparent for the rounded, frameless window. Windows stays
-    // opaque: its frame is DWM's, which rounds the window itself.
+    // opaque because its frame is DWM's and rounds the window itself.
     background: self.macos || self.linux ? transparent : Theme.crust;
-    // 840x532 is the floor, not a fixed size: fixed `width`/`height` on the
-    // root Window pin min == max (making the window non-resizable), so the
-    // intended size is expressed as the minimum + preferred size.
+    // The floor, not a fixed size: fixed `width`/`height` on the root Window pin
+    // min == max and make it non-resizable.
     min-width: 840px;
     min-height: 532px;
     preferred-width: 840px;
     preferred-height: 532px;
     // Linux has no window controls of its own, and Windows drops the caption so
-    // that the platform's have the app's title bar to sit on (see
-    // `app/src/support/native/windows/caption.rs`), so both draw over the whole window.
+    // the platform's controls sit on the app's title bar.
     no-frame: self.linux || self.windows;
     resize-border-width: (self.linux || self.windows) ? 6px : 0px;
-    // The initial focus element, and the only thing that keeps the `Ctrl`/`⌘` + `/`
-    // shortcut alive: a window with nothing focused discards its key events, so
-    // the shortcut would work until the first click and never again. The scope
-    // wraps the whole window so a key event from any focused field inside it —
-    // a settings text input, the palette's own search box — reaches its binding
-    // on the way up.
+    // The initial focus element: a window with nothing focused discards its key
+    // events, which would kill the `Ctrl`/`⌘` + `/` shortcut after the first
+    // click. The scope wraps the whole window so a key event from any focused
+    // field inside it still reaches its binding on the way up.
     forward-focus: app-scope;
 
     in-out property <bool> macos: false;
     in-out property <bool> linux: false;
     in-out property <bool> windows: false;
-    /// The custom title bar's height. Declared here rather than in
-    /// `title-bar.slint` because the platform sizes the window controls to it and
-    /// hit tests them against it (see `app/src/support/native/windows/caption.rs`), so the two sides
-    /// have to read the same number.
+    /// The custom title bar's height, shared with the platform, which sizes and
+    /// hit tests the window controls against it (`app/src/support/native/windows/caption.rs`).
     in property <length> title-bar-height: 44px;
-    /// How much of the title bar's right-hand end the platform's own window
-    /// controls take, in logical units. Zero everywhere but Windows, where the
-    /// platform measures it and pushes it in.
+    /// How much of the title bar's right-hand end the platform's window controls
+    /// take, in logical units. Zero everywhere but Windows.
     in-out property <length> window-controls-inset: 0px;
     /// The platform's window controls, as the platform draws them. Empty until
-    /// the window exists, which is also when the platform can be asked.
+    /// the window exists.
     in-out property <[WindowControl]> window-controls: [];
     /// Which control the pointer is on, and which is pressed, in the platform's
-    /// own numbering (`WindowControl.index`). -1 is neither: the controls are
-    /// non-client area, so the pointer is only ever reported through the system's
-    /// own messages.
+    /// own numbering (`WindowControl.index`). -1 is neither; the controls are
+    /// non-client area, so only the system reports the pointer.
     in-out property <int> window-control-hovered: -1;
     in-out property <int> window-control-pressed: -1;
-    /// Whether the window is in native fullscreen — a *state* pushed from the
-    /// platform (`native/macos/traffic_lights.rs`), not a request: to change it, use the
-    /// `WindowService`. macOS hides the traffic lights in fullscreen, and the
-    /// title bar stops leaving room for them there. False elsewhere.
+    /// Native fullscreen, a state pushed from the platform rather than a request
+    /// (use `WindowService` to change it). macOS hides the traffic lights here.
     in-out property <bool> window-fullscreen: false;
     in-out property <string> search-placeholder: @tr("Action");
     in-out property <string> search-hotkey: "";
 
     // Closing while a task is running asks first
-    // (`Dialogs.confirm-quit-app-visible`); the confirm then plays a 250ms
-    // `scale(0.93)` plus fade and closes the window 500ms later. Both halves live
-    // here: the scale and the fade are the container's own `transform-scale` and
-    // `opacity` about its centre, and the wait is the timer.
-    //
-    // A close on any other page never gets here — the title bar's close button
-    // closes the window outright.
+    // (`Dialogs.confirm-quit-app-visible`), then plays a 250ms scale + fade and
+    // closes the window 500ms later. A close on any other page never gets here.
     private property <bool> quitting: false;
     private property <float> quit-alpha: root.quitting ? 0.0 : 1.0;
     private property <float> quit-scale: root.quitting ? 93% : 100%;
@@ -191,28 +172,24 @@ export component App inherits Window {
         root.quitting = true;
     }
 
-    /// Runs the same close flow as `⌘W` and the title bar's button, for callers
-    /// outside the UI. The macOS terminate hook
-    /// (`app/src/support/native/macos/terminate.rs`) invokes this when AppKit
-    /// receives `⌘Q`, the menu's Quit or a system logout. AppKit is where those
-    /// are answered, so no `⌘Q` `KeyBinding` is registered for them.
+    /// The same close flow as `⌘W`, for callers outside the UI. The macOS
+    /// terminate hook invokes it for `⌘Q`, the Quit menu item or a logout, so no
+    /// `⌘Q` `KeyBinding` is registered.
     public function request-close() {
         root.close();
     }
 
-    // The page-swap lifecycle. `navigate`/`back` set `transition-stage` to
-    // "starting" on the same beat as `current-page`; these two timers advance
-    // it. One 16ms beat holds a view at its start values so the renderer has
-    // seen them before its animation retargets them — Slint has no timeline, and
-    // a property only moves while something reads it.
+    // The page-swap lifecycle. The 16ms beat holds a view at its start values
+    // for one frame before its animation retargets them; Slint has no timeline
+    // and a property only moves while something reads it.
     page-settle-timer := Timer {
         interval: 16ms;
         running: Navigation.transition-stage == "starting";
         triggered => { Navigation.transition-stage = "running"; }
     }
 
-    // The swap is at most the 250ms any view's exit is allowed. When it is over
-    // `leaving-page` clears, so a kept-mounted view (the wizard) unmounts.
+    // The swap is at most the 250ms any view's exit is allowed. Clearing
+    // `leaving-page` lets a kept-mounted view (the wizard) unmount.
     page-run-timer := Timer {
         interval: 250ms;
         running: Navigation.transition-stage == "running";
@@ -223,16 +200,13 @@ export component App inherits Window {
     }
 
     // The first page's view can animate in too: the wizard reads "starting" as
-    // its entrance. `init` runs before the event loop, so the stage outlives
-    // Rust's `set_current_page("setup")` and the settle timer starts on the
-    // first frame.
+    // its entrance. `init` runs before the event loop.
     init => {
         if Navigation.transition-stage == "idle" {
             Navigation.transition-stage = "starting";
         }
-        // Make the Up/Down bindings live from the first frame; `forward-focus`
-        // covers a window that gains focus, but the app is already frontmost
-        // when it is launched from a running terminal.
+        // Make the Up/Down bindings live from the first frame: the app can be
+        // already frontmost when launched from a running terminal.
         app-scope.focus();
     }
 
@@ -245,19 +219,18 @@ export component App inherits Window {
     /// Settings → Data storage asked for a restart after a location changed.
     callback restart-app();
     /// Tells the platform which theme the app resolved to, so the window controls
-    /// it draws take their ink from this title bar. Answered on Windows
-    /// (`app/src/support/native/windows/caption.rs`) and ignored everywhere else.
+    /// it draws take their ink from this title bar. Answered on Windows only.
     callback set-caption-dark(dark: bool);
 
-    // Drives the palette selection and animates the Theme tokens (see
-    // theme.slint). Must exist exactly once.
+    // Drives the palette selection and animates the Theme tokens. Must exist
+    // exactly once.
     ThemeProvider {
         caption-dark-changed(dark) => { root.set-caption-dark(dark); }
     }
 
-    // The window's key handler. Neither focus-on-click nor tab traversal is on:
-    // a `FocusScope` covering the window would take every click in the app away
-    // from the control under it, and it is only ever focused explicitly.
+    // The window's key handler. Focus-on-click and tab traversal are off so the
+    // scope does not steal clicks from the control under the pointer; it is only
+    // ever focused explicitly.
     app-scope := FocusScope {
         width: 100%;
         height: 100%;
@@ -265,40 +238,30 @@ export component App inherits Window {
         focus-on-tab-navigation: false;
 
         // Slint's `Control` is the command key on macOS and the control key
-        // everywhere else, so one binding covers both platforms. (`Meta` is the
-        // *other* one — the physical control key on macOS — which is the opposite
-        // of what the name suggests.)
-        //
-        // The binding lives on the app scope rather than on the palette, which is
-        // hidden most of the time and whose subtree a click outside never focuses.
+        // everywhere else, so one binding covers both. The binding lives on the
+        // app scope rather than on the palette, which is hidden most of the time.
         KeyBinding {
             keys: @keys(Control + "/");
             activated => { CommandPaletteState.toggle(); }
         }
 
-        // `⌘W` (`Control` + `W`) is the platform's close-window shortcut. The
-        // default app menu the backend installs on macOS has no Close item, so
-        // the key reaches the window and is caught here; on Windows and Linux
-        // the key is unconsumed for the same reason. `App.close()` runs the
-        // window's close-requested callback, so the launch page asks first.
+        // `⌘W` (`Control` + `W`): the platform's close-window shortcut. `close()`
+        // runs the close-requested callback, so the launch page asks first.
         KeyBinding {
             keys: @keys(Control + W);
             activated => { root.close(); }
         }
 
-        // Escape returns to the home (game) page and closes whatever transient
-        // UI is above it. The command palette owns Escape while it is open; its
-        // final step calls the same `Navigation.escape`.
+        // Escape returns home and closes whatever transient UI is above it. The
+        // command palette owns Escape while it is open.
         KeyBinding {
             keys: @keys(Escape);
             activated => { Navigation.escape(); }
         }
 
-        // Up/Down move the current instance on the game page. This is a
-        // `key-pressed` handler rather than a `KeyBinding`: the winit backend
-        // reports arrows through the key text, and a binding for them was not
-        // matched. The command palette owns the arrows while it is open (its
-        // field moves its own selection); other pages keep their own keys.
+        // Up/Down move the current instance on the game page. A `key-pressed`
+        // handler rather than a `KeyBinding`: the winit backend reports arrows
+        // through the key text, and a binding for them was not matched.
         key-pressed(event) => {
             if Navigation.current-page == "game" && !CommandPaletteState.visible {
                 if event.text == Key.UpArrow {
@@ -313,9 +276,8 @@ export component App inherits Window {
             reject
         }
 
-        // The focus goes to the palette's search field while it is open and comes
-        // back here when it closes, so the bindings above keep working: a window
-        // with nothing focused discards its key events entirely.
+        // Focus returns here when the palette closes, so the bindings above keep
+        // working: a window with nothing focused discards its key events.
         private property <bool> palette-open: CommandPaletteState.visible;
         changed palette-open => {
             if !palette-open {
@@ -328,20 +290,15 @@ export component App inherits Window {
         container := Rectangle {
             width: root.width;
             height: root.height;
-            // The quit animation: `scale(0.93)` and `opacity: 0`, over the
-            // transition the confirm dialog starts. Both are on this one box
-            // because it holds everything; the easing lives on the two root
-            // properties they read, so it is written once.
+            // The quit animation: scale(0.93) plus fade, on the one box that
+            // holds everything. The easing lives on the two root properties.
             opacity: root.quit-alpha;
             transform-scale: root.quit-scale;
-            // The window background: the palette's flat `crust`. The hyperbola sky
-            // over it is only 30% opaque, so the base shows through and is part of
-            // the picture.
+            // The flat `crust` base; the background sky over it is translucent.
             background: Theme.crust;
             border-radius: 16px;
             // A 1px hairline at 16% white. A Slint border is drawn inside the box
-            // and does not inset its children, so only the hairline is reproduced,
-            // not the 1px inset.
+            // and does not inset its children, so only the hairline is reproduced.
             border-width: 1px;
             border-color: #ffffff.with-alpha(0.16);
             clip: true;
@@ -362,13 +319,9 @@ export component App inherits Window {
                 }
 
                 // Page stack. The account view is an overlay on the game screen,
-                // not a page; the fallback catches any page value with no screen
-                // of its own.
-                //
-                // Animated at the view, not here: a page that plays its own exit
-                // keeps being mounted while `leaving-page` is set, so its elements
-                // can run their `leave` phase. Pages without an exit swap on
-                // `current-page` alone, instantly.
+                // not a page; the fallback catches any page with no screen.
+                // Animation lives at the view: a page playing its exit stays
+                // mounted while `leaving-page` is set.
                 page-stack := Rectangle {
                     width: 100%;
                     vertical-stretch: 1;
@@ -382,36 +335,25 @@ export component App inherits Window {
                 }
             }
 
-            // Floating dropdown list + outside-click layer, mounted above the page
-            // stack (see `DropdownOverlay`).
-            //
-            // The `z` is load-bearing. Mounting after `page-stack` only orders it
-            // above the elements that carry no `z` of their own; the instance
-            // list's toolbar (`z: 114`) and both scrollbars (`z: 500`) do, and
-            // those are exactly what a toolbar dropdown opens over — at the
-            // default 0 the panel is painted underneath the list it belongs to.
+            // Floating dropdown list + outside-click layer, above the page stack.
+            // The `z` is load-bearing: the instance list's toolbar (`z: 114`) and
+            // scrollbars (`z: 500`) would otherwise paint over the panel.
             DropdownOverlay {
                 z: 1000;
             }
 
-            // The description tooltip, on the same footing: it is taller than the row
-            // it belongs to and both the settings collapse and the settings scroll
-            // area clip, so it is drawn here and anchored to the description line
-            // (see `overlays/description-tooltip.slint`).
+            // The description tooltip, drawn here because both the settings
+            // collapse and the settings scroll area clip it.
             DescriptionTooltipOverlay { }
 
-            // The background-music panel, mounted on the same layer and covering
-            // everything below the title bar. It comes after the dropdowns and the
-            // tooltip but before the dialogs. Its `top: 44px` is applied here,
-            // where the title bar's height is known.
+            // The background-music panel, covering everything below the title bar.
             MusicPlayerOverlay {
                 y: root.title-bar-height;
                 height: root.height - root.title-bar-height;
             }
 
-            // The news browser: a full overlay above the pages, below the
-            // command palette and the dialogs. It opens from the title bar's
-            // newspaper button and covers everything but the title bar itself.
+            // The news browser, above the pages and below the command palette and
+            // dialogs.
             NewsRoot {
                 y: root.title-bar-height;
                 height: root.height - root.title-bar-height;
@@ -423,18 +365,16 @@ export component App inherits Window {
                 z: 1100;
             }
 
-            // The floating previews sit above the centre panel but under the
-            // title bar, so the window controls stay reachable.
+            // The floating previews, above the centre panel but under the title
+            // bar so the window controls stay reachable.
             NotificationToasts {
                 y: root.title-bar-height;
                 height: root.height - root.title-bar-height;
                 z: 1150;
             }
 
-            // The crash prompt: a content-style overlay above the notification
-            // layers, because a crash is the message the player must act on. It
-            // stays below the title bar and the dialogs so the window controls
-            // and a dialog already in flight keep their place.
+            // The crash prompt, above the notification layers but below the title
+            // bar and dialogs.
             CrashRoot {
                 y: root.title-bar-height;
                 height: root.height - root.title-bar-height;
@@ -442,8 +382,7 @@ export component App inherits Window {
             }
 
             // Mounted outside the page layout so the bar stays above the
-            // notification, news and music layers (z: 1150 and below), while
-            // still sitting under the command palette and dialogs.
+            // notification, news and music layers, but under the palette and dialogs.
             TitleBar {
                 x: 0;
                 y: 0;
@@ -479,9 +418,8 @@ export component App inherits Window {
                 toggle-music => { root.toggle-music(); }
                 maximize-or-fullscreen => { root.maximize-or-fullscreen(); }
                 minimize-window => { root.minimize-window(); }
-                // `App.close()` runs the window's close-requested callback,
-                // where the launch-page confirm lives. `⌘W` above and the
-                // macOS `⌘Q` (`native/macos/quit.rs`) do the same.
+                // `App.close()` runs the close-requested callback, where the
+                // launch-page confirm lives.
                 close-window => { root.close(); }
             }
 
@@ -489,19 +427,16 @@ export component App inherits Window {
             // layer.
             CommandPaletteOverlay { }
 
-            // The dialog layer, mounted last so a dialog covers both the page and
-            // the floating dropdown. It has to stay above the command palette and
-            // the music player, so it carries an explicit `z` rather than relying
-            // on declaration order.
+            // The dialog layer, above the palette and the music player, hence the
+            // explicit `z` rather than declaration order.
             DialogRoot {
                 z: 2000;
                 confirm-quit => { root.quit(); }
                 restart-app => { root.restart-app(); }
             }
 
-            // The generic pointer tooltip, above everything — including the
-            // dialogs, since a dialog's own controls carry tooltips too. It is
-            // pure drawing with no `TouchArea`, so it never takes a click.
+            // The generic pointer tooltip, above everything including the dialogs.
+            // Pure drawing with no `TouchArea`, so it never takes a click.
             TooltipOverlay {
                 z: 3000;
             }

@@ -16,7 +16,6 @@ use crate::Launch;
 /// a NUL, so the first pair is always the boundary between the two fields.
 const SEPARATOR: &str = "\0\0";
 
-/// Frames a launch for the trip to the process that is already running.
 pub(crate) fn encode(launch: &Launch) -> String {
     format!(
         "{cwd}{SEPARATOR}{args}",
@@ -25,7 +24,6 @@ pub(crate) fn encode(launch: &Launch) -> String {
     )
 }
 
-/// Reads a framed launch back, or `None` when the report is not one of ours.
 pub(crate) fn decode(raw: &str) -> Option<Launch> {
     let (cwd, args) = raw.split_once(SEPARATOR)?;
     Some(Launch {

@@ -4,17 +4,13 @@
 
 //! The world-map tile port.
 //!
-//! A map is drawn from tiles, and a tile comes from somewhere: a save's region
-//! files (`content`), or a seed rendered by a fixed algorithm (a future
-//! `seedmap`). Those are different domains, so the port they share lives here
-//! and neither depends on the other — [`TileSource`] is implemented by both, and
-//! the app picks one for the [`WorldId`] it is showing.
-//!
-//! Everything crossing the port is plain data: a rendered tile is an RGBA
-//! buffer, not a UI image, so it can cross a thread.
+//! A save's region files and a seed-rendered map are different domains, so
+//! [`TileSource`] is the port they share and the app picks an implementation for
+//! the [`WorldId`] it is showing. Everything crossing it is plain data, so a
+//! rendered tile can cross a thread.
 
-/// Which world a tile belongs to, and how it is identified. The same value keys
-/// a cache, so a different world means every tile is re-rendered.
+/// The same value keys a cache, so a different world means every tile is
+/// re-rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum WorldId {
     /// A save folder inside an instance.
@@ -29,14 +25,13 @@ pub enum WorldId {
     Seed { seed: i64, dimension: String },
 }
 
-/// A tile's position in the tile grid. `tile * size` is its top-left block.
+/// `tile * size` is its top-left block.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TileKey {
     pub x: i32,
     pub z: i32,
 }
 
-/// The toggles every tile of a world is rendered with.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RenderOptions {
     pub water: bool,
@@ -54,7 +49,7 @@ impl Default for RenderOptions {
     }
 }
 
-/// One tile to render: a `size`×`size` square of blocks centred on `center`.
+/// A `size`×`size` square of blocks centred on `center`.
 #[derive(Debug, Clone)]
 pub struct TileRequest {
     pub world: WorldId,
@@ -64,7 +59,7 @@ pub struct TileRequest {
     pub options: RenderOptions,
 }
 
-/// A rendered tile: an RGBA bitmap, one block per pixel, row-major.
+/// An RGBA bitmap, one block per pixel, row-major.
 #[derive(Debug, Clone)]
 pub struct TileImage {
     pub width: u32,
@@ -72,7 +67,6 @@ pub struct TileImage {
     pub pixels: Vec<u8>,
 }
 
-/// Why a tile could not be rendered.
 #[derive(Debug)]
 pub struct Error(pub String);
 
@@ -84,9 +78,7 @@ impl std::fmt::Display for Error {
 
 impl std::error::Error for Error {}
 
-/// The output port a world-map source implements.
-///
-/// `Send + Sync` because one source is shared across the app and its `render` is
+/// `Send + Sync` because one source is shared across the app and `render` is
 /// called from a blocking worker per tile.
 pub trait TileSource: Send + Sync {
     fn render(&self, request: &TileRequest) -> Result<TileImage, Error>;

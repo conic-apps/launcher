@@ -113,8 +113,6 @@ pub(crate) fn number_text(value: Option<usize>) -> String {
     value.map(|value| value.to_string()).unwrap_or_default()
 }
 
-/// A field's text as the number it names.
-///
 /// A blank field is `None`, which clears the setting rather than making it
 /// zero. Anything else that does not parse keeps `previous`, the way
 /// `crate::ui::services::app_config::parse_usize_keep` does for the settings screen: a field
@@ -128,8 +126,6 @@ pub(crate) fn parse_number(value: &str, previous: Option<usize>) -> Option<usize
     Some(value.parse().unwrap_or_else(|_| previous.unwrap_or(0)))
 }
 
-/// The instance's config with the overlay's edits merged into it.
-///
 /// Only what the overlay shows is read back: the name, `use_as_launcher_background`
 /// and the launch settings are replaced, and the rest of the config — the icon,
 /// the runtime and the group (which carries the starred flag) — is kept from the

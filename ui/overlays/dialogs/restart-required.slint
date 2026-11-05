@@ -6,15 +6,14 @@ import { Dialog } from "dialog.slint";
 import { ConfirmWarningBody } from "confirm-warning.slint";
 import { Dialogs } from "../../globals/dialogs.slint";
 
-// Raised after a storage location changed in Settings. The roots are resolved
-// once at startup, so the new one only takes effect on the next run; the confirm
-// button spawns that run and quits this one.
+// Raised after a storage location change, since the roots resolve only at
+// startup. Confirm spawns the next run and quits this one.
 export component RestartRequired inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;
 
-    /// Fired on "Restart now"; the app root re-execs the binary.
+    /// The app root re-execs the binary.
     callback confirm();
 
     dialog := Dialog {

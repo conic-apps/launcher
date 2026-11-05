@@ -2,13 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The display list: geometry, line breaking and the item kinds.
-//!
-//! These need a font collection, so they take the system's. They do not need
-//! *a particular* one: every assertion here is either about how the geometry
-//! relates to itself (a line is inside the box, a link's rule is under its text,
-//! nothing overlaps) or about a count (three lines, two rows), both of which hold
-//! whichever font the machine has.
+//! The display list: geometry, line breaking and the item kinds. Assertions are
+//! about relative geometry or counts, so any font collection works.
 
 use crate::ui::components::markdown::{
     ColorRole, ItemKind, MdItem, MdStyle, Measurer, Renderer, SourceFormat,
@@ -65,8 +60,6 @@ fn a_long_paragraph_wraps_onto_several_lines() {
             line
         );
     }
-    // A line that fits is filled: greedy filling means every line but the last
-    // comes close to the width.
     let widest = items
         .iter()
         .map(|item| item.x + item.width)
@@ -101,7 +94,6 @@ fn a_narrower_box_wraps_earlier() {
 
 #[test]
 fn a_word_longer_than_the_line_is_broken() {
-    // `word-wrap: break-word`, which is what the launcher's container sets.
     let items = render(&format!("{}end\n", "x".repeat(900)));
     let lines = texts(&items);
     assert!(lines.len() > 1, "an unbreakable word should still be split");
@@ -136,7 +128,6 @@ fn runs_of_one_line_share_a_baseline() {
             .map(|run| (run.text.as_str(), run.y, run.height))
             .collect::<Vec<_>>()
     );
-    // And the code run is narrower than the same text at body size.
     assert!(runs[1].font_size < runs[0].font_size);
 }
 
@@ -152,7 +143,6 @@ fn inline_code_gets_a_capsule_behind_it() {
         .find(|item| item.kind == ItemKind::Text && item.mono)
         .expect("no code run")
         .clone();
-    // The capsule covers the glyphs, with the style's padding on each side.
     assert!(capsule.x < glyphs.x);
     assert!(capsule.x + capsule.width > glyphs.x + glyphs.width);
     assert!(capsule.y < glyphs.y && capsule.y + capsule.height > glyphs.y + glyphs.height);
@@ -210,7 +200,6 @@ fn a_link_gets_a_hit_area_and_a_rule_for_each_of_its_lines() {
     assert!(hit.iter().all(|item| !item.filled));
     assert!(hit.iter().all(|item| item.rule_offset >= 0.0));
     assert!(hit.iter().all(|item| item.rule_offset <= item.height));
-    // They are on different lines, one below the other.
     for pair in hit.windows(2) {
         assert!(pair[1].y >= pair[0].y, "the pieces stack");
     }
@@ -304,7 +293,6 @@ fn h1_and_h2_carry_a_rule_underneath_and_h3_does_not() {
         .filter(|item| item.color == ColorRole::Rule)
         .collect::<Vec<_>>();
     assert_eq!(rules.len(), 2, "only h1 and h2 are underlined");
-    // The rule sits below the heading it belongs to and above the next one.
     let three = items.iter().find(|item| item.text == "Three").unwrap();
     let two_rule = rules[1];
     assert!(two_rule.y < three.y);
@@ -329,7 +317,6 @@ fn a_code_block_is_a_filled_box_around_monospace_lines() {
     for line in &lines {
         assert!(line.y > box_item.y && line.y + line.height < box_item.y + box_item.height);
     }
-    // The first line starts below the padding, not on the edge of the box.
     assert!(lines[0].y - box_item.y >= 8.0);
 }
 
@@ -343,7 +330,6 @@ fn a_block_quote_is_bordered_on_the_left_and_dimmed() {
     let text = items.iter().find(|item| item.text == "quoted").unwrap();
     assert!(text.x >= bar.x + bar.width, "the text is inside the bar");
     assert_eq!(text.color, ColorRole::QuoteText);
-    // The bar spans the quoted content.
     assert!(bar.y <= text.y && bar.y + bar.height >= text.y + text.height - 0.5);
 }
 
@@ -370,8 +356,6 @@ fn a_list_numbers_its_items_and_indents_them() {
         .find(|item| item.text == "4.")
         .expect("no marker");
     let body = items.iter().find(|item| item.text == "three").unwrap();
-    // The marker sits to the left of the item's own text, and the list starts at
-    // the ordinal it was given.
     assert!(marker_three.x + marker_three.width <= body.x);
     assert!(marker_three.y < body.y + body.height);
     assert!(marker_four.y > marker_three.y, "the items are stacked");
@@ -413,13 +397,11 @@ fn a_table_fills_its_header_and_its_body_cells() {
         .collect::<Vec<_>>();
     assert_eq!(heads.len(), 2, "one header cell per column");
     assert!(heads.iter().all(|cell| cell.border_width > 0.0));
-    // A body cell is an outline and nothing else, so it is not filled.
     let body = rects(&items)
         .into_iter()
         .find(|item| !item.filled && item.border_width > 0.0)
         .expect("no body cell");
     assert!(body.height > 0.0);
-    // A right-aligned column puts its text against the right edge of the cell.
     let right_column = heads
         .iter()
         .max_by(|a, b| a.x.partial_cmp(&b.x).unwrap())
@@ -708,7 +690,6 @@ fn a_squeezed_table_never_narrows_a_column_past_its_longest_word() {
     let mut measurer = Measurer::new();
     let blocks = crate::ui::components::markdown::parse::parse(source);
     let images = crate::ui::components::markdown::ImageStore::default();
-    // A box narrow enough that the table has to be squeezed.
     let items = crate::ui::components::markdown::layout::layout(
         &blocks,
         &style,
@@ -717,8 +698,6 @@ fn a_squeezed_table_never_narrows_a_column_past_its_longest_word() {
         &mut measurer,
     )
     .items;
-    // Every word in the head is on one line: a text item is a run, and a broken
-    // word is two of them.
     for word in ["Feature", "State", "Notes"] {
         let hits = items
             .iter()
@@ -726,8 +705,6 @@ fn a_squeezed_table_never_narrows_a_column_past_its_longest_word() {
             .count();
         assert_eq!(hits, 1, "{word} was broken across lines");
     }
-    // And the table still fits the box it was given, which is the whole reason
-    // the columns were narrowed at all.
     for item in rects(&items) {
         assert!(
             item.x + item.width <= 240.0 + 0.01,
@@ -814,7 +791,6 @@ fn an_inline_image_with_a_bitmap_is_drawn_as_a_picture_and_not_as_its_alt_text()
         !texts(&items).iter().any(|text| text.contains("Badge")),
         "the alt text was drawn as well as the picture"
     );
-    // And it is clickable, because it is a link.
     assert_eq!(picture.link_url, "https://example.com");
     assert!(!picture.link_id.is_empty());
 }
@@ -850,7 +826,6 @@ fn a_linked_image_reveals_no_rule() {
         .find(|item| item.kind == ItemKind::Rect && !item.link_url.is_empty())
         .expect("the badge is not clickable");
     assert!(!link.rule, "a linked image has a rule under it");
-    // A link that is *text* still has one, or the other half of the rule is gone.
     let text_link = render("text [label](https://example.com)\n");
     let text_link = text_link
         .iter()
@@ -887,8 +862,6 @@ fn a_row_of_badges_wraps_like_a_row_of_words() {
         .filter(|item| item.kind == ItemKind::Image)
         .count();
     assert_eq!(pictures, 8, "every badge is drawn");
-    // Every badge is inside the box it was given, which can only hold if the row
-    // wrapped.
     for item in items.iter().filter(|item| item.kind == ItemKind::Image) {
         assert!(
             item.x + item.width <= WIDTH + 0.01,
@@ -1120,7 +1093,6 @@ fn every_section_has_its_own_id() {
     let found = sections(&list);
     assert_eq!(found.len(), 2);
     assert_ne!(found[0].id, found[1].id);
-    // And they are in document order, which is the order a view stacks them in.
     assert!(found[0].head_y < found[1].head_y);
 }
 
@@ -1223,13 +1195,11 @@ fn a_run_hides_its_section_whole() {
         section.content_height + style.details_margin_bottom,
         "the margin under a closed section is still there"
     );
-    // Which leaves the row and the gap, and nothing else.
     assert_eq!(
         run.height - section.hidden,
         section.head_height + style.details_gap,
         "a closed run is its row and the gap under it"
     );
-    // And the content starts below that, so nothing of it is left showing.
     assert!(section.content_y - run.top >= run.height - section.hidden);
 }
 
@@ -1335,8 +1305,6 @@ fn the_line_itself_is_wider_by_the_capsules_margins() {
         width_of(&bare),
         width_of(&boxed)
     );
-    // Two capsules on one line, side by side, are `2 * margin` further right than
-    // the second one's glyphs would put it.
     let two = render("`a` `b`");
     let second = two
         .iter()

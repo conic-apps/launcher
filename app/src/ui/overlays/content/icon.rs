@@ -8,12 +8,8 @@ use futures::{StreamExt, stream};
 
 use super::*;
 
-/// How many icons are fetched at once.
-///
-/// They are small images from a CDN, so the cap is about the CDN rather than the
-/// app: sixteen keeps a page's worth in flight without looking like an attack.
-/// The point of the cap is that they overlap at all — one at a time is what made
-/// a page of twenty results look dead for twenty round-trips.
+/// How many icons are fetched at once — enough to keep a page in flight without
+/// looking like an attack, where one at a time made a page of twenty look dead.
 pub(crate) const ICON_FETCH_CONCURRENCY: usize = 16;
 
 /// How many decoded images one of these maps holds.
@@ -205,8 +201,6 @@ async fn force_fetch_icon_bytes(url: &str) -> Option<Vec<u8>> {
     shared::http_cache::force_fetch(url).await
 }
 
-/// Decodes what [`fetch_icon_bytes`] brought back. A local icon and a remote
-/// project's differ only in how the bytes were obtained.
 pub(crate) fn decode_icon(url: &str, bytes: Vec<u8>) -> Option<PendingImage> {
     let (width, height, rgba) = decode_to_rgba(&bytes)?;
     Some(PendingImage {

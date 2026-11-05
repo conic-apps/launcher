@@ -47,7 +47,6 @@ pub(crate) fn controller() -> Rc<RefCell<GameController>> {
         .expect("the game controller is set up before any of its callbacks run")
 }
 
-/// A ready-to-display relative time (`GameTime.last-played`).
 pub(crate) struct RelativeTime {
     pub(crate) kind: &'static str,
     pub(crate) hours: i32,
@@ -63,8 +62,6 @@ pub(crate) struct CachedBackground {
     image: Image,
 }
 
-/// One group in display order, and whether it is open. Used by the accordion
-/// normalisation and the arrow / Alt-wheel instance stepper.
 #[derive(Clone, Debug)]
 pub(crate) struct GroupRange {
     key: String,
@@ -81,35 +78,29 @@ pub(crate) struct GameController {
     expanded: HashMap<String, bool>,
     accounts: Vec<Account>,
     playtime: HashMap<String, u64>,
-    /// The account heads the footer and its switcher draw, by `<key>@<size>`.
     /// Memoised because a skin is a base64 PNG (or a bundled webp) that has to
     /// be decoded and cropped, and `apply` runs on every list change.
     avatars: HashMap<String, Image>,
-    /// The instance backgrounds the list cards draw, by instance id. Memoised
-    /// because the card needs a decoded image and `apply` runs on every list
-    /// change; the background file's modified time is the invalidation key.
+    /// Memoised by the background file's modified time, which is the
+    /// invalidation key.
     backgrounds: RefCell<HashMap<String, CachedBackground>>,
-    /// The groups of the current flattened list, cached so a wheel event can
-    /// decide whether it crossed a group edge without rebuilding the rows.
+    /// Cached so a wheel event can decide whether it crossed a group edge
+    /// without rebuilding the rows.
     groups: Vec<GroupRange>,
-    /// The instance list. It is kept across applies and reconciled in place (see
-    /// `sync_rows`), so the view's row items survive a relayout and can animate
-    /// along the rail to their new slot instead of being recreated in place.
+    /// Kept across applies and reconciled in place (see `sync_rows`), so the
+    /// view's row items survive a relayout and can animate along the rail to
+    /// their new slot instead of being recreated.
     rows_model: Rc<VecModel<GameRow>>,
-    /// Reveals the rows that `sync_rows` added, 50ms after they appeared.
     reveal_timer: Timer,
-    /// Whether the list has been handed to the view at least once. The rows of
-    /// that first layout are the ones the view's intro slides in, so they start
-    /// revealed and only rows added later use the appear animation.
+    /// Whether the list has been handed to the view at least once. That first
+    /// layout is what the view's intro slides in, so it starts revealed and only
+    /// rows added later use the appear animation.
     synced: bool,
-    /// Whether the rows about to be laid out animate to their new slots on the
-    /// 400ms FLIP (`true`) or the 300ms `cubic-bezier(0.33, 1, 0.68, 1)` collapse
-    /// curve (`false`). Reset to `true` by `apply`.
+    /// Whether rows animate to their new slots on the 400ms FLIP (`true`) or the
+    /// 300ms collapse curve (`false`); reset to `true` by `apply`.
     flip: bool,
 }
 
-/// Reveals the rows added by the last `sync_rows`: `appear` flipping to true is
-/// what makes the view animate them in along the rail.
 pub(crate) fn reveal_rows(model: &VecModel<GameRow>) {
     for index in 0..model.row_count() {
         let Some(mut row) = model.row_data(index) else {
@@ -122,7 +113,6 @@ pub(crate) fn reveal_rows(model: &VecModel<GameRow>) {
     }
 }
 
-/// Formats a play time in seconds into a `GameTime.play-time` kind + value.
 pub(crate) fn format_play_time(seconds: u64) -> (&'static str, String) {
     if seconds < 60 {
         return ("seconds", seconds.to_string());
@@ -134,7 +124,6 @@ pub(crate) fn format_play_time(seconds: u64) -> (&'static str, String) {
     ("hours", format_decimal(minutes / 60.0))
 }
 
-/// Rounds to one decimal and strips a trailing `.0`.
 pub(crate) fn format_decimal(value: f64) -> String {
     let rounded = (value * 10.0).round() / 10.0;
     if (rounded.fract()).abs() < f64::EPSILON {
@@ -144,8 +133,7 @@ pub(crate) fn format_decimal(value: f64) -> String {
     }
 }
 
-/// Resolves the relative-time parts of a last-played timestamp. Shared with the
-/// content overlays' saves cards (`content`).
+/// Shared with the content overlays' saves cards (`content`).
 pub(crate) fn relative_time(timestamp: Option<u64>) -> RelativeTime {
     let Some(timestamp) = timestamp else {
         return RelativeTime {

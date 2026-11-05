@@ -11,18 +11,11 @@ import { ContentNotFound } from "../content/content-not-found.slint";
 import { NewsSearchPanel } from "news-search-panel.slint";
 import { NewsCardView } from "news-card.slint";
 
-// The news list: the content browser's skeleton — a title bar, a search panel
-// and the results — with a vertical card flow where the content panels draw a
-// grid.
+// The news list: a title bar, search panel and a vertical card flow.
 //
-// The flow positions its cards by hand and culls them. Slint's layout would
-// draw every card of a 415-entry changelog at once, and — worse — fetch every
-// one of their images; instead Rust stacks them, the flow draws only the ones
-// the viewport touches (`card.in-view`), and the panel reports its scroll
-// offset so that set follows the reader. `content-card-grid.slint` does the
-// same for the paged content grids.
+// Rust stacks the cards and only in-view ones are drawn, so a long changelog
+// neither draws nor fetches every image at once.
 export component NewsListPanel inherits Rectangle {
-    /// The overlay container's size, passed in rather than read off `parent`.
     in property <length> panel-width: 0px;
     in property <length> panel-height: 0px;
 
@@ -30,25 +23,20 @@ export component NewsListPanel inherits Rectangle {
     height: panel-height;
     background: transparent;
 
-    // The size Rust lays the cards and the filter rows out in. Reported from
-    // here rather than read off the flow, which is an absolutely-positioned
-    // child of the scroller: `changed` does not fire for the value a component
-    // is created with, so the first report is `init` and the handlers pick up a
-    // later resize.
+    // Reported here because layout-assigned geometry skips `changed`; `init`
+    // covers creation and the handlers cover later resizes.
     init => { NewsState.list-resized(root.width, root.height); }
     changed width => { NewsState.list-resized(root.width, root.height); }
     changed height => { NewsState.list-resized(root.width, root.height); }
 
-    // The distance from the flow's top to the viewport's top: the scroller's
-    // offset (`content-y`, negative down) plus the flow's own place in the
-    // scrolled content. It moves on a scroll and when the panels above the flow
-    // change height, which are exactly the two times the visible cards change.
+    // Moves on a scroll and when the panels above change height, the two times
+    // the visible set can change.
     private property <length> viewport-top: list-scroll.content-y + flow.y;
     changed viewport-top => {
         NewsState.list-scrolled(-root.viewport-top, list-scroll.height);
     }
 
-    // The panel stays mounted between shows, so the scroll is reset by hand.
+    // The panel stays mounted, so reset the scroll by hand.
     private property <bool> panel-open: NewsState.visible;
     changed panel-open => {
         if root.panel-open {
@@ -56,11 +44,7 @@ export component NewsListPanel inherits Rectangle {
         }
     }
 
-    // One float drives the whole loading layer: the dim and the spinner's
-    // opacity, and — through its value — the spinner's scale. It snaps up while
-    // a feed is in flight and eases back down when it lands, which is what gives
-    // the spinner its shrink-and-fade and the panel its fade back to full
-    // brightness.
+    // One float drives the dim, the spinner's opacity and its scale.
     private property <float> loading-fade: NewsState.loading ? 1.0 : 0.0;
     animate loading-fade {
         duration: NewsState.loading ? 150ms : 300ms;
@@ -68,8 +52,7 @@ export component NewsListPanel inherits Rectangle {
     }
 
     list-scroll := ScrollView {
-        // No `title-gap`: the search panel's crust sits directly under the
-        // header, as it does in the mods, resource-pack and pack panels.
+        // No `title-gap`: the search panel sits directly under the header.
         ContentTitleBar {
             icon: "newspaper";
             title: @tr("News");
@@ -77,9 +60,7 @@ export component NewsListPanel inherits Rectangle {
 
         NewsSearchPanel { }
 
-        // The flow's box is as tall as every card plus the padding; its own
-        // children are stacked by Rust and only the visible ones are drawn. An
-        // empty flow keeps only its padding.
+        // As tall as every card plus padding; Rust stacks the children.
         flow := Rectangle {
             width: 100%;
             height: NewsState.list-height;
@@ -103,41 +84,30 @@ export component NewsListPanel inherits Rectangle {
 
         if !NewsState.loading && NewsState.cards.length == 0: not-found := ContentNotFound {
             show: true;
-            // The placeholder sits below the search panel rather than over the
-            // whole panel, so its block is its own content plus a padding.
+            // Below the search panel, so its block is content plus padding.
             block-height: not-found.content-height + 80px;
             description: @tr("Try adjusting the filters or search again");
         }
     }
 
-    // The loading layer, over the *panel* rather than the whole window: it dims
-    // the title bar, the search panel and the flow while a feed is in flight,
-    // and the overlay's own scrim — the strip beside the narrower container — is
-    // left uncovered, so a click there still closes the panel. The spinner is
-    // centred in the panel and shrinks into the dim as it fades.
+    // Dims the panel only; the overlay scrim stays clickable to close it.
     if root.loading-fade > 0.001: Rectangle {
         width: 100%;
         height: 100%;
-        // Black rather than a palette surface: the panel is `base`, which is
-        // light in Latte and dark in the others, and a palette token would
-        // brighten one of them instead of dimming it.
+        // Black, because a palette token would brighten Latte's light `base`.
         background: #000000.with-alpha(0.45 * root.loading-fade);
 
-        // Swallows presses so nothing under the dim reacts while loading; it is
-        // still inside the container, so the scrim keeps its own clicks.
+        // Swallows presses, while the scrim keeps its own clicks.
         TouchArea { }
 
-        // The same mark `ContentLoading` draws — a 64px mantle rounded square
-        // with a 32px ring — centred in the panel rather than at the top of the
-        // flow. The fade and the shrink are on this box, so the ring travels
-        // with it.
+        // The same mark `ContentLoading` draws; the fade and shrink are on this
+        // box so the ring travels with it.
         Rectangle {
             width: 64px;
             height: 64px;
             background: Theme.mantle;
             border-radius: 8px;
             opacity: root.loading-fade;
-            // 0.6 when gone, 1.0 at full: the shrink the fade reads as.
             transform-scale: 0.6 + 0.4 * root.loading-fade;
             transform-origin: { x: self.width / 2, y: self.height / 2 };
 

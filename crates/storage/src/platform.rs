@@ -8,10 +8,7 @@ use std::path::PathBuf;
 
 use platform::{OsFamily, PLATFORM_INFO};
 
-/// The launcher's folder name inside the platform's base directory.
-///
-/// macOS names it after the bundle identifier (`app.conicmc.launcher`), which is
-/// what [`platform_anchor`] joins the Application Support directory with; the
+/// The launcher's folder name inside the platform's base directory. The
 /// `-debug` suffix keeps a debug build out of a release install's data.
 #[cfg(target_os = "macos")]
 pub const APP_DIR_NAME: &str = if cfg!(debug_assertions) {
@@ -74,10 +71,8 @@ pub fn default_root() -> PathBuf {
 /// is the portable build.
 #[cfg(target_os = "windows")]
 fn portable_root() -> Option<PathBuf> {
-    // Each of the three readings can fail or answer differently, and all three
-    // collapse into one boolean here. That boolean picks the portable updater over
-    // the MSI one, so a registry read that fails is not a cosmetic loss — it is the
-    // wrong update path, chosen with nothing to say why.
+    // A failed registry read is not cosmetic: this boolean picks the portable
+    // updater over the MSI one, so it must explain itself.
     match windows_registry::install_location() {
         Some(directory) => match std::env::current_exe() {
             Ok(exe) => {

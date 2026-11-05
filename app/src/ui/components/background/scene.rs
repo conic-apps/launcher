@@ -2,83 +2,56 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The 3D background world — terrain, trees and face culling.
+//! The 3D background world: terrain, trees and face culling. It emits the face
+//! list plus the GPU vertex and index buffers, rebuilt when the camera crosses a
+//! block or the aspect changes.
 //!
-//! Nothing about the *scene* is WebGL-specific, so this module keeps the same
-//! functions and constants (and their names) and emits the face list along with
-//! the GPU vertex and index buffers. The face list is rebuilt when the camera
-//! crosses into a new block, the aspect changes or the buffer set changes — the
-//! ring height cache and the per-rebuild row invalidation are load-bearing: the
-//! ring maps z's 128 apart to the same slot.
-//!
-//! Everything a face needs to be drawn (four world-space corners, its fill
-//! alpha and its edge mix) is baked here, because those depend on the camera's
-//! *block*, not on its exact position; the projection is redone every frame.
+//! The ring height cache is load-bearing: it maps z's 128 apart to the same slot,
+//! so the row the camera is about to reach is invalidated on every rebuild.
 
 use std::collections::HashSet;
 
-/// Camera advance speed in blocks per second.
 pub const CAMERA_SPEED: f32 = 2.0;
-/// The tangent of half the 60° field of view — the frustum's slope in x per
-/// unit z.
-pub const FOV_HALF_TAN: f32 = 0.577_350_26; // tan(60° / 2)
-/// The near plane the depth buffer clamps to (`uNearZ`).
+/// The frustum's slope in x per unit z: `tan(60° / 2)`.
+pub const FOV_HALF_TAN: f32 = 0.577_350_26;
 pub const NEAR_PLANE: f32 = 0.2;
-/// World render distance in blocks.
 pub const VIEW_DISTANCE: i32 = 120;
-/// The distance at which the fog starts eating into the fills (`FADE_START`).
 pub const FADE_START: f32 = VIEW_DISTANCE as f32 * 0.55;
-/// The far plane; everything beyond it is dropped (`FADE_END`).
 pub const FADE_END: f32 = VIEW_DISTANCE as f32;
 
-/// The camera's fixed position: x is between two block columns so the world
-/// scrolls past evenly, y is one eye height above `BASE_HEIGHT`.
+/// x sits between two block columns so the world scrolls past evenly.
 pub const CAM_X: f32 = -0.5;
 pub const CAM_Y: f32 = BASE_HEIGHT as f32 + EYE_HEIGHT;
 
-/// The overlay opacity of the world layer (`.world { opacity: 0.3 }`).
 pub const LAYER_ALPHA: f32 = 0.3;
-
-/// The outline width, in *device* pixels. The outlines are expanded into quads
-/// in screen space, so this is a width on screen rather than in the world.
+/// Expanded into screen-space quads, so this is a width in device pixels rather
+/// than in the world.
 pub const EDGE_WIDTH_DEVICE_PX: f32 = 2.0;
 
-/// Surface height the hills are generated around.
 const BASE_HEIGHT: i32 = 4;
-/// Hill amplitude in blocks.
 const HILL_AMPLITUDE: f32 = 2.2;
-/// Camera height above `BASE_HEIGHT`.
 const EYE_HEIGHT: f32 = 10.6;
-/// Chance that a column grows a tree.
 const TREE_DENSITY: f64 = 0.0007;
-/// Block outline opacity at zero distance.
 const WORLD_STROKE_ALPHA: f32 = 0.55;
-/// Fill opacity at zero and full distance.
 const FILL_ALPHA_NEAR: f32 = 1.0;
 const FILL_ALPHA_FAR: f32 = 0.15;
 
-/// The block column the camera travels down: `floor(CAM_X)`, `floor(CAM_Y)`.
-/// A tree whose blocks would occupy it is not grown, which is what
-/// `tree_hits_camera` is for. (With `CAM_Y = 14.6` and trees topping out at
-/// `y = 13`, no tree can reach it — the check is kept, and would matter if the
-/// camera height ever changed.)
+/// The block column the camera travels down. A tree whose blocks would occupy
+/// it is not grown; with the current camera height none can reach it, but the
+/// check would matter if the height changed.
 const CAM_X_CELL: i32 = -1;
 const CAM_Y_CELL: i32 = 14;
 
-/// Half the widest row of columns the frustum can see, plus a margin
-/// (`MAX_HALF_X`): columns `CAM_X ± 74`, i.e. x from -75 to 74.
+/// Half the widest row of columns the frustum can see, plus a margin.
 const MAX_HALF_X: i32 = 74;
 
-/// Trees reach two blocks sideways from their column; used to keep the
-/// frustum cull conservative.
+/// Keeps the frustum cull conservative past a tree's sideways reach.
 const TREE_OVERHANG: f32 = 3.0;
 
-/// First x held by `heights`.
-const HEIGHT_X_OFF: i32 = -79; // floor(CAM_X - MAX_HALF_X) - 4
-const HEIGHT_X_SPAN: i32 = 164; // 2 * MAX_HALF_X + 16
-const HEIGHT_Z_SPAN: i32 = 128; // VIEW_DISTANCE + 8
+const HEIGHT_X_OFF: i32 = -79;
+const HEIGHT_X_SPAN: i32 = 164;
+const HEIGHT_Z_SPAN: i32 = 128;
 
-/// The eight corners of a unit block; the face constants below index into it.
 const CORNER_OFFSETS: [[f32; 3]; 8] = [
     [0.0, 0.0, 0.0],
     [1.0, 0.0, 0.0],
@@ -90,16 +63,15 @@ const CORNER_OFFSETS: [[f32; 3]; 8] = [
     [1.0, 1.0, 1.0],
 ];
 
-/// Corner order of each visible face (all legal quads). The bottom face still
-/// exists, though nothing can see it: the camera is above every block.
+/// Corner order of each visible face. The bottom face is never seen: the camera
+/// is above every block.
 const FACE_NZ: [usize; 4] = [0, 1, 3, 2];
 const FACE_NX: [usize; 4] = [0, 2, 6, 4];
 const FACE_PX: [usize; 4] = [1, 5, 7, 3];
 const FACE_PY: [usize; 4] = [2, 3, 7, 6];
 const FACE_NY: [usize; 4] = [0, 1, 5, 4];
 
-/// Tree shape: `[dx, dy, dz]` from the block above the surface. Editing this
-/// list reshapes every tree.
+/// Tree shape from the block above the surface: `[dx, dy, dz]`.
 const TREE_SHAPE: [[i32; 3]; 68] = [
     // trunk, four blocks tall
     [0, 0, 0],
@@ -175,11 +147,9 @@ const TREE_SHAPE: [[i32; 3]; 68] = [
     [0, 6, 1],
 ];
 
-/// One quad to draw, in world space.
 #[derive(Clone, Copy)]
 pub struct Face {
     pub corners: [[f32; 3]; 4],
-    /// Fill opacity at this face's distance.
     pub fill_alpha: f32,
     /// How far the outline is mixed toward the edge colour (0 at the fog end).
     pub edge_mix: f32,
@@ -189,19 +159,12 @@ pub struct Face {
 pub struct Scene {
     /// Ring-buffered column heights; 0 means "not computed" (heights are 2..7).
     heights: Vec<f32>,
-    /// Every block a tree occupies in the visible area, for occlusion tests.
     tree_blocks: HashSet<(i32, i32, i32)>,
-    /// Faces in emission order: z rows far to near, x ascending, and within a
-    /// block front, left, right, top — the order they are uploaded in, which
-    /// decides how overlapping fills and tied edges resolve.
+    /// Faces in emission order, which decides how overlapping fills and tied
+    /// edges resolve.
     pub faces: Vec<Face>,
-    /// The far-plane quad covering everything below the horizon, emitted first.
     pub ground: [[f32; 3]; 4],
-    /// The GPU path's buffers: fill vertices are `x y z alpha` with six indices
-    /// per quad, and each outline is six
-    /// `x y z mix other_x other_y other_z side` vertices — the screen-space
-    /// expansion happens in the vertex shader. Built only when a GPU renderer is
-    /// going to draw them.
+    /// The GPU path's buffers, built only when a GPU renderer will draw them.
     pub fill_vertices: Vec<f32>,
     pub fill_indices: Vec<u32>,
     pub edge_vertices: Vec<f32>,
@@ -269,7 +232,6 @@ impl Scene {
             [CAM_X + x_reach, CAM_Y - y_reach, wz],
         ];
         if self.buffers {
-            // Alpha 1: it is the slab that hides the sky below the horizon.
             for corner in self.ground {
                 self.fill_vertices
                     .extend_from_slice(&[corner[0], corner[1], corner[2], 1.0]);
@@ -277,8 +239,8 @@ impl Scene {
             self.fill_indices.extend_from_slice(&[0, 1, 2, 1, 3, 2]);
         }
 
-        // Collect the visible area's tree blocks first: they take part in the
-        // occlusion tests the columns (and the trees themselves) run.
+        // Tree blocks are needed first: the columns and the trees use them for
+        // occlusion tests.
         for z in z_base..=z_far {
             for x in x_min..=x_max {
                 if !self.column_may_be_visible(x, z, cam_z) {
@@ -300,15 +262,8 @@ impl Scene {
         }
     }
 
-    /// Whether a column can project into the viewport at all while this
-    /// geometry is in use.
-    ///
-    /// Off-screen columns would cost more than the visible ones, so they are
-    /// skipped here — the image is identical, because a column outside the
-    /// frustum projects outside it for every camera position in this block. The
-    /// frustum widens with distance, so the test uses the block's *nearest*
-    /// camera position and the furthest edge of the column (plus the tree
-    /// overhang).
+    /// Skips columns that cannot project into the viewport, using the block's
+    /// nearest camera position because the frustum widens with distance.
     fn column_may_be_visible(&self, x: i32, z: i32, cam_z: f32) -> bool {
         let dz = (z - cam_z.floor() as i32 - 1) as f32;
         let reach = FOV_HALF_TAN * dz.max(0.0) + TREE_OVERHANG;
@@ -316,11 +271,8 @@ impl Scene {
             && (x as f32 - TREE_OVERHANG) <= CAM_X + reach
     }
 
-    /// A deterministic hash of a lattice point.
-    ///
-    /// Implemented operation for operation (`Math.imul` is `wrapping_mul`, `>>>`
-    /// is a shift on `u32`) and evaluated in `f64` like JavaScript's numbers, so
-    /// the terrain reproduces the golden table in the tests exactly.
+    /// A deterministic hash of a lattice point, operation for operation what the
+    /// original JavaScript did, so the terrain reproduces the golden table.
     fn hash2i(ix: i32, iz: i32, seed: i32) -> f64 {
         let mut h = ix.wrapping_mul(374_761_393) ^ iz.wrapping_mul(668_265_263);
         h = h.wrapping_add(seed);
@@ -344,8 +296,6 @@ impl Scene {
         a + (b - a) * ux + (c - a) * uz + (a - b - c + d) * ux * uz
     }
 
-    /// Two octaves of value noise, rounded to whole blocks and clamped to the
-    /// height range the camera and the fog are tuned for.
     fn terrain_height(x: i32, z: i32) -> i32 {
         let x = f64::from(x);
         let z = f64::from(z);
@@ -355,9 +305,8 @@ impl Scene {
         h.clamp(2, 7)
     }
 
-    /// `heightAt`: the ring cache keeps the terrain from being re-generated
-    /// every time a column is asked about — which is several times per column,
-    /// for the column and its three neighbours.
+    /// The ring cache avoids regenerating a height for the several queries a
+    /// column and its neighbours make.
     fn height_at(&mut self, x: i32, z: i32) -> i32 {
         let xi = x - HEIGHT_X_OFF;
         if !(0..HEIGHT_X_SPAN).contains(&xi) {
@@ -373,7 +322,6 @@ impl Scene {
         value as i32
     }
 
-    /// Clears the cache slots of the row the camera is about to reach.
     fn invalidate_height_row(&mut self, z_world: i32) {
         let zm = z_world.rem_euclid(HEIGHT_Z_SPAN);
         let start = (zm * HEIGHT_X_SPAN) as usize;
@@ -391,8 +339,6 @@ impl Scene {
         !Self::tree_hits_camera(x, h)
     }
 
-    /// Whether any of a tree's blocks would land in the column the camera
-    /// travels down.
     fn tree_hits_camera(x: i32, h: i32) -> bool {
         let y0 = h + 1;
         TREE_SHAPE
@@ -400,7 +346,6 @@ impl Scene {
             .any(|[dx, dy, _]| x + dx == CAM_X_CELL && y0 + dy == CAM_Y_CELL)
     }
 
-    /// Whether a block is solid: at or below the surface, or part of a tree.
     /// Below the world (`y < 1`) counts as solid, so columns have no underside.
     fn is_solid(&mut self, x: i32, y: i32, z: i32) -> bool {
         if y < 1 {
@@ -470,8 +415,6 @@ impl Scene {
         });
     }
 
-    /// Only faces that look at the camera and are not covered by a neighbouring
-    /// block are emitted.
     fn emit_block(&mut self, x: i32, y: i32, z: i32, cam_z: f32) {
         if !self.is_solid(x, y, z - 1) {
             self.emit_face(x, y, z, &FACE_NZ, cam_z);
@@ -530,9 +473,7 @@ impl Default for Scene {
 mod tests {
     use super::*;
 
-    /// `(x, z, height, hash2i(x, z, 0x5eed))` reference values, generated from a
-    /// JavaScript implementation run through Node. The terrain must agree with
-    /// them value for value, so this is asserted rather than eyeballed.
+    /// Reference values from the original JavaScript implementation.
     const GOLDEN: [(i32, i32, i32, f64); 50] = [
         (-80, 17, 5, 0.768376867),
         (-80, 83, 5, 0.816261004),
@@ -598,12 +539,8 @@ mod tests {
         }
     }
 
-    /// The ring cache hands back a stored height instead of re-generating it,
-    /// so it has to agree with the generator for every column the camera
-    /// actually visits — including across the wrap where the 128th row reuses
-    /// the first's slots. Advancing one block at a time is how `build` drives
-    /// it, and the invalidation of the row the camera is about to reach is what
-    /// keeps a stale value from being handed back.
+    /// The ring cache must agree with the generator, including across the wrap
+    /// where the 128th row reuses the first's slots.
     #[test]
     fn height_cache_matches_the_generator() {
         let mut scene = Scene::new();

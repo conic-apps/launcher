@@ -16,11 +16,8 @@ use shared::ChangeReporter;
 use std::{ffi::OsStr, path::Path};
 use storage::LOCATIONS;
 
-/// The output port [`download_library`] reports its progress through.
 pub type LibrarySink = shared::Sink<DownloadSnapshot>;
 
-/// The directory the Conic Nexus dynamic library lives in
-/// (`LOCATIONS.launcher.native/conic-nexus`).
 pub fn library_dir() -> std::path::PathBuf {
     LOCATIONS.launcher.native.join("conic-nexus")
 }
@@ -35,8 +32,8 @@ pub async fn check_library_valid() -> Result<()> {
     let file_content = tokio::fs::read(&path).await?;
     sha256_hasher.update(file_content);
     let sha256 = format!("{:02x}", sha256_hasher.finalize());
-    // Log expected and actual so a tampered or truncated dylib is
-    // distinguishable from a missing one.
+    // Log expected and actual so a tampered dylib is distinguishable from a
+    // missing one.
     if metadata::LIBRARY.sha256 != sha256 {
         log::error!(
             "The Conic Nexus library at {} has sha256 {sha256}, but {} was expected",

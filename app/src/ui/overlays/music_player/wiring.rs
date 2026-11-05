@@ -115,7 +115,6 @@ pub(crate) fn apply_volume(controller: &mut Controller, percent: i32, smooth: bo
     controller.player.set_volume(percent as f32 / 100.0, smooth);
 }
 
-/// A config percentage clamped to the 0..100 range the slider allows.
 pub(crate) fn volume_percent(percent: i32) -> u8 {
     percent.clamp(0, 100) as u8
 }

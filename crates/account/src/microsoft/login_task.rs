@@ -38,12 +38,8 @@ pub enum LoginEvent {
     SaveAccount,
 }
 
-/// Clonable handle through which the login flow reports [`LoginEvent`]s.
-///
 /// The flow runs off the UI thread, so the closure the app supplies forwards
-/// each event with `upgrade_in_event_loop`. The mechanism is [`shared::Sink`],
-/// the same one every other crate's progress port uses; only the vocabulary
-/// ([`LoginEvent`]) is this crate's.
+/// each event with `upgrade_in_event_loop`.
 #[derive(Clone)]
 pub struct LoginReporter {
     on_event: Sink<LoginEvent>,

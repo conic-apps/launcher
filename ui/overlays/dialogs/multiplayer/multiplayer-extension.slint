@@ -11,15 +11,10 @@ import { MultiplayerDownloadDescription } from "download-description.slint";
 import { MultiplayerDownloadProgress } from "download-progress.slint";
 import { MultiplayerManager } from "multiplayer-manager.slint";
 
-// The dialog body: 8px of padding around whichever of the three components is
-// mounted, swapping with a left slide-out/in.
-//
-// The swap is the same state machine the create-instance dialog uses: the
-// mounted screen plays its 80ms leave, the slot changes, and the arriving screen
-// moves from its enter rest to `shown` a frame later.
+// The dialog body: the mounted component, swapped with a left slide-out/in using
+// the create-instance state machine.
 component MultiplayerConnect inherits VerticalLayout {
-    /// The dialog's inner width (the panel minus its 16px padding); see
-    /// `Dialog` for why the body sizes itself against this.
+    /// The panel minus its 16px padding.
     in property <length> content-width: 0px;
 
     width: root.content-width;
@@ -95,13 +90,9 @@ component MultiplayerConnect inherits VerticalLayout {
     }
 }
 
-// The multiplayer floating dialog.
-//
-// The panel animates its height: it sizes to the mounted component and tweens to
-// it over 300ms, an ease-out-quad applied by `Dialog` itself off this height,
-// with the width switching instantly between the three components (580 / 480 /
-// 600). Slint has no fit-content panel mode, so the height comes from the
-// measuring layout the body is written in, exactly like the add-account dialog.
+// The multiplayer floating dialog. `Dialog` eases height changes between the
+// mounted components; the width switches instantly. The height comes from the
+// body's measuring layout, like the add-account dialog.
 export component MultiplayerExtension inherits Rectangle {
     width: 100%;
     height: 100%;

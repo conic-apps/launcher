@@ -80,7 +80,7 @@ pub struct QuiltVersion {
 pub struct QuiltVersionList(Vec<QuiltVersion>);
 
 impl QuiltVersionList {
-    /// Fetches the Quilt versions for a Minecraft version, newest first.
+    /// Sorts newest first.
     pub async fn new(mcversion: &str) -> Result<Self> {
         let url = format!("https://meta.quiltmc.org/v3/versions/loader/{mcversion}");
         let mut response = HTTP_CLIENT.get(url).send().await?.json::<Self>().await?;
@@ -90,7 +90,6 @@ impl QuiltVersionList {
         Ok(response)
     }
 
-    /// The versions, newest first.
     pub fn as_slice(&self) -> &[QuiltVersion] {
         &self.0
     }
@@ -114,7 +113,6 @@ pub async fn install(
         log::warn!("the quilt meta API answered {status} for {quilt_version} on {mcversion}");
     }
     let quilt_version_json: Version = response.json().await?;
-    // `version_name` is the id everything else keys off, so it is worth recording.
     let version_name = quilt_version_json.id.clone();
     let json_path = minecraft.get_version_json(&version_name);
     if let Some(parent) = json_path.parent() {

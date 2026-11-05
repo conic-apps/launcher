@@ -6,24 +6,16 @@ import { Theme } from "../../theme.slint";
 import { AppIcon } from "../../components/display/app-icon.slint";
 import { NewsChip, NewsSearch, NewsText } from "../../globals/news.slint";
 
-// The news browser's search header.
+// The news browser's search header: a search field and three fixed filter rows
+// (type, year, month).
 //
-// The same shape as the content browser's: a translucent crust panel with a
-// 36px search field and a button beside it, then one row per filter — a 52px
-// label and a run of pill chips. The news rows are fixed — type, year, month —
-// rather than the content panel's data-driven set, because the news feed knows
-// exactly which three it has.
-//
-// The rows wrap, so their height cannot come from the layout: a wrapping
-// `FlexboxLayout` measures itself at its own deliberately "roughly square"
-// preferred width (`i-slint-core/layout.rs`), not at the width the row is
-// given. Each chip therefore *reports* the width it measured and Rust computes
-// the row's height, the same arrangement as the content panel's filter rows.
+// Wrapping rows cannot take their height from the layout, since a wrapping
+// `FlexboxLayout` measures at a roughly square width. Each chip reports its
+// width and Rust computes the row height.
 
 component NewsChipView inherits Rectangle {
     in property <NewsChip> chip;
-    /// Which row this chip belongs to: "type" | "year" | "month". It is what
-    /// the click and the measurement are filed under.
+    /// "type" | "year" | "month"; the key for clicks and measurements.
     in property <string> row-key: "";
     callback measured(length);
 
@@ -34,8 +26,7 @@ component NewsChipView inherits Rectangle {
         ? (touch.pressed ? Theme.surface-2 : touch.has-hover ? Theme.surface-1 : transparent)
         : Theme.lavender;
 
-    // The *leave* eases and the enter does not, which is what `duration` bound
-    // to the hover state says; a pressed or selected chip eases either way.
+    // Hover-in is instant, hover-out eased; press and selection ease both ways.
     animate background {
         duration: touch.has-hover && !touch.pressed && !root.chip.selected ? 0ms : 120ms;
         easing: ease-out;
@@ -43,9 +34,7 @@ component NewsChipView inherits Rectangle {
 
     label := Text {
         width: self.preferred-width;
-        // The value is keyed on the row: an empty value is the "all" chip, the
-        // type row names a feed, the month row names a month, and the year row
-        // is its own digit string.
+        // The row decides how the value is labelled.
         text: root.chip.value == "" ? NewsText.all-label()
             : root.row-key == "type" ? NewsText.type-label(root.chip.value)
             : root.row-key == "month" ? NewsText.month-label(root.chip.value)
@@ -63,8 +52,7 @@ component NewsChipView inherits Rectangle {
         clicked => { NewsSearch.chip-clicked(root.row-key, root.chip.value); }
     }
 
-    // `changed` does not fire for the value an element is created with, hence
-    // both.
+    // `changed` does not fire for the initial value, hence both.
     init => { root.measured(root.width); }
     changed width => { root.measured(root.width); }
 }
@@ -81,16 +69,14 @@ component NewsFilterRow inherits Rectangle {
 
     HorizontalLayout {
         spacing: 10px;
-        // The cross axis is left at its default (`stretch`) deliberately: the
-        // wrapping `FlexboxLayout` is given the row's own height, which Rust
-        // computed from the chips' measured widths.
+        // Cross axis stays `stretch`, so the flex row takes the height Rust
+        // computed.
         Text {
             text: root.label;
             font-size: 12px;
             color: Theme.subtext-0;
             min-width: 52px;
             horizontal-alignment: left;
-            // The 20px line box centres the 12px text.
             vertical-alignment: center;
             height: 20px;
         }
@@ -111,20 +97,17 @@ component NewsFilterRow inherits Rectangle {
 
 export component NewsSearchPanel inherits Rectangle {
     width: 100%;
-    // A layout has no margin, so the box is the content plus the bottom 16px.
+    // A layout has no margin, so the 16px gap is outside the panel's fill.
     height: panel-content.preferred-height + 16px;
     background: Colors.transparent;
 
     panel := Rectangle {
-        // Pinned to the top: without a `y` the crust is centred in the box that
-        // is 16px taller than its content, which leaves an equal gap above and
-        // below it. The 16px belongs below, against the cards.
+        // Pinned to the top: centring would split the 16px above and below.
         x: 0;
         y: 0;
         width: 100%;
         height: panel-content.preferred-height;
-        // `backdrop-filter: blur(4px)` has no Slint equivalent, so the panel
-        // stays translucent without the blur.
+        // No backdrop blur in Slint 1.18, so the panel is translucent only.
         background: Theme.crust.with-alpha(0.92);
 
         panel-content := VerticalLayout {
@@ -164,8 +147,7 @@ export component NewsSearchPanel inherits Rectangle {
                     }
 
                     field-touch := TouchArea {
-                        // The area sits over the input, so it hands the focus
-                        // over explicitly.
+                        // Sits over the input, so it hands focus over explicitly.
                         clicked => { input.focus(); }
                     }
                 }

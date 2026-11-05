@@ -2,30 +2,11 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The registry of launched Minecraft sessions.
-//!
-//! Launching is two-phase: [`crate::launch`] sets a process running and returns;
-//! the process outlives the call. The caller only awaits the pipeline, so
-//! without a registry the running process would be unreachable the moment
-//! `launch` returns — nobody could stop it, and nobody would see it exit. This
-//! module closes that gap: `register` records every spawned process with the
-//! instance it belongs to and the thread watching its output, [`terminate`]
-//! signals one process to stop, [`terminate_all`] stops every process of an
-//! instance, and [`running_instances`] lists what is live. When a process exits
-//! its watcher reaps it and forgets it, so the registry only ever holds live
-//! sessions.
-//!
-//! The app learns about a session through [`subscribe`], the crate's one output
-//! port for this state: [`SessionEvent::Started`] when a process is registered
-//! and [`SessionEvent::Exited`] when it is gone. The exit event carries whether
-//! the exit was abnormal and, when it was, a [`CrashReport`] — so a crash is
-//! reported at the source, where the exit status and the instance are still at
-//! hand. The module itself does not know what the app does with either.
-//!
-//! An instance is not limited to one live process — the same instance can be
-//! launched again while a previous launch is running — so each id maps to a
-//! *list* of sessions. A per-launch token identifies which one a watcher must
-//! drop, since a process id can be reused after its process is reaped.
+//! The registry of launched Minecraft sessions: each is recorded, reaped when
+//! its watcher sees EOF, and exposed for termination plus a [`SessionEvent`]
+//! stream through [`subscribe`]. An instance may have several live processes, so
+//! each id maps to a list and a per-launch token identifies which entry a watcher
+//! must drop (a pid can be reused).
 
 use std::{
     collections::{HashMap, VecDeque},
@@ -48,9 +29,6 @@ use crate::crash::{CrashReport, LaunchInfo};
 
 /// Every session currently running, keyed by instance id. An instance can have
 /// more than one live process, so each key holds a list.
-///
-/// Private on purpose: the global is an implementation detail behind this
-/// module's functions, so no caller can reach the map or a `Child`.
 static RUNNING: LazyLock<Mutex<HashMap<String, Vec<Session>>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
@@ -65,21 +43,16 @@ static NEXT_TOKEN: AtomicU64 = AtomicU64::new(1);
 /// What a launch session reports to the app.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SessionEvent {
-    /// A process was registered and is running now.
     Started(RunningInstance),
-    /// A process exited and has been unregistered.
     Exited {
-        /// The session that ended.
         instance: RunningInstance,
         /// Whether the exit was abnormal: it was not a success and the app did
         /// not ask for it.
         abnormal: bool,
-        /// The collected crash information, when the exit was abnormal.
         crash: Option<Box<CrashReport>>,
     },
 }
 
-/// The output port [`subscribe`] takes.
 pub type SessionSink = Sink<SessionEvent>;
 
 /// The child's output pipes, taken before the child is wrapped so the watcher
@@ -89,7 +62,6 @@ struct Pipes {
     stderr: Option<ChildStderr>,
 }
 
-/// The instance and launch facts the watcher needs when the process exits.
 struct CrashContext {
     instance: Instance,
     launch: LaunchInfo,
@@ -99,7 +71,6 @@ struct CrashContext {
 struct Session {
     /// Identifies this launch within its instance's list; see [`NEXT_TOKEN`].
     token: u64,
-    /// The operating-system process id, fixed for the life of the process.
     pid: u32,
     /// The instance the process belongs to, kept for the crash analysis.
     instance: Instance,
@@ -121,7 +92,6 @@ struct Session {
 pub struct RunningInstance {
     /// The instance's id, the key [`terminate_all`] and [`is_running`] take.
     pub id: String,
-    /// The instance's display name.
     pub name: String,
     /// The operating-system process id, unique among the live sessions.
     pub pid: u32,

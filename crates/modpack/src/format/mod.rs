@@ -2,14 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The pack-format layer.
-//!
-//! [`inspect`] detects the format from the dropped path and asks that format to
-//! read it; [`resolve`] dispatches the same way. Adding Modrinth, MultiMC/Prism,
-//! MCBBS or HMCL is a module next to `curseforge`, a `Format`/`FormatInspection`
-//! arm, and its marker in `UNSUPPORTED` until it is implemented.
-//!
-//! The installer never sees this module: it consumes the common [`Plan`].
+//! The pack-format layer: [`inspect`] detects the format from the dropped path
+//! and asks it to read the pack; [`resolve`] dispatches the same way. The
+//! installer only sees the common [`Plan`].
 
 mod curseforge;
 
@@ -38,7 +33,6 @@ enum Format {
     CurseForge,
 }
 
-/// The manifest file CurseForge packs carry.
 const CURSEFORGE_MARKER: &str = "manifest.json";
 
 /// Formats this launcher can recognise but not import yet.

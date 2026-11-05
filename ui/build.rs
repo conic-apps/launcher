@@ -22,18 +22,11 @@ const ICON_SOURCES: &[(&str, &str)] = &[
     ("assets/images", "modrinth,curseforge"),
 ];
 
-/// The stack `slint-build`'s compiler is given.
-///
-/// Its stack use grows with the whole `.slint` tree, and the build script's **main
-/// thread** only gets the linker's default: 1 MiB on `*-pc-windows-msvc`,
-/// where rustc does not raise the PE stack reserve for a build script. The
-/// tree has outgrown that, and the symptom is a bare
-/// `STATUS_STACK_OVERFLOW` from the build script -- the compiler dies in the
-/// middle of a file and names no file, so it reads like a corrupt `.slint`.
-///
-/// 64 MiB is ~30x what the tree needs today (it fits in 2 MiB), which leaves the
-/// next few screens off the same cliff. A thread stack is *reserved*, not
-/// committed, so the headroom costs nothing until the compiler touches it.
+/// The stack `slint-build`'s compiler thread is given: its stack use grows with
+/// the whole `.slint` tree, and a Windows build script only gets the linker's
+/// 1 MiB default, which overflows with a bare `STATUS_STACK_OVERFLOW` that names
+/// no file. A thread stack is reserved, not committed, so the headroom is free
+/// until the compiler touches it.
 const COMPILER_STACK_BYTES: usize = 64 * 1024 * 1024;
 
 fn main() {
@@ -102,20 +95,10 @@ struct Icon {
 
 /// Generate `icons.slint` from the SVGs `AppIcon` renders.
 ///
-/// **Why generated rather than written by hand.** A transcribed table drifts:
-/// shapes are easy to mistype, and every SVG shape type (`<rect rx>`,
-/// `<circle>`, `<ellipse>`, `<line>`, `<polyline>`) would have to be
-/// re-implemented by hand. Generating from the SVGs keeps the geometry exact.
-///
-/// So the SVGs are read with `usvg` -- the same crate Slint rasterizes them
-/// with, reached through `resvg` -- and the geometry comes back already
-/// resolved: attribute inheritance applied, `<rect rx>`, `<circle>`,
-/// `<ellipse>`, `<line>` and `<polyline>` all converted to path segments by
-/// the library that will draw them. The generated data cannot disagree with
-/// the rendering, and an icon is repaired by editing its SVG.
-///
-/// Adding an icon is dropping the file into `ui/assets/icons/`; there is
-/// nothing else to update.
+/// The geometry is read with `usvg` — the same crate Slint rasterizes with — so
+/// attribute inheritance and every shape type are already resolved and the
+/// generated data cannot disagree with the rendering. Adding an icon is dropping
+/// the file into `ui/assets/icons/`.
 fn generate_icons() {
     let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let mut icons: BTreeMap<String, Icon> = BTreeMap::new();

@@ -2,71 +2,46 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The types the renderer produces and the knobs it is driven with.
-//!
-//! The renderer is a *layout engine*, not a widget: it turns a Markdown (or
-//! HTML) document into a flat list of absolutely positioned [`MdItem`]s. A view
-//! then draws that list. Nothing here knows about Slint's item tree, and the
-//! only Slint type that appears is [`slint::Image`], which is how a decoded
-//! bitmap travels from the caller to the display list.
+//! The display-list types and the knobs the layout engine is driven with.
 
 use std::collections::HashMap;
 
 use slint::Image;
 
-/// Which grammar a document is written in.
-///
-/// Modrinth sends Markdown and CurseForge sends HTML, and both are served to the
-/// same view, so the format is part of the document rather than a global.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum SourceFormat {
-    /// CommonMark with the GitHub extensions (tables, task lists,
-    /// strikethrough, autolinks, footnotes, …).
     #[default]
     Markdown,
-    /// A tag soup, the way CurseForge serves its `markup: true` descriptions.
     Html,
 }
 
-/// A slot in the view's palette.
-///
-/// Colours travel as a role rather than as a colour so that a palette switch is
-/// a repaint and nothing more: the display list never has to be rebuilt (which
-/// would re-measure, re-break and re-position every line) just because the app
-/// switched from a dark flavour to a light one.
+/// A palette slot rather than a colour, so a theme switch only repaints instead
+/// of rebuilding the display list.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ColorRole {
-    /// Body text, and the fallback for anything not listed below.
     #[default]
     Text,
-    /// Heading text. GitHub's stylesheet does not give headings their own colour
-    /// (they inherit the container's), but a view may want to.
     Heading,
-    /// The text of a link. Deliberately *not* the same as `Text`: links are the
-    /// one thing a stylesheet always recolours.
     Link,
     CodeText,
     CodeBackground,
     CodeBlockText,
     CodeBlockBackground,
-    /// A block quote's text, dimmed a shade below the body.
     QuoteText,
     QuoteBar,
     TableBorder,
     TableHeadText,
     TableHeadBackground,
-    /// A `---` thematic break, and the rule under `h1`/`h2`.
     Rule,
     Strike,
     Marker,
-    /// An inline image that could not be fetched, drawn as its alt text. A block
-    /// image's alt text is drawn in the body colour instead.
+    /// A failed inline image drawn as alt text; a block image uses the body
+    /// colour instead.
     Placeholder,
 }
 
 impl ColorRole {
-    /// The stable name a view switches on. Kept in sync with
-    /// `MarkdownColors.resolve` in `markdown-view.slint` by hand.
+    /// Kept in sync by hand with `MarkdownColors.resolve` in `markdown-view.slint`.
     pub const fn name(self) -> &'static str {
         match self {
             Self::Text => "text",
@@ -89,25 +64,19 @@ impl ColorRole {
     }
 }
 
-/// What an [`MdItem`] draws. Three kinds cover the whole stylesheet: text, a
-/// rounded (optionally outlined) box, and a bitmap.
+/// What an [`MdItem`] draws.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ItemKind {
-    /// A single run of glyphs in one style. One run per line per style, which is
-    /// what lets the view hand each one to a `Text` and lets the strike-through
-    /// and underline rules land on exactly the run they belong to.
+    /// One run of glyphs in one style.
     #[default]
     Text,
-    /// A box: a code capsule, a code block's background, a quote's rule, a
-    /// table cell, a thematic break, a link's hit area or its hover underline.
     Rect,
     /// A decoded bitmap, clipped to `radius`.
     Image,
 }
 
 impl ItemKind {
-    /// The stable name a view switches on. Kept in sync with the `kind` strings
-    /// of the companion component by hand.
+    /// Kept in sync by hand with the companion component's `kind` strings.
     pub const fn name(self) -> &'static str {
         match self {
             Self::Text => "text",
@@ -117,76 +86,42 @@ impl ItemKind {
     }
 }
 
-/// One drawable in the display list.
-///
-/// Coordinates are in logical pixels relative to the display list's own top-left
-/// corner. The list is in paint order: a code block's background precedes the
-/// glyphs drawn on it, and a link's transparent hit area follows the text it
-/// covers.
+/// One drawable in the display list, in logical pixels from the list's
+/// top-left, in paint order.
 #[derive(Clone)]
 pub struct MdItem {
     pub kind: ItemKind,
-    /// Left edge, in logical pixels from the list's own origin.
     pub x: f32,
-    /// Top edge. A `Text` item's box is the run's own ascent and descent, not
-    /// the line box, so that runs of different sizes on one line share a
-    /// baseline; a view centres the glyphs inside it.
+    /// A `Text` item's box is the run's ascent and descent, not the line box,
+    /// so runs of different sizes share a baseline.
     pub y: f32,
-    /// The box's width. For a `Text` item this is the run's advance, which is
-    /// what a link's rule and a strikethrough are drawn across.
     pub width: f32,
     pub height: f32,
 
-    /// The glyphs of a `Text` item, and empty for the other kinds. An `Image`
-    /// item carries its alternative text here instead, for a view that wants a
-    /// label or a tooltip.
+    /// The glyphs, or an image's alt text.
     pub text: String,
-    /// The `Text` item's font size. Slint centres the glyphs in `height`, which
-    /// is the run's own ascent and descent rather than the line's box, so a run
-    /// of a different size sitting next to a larger one still lands on the same
-    /// baseline.
     pub font_size: f32,
-    /// The `font-weight`, 100 to 900. A variable font interpolates it, which is
-    /// how a heading gets 600 rather than the boldest weight the family has.
     pub font_weight: u16,
     pub font_italic: bool,
     pub mono: bool,
-    /// Which slot of the view's palette this item takes its colour from.
     pub color: ColorRole,
 
     pub radius: f32,
-    /// Whether a `Rect` item is filled. A table cell that has no background of
-    /// its own — every cell but a header's — is an outline and nothing else.
     pub filled: bool,
-    /// A `Rect` item's outline width, drawn inside the box.
     pub border_width: f32,
     pub border_color: ColorRole,
 
-    /// Set on a `Rect` item that acts as a link: a transparent box that takes the
-    /// press. A link is *one* item per line rather than two — the box and the
-    /// rule it reveals — because they are the same rectangle, and a view that had
-    /// to match them up by position would be doing arithmetic the engine has
-    /// already done.
+    /// Set on a `Rect` that acts as a link and takes the press.
     pub link_url: String,
-    /// Groups every piece of one link — its per-line boxes — so a view can
-    /// resolve "is the pointer inside this link" from one string, and draw the
-    /// rule under all of the link's lines at once.
+    /// Groups a link's per-line boxes so a view can test them at once.
     pub link_id: String,
-    /// Where the rule a view reveals for this link sits, measured down from the
-    /// top of the box. Zero for an item that is not a link.
+    /// Where the revealed rule sits, down from the box top.
     pub rule_offset: f32,
-    /// Whether this link reveals a rule when the pointer is over it.
-    ///
-    /// Almost always true, and false for a link whose content is an image: an
-    /// image is a replaced element, `text-decoration` does not reach one, and a
-    /// browser underlines nothing under a linked picture. A view that drew the
-    /// rule anyway would put a line across the bottom of every badge in a README,
-    /// which is the one place a README is guaranteed to have a row of them.
+    /// False for a linked image, which a browser does not underline.
     pub rule: bool,
 
     pub image: Option<Image>,
-    /// The natural size of that bitmap, which the caller supplies because
-    /// Slint's `Image` cannot report it.
+    /// Slint's `Image` cannot report its size, so the caller supplies it.
     pub image_size: Option<(u32, u32)>,
 }
 
@@ -218,11 +153,8 @@ impl Default for MdItem {
     }
 }
 
-/// The item's geometry and style, without the bitmap.
-///
-/// Hand-written because [`slint::Image`] has no `Debug`, and a layout engine
-/// whose items cannot be printed is one whose bugs cannot be seen: `{:?}` of a
-/// display list is the first thing anyone reaches for.
+/// Hand-written because [`slint::Image`] has no `Debug`, and a display list that
+/// cannot be printed cannot be debugged.
 impl std::fmt::Debug for MdItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("MdItem")
@@ -291,14 +223,8 @@ impl std::fmt::Debug for ImageAsset {
     }
 }
 
-/// The images a document references, as handed to [`crate::ui::components::markdown::Renderer::set_image`].
-///
-/// A README can reference dozens of images; fetching and decoding them is the
-/// caller's job (it needs a network client and a background thread), so the
-/// renderer takes them one at a time and re-layouts whenever one arrives. A
-/// document that has not been given an image yet draws the image's alt text in
-/// its place — as inline text for an image inside a sentence, and as a paragraph
-/// for a block image — which is what a browser does for a broken image.
+/// The bitmaps a document references, handed in by the caller as they arrive.
+/// Until one arrives, its alt text is drawn in its place.
 #[derive(Default, Clone)]
 pub struct ImageStore {
     assets: HashMap<String, ImageAsset>,
@@ -326,9 +252,6 @@ impl ImageStore {
     }
 
     /// The URLs a document references, in document order and without repeats.
-    ///
-    /// The caller uses this to decide what to fetch; until an asset is handed
-    /// over, the layout draws the image's alt text where the picture would be.
     pub fn referenced(&self, blocks: &[crate::ui::components::markdown::Block]) -> Vec<String> {
         let mut out: Vec<String> = Vec::new();
         for block in blocks {
@@ -342,200 +265,92 @@ impl ImageStore {
     }
 }
 
-/// Every measurement, margin and radius the renderer uses.
-///
-/// The defaults are GitHub's `.markdown-body` values scaled to a 14px body,
-/// which is what the launcher renders its detail panel with — except the
-/// `<details>` fields, which are sized like a launcher settings row instead. A
-/// caller overrides whichever of them its own stylesheet disagrees about.
-/// Nothing is read from the environment: the renderer never looks at a palette,
-/// a font file or a window, it only produces geometry from what it is given.
+/// Every measurement, margin and radius the renderer uses. The defaults are
+/// GitHub's `.markdown-body` at a 14px body, with the `<details>` row sized like
+/// a launcher settings row.
 #[derive(Debug, Clone, PartialEq)]
 pub struct MdStyle {
-    /// The family body text is shaped with, before the generic fallbacks.
     pub font_family: String,
-    /// The family inline `code` and code blocks are shaped with.
     pub mono_family: String,
-    /// The body size. Heading sizes and line heights are relative to this.
     pub font_size: f32,
-    /// The body line height, a multiple of the body size (CSS `line-height`).
     pub line_height: f32,
-    /// The weight of body text, a `<summary>` row and a list marker.
     pub weight_normal: u16,
-    /// The weight of a task list's tick. `**strong**` is set to at least 700 by
-    /// the layout rather than read from here.
     pub weight_bold: u16,
-    /// `font-weight` of every heading level, and of a table's header cells.
     pub heading_weight: u16,
 
-    /// `h1`…`h6` sizes as multiples of `font_size`. The last two are the
-    /// browser's user-agent defaults, which the launcher's stylesheet leaves
-    /// alone because it only overrides `h1`–`h4`.
     pub heading_sizes: [f32; 6],
     pub heading_line_height: f32,
 
-    /// `p { margin: 0 0 16px }`
     pub paragraph_margin_bottom: f32,
-    /// The `margin-top` half of `h1..h6 { margin: 24px 0 16px }`.
-    ///
-    /// The layout does not read it: a heading's separation from what precedes it
-    /// is that block's own bottom margin, so only `heading_margin_bottom` is
-    /// applied.
+    /// Not read: a heading's separation comes from the preceding block's margin.
     pub heading_margin_top: f32,
-    /// The space below a heading, before the next block's own top margin.
     pub heading_margin_bottom: f32,
-    /// `h1, h2 { border-bottom: 1px solid }` with `padding-bottom: 0.3em`, the
-    /// padding relative to the heading's own size. `false` for `h3`–`h6`, which
-    /// carry no rule.
     pub heading_rule: [Option<HeadingRule>; 6],
-    /// `ul, ol { margin: 0 0 16px }`
     pub list_margin_bottom: f32,
-    /// `ul, ol { padding-left: 2em }`
     pub list_indent: f32,
-    /// `li { margin-top: 0.25em }` — the gap between items. A user agent also
-    /// puts it above the first one, and so does the launcher's stylesheet.
     pub list_item_spacing: f32,
-    /// The gap between a list marker and the item's text. A user agent places
-    /// the marker outside the content box; the distance here is the same
-    /// `0.5em` the task list's checkbox gets.
     pub list_marker_gap: f32,
-    /// `blockquote { margin: 0 0 16px 0 }`
     pub quote_margin_bottom: f32,
-    /// `blockquote { padding: 0 1em }`
     pub quote_padding_x: f32,
-    /// `blockquote { border-left: 0.25em solid }`
     pub quote_bar_width: f32,
-    /// `pre { margin: 0 0 16px }`
     pub code_block_margin_bottom: f32,
-    /// `pre { padding: 16px }`
     pub code_block_padding: f32,
-    /// `pre { border-radius: 8px }`
     pub code_block_radius: f32,
-    /// `hr { margin: 24px 0 }`
     pub rule_margin: f32,
-    /// `hr { height: 0.25em }`
     pub rule_thickness: f32,
-    /// `table { margin: 0 0 16px }`
     pub table_margin_bottom: f32,
-    /// `th, td { padding: 6px 13px }`
     pub cell_padding_x: f32,
-    /// The space above and below a cell's text.
     pub cell_padding_y: f32,
-    /// `th, td { border: 1px solid }`
     pub cell_border: f32,
-    /// The gap between a task box and its label (`input { margin-right: 0.5em }`).
     pub task_marker_gap: f32,
-    /// The edge of a task list's checkbox. 13px matches the surrounding text
-    /// size; GitHub itself uses the platform control.
     pub task_marker_size: f32,
-    /// Reserved for the space above the collected footnote definitions. The
-    /// layout draws the separator at `footnote_rule_margin` and does not read
-    /// this field.
+    /// Not read: the separator uses `footnote_rule_margin`.
     pub footnote_margin_top: f32,
-    /// The separator drawn above the collected footnote definitions.
     pub footnote_rule_margin: f32,
 
-    // A `<details>` is a control, not prose, so it is sized like the launcher's
-    // settings rows rather than like GitHub's own `<summary>`: a 13px title in a
-    // padded, rounded, hoverable row with a chevron. GitHub draws a bare
-    // `<summary>` at body size with a small triangle, which in a body already
-    // carrying the launcher's own typography reads as an unstyled leftover, and
-    // the settings rows are the one place in the app where "a row you can click
-    // to see more" already has a look.
-    /// The summary line's font size, which is a settings row's title rather than
-    /// the body's.
+    /// A `<details>` is a control, so it is sized like a launcher settings row
+    /// rather than GitHub's bare summary.
     pub details_head_font_size: f32,
-    /// The row's left and right padding.
     pub details_head_padding_x: f32,
-    /// The row's top and bottom padding.
     pub details_head_padding_y: f32,
-    /// The row's corner radius, the same 8px a settings group has.
     pub details_head_radius: f32,
-    /// The edge of the disclosure chevron.
     pub details_marker_size: f32,
-    /// The gap between the chevron and the title.
     pub details_marker_gap: f32,
-    /// The indent the hidden content is laid out at, from the section's left
-    /// edge. The default equals `details_head_padding_x`, so the content starts
-    /// at the row's own padding edge — under the chevron rather than under the
-    /// title.
     pub details_content_inset: f32,
-    /// The gap between the summary row and the content it hides.
-    ///
-    /// Not the 1px `SettingCollapse` puts between its rows. That is a seam
-    /// *inside* one group, where the rows below it carry on; a `<summary>` is the
-    /// end of a group and the beginning of another, and at 1px the first line of
-    /// the content sits against the row's own edge. 8px is a little over half the
-    /// row's padding, which puts the gap and the padding in the same family.
     pub details_gap: f32,
-    /// The space under a collapsed section's summary, before the next block's own
-    /// top margin. Folded into the section's own height.
     pub details_margin_bottom: f32,
 
-    /// `code, pre { font-size: 85% }`, applied to both inline code and code
-    /// blocks. GitHub's own inline code is a touch smaller still; the launcher
-    /// stylesheet uses 85% for both.
     pub code_font_scale: f32,
-    /// `pre { line-height: 1.45 }`
     pub code_line_height: f32,
-    /// `code { padding: 0.2em 0.4em }`, relative to the code font's size.
     pub code_padding_x: f32,
-    /// The space between an inline-code capsule and the text beside it, relative
-    /// to the code font's size. Half a space, which is what reads as "this is
-    /// code" without opening a hole in the paragraph.
-    ///
-    /// A margin and not more padding: padding is inside the capsule, and the gap
-    /// the reader is asking about is the one *outside* it. `code_padding_x` alone
-    /// leaves the capsule drawn straight over the glyphs next to it, because
-    /// nothing in the line's width was ever asked for it.
+    /// The gap outside the capsule, which has to be room in the line or the
+    /// capsule is drawn over the glyphs next to it.
     pub code_margin_x: f32,
-    /// The space above and below an inline code span's glyphs.
     pub code_padding_y: f32,
-    /// `code { border-radius: 6px }`
     pub code_radius: f32,
-    /// `img { border-radius: 8px }`
     pub image_radius: f32,
-    /// The space under a block image, before the next block's own top margin.
-    ///
-    /// A browser needs no rule for it: a lone `img` sits in a paragraph, and
-    /// the paragraph's `margin-bottom: 16px` is the gap. There is no paragraph
-    /// here — the image *is* the block — so without this the next line starts
-    /// against the picture's edge.
+    /// A block image is its own block, so without this the next line starts
+    /// against the picture.
     pub image_margin_bottom: f32,
-    /// The thickness of the rule a hovered link reveals, and of a
-    /// strikethrough. One pixel is what a 1px CSS decoration comes out as.
+    /// The thickness of a revealed link rule and of a strikethrough.
     pub decoration_width: f32,
 
-    /// `word-wrap: break-word` on the container: a word wider than the line is
-    /// split instead of overflowing.
-    ///
-    /// The layout always allows that break while wrapping
-    /// (`allow_breaks_inside_long_units`); this flag is not currently consulted.
+    /// Not consulted: wrapping always allows the break.
     pub break_long_words: bool,
-    /// `pre { overflow: auto }`. When false a code block is one long line that
-    /// is clipped; when true it is wrapped, which is not what a browser does
-    /// but is the only option for a view that cannot scroll sideways.
+    /// Wrap a code block instead of clipping it, for a view that cannot scroll.
     pub code_block_wrap: bool,
 }
 
-/// The `border-bottom` of a heading that GitHub underlines.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct HeadingRule {
-    /// The rule's thickness.
-    pub width: f32,
-    /// `padding-bottom`, relative to the heading's own font size.
+    /// `padding-bottom`, relative to the heading's own size.
     pub padding: f32,
+    pub width: f32,
 }
 
 impl MdStyle {
-    /// The style with `family` and `mono_family` set.
-    ///
-    /// A caller that embeds a typeface *has* to do this: the measurement is
-    /// taken with this family, and the view draws with whatever the caller told
-    /// it to. An empty family measures with the generic fallbacks, and a
-    /// document laid out with Helvetica's advances and drawn in Comfortaa's is a
-    /// document whose lines are the wrong length — which shows up as text clipped
-    /// at the end of every line.
+    /// A caller that embeds a typeface must set this, or the document is measured
+    /// with one family and drawn with another, clipping every line.
     pub fn with_families(
         mut self,
         family: impl Into<String>,
@@ -627,110 +442,56 @@ impl Default for MdStyle {
     }
 }
 
-/// The result of a layout pass: the display list and how tall it is.
 #[derive(Default, Clone)]
 pub struct DisplayList {
-    /// The items, in paint order.
     pub items: Vec<MdItem>,
-    /// The height a scroll container has to offer, which is the bottom of the
-    /// last item plus the container's bottom margin.
+    /// The height a scroll container has to offer.
     pub height: f32,
     pub width: f32,
-    /// The widest single line, which is what a shrink-to-fit container wants.
+    /// The widest line, for a shrink-to-fit container.
     pub content_width: f32,
-    /// The document in runs, in document order. Empty only for a document with
-    /// no items (and before the first layout); a document with no `<details>` in
-    /// it is one run of everything.
-    ///
-    /// This is what a view lays out *vertically*, and it is here because a
-    /// collapsible region cannot be drawn over: hiding a section's content means
-    /// taking that height out of the flow, and every line below it has to move up
-    /// by the same amount. A view that painted a cover over the content and
-    /// shrank the height it reported would reclaim no space at all — the gap would
-    /// still be there, and everything past it would be scrolled out of reach.
-    ///
-    /// So the engine hands over the runs, and a view that can stack things stacks
-    /// these: a section's run is as tall as its content allows and as short as
-    /// its summary row alone, and animating between the two moves everything below
-    /// it for free. `SettingCollapse` is the same idea with a `clip: true` box.
+    /// The document in runs a view stacks vertically. Hiding a section means
+    /// taking its height out of the flow, which is why the engine hands over runs
+    /// rather than letting a view cover the content.
     pub chunks: Vec<MdChunk>,
 }
 
 /// A run of the document that moves as one thing.
 #[derive(Debug, Clone, PartialEq)]
 pub struct MdChunk {
-    /// The `<details>` this run is, when it is one. A run between two sections
-    /// has none, and is never hidden.
     pub section: Option<MdSection>,
-    /// Where the run starts in the open layout, which is the origin its items'
-    /// own `y` are measured from.
+    /// Where the run starts in the open layout, the origin its items use.
     pub top: f32,
-    /// How tall the run is with its section open. A run with no section is always
-    /// this tall.
+    /// The run's height with its section open.
     pub height: f32,
-    /// Which of [`DisplayList::items`] belong to this run, as a contiguous range.
-    ///
-    /// A range rather than a copy: the display list is the same items either way,
-    /// and a second copy of a long README's every line is a second copy to keep
-    /// correct. Runs are contiguous by construction — the document is one flow.
+    /// A contiguous range into [`DisplayList::items`]; a copy would have to be
+    /// kept correct.
     pub items: std::ops::Range<usize>,
 }
 
-/// A `<details>`: the summary line that is always shown, and the blocks below it
-/// that a view hides until the summary is clicked.
-///
-/// The engine lays a section's content out **whether it is open or not**, and
-/// reports the content's full height here rather than laying it out collapsed.
-/// That is what makes the open/close animation possible at all: a view that had
-/// to ask the engine to re-measure would get a document that jumps to its new
-/// height instead of easing into it, and a view that hid the content by
-/// re-laying out would watch every line below it move. Instead the items are
-/// drawn as they are and the view covers what is hidden, which is the same
-/// trick `SettingCollapse` uses with a `clip: true` box and the same reason.
+/// A `<details>`, laid out **open** either way so a view can animate the reveal
+/// without re-measuring.
 #[derive(Debug, Clone, PartialEq)]
 pub struct MdSection {
-    /// Identifies the section. A view holds its open/closed state against this,
-    /// so the state survives the re-layout a width change causes.
+    /// A view holds its open/closed state against this across re-layouts.
     pub id: u32,
-    /// The summary row's left edge.
     pub head_x: f32,
-    /// The summary row's top edge.
     pub head_y: f32,
-    /// The summary row's width, which is the width the document was laid out
-    /// for rather than the summary text's own.
     pub head_width: f32,
-    /// The summary row's height: the title's line box between the row's padding.
     pub head_height: f32,
-    /// The corner radius of that box.
     pub head_radius: f32,
-    /// The disclosure marker's left edge — the chevron a view rotates by a
-    /// quarter turn when the section opens. A box rather than an item because the
-    /// engine has no icon font: a view draws what it has.
+    /// The chevron's left edge; the engine has no icon font, so a view draws it.
     pub marker_x: f32,
-    /// The marker's top edge, centred in the row.
     pub marker_y: f32,
-    /// The chevron's edge length.
     pub marker_size: f32,
-    /// Where the hidden content starts, and the indent it is laid out at.
     pub content_x: f32,
-    /// The hidden content's top edge, just under the row and its gap.
     pub content_y: f32,
-    /// How tall the content is with the section fully open.
     pub content_height: f32,
-    /// How much of the document's flow the section takes away while it is closed:
-    /// its content **and** the margin under it, which stays either way.
-    ///
-    /// Not `content_height`, and the difference is the last of the content: the
-    /// space under a closed section is its own, so a run that shrank by the
-    /// content alone would still be a margin taller than its summary row and the
-    /// top of the first hidden line would sit inside it. What is left when the
-    /// section is closed is the row and the gap under it, and nothing else.
+    /// The flow taken away while closed: the content **and** the margin under
+    /// it, so a closed run is only its row and the gap.
     pub hidden: f32,
-    /// The y below the section, its own margin included — which is where the
-    /// document's flow carries on after it. A view that stacks runs needs to know
-    /// where this one ends to know where the next begins.
+    /// Where the document's flow carries on after the section.
     pub flow_bottom: f32,
-    /// Whether the document asked for the section open (`<details open>`). A view
-    /// that keeps its own state seeds it from here; see [`Block::Details`](crate::ui::components::markdown::Block::Details).
+    /// Seeds a view's own state from `<details open>`.
     pub open: bool,
 }

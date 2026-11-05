@@ -80,8 +80,8 @@ static DEFAULT_JVM_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
     ]
 });
 
-/// A fully resolved `version.json`: the merged inheritance chain with its
-/// libraries, arguments and asset index ready to launch.
+/// A merged inheritance chain with its libraries, arguments and asset index
+/// ready to launch.
 #[derive(Clone, Serialize, Default)]
 pub struct ResolvedVersion {
     pub id: String,
@@ -99,16 +99,11 @@ pub struct ResolvedVersion {
     pub logging: HashMap<String, Logging>,
     pub java_version: JavaVersion,
 
-    /// The version inheritances of this whole resolved version.
-    ///
-    /// The first element is this version's direct parent, and the last element is the root Minecraft version.
-    /// The dependencies of \[\<a\>, \<b\>, \<c\>\] should be \<a\> -> \<b\> -> \<c\>, where c is a Minecraft version.
+    /// The first element is this version's direct parent and the last is the
+    /// root Minecraft version.
     pub inheritances: Vec<String>,
 
-    /// All array of json file paths.
-    ///
-    /// It's the chain of inherits json path. The root json will be the last element of the array.
-    /// The first element is this version's direct parent.
+    /// The matching chain of json paths, in the same order as [`Self::inheritances`].
     pub path_chain: Vec<PathBuf>,
 }
 
@@ -197,16 +192,11 @@ impl ResolvedVersion {
         self
     }
 
-    /// Merges the tokens of a legacy style `minecraftArguments` string into
-    /// the game arguments.
-    ///
     /// Version jsons before `minimumLauncherVersion 21` carry their game
-    /// arguments as a single whitespace separated string instead of the
-    /// modern `arguments.game` array. Without this, loader specific options
-    /// like Forge's `--tweakClass` would be silently dropped. Options that
-    /// appear in both sets are collapsed to their last occurrence because
-    /// launchwrapper and the game read them through joptsimple single value
-    /// specs, which reject repeated options.
+    /// arguments as one whitespace-separated string, and loader options like
+    /// Forge's `--tweakClass` would otherwise be dropped. Repeated options
+    /// collapse to their last occurrence because joptsimple single-value specs
+    /// reject them.
     fn join_minecraft_arguments(&mut self, minecraft_arguments: &Option<String>) -> &mut Self {
         if let Some(minecraft_arguments) = minecraft_arguments {
             let mut combined = std::mem::take(&mut self.game_arguments);

@@ -6,31 +6,15 @@ import { Theme } from "../../theme.slint";
 import { FocusManager } from "../../globals/focus.slint";
 import { ScrollInput, ScrollSource } from "../../globals/scroll.slint";
 
-// Horizontal scroll container with a slim custom scrollbar on its bottom edge.
+// Horizontal scroll container with a slim scrollbar on its bottom edge; the same
+// eased lerp and thumb as `ScrollView`.
 //
-// This is `ScrollView` turned on its side: the same eased lerp, the same thumb,
-// and the same rule that the vertical wheel belongs to the page. Two rules keep
-// the strip from stealing a gesture meant for the vertical scroller around it:
+// Two rules keep it from stealing a gesture meant for the vertical scroller: a
+// trackpad only turns it with its horizontal component, and a notched wheel only
+// while Ctrl is held (a horizontal `delta-x` is taken as horizontal regardless).
 //
-//   * A trackpad (or its momentum) turns the strip only with its *horizontal*
-//     component. A vertical two-finger swipe is left to bubble to the page.
-//   * A notched wheel turns the strip only while Ctrl is held — the
-//     wheel-rotated-sideways convention. Without Ctrl the event bubbles up to
-//     the vertical `ScrollView`, so a plain wheel over the strip scrolls the
-//     page, and Ctrl+wheel scrolls the strip. A wheel that *reports* a
-//     horizontal axis (`delta-x`) is taken as horizontal regardless.
-//
-// The differences from `ScrollView` are in the details panel's gallery, which
-// is the one other place it is used: the track sits at the *bottom* rather than
-// the right, inset from the left and right edges by the caller's padding rather
-// than by a fixed 8px.
-//
-// There is no scroll-to-centre here. Centring took a live element to measure;
-// here the items are written into a `@children` slot, and Slint has no way to
-// reach a slot's child by index, so the offsets are not addressable from inside
-// the component. A caller that needs to centre something has to add the distance
-// itself — the detail gallery can, because its item widths come from its own
-// model.
+// There is no scroll-to-centre here: items live in a `@children` slot, and Slint
+// cannot address a slot's child by index. The caller must add the distance.
 export component ScrollViewHorizontal inherits Rectangle {
     in property <length> scrollbar-left: 8px;
     in property <length> scrollbar-right: 8px;
@@ -42,13 +26,10 @@ export component ScrollViewHorizontal inherits Rectangle {
     clip: true;
     background: transparent;
 
-    /// Width of the scrollable content: the natural width of what was put in, or
-    /// the viewport when that is narrower. Read off the layout the same way
-    /// `ScrollView` reads its height off.
+    /// Width of the scrollable content: the natural width or the viewport when
+    /// that is narrower.
     out property <length> content-width: max(root.width, content-layout.preferred-width);
-    /// Smoothed scroll offset in the `Flickable` sign: 0 at the left, negative
-    /// once the content has been scrolled to the right. `scroll-x` below is its
-    /// positive twin, the one the position and the thumb are written in.
+    /// Smoothed offset in the `Flickable` sign; `scroll-x` is its positive twin.
     out property <length> content-x: -root.scroll-x;
 
     private property <length> scrollbar-inset-bottom: 4px;
@@ -57,19 +38,17 @@ export component ScrollViewHorizontal inherits Rectangle {
 
     /// Smoothed offset: 0 at the left edge, growing as the content scrolls right.
     private property <length> scroll-x: 0px;
-    /// Where `scroll-x` is heading (wheel input, `scroll-to`, dragging).
+    /// Where `scroll-x` is heading.
     private property <length> target-x: 0px;
     private property <length> max-scroll: max(0px, root.content-width - root.width);
-    /// Wheel distance multiplier; see `ScrollView`'s for why it is 2.
+    /// Wheel distance multiplier, as in `ScrollView`.
     private property <float> wheel-step: 2;
 
-    // The `lerp`, 0.16 — see `ScrollView`. The horizontal and vertical
-    // containers share one value so they glide identically.
+    // Share of the remaining distance per frame, shared with the vertical container.
     private property <float> lerp: 0.16;
     private property <float> last-tick-ms: 0;
 
-    /// Whether the offset still has to catch up with the target; see `ScrollView`
-    /// for why it cannot be derived at the point it is needed.
+    /// Whether the offset still has to catch up; see `ScrollView`.
     private property <bool> scrolling: abs(root.target-x - root.scroll-x) > 0.5px;
 
     changed scrolling => {
@@ -90,14 +69,13 @@ export component ScrollViewHorizontal inherits Rectangle {
         }
     }
 
-    // The content getting wider (or narrower) can leave the offset past the end
-    // of the row, which is clamped and eased back from.
+    // The content can get narrower, leaving the offset past the end; pull the
+    // target back to the new limit.
     changed max-scroll => {
         root.target-x = clamp(root.target-x, 0px, root.max-scroll);
     }
 
-    /// Scrolls so that `x` — the same sign as `content-x` — ends up at the left of
-    /// the viewport.
+    /// Scrolls so `x` (same sign as `content-x`) is at the left of the viewport.
     public function scroll-to(x: length, smooth: bool) {
         if smooth {
             root.target-x = clamp(-x, 0px, root.max-scroll);
@@ -106,8 +84,7 @@ export component ScrollViewHorizontal inherits Rectangle {
         }
     }
 
-    /// Moves the offset without easing: both the offset and the target, so a
-    /// glide in flight is dropped rather than resumed.
+    /// Moves both offset and target without easing, dropping any glide in flight.
     function jump-to(offset: length) {
         root.scroll-x = clamp(offset, 0px, root.max-scroll);
         root.target-x = root.scroll-x;
@@ -125,32 +102,28 @@ export component ScrollViewHorizontal inherits Rectangle {
             width: parent.width;
             height: parent.height;
 
-            // Blurs a focused text field when its user clicks away from it. See
-            // `ScrollView` for why the area is here rather than on the
-            // container.
+            // Blur a focused field when its user clicks away; see `ScrollView`.
             clicked => { FocusManager.clear(); }
 
             scroll-event(event) => {
                 let source = ScrollInput.source();
                 let horizontal = abs(event.delta-x) > abs(event.delta-y);
 
-                // A vertical gesture is the page's, not the strip's — unless a
-                // wheel is being rotated sideways with Ctrl. Either way it is
-                // rejected so it bubbles to the vertical scroller around us.
+                // A vertical gesture belongs to the page unless a wheel is
+                // rotated sideways with Ctrl; reject it so it bubbles up.
                 if !horizontal {
                     if source != ScrollSource.wheel {
                         return reject;
                     }
-                    // On macOS Slint maps ⌘ to `control` and the physical
-                    // Control key to `meta`, so both are taken: the "Ctrl" the
-                    // user presses is whichever of the two the platform reports.
+                    // On macOS Slint maps ⌘ to `control` and the physical Control
+                    // key to `meta`, so accept either.
                     if !event.modifiers.control && !event.modifiers.meta {
                         return reject;
                     }
                 }
 
-                // A horizontal gesture is ours even with nothing to scroll, so
-                // it never chains to the page.
+                // A horizontal gesture is ours even with nothing to scroll, so it
+                // never chains to the page.
                 if root.max-scroll <= 0px {
                     return accept;
                 }
@@ -165,8 +138,7 @@ export component ScrollViewHorizontal inherits Rectangle {
                         root.max-scroll,
                     );
                 } else {
-                    // A trackpad swipe, fingers down or coasting: the horizontal
-                    // deltas *are* the motion.
+                    // A trackpad's horizontal deltas are the motion.
                     root.jump-to(root.scroll-x - event.delta-x);
                 }
                 return accept;
@@ -203,7 +175,7 @@ export component ScrollViewHorizontal inherits Rectangle {
             height: track-touch.has-hover || track-touch.pressed ? 10px : 8px;
             y: track-touch.has-hover || track-touch.pressed ? -2px : 0px;
             width: root.thumb-width;
-            // Follows the *smoothed* offset, so the thumb glides with the content.
+            // Follows the smoothed offset, so the thumb glides with the content.
             x: parent.thumb-track > 0px
                 ? clamp(root.scroll-x / root.max-scroll, 0, 1) * parent.thumb-track
                 : 0px;
@@ -219,11 +191,8 @@ export component ScrollViewHorizontal inherits Rectangle {
             animate transform-scale-x, transform-scale-y { duration: 120ms; }
         }
 
-        // As in `ScrollView`: the drag state is tracked here rather than off the
-        // event's button, because a *move* arrives with
-        // `PointerEventButton.other`, and the touch area is as tall as the
-        // *hovered* thumb so grabbing the overhang does not shrink it out from
-        // under the cursor.
+        // As in `ScrollView`: track the drag here because a move arrives with
+        // `PointerEventButton.other`, and size the touch area to the hovered thumb.
         track-touch := TouchArea {
             y: -2px;
             height: parent.height + 4px;
@@ -240,7 +209,7 @@ export component ScrollViewHorizontal inherits Rectangle {
                     }
                     FocusManager.clear();
                     // Pressing the thumb keeps the grab point; pressing the track
-                    // brings the thumb's centre to the cursor.
+                    // centres the thumb on the cursor.
                     root.drag-anchor = self.mouse-x >= thumb.x && self.mouse-x <= thumb.x + thumb.width
                         ? self.mouse-x - thumb.x
                         : thumb.width / 2;
@@ -258,8 +227,7 @@ export component ScrollViewHorizontal inherits Rectangle {
         : root.track-width;
 
     private property <bool> dragging: false;
-    /// Where inside the thumb the pointer grabbed it, so dragging does not make
-    /// the thumb jump under the cursor.
+    /// Where inside the thumb the pointer grabbed it, so dragging does not jump.
     private property <length> drag-anchor: 0px;
 
     function drag-scrollbar(mouse-x: length) {

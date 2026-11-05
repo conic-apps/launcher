@@ -2,19 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// Content overlay state.
-//
-// Nothing ever opens two panels at once, and the six kinds of detail panel are
-// one family, so what the UI needs is an enumerable "which overlay is open"
-// plus the id it shows, which a view can switch on directly.
-//
-// The domain state lives in Rust and is pushed in here; the view writes back
-// only what is pure UI (the search box, the selected save).
+// Content overlay state. Only one panel is open at a time; the domain state
+// lives in Rust and the view writes back only pure UI state (search, selection).
 
-// The types a laid-out body is made of. They belong to the Markdown renderer
-// (`src/markdown/`), whose `.slint` files live under `ui/components/markdown/`.
-// See `ui/overlays/content/markdown-body.slint` for the component that draws
-// them.
+// The Markdown renderer's laid-out body types (`ui/components/markdown/`).
 import {
     MdItem,
     MarkdownImage,
@@ -24,8 +15,8 @@ import {
 /// One tag on a card. Its `kind` picks the surface colour.
 export struct CardTag {
     text: string,
-    /// A dimmed label drawn before the text, with no gap between them. Only the
-    /// saves' "last played:" tag has one.
+    /// A dimmed label drawn before the text with no gap; only the saves' "last
+    /// played:" tag has one.
     label: string,
     /// "loader-fabric" | "loader-forge" | "loader-quilt" | "loader-neoforge"
     /// | "loader-liteloader" | "version" | "game-mode-survival"
@@ -33,10 +24,7 @@ export struct CardTag {
     /// | "command-enabled" | "last-played" | "plain"
     kind: string,
     /// When `kind` is "last-played", the parts `GameTime.last-played` formats.
-    /// The tag then draws a translated label and a translated relative time
-    /// instead of `text`, which Rust could not translate — a string Rust
-    /// composed is fixed when it is pushed and would not follow a language
-    /// change.
+    /// The tag translates these rather than `text`, which Rust cannot translate.
     time-kind: string,
     time-hours: int,
     time-month: int,
@@ -46,79 +34,56 @@ export struct CardTag {
 
 /// One card of a content grid.
 ///
-/// Its geometry is part of the row rather than derived in the view: the grid's
-/// column count comes from the panel's width, so Rust lays the cards out and
-/// hands each one its `x`/`y`/`width`/`height`. That keeps a resize onto the
-/// *same* elements — the model is rewritten in place with `set_row_data`, so a
-/// card keeps its hover, its decoded icon and any animation in flight, where a
-/// model reset would re-create every one of them.
+/// Rust lays the cards out because the column count comes from the panel's
+/// width. The model is rewritten in place with `set_row_data`, so a resize keeps
+/// each card's hover, decoded icon and in-flight animation.
 export struct ContentCard {
     x: length,
     y: length,
     width: length,
     height: length,
-    /// Whether the card is drawn. Rust sets it true for every card it lays
-    /// out, so no card is culled.
+    /// Whether the card is drawn.
     in-view: bool,
-    /// What `select` reports back: a Modrinth/CurseForge project id, a local
-    /// file path, or a save folder name.
+    /// What `select` reports: a project id, a local file path or a save folder name.
     id: string,
     /// The URL a card's link button opens (remote lists only).
     link: string,
     title: string,
     subtitle: string,
-    /// Whether the subtitle line is drawn (a project's "by …", a save's folder
-    /// name); a card without one keeps the row out of the layout rather than
-    /// drawing an empty line.
+    /// Whether the subtitle line is drawn; a card without one omits the row.
     has-subtitle: bool,
     description: string,
     tags: [CardTag],
-    /// The decoded icon. Rust falls back to the bundled unknown-server texture.
+    /// The decoded icon; falls back to the bundled unknown-server texture.
     icon: image,
-    /// Whether the icon is still being fetched, in which case the card draws a
-    /// spinner in its place instead of the fallback texture. Rust delivers the
-    /// cards first and fills their icons in as the bytes arrive, because a page
-    /// of remote results is all `https:` URLs and fetching them before the first
-    /// one is drawn is what makes a list look dead while it loads.
+    /// The icon is still being fetched, so the card draws a spinner in its place.
     icon-loading: bool,
-    /// Which trailing action column the card draws: "" | "favorite" (heart +
-    /// link) | "file" (folder + trash). The two buttons fade and scale in on
-    /// hover.
+    /// The trailing action column: "" | "favorite" (heart + link) | "file"
+    /// (folder + trash).
     action-kind: string,
-    /// The saves' separate play button, which floats over the icon rather than
-    /// sitting in the action column. A save card draws both.
+    /// The saves' play button, which floats over the icon.
     shows-play: bool,
     favorited: bool,
-    /// A disabled local mod: struck-through name behind the
-    /// `[disabled] ` prefix, and the whole card dimmed.
+    /// A disabled local mod: struck-through name and a dimmed card.
     mod-disabled: bool,
-    /// The saves' expanded state: the card lifts above its neighbours and its
-    /// extra panel slides out.
+    /// The saves' expanded state: the card lifts and its extra panel slides out.
     selected: bool,
-    /// Whether a selected save expands upwards — set when the card sits within
-    /// 160px of the bottom of the window.
+    /// Whether a selected save expands upwards (set within 160px of the bottom).
     expand-up: bool,
-    /// A save's spawn point, which its world map opens centred on
-    /// (`level.dat`'s `Data.spawn.pos`). `0, 0` when the tag is absent, which
-    /// asks the world for its own spawn. Zero on every other kind of card.
+    /// A save's spawn point for its world map (`level.dat`'s `Data.spawn.pos`).
+    /// `0, 0` when absent, asking the world for its own spawn.
     spawn-x: int,
     spawn-z: int,
 }
 
 /// One filter chip of the search panel's filter rows.
 export struct FilterChip {
-    /// What `chip-clicked` reports back — the option itself, or the CurseForge
-    /// category's numeric id as a string.
+    /// The option itself, or a CurseForge category's numeric id as a string.
     value: string,
-    /// The chip's label. Ignored when `translated` is set, because a label that
-    /// may need translating has to be resolved in Slint: a string Rust composed
-    /// is fixed at the moment it was pushed and would not follow a language
-    /// change (`@tr` bindings do).
+    /// The chip's label; ignored when `translated` is set.
     text: string,
-    /// Resolve the label through `ContentText.chip-label` from `label-key`
-    /// instead of drawing `text`, so it re-translates with the locale. The key
-    /// is not always the value: a CurseForge category chip carries the numeric
-    /// id the API wants while its label comes from the category's slug.
+    /// Resolve the label through `ContentText.chip-label` from `label-key` so it
+    /// re-translates with the locale. The key is not always the value.
     translated: bool,
     label-key: string,
     selected: bool,
@@ -127,40 +92,29 @@ export struct FilterChip {
     accent: string,
 }
 
-/// One filter row. The version row is the paginated one, and is the only one
-/// that draws its chips in a carousel rather than wrapping.
+/// One filter row. The version row is the paginated one and the only one that
+/// draws its chips in a carousel rather than wrapping.
 export struct FilterRow {
-    /// The row's key — "loader" | "version" | "category" — which
-    /// `ContentText.row-label` turns into the label the row draws. A key rather
-    /// than the text so it follows a language change.
+    /// "loader" | "version" | "category", resolved by `ContentText.row-label`.
     label: string,
     chips: [FilterChip],
     paginated: bool,
-    /// The row's height, computed in Rust from the widths the chips report.
-    ///
-    /// A wrapping `FlexboxLayout` cannot supply it: the layout measures itself
-    /// at its own *preferred* width, and for `flex-wrap: wrap` that is a
-    /// deliberately "roughly square" one (`i-slint-core/layout.rs`), not the
-    /// width the row actually gets. A row of Chinese category labels therefore
-    /// reserved two lines where it drew one, and the rows below it sat too far
-    /// down. Rust wraps the chips itself instead — same 6px gap, same 20px
-    /// chips — and the height follows a language change with the labels.
+    /// The row's height, computed in Rust from the chips' measured widths. A
+    /// wrapping `FlexboxLayout` measures itself at its preferred width, not the
+    /// width it is given, so it cannot supply this.
     height: length,
 }
 
-/// One page button of the pagination bar. `text` is "…" for an ellipsis, which
-/// is drawn as a label instead of a button.
+/// One page button of the pagination bar.
 export struct PageButton {
     text: string,
-    /// -1 for the ellipsis.
+    /// -1 for an ellipsis.
     page: int,
 }
 
-/// One image of a strip whose items are a fixed height and whose width follows
-/// the image's own aspect ratio — a detail panel's gallery and the screenshots
-/// viewer's thumbnail row. The ratio comes from Rust, which has just decoded the
-/// bitmap: Slint cannot read an image's natural size, and the two strips scale
-/// it to different heights.
+/// One image of a strip whose items have a fixed height and a width following
+/// the image's aspect ratio. Rust supplies the ratio because Slint cannot read an
+/// image's natural size.
 export struct GalleryShot {
     image: image,
     /// width / height of the decoded bitmap.
@@ -178,34 +132,20 @@ export global ContentState {
     /// The id the open detail panel is showing — a project id either way, the
     /// CurseForge numeric id as a string.
     in-out property <string> detail-id: "";
-    /// The height Rust gave the visible grid. `ContentCardGrid` takes this as
-    /// its own height: the cards are positioned absolutely and an absolutely
-    /// positioned child contributes nothing to its parent's measurement, so a
-    /// measured height would be zero and the panel's `ScrollView` would stop
-    /// scrolling.
-    /// One height **per grid**, because they are not the same grid: a panel
-    /// shows one list at a time, but the other lists keep loading behind it —
-    /// opening Mods loads the local folder while the Modrinth search is still
-    /// in the air — and a single shared height would be overwritten by
-    /// whichever finished last. The remote grid then reserved the *local*
-    /// folder's 3 081px for its 906px of cards, which is the blank that sat
-    /// between the last row and the page bar.
-    ///
-    /// The four names are the four models (`Grid` in `app/src/ui/overlays/content/`).
+    /// The height Rust gave the visible grid. Cards are positioned absolutely
+    /// and contribute nothing to their parent, so a measured height would be
+    /// zero and the panel's `ScrollView` would stop scrolling. One per grid,
+    /// because the other lists keep loading behind the visible one.
     in-out property <length> saves-grid-height: 0px;
     in-out property <length> local-mods-grid-height: 0px;
     in-out property <length> local-resourcepacks-grid-height: 0px;
     in-out property <length> remote-grid-height: 0px;
 
-    /// The panel's height, written back by whichever panel is on screen. The
-    /// "nothing here" placeholder covers the panel rather than its (empty) grid,
-    /// so it needs a height of its own to sit in.
+    /// The panel's height, for the "nothing here" placeholder.
     in-out property <length> panel-height: 0px;
 
-    /// A grid reports the width it has to lay out in. Rust turns it into a
-    /// column count and rewrites every card's geometry, in place, so a resize
-    /// moves the cards rather than re-creating them. `height` is the panel's,
-    /// for the placeholder.
+    /// A grid reports the width it has to lay out in; Rust turns it into a
+    /// column count and rewrites the cards' geometry in place.
     callback grid-resized(length, length);
 
     in-out property <[ContentCard]> saves: [];
@@ -215,32 +155,24 @@ export global ContentState {
     in-out property <[ContentCard]> local-resourcepacks: [];
     in-out property <bool> local-resourcepacks-loading: false;
 
-    // Only one sub-view is on screen at a time; switching to another resets its
-    // query, page and selections, which Rust clears.
-    /// Which of the open panel's sub-views is showing: "local" | "modrinth"
-    /// | "curseforge". One value covers every panel because only one panel is
-    /// ever open.
+    /// Which sub-view is showing: "local" | "modrinth" | "curseforge".
     in-out property <string> source: "local";
     /// "mods" | "resourcepacks" | "packs" — which panel the remote list belongs
-    /// to. It decides the card's tag set and where a download lands.
+    /// to, deciding the card's tags and where a download lands.
     in-out property <string> remote-kind: "mods";
     in-out property <[ContentCard]> remote-cards: [];
-    /// The spinner shows while there is no result yet *or* a request is in
-    /// flight, so this covers both.
+    /// The spinner shows while there is no result yet or a request is in flight.
     in-out property <bool> remote-loading: true;
-    /// The last remote search failed. The panels draw the failure placeholder
-    /// instead of the empty one, and no result from the previous list is left
-    /// underneath it.
+    /// The last remote search failed, so the panels draw the failure placeholder.
     in-out property <bool> remote-failed: false;
 
     in-out property <bool> detail-loading: false;
     in-out property <string> detail-title: "";
     in-out property <image> detail-icon;
-    /// The repository URL the link opens. `detail-source-label` is its display
+    /// The repository URL the link opens; `detail-source-label` is its display
     /// form.
     in-out property <string> detail-source: "";
-    /// "owner/repo" when the source is a GitHub URL, and the URL itself
-    /// otherwise.
+    /// "owner/repo" when the source is GitHub, and the URL otherwise.
     in-out property <string> detail-source-label: "";
     /// Whether the source is GitHub, which decides the entry's glyph.
     in-out property <bool> detail-source-is-github: false;
@@ -248,109 +180,76 @@ export global ContentState {
     in-out property <string> detail-followers: "";
     in-out property <bool> detail-has-followers: false;
     in-out property <string> detail-description: "";
-    /// The body, before rendering: the Markdown a Modrinth project ships, or the
-    /// HTML a CurseForge project ships. Rust parses and lays it out for the
-    /// width the panel gives it and fills the three properties below; the panel
-    /// draws only those, and this string is never drawn.
+    /// The body before rendering: Modrinth Markdown or CurseForge HTML. Rust
+    /// lays it out and fills the properties below; this string is never drawn.
     in-out property <string> detail-body: "";
-    /// The laid-out body, as the runs a view stacks. Empty until Rust has laid it
-    /// out. Each run carries its own items and bitmaps, because a run is what
-    /// moves when a `<details>` above it opens or closes.
+    /// The laid-out body, as the runs a view stacks. Each run carries its own
+    /// items and bitmaps because a run is what moves when a `<details>` toggles.
     in-out property <[MdChunk]> detail-body-chunks: [];
-    /// How tall the engine laid the body out, measured *inside* the box's
-    /// padding and with every `<details>` open. The box does not size itself
-    /// from it — the view measures the runs as they are, so a closing section
-    /// shrinks the document — but the view reads it while there are no runs to
-    /// measure, which is the state between the engine answering and the rows
-    /// being pushed.
+    /// The engine's height with every `<details>` open. Used while there are no
+    /// runs to measure, between the engine answering and the rows being pushed.
     in-out property <length> detail-body-height: 0px;
-    /// Which runs are open, index-aligned with `detail-body-chunks`. A run that is
-    /// not a `<details>` has nothing to open and the value it holds is never read.
-    ///
-    /// Rust owns it so the state survives the re-layout a width change causes,
-    /// seeding each section from its own `open` — a README's `<details>` has no
-    /// `open` attribute, so it starts closed, as it does on GitHub.
+    /// Which runs are open, index-aligned with `detail-body-chunks`. Rust owns it
+    /// so the state survives a width-change re-layout.
     in-out property <[bool]> detail-body-section-open: [];
-    /// A `<details>` summary row was clicked. The parameter is the run's index.
+    /// A `<details>` summary row was clicked; the parameter is the run's index.
     callback body-section-toggled(int);
-    /// Whether the body holds a link the pointer is over. The panel clears it
-    /// when the body scrolls out from under the pointer, which is the only way
-    /// a hover can outlive the item it was on.
+    /// The body link the pointer is over, cleared when the body scrolls away.
     in-out property <string> detail-body-hovered: "";
-    /// The monospace family code is drawn in, which the panel's font style does
-    /// not know: Slint's `font-family` takes a name rather than a generic, so
-    /// "monospace" would mean "no such family" and the view would fall back to
-    /// the body face. Rust names the embedded Fira Code (see `monospace_family`
-    /// in `content/body.rs`) and puts the answer here.
+    /// The monospace family code is drawn in. Slint's `font-family` takes a name
+    /// rather than a generic, so Rust names the embedded Fira Code here.
     in-out property <string> detail-body-mono-family: "";
-    /// The body needs laying out for this width, in logical pixels. The view
-    /// reports it because a document is a function of its width, and a width
-    /// nobody is told about is a document that never re-wraps.
-    ///
-    /// A link in the body opens through `open-url`, the same callback the header's
-    /// repository link uses, so it goes through one `open_external` path rather
-    /// than two.
+    /// The body needs laying out for this width, in logical pixels. Body links
+    /// open through `open-url`, the same path as the header's repository link.
     callback body-resized(length);
-    /// Whether the body's box is drawn even when the body is empty. The three
-    /// Modrinth panels render it unconditionally — an empty one still takes a
-    /// 32px box plus its 16px margin — while the CurseForge ones draw it only
-    /// when there is a description. Rust sets this from the platform it loaded.
+    /// Whether the body box is drawn even when empty. The Modrinth panels render
+    /// it unconditionally; the CurseForge ones only when there is a description.
     in-out property <bool> detail-body-always: false;
     in-out property <[GalleryShot]> detail-gallery: [];
     in-out property <bool> detail-favorited: false;
     /// The heart + download/remove row belongs to the mod and resource-pack
-    /// detail panels; a pack has no remove and is never "installed".
+    /// panels; a pack has no remove and is never "installed".
     in-out property <bool> detail-has-install: true;
     in-out property <bool> detail-installed: false;
     in-out property <string> detail-installed-version: "";
     in-out property <bool> detail-checking-installed: false;
     in-out property <bool> detail-operating: false;
-    /// The in-flight install/remove's download, as `value`/`max` plus a
-    /// pre-formatted byte label. `max` is 0 while the size is unknown or the
-    /// files are being verified, and the bar is hidden until it is known.
+    /// The in-flight install/remove download: `value`/`max` plus a formatted byte
+    /// label. `max` is 0 while the size is unknown and the bar is hidden.
     in-out property <float> detail-progress: 0;
     in-out property <float> detail-progress-max: 0;
     in-out property <string> detail-progress-text: "";
-    /// Whether this detail panel has an installed state at all. Mod and
-    /// resource-pack panels offer a remove button; a pack only draws a download
-    /// button.
+    /// Whether this panel has an installed state at all; a pack only downloads.
     in-out property <bool> detail-can-remove: true;
 
     in-out property <[GalleryShot]> screenshots: [];
     in-out property <bool> screenshots-loading: false;
     in-out property <int> screenshot-index: 0;
-    /// The image the stage shows, which is `screenshots[screenshot-index]` —
-    /// kept as its own property because a model index inside a binding would
-    /// re-read the whole model.
+    /// The image the stage shows. Kept separate because a model index inside a
+    /// binding would re-read the whole model.
     in-out property <image> current-screenshot;
 
-    /// Closes whichever panel is open (the scrim click, and Escape).
+    /// Closes whichever panel is open (scrim click and Escape).
     callback close();
     /// A detail panel was closed, leaving the list underneath open.
     callback close-detail();
     /// The mods/resource-packs/packs panels' source switcher.
     callback set-source(string);
-    /// A card was clicked. `id` is the card's id.
+    /// A card was clicked.
     callback select-card(string);
-    /// The saves' folder button, the local mods' folder button.
+    /// A saves or local-mods folder button.
     callback open-path(string);
-    /// A local mod's / resource pack's / pack's delete button.
-    ///
-    /// The saves grid does not come through here: it goes to
-    /// `request-delete-save` first, because its button is the only destructive
-    /// one in the content layer and it asks before it acts. This one is wired to
-    /// the local mods' and resource packs' buttons, which are inert: they have
-    /// no click handler.
+    /// A local mod's / resource pack's / pack's delete button. The saves grid
+    /// uses `request-delete-save` instead; this one is currently inert.
     callback delete-save(string);
     /// The saves' delete button: opens `ConfirmDeleteSave` rather than deleting.
-    /// `folder` is the card's id, `level-name` what the dialog names it by.
     callback request-delete-save(string, string);
-    /// The remote grids' link button / the detail panel's source link.
+    /// The remote grids' link button or the detail panel's source link.
     callback open-url(string);
     callback toggle-favorite(string);
     callback download();
     callback remove();
-    /// A save was selected (or deselected, with an empty id).
+    /// A save was selected, or deselected with an empty id.
     callback select-save(string);
     /// The screenshots viewer.
     callback set-screenshot(int);
@@ -358,11 +257,8 @@ export global ContentState {
     callback screenshot-prev();
 }
 
-/// The search panel's own state, for whichever remote list is on screen.
-///
-/// Kept apart from `ContentState` because it is a self-contained form: the
-/// query, the three filter rows, the version carousel's page, and the result
-/// pages. Rust fills `filters` and `pages` and reads back what the user picked.
+/// The search panel's own state, for whichever remote list is on screen. Kept
+/// apart from `ContentState` because it is a self-contained form.
 export global ContentSearch {
     in-out property <string> query: "";
     in-out property <[FilterRow]> filters: [];
@@ -371,12 +267,10 @@ export global ContentSearch {
     in-out property <int> version-page: 0;
     in-out property <int> version-page-count: 0;
     /// Every version the filter offers. The carousel draws the whole track and
-    /// clips it: a page is what the track is *translated* by, not how many chips
-    /// are drawn, so more than a page's worth can show at once.
+    /// translates it by page.
     in-out property <[FilterChip]> version-chips: [];
-    /// How far the track is scrolled left, in pixels. Rust sums the chips'
-    /// measured widths up to the page's first one — Slint cannot read a repeated
-    /// element's geometry from outside.
+    /// How far the track is scrolled left. Rust sums the chips' measured widths;
+    /// Slint cannot read a repeated element's geometry from outside.
     in-out property <length> version-offset: 0px;
     in-out property <[PageButton]> pages: [];
     in-out property <int> current-page: 1;
@@ -384,10 +278,8 @@ export global ContentSearch {
 
     callback search();
     callback chip-clicked(string);
-    /// A version chip reports the width it measured, for the carousel's offset.
-    /// Keyed by the chip's value rather than its position: the other rows' chips
-    /// report too (their handler is the same one), and their indices would land
-    /// on the version slots.
+    /// A version chip reports its measured width, keyed by value rather than
+    /// position so other rows' reports do not land on the version slots.
     callback chip-measured(string, length);
     callback version-page-prev();
     callback version-page-next();
@@ -397,18 +289,11 @@ export global ContentSearch {
 
 /// The content overlays' translated strings.
 ///
-/// Rust composes most of a chip's label — a loader name, a version, a category —
-/// but a string Rust pushes into a model is fixed at the moment it is pushed and
-/// would not follow a language change, where an `@tr` binding re-evaluates. So
-/// the labels live here and the view resolves them from the chip's key, the way
-/// `GameTime` does for the game view's relative times.
-///
-/// The context is set explicitly (`@tr("ContentText" => …)`) because these are
-/// not a component's own strings: Slint's default context is the component name,
-/// and the callers are the chips and cards rather than one component.
+/// Labels live here because a string Rust pushes into a model would not follow a
+/// language change, while an `@tr` binding re-evaluates. The context is explicit
+/// because these are not one component's own strings.
 export global ContentText {
-    /// The local mods' disabled marker. It resolves through a `@tr` so it
-    /// follows a language change; the prefix carries its own trailing space.
+    /// The local mods' disabled marker; the prefix carries its trailing space.
     out property <string> disabled-prefix: @tr("ContentText" => "[Disabled] ");
 
     /// The loader names, never translated.
@@ -422,10 +307,8 @@ export global ContentText {
     }
 
     /// A category chip's label. `platform` and `kind` are part of the lookup
-    /// because the three lists have their own category tables and CurseForge's
-    /// are keyed by numeric id — the same slug can mean something different in
-    /// two of them (`combat` is a Modrinth pack category and a CurseForge one
-    /// with a different name).
+    /// because the lists have their own category tables and the same slug can
+    /// mean something different in two of them.
     public pure function category(kind: string, platform: string, key: string) -> string {
         if kind == "mods" && platform == "curseforge" && key == "adventure-rpg" {
             return @tr("CategoryModsCurseforge" => "Adventure & RPG");
@@ -736,8 +619,8 @@ export global ContentText {
         return key;
     }
 
-    /// A chip's label, whichever kind of chip it is. A Minecraft version is not
-    /// in any table and reads as itself.
+    /// A chip's label. A Minecraft version is not in any table and reads as
+    /// itself.
     public pure function chip-label(kind: string, platform: string, key: string) -> string {
         if key == "favorites" { return @tr("ContentText" => "Favorites"); }
         if key == "fabric" || key == "forge" || key == "neoforge" || key == "quilt"
@@ -747,18 +630,13 @@ export global ContentText {
         return self.category(kind, platform, key);
     }
 
-    /// The saves' "Last played: " prefix. The time itself is
-    /// `GameTime.last-played`'s, which the card tag calls.
+    /// The saves' "Last played: " prefix; the time is `GameTime.last-played`'s.
     public pure function last-played-label() -> string {
         return @tr("ContentText" => "Last played: ");
     }
 
-    /// A save card's game-mode and cheats tags. `kind` is the tag's own `kind`,
-    /// so the one table covers both the game-mode and command-enabled families.
-    ///
-    /// These are resolved here rather than composed in Rust for the reason the
-    /// chip labels are: a string Rust pushed is fixed at that moment and would
-    /// not follow a language change.
+    /// A save card's game-mode and cheats tags, resolved here so they follow a
+    /// language change.
     public pure function save-tag(kind: string) -> string {
         if kind == "game-mode-survival" { return @tr("ContentText" => "Survival"); }
         if kind == "game-mode-creative" { return @tr("ContentText" => "Creative"); }
@@ -768,8 +646,7 @@ export global ContentText {
         return "";
     }
 
-    /// A detail panel's header title. `kind` is the `ContentState.remote-kind`
-    /// of the open list.
+    /// A detail panel's header title, from the open list's remote kind.
     public pure function detail-title(kind: string) -> string {
         if kind == "mods" { return @tr("ContentText" => "Mod info"); }
         if kind == "resourcepacks" { return @tr("ContentText" => "Resource pack info"); }
@@ -782,7 +659,7 @@ export global ContentText {
         return @tr("ContentText" => "Search modpacks...");
     }
 
-    /// A filter row's label. The rows are identified by key so the label stays
+    /// A filter row's label; rows are identified by key so the label stays
     /// translatable.
     public pure function row-label(key: string) -> string {
         if key == "loader" { return @tr("ContentText" => "Loader"); }

@@ -2,13 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! comrak → [`Block`].
-//!
-//! comrak is asked for CommonMark plus the GitHub extensions, because that is
-//! what a Modrinth README is written against, and its arena AST is walked once
-//! into the block tree the layout engine consumes. Nothing is rendered through
-//! comrak's own HTML formatter: the point of taking the AST is that the
-//! geometry is ours.
+//! comrak AST → [`Block`], with CommonMark and the GitHub extensions.
 
 use std::collections::HashMap;
 
@@ -16,22 +10,16 @@ use std::cell::RefCell;
 
 use comrak::arena_tree::Node as AstNode;
 
-/// comrak's AST node. `Node<'a, T>` is invariant in `'a` and `children()`
-/// hands out `&'a Node<'a, T>`, so every walk below carries the *arena's*
-/// lifetime rather than its own borrow's. That is why the signatures are
-/// noisier than they would otherwise be.
+/// `children()` hands out `&'a Node<'a, T>`, so every walk carries the arena's
+/// lifetime rather than its own.
 type Node<'a> = AstNode<'a, RefCell<Ast>>;
 use comrak::nodes::{Ast, NodeValue, TableAlignment};
 use comrak::{Arena, ComrakOptions, parse_document};
 
 use crate::ui::components::markdown::doc::{Align, Block, Cell, Inline, Inlines, ListItem};
 
-/// The extensions the renderer understands.
-///
-/// Everything else keeps comrak's default. The render options are left alone
-/// too: the HTML formatter is never called, and the parser does not consult
-/// them — `render.unsafe_` in particular only decides whether raw HTML reaches
-/// the formatter, which never runs.
+/// The GitHub extensions the renderer understands. Render options are left
+/// alone because comrak's HTML formatter is never called.
 fn options() -> ComrakOptions {
     let mut options = ComrakOptions::default();
     let ext = &mut options.extension;
@@ -52,10 +40,8 @@ fn options() -> ComrakOptions {
     options
 }
 
-/// Parses a document into its top-level blocks.
-///
-/// Footnote *definitions* are hoisted to the end of the list, which is where
-/// GitHub puts them, and the references are renumbered to match afterwards.
+/// Footnote definitions are hoisted to the end, as GitHub does, and the
+/// references renumbered to match.
 pub fn parse(source: &str) -> Vec<Block> {
     let arena = Arena::new();
     let root = parse_document(&arena, source, &options());
@@ -76,26 +62,16 @@ pub fn parse(source: &str) -> Vec<Block> {
 
 type Collected = Vec<(String, usize, Vec<Block>)>;
 
-/// A `<details>` that has been opened and not yet closed.
 struct Open {
     open: bool,
-    /// Its `<summary>`'s content, read from whichever raw HTML block held it.
     summary: Inlines,
     blocks: Vec<Block>,
 }
 
-/// Where the walker puts the blocks it converts.
-///
-/// A `<details>` is not a node in comrak's tree: comrak ends a raw HTML block at
-/// a blank line, so `<details>` and its `</details>` arrive as two siblings with
-/// real markdown — tables, lists, headings — parsed *between* them. Re-parsing
-/// the joined source would lose all of that, and feeding the tags to the HTML
-/// parser would too, so the tags are read here and the blocks stay comrak's.
-///
-/// That makes the destination a function of the walk's position rather than a
-/// fixed list, which is all this is: the innermost open `<details>` if there is
-/// one, and the document otherwise. `Deref` is what keeps the rest of the walker
-/// reading as if it were still writing into a `Vec`.
+/// The destination is the innermost open `<details>`, or the document. comrak
+/// ends a raw HTML block at a blank line, so the tags arrive as siblings of the
+/// markdown between them; re-parsing the joined source would lose that markdown.
+/// `Deref` keeps the walker reading as if it wrote to a `Vec`.
 struct Sink {
     root: Vec<Block>,
     open: Vec<Open>,
@@ -110,8 +86,7 @@ impl Sink {
     }
 
     fn into_root(mut self) -> Vec<Block> {
-        // An unclosed `<details>` is still a section: a document truncated
-        // mid-tag is one a README is not, but a fragment handed to the API is.
+        // A truncated fragment can still leave a section open.
         while !self.open.is_empty() {
             self.close_details();
         }
@@ -122,8 +97,6 @@ impl Sink {
         let Some(open) = self.open.pop() else {
             return;
         };
-        // The target is the *new* innermost, which is the one this section's own
-        // block belongs in: a nested `<details>` closes into its parent.
         self.target_mut().push(Block::Details {
             open: open.open,
             summary: open.summary,
@@ -166,8 +139,6 @@ fn walk_children<'a>(
     }
 }
 
-/// The blocks of a container element, which a `<details>` inside it opens and
-/// closes within.
 fn inner_blocks<'a>(
     node: &'a Node<'a>,
     list_depth: usize,
@@ -179,8 +150,7 @@ fn inner_blocks<'a>(
 }
 
 fn convert<'a>(node: &'a Node<'a>, list_depth: usize, out: &mut Sink, footnotes: &mut Collected) {
-    // Borrowed once: `node.data.borrow()` is a `Ref` into the arena, and the
-    // conversions below need `&mut out` at the same time.
+    // Cloned so the `Ref` into the arena is not held while `out` is mutated.
     let value = node.data.borrow().value.clone();
     let tight = is_tight(node, list_depth);
 
@@ -226,15 +196,8 @@ fn convert<'a>(node: &'a Node<'a>, list_depth: usize, out: &mut Sink, footnotes:
         }
 
         NodeValue::HtmlBlock(raw) => {
-            // A raw HTML block is reduced to its text: the renderer has no way to
-            // lay out an unknown element, and a browser shows the text too. A
-            // comment, a doctype or a CDATA section has no text at all.
-            //
-            // `<details>` is the exception, and it is the one tag here that is a
-            // control rather than a container. comrak ends a raw HTML block at a
-            // blank line, so the tags arrive as siblings of the markdown between
-            // them, and the walker has to hold the section open across them —
-            // see `Sink`.
+            // HTML is reduced to its text, except `<details>`, which is a
+            // control held open across sibling blocks (see `Sink`).
             for event in details_events(&raw.literal) {
                 match event {
                     DetailsEvent::Open { open } => out.open.push(Open {
@@ -243,9 +206,7 @@ fn convert<'a>(node: &'a Node<'a>, list_depth: usize, out: &mut Sink, footnotes:
                         blocks: Vec::new(),
                     }),
                     DetailsEvent::Summary(text) => {
-                        // The first `<summary>` is the label; a second one is
-                        // content the document put in the wrong place, and
-                        // dropping it keeps the label unique.
+                        // Only the first `<summary>` is the label.
                         if let Some(section) = out.open.last_mut()
                             && section.summary.is_empty()
                         {
@@ -256,8 +217,6 @@ fn convert<'a>(node: &'a Node<'a>, list_depth: usize, out: &mut Sink, footnotes:
                 }
             }
             if !out.open.is_empty() {
-                // Inside a `<details>`, so the tags were the block: there is no
-                // text of their own to show.
                 return;
             }
             let text = html::text_content(&raw.literal);
@@ -290,8 +249,7 @@ fn convert<'a>(node: &'a Node<'a>, list_depth: usize, out: &mut Sink, footnotes:
             });
         }
 
-        // A list item outside a list, which comrak's parser does not build but a
-        // hand-made arena could. Keep the item's contents.
+        // Not built by comrak's parser, but a hand-made arena could.
         NodeValue::Item(_) => {
             let blocks = inner_blocks(node, list_depth, footnotes);
             out.extend(blocks);
@@ -309,16 +267,14 @@ fn convert<'a>(node: &'a Node<'a>, list_depth: usize, out: &mut Sink, footnotes:
             footnotes.push((name.clone(), number, blocks));
         }
 
-        // Reached only through a `TaskItem` whose content is not a block.
         NodeValue::TaskItem(checked) => out.push(Block::RawText {
             text: format!("[{}]", if checked.is_some() { "x" } else { " " }),
         }),
 
-        // Text at block level, which only a `li` of a tight list can produce.
         NodeValue::Text(text) => out.push(Block::RawText { text: text.clone() }),
 
-        // Anything else: keep the children, and if there are none, keep the
-        // node's own literal so that no line of a document disappears.
+        // Keep the children; if there are none, keep the literal so no line
+        // disappears.
         _ => {
             let blocks = inner_blocks(node, list_depth, footnotes);
             if blocks.is_empty() {
@@ -337,8 +293,6 @@ fn convert<'a>(node: &'a Node<'a>, list_depth: usize, out: &mut Sink, footnotes:
     }
 }
 
-/// Whether the innermost list wraps its items in paragraphs, which is what tells
-/// a tight list's items from a loose one's.
 fn is_tight(node: &Node<'_>, list_depth: usize) -> bool {
     if list_depth == 0 {
         return false;
@@ -405,8 +359,6 @@ fn convert_inline_children<'a>(node: &'a Node<'a>, out: &mut Inlines) {
         let value = child.data.borrow().value.clone();
         match &value {
             NodeValue::Text(text) => out.push(Inline::Text(text.clone())),
-            // A soft break is a space in a rendered paragraph, which is what
-            // GitHub shows: its renderer does not preserve the source newline.
             NodeValue::SoftBreak => out.push(Inline::Text(" ".into())),
             NodeValue::LineBreak => out.push(Inline::HardBreak),
             NodeValue::Code(code) => out.push(Inline::Code(code.literal.clone())),
@@ -431,11 +383,8 @@ fn convert_inline_children<'a>(node: &'a Node<'a>, out: &mut Inlines) {
                     .collect(),
             }),
             NodeValue::FootnoteReference(name) => out.push(Inline::FootnoteRef {
-                // With the footnotes extension on, comrak has already renamed
-                // every definition and reference to the ordinal the first
-                // reference gave it, so the name *is* the number. A reference
-                // to a definition comrak did not find keeps its own name and is
-                // numbered by the second pass below.
+                // With the extension on, comrak has already renamed the reference
+                // to its ordinal, so the name is the number.
                 name: name.clone(),
                 number: name.parse().unwrap_or(0),
             }),
@@ -445,14 +394,12 @@ fn convert_inline_children<'a>(node: &'a Node<'a>, out: &mut Inlines) {
                     out.push(Inline::Text(text));
                 }
             }
-            // A block that an inline walk reached: recurse rather than lose it.
             _ => convert_inline_children(child, out),
         }
     }
 }
 
-/// Renumbers the footnote references to match the order the definitions were
-/// collected in, which is the order GitHub numbers them in.
+/// Renumbers references to the order the definitions were collected in.
 fn renumber_footnotes(blocks: &mut [Block]) {
     let mut numbers: HashMap<&str, usize> = HashMap::new();
     for block in blocks.iter() {
@@ -475,8 +422,6 @@ fn renumber_block(block: &mut Block, numbers: &HashMap<String, usize>) {
         Block::Details {
             summary, blocks, ..
         } => {
-            // The summary is a run of inlines like any other heading, so a
-            // footnote reference in it is numbered like one too.
             renumber_inlines(summary, numbers);
             renumber_footnotes(blocks);
         }
@@ -516,25 +461,17 @@ fn renumber_inlines(inlines: &mut Inlines, numbers: &HashMap<String, usize>) {
     }
 }
 
-/// The HTML front end's tag-soup reader, which also owns the entity table.
 pub mod html;
 
 /// What a raw HTML block did to the `<details>` around it.
 enum DetailsEvent {
-    Open {
-        open: bool,
-    },
-    /// A `<summary>`'s raw content, which is HTML rather than text.
+    Open { open: bool },
     Summary(String),
     Close,
 }
 
-/// Reads the `<details>` structure out of one raw HTML block.
-///
-/// comrak gives a raw HTML block whole, so a block can hold the open tag, the
-/// summary and the close tag at once — `<details><summary>x</summary></details>`
-/// on one line is the usual way a README writes an empty one — and the events
-/// come back in source order for the walker to apply one at a time.
+/// One block can hold the open tag, the summary and the close tag at once, so
+/// the events come back in source order for the walker to apply.
 fn details_events(literal: &str) -> Vec<DetailsEvent> {
     let mut events = Vec::new();
     let mut at = 0usize;

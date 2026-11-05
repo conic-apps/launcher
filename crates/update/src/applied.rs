@@ -4,12 +4,10 @@
 
 //! The one-shot record of an update that was applied as a session ended.
 //!
-//! The swap happens after the window closes, so no interface is left to tell
-//! the user it happened. [`record`] leaves the target version behind and the
-//! next launch [`take`]s it: the process that reads it is the new build, and
-//! only it can know the update actually took effect. A record whose version is
-//! not the running one is discarded rather than announced, which covers a
-//! Windows hand-off whose detached script never completed.
+//! The swap happens after the window closes, so [`record`] leaves the target
+//! version for the next launch to [`take`]: only the new build can know the
+//! update took effect. A record whose version is not the running one is
+//! discarded, which covers a Windows hand-off whose script never completed.
 
 use std::path::{Path, PathBuf};
 
@@ -18,14 +16,12 @@ use serde::{Deserialize, Serialize};
 use crate::error::Result;
 use crate::staged::updates_dir;
 
-/// An update that was applied at the end of the previous session.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Applied {
     pub version: String,
 }
 
 impl Applied {
-    /// Whether this record names the version that is running now.
     pub fn matches_current(&self) -> bool {
         normalise(&self.version) == normalise(shared::app_version())
     }
@@ -35,7 +31,6 @@ fn applied_path() -> PathBuf {
     updates_dir().join("applied.json")
 }
 
-/// Records `version` as applied, for the next launch to announce.
 pub fn record(version: &str) -> Result<()> {
     std::fs::create_dir_all(updates_dir())?;
     let bytes = serde_json::to_vec_pretty(&Applied {

@@ -2,8 +2,6 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Errors for the Modrinth client.
-//!
 //! The `Serialize` derive and the `serde_with::DisplayFromStr` shims keep the
 //! shape the frontend sees (`{"kind": …, "message": …}`, with `{"kind": …}`
 //! alone for the unit variant) stable.

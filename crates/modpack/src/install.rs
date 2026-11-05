@@ -2,13 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Turning a resolved pack into an instance and installing it.
-//!
-//! The game and loader come from the `install` crate, the pack's own files from
-//! `download`, and the overrides from the archive or folder the pack was
-//! dropped as. Progress is reported through a [`shared::Sink`] of [`Progress`]
-//! so the frontend can drive its install screen without this crate knowing
-//! about it.
+//! Turning a resolved pack into an instance and installing it. Progress is
+//! reported through a [`shared::Sink`] of [`Progress`].
 
 use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
@@ -27,9 +22,7 @@ use crate::overrides::extract_all;
 pub enum Progress {
     /// Minecraft, Java and the loader, as the `install` crate reports them.
     Install(install_crate::InstallProgress),
-    /// The pack's own files being downloaded.
     Download(DownloadSnapshot),
-    /// The overrides are being copied out of the archive.
     Extracting,
 }
 
@@ -72,7 +65,6 @@ pub async fn create_instance(plan: &Plan, name: &str) -> Result<String> {
     Ok(id)
 }
 
-/// Installs a created instance's game, loader, files and overrides.
 pub async fn install(
     id: String,
     plan: Plan,

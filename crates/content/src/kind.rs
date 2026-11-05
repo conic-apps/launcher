@@ -51,7 +51,6 @@ impl ContentKind {
 pub struct ContentScope {
     pub instance_id: String,
     pub kind: ContentKind,
-    /// The world a data pack belongs to. Every other kind has no world.
     pub world: Option<String>,
 }
 

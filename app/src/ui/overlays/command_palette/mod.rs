@@ -2,30 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The command palette.
-//!
-//! Three modes, one list. The root mode offers the five fixed commands and —
-//! when the query matches none of them — the instance list; "launch-instance"
-//! offers the instances alone; "search-online" offers whatever Modrinth or
-//! CurseForge has for the keyword. Every mode draws the same row and the same
-//! footer, and the mode picks the placeholder, the breadcrumb and which of the
-//! two footer hints is shown.
-//!
-//! Two conventions it follows:
-//!
-//!   * The rendered list is built here rather than in an expression. Slint can
-//!     neither build a model nor index one, and the list's order, its filtering,
-//!     its section headings and every row's height have to agree — which is the
-//!     same reason `game/controller.rs` builds `GameRow`s and `content/grid.rs`
-//!     lays the card grid out.
-//!   * Nothing here composes a *translatable* string. A string pushed into a
-//!     model is fixed at the moment it is pushed and would not follow a language
-//!     change, where an `@tr` binding re-evaluates, so a row carries the *key* of
-//!     its label and `CommandText` resolves it
-//!     (`ui/globals/command-palette.slint`).
-//!
-//! The two searches run on the tokio runtime and report back through
-//! `upgrade_in_event_loop`, exactly as the content overlays' do.
+//! The command palette: three modes over one list. The list is built here because
+//! Slint can neither build nor index a model, and rows carry label *keys* rather
+//! than translated text so a language change re-resolves them. Searches run on the
+//! tokio runtime and report back through `upgrade_in_event_loop`.
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -44,13 +24,10 @@ pub(crate) use search::*;
 pub(crate) use wiring::*;
 
 thread_local! {
-    /// The one state.
-    ///
-    /// It lives here rather than in a value `setup` owns because an
-    /// `upgrade_in_event_loop` closure has to be `Send`, and an `Rc` — which is
-    /// what a Slint model is — cannot cross into one. Slint's callbacks and the
-    /// event-loop closures both run on the UI thread, so both reach it through
-    /// [`controller`]; the async task carries only owned values and a `Weak<App>`.
+    /// An `upgrade_in_event_loop` closure has to be `Send`, and an `Rc` — which
+    /// is what a Slint model is — cannot cross into one. Both the callbacks and
+    /// the event-loop closures run on the UI thread and reach it through
+    /// [`controller`]; async tasks carry only owned values and a `Weak<App>`.
     static CONTROLLER: Rc<RefCell<PaletteController>> =
         Rc::new(RefCell::new(PaletteController::new()));
 }
@@ -60,20 +37,15 @@ pub(crate) fn controller() -> Rc<RefCell<PaletteController>> {
     CONTROLLER.with(Rc::clone)
 }
 
-/// `.section-label`'s own box — `padding: 6px 10px 2px` around a `line-height: 1`
-/// 11px line — plus 4px more, so the heading does not sit flush on the row under
-/// it. The extra 4px is deliberate, and it is why the constant is not just the
-/// sum of that padding and that line.
+/// `.section-label`'s box plus 4px, so the heading does not sit flush on the row
+/// under it.
 pub(crate) const LABEL_HEIGHT: f32 = 23.0;
-/// `.palette-item` with no loader tags: `padding: 8px 10px` around the 24px
-/// icon box, which is taller than the 13px title line on its own.
+/// `.palette-item` with no loader tags: `padding: 8px 10px` around the 24px icon
+/// box, which is taller than the 13px title line.
 pub(crate) const ROW_HEIGHT: f32 = 40.0;
-/// The same row with the tag line: 13px of title, a `gap: 3px` and a 14px tag
-/// (`font-size: 10px` + `padding: 2px 5px`) make `.item-main` 30px, and 30 > 24
-/// is what decides the row.
+/// The same row with the tag line, whose `.item-main` is 30px.
 pub(crate) const ROW_HEIGHT_TAGGED: f32 = 46.0;
 
-/// How many hits a search asks for (`limit` / `pageSize` 20).
 pub(crate) const SEARCH_LIMIT: usize = 20;
 
 /// How long one project icon may take before the row keeps the site's mark.
@@ -85,9 +57,8 @@ pub(crate) const ICON_TIMEOUT: std::time::Duration = std::time::Duration::from_s
 
 /// One of the root mode's five commands.
 ///
-/// `title` is the source string, which is what the *filter* matches against. The
-/// row shows `CommandText.title(title_kind, title)`, the translated form; see `rebuild`
-/// for why the two can differ.
+/// `title` is the source string the *filter* matches against; the row shows
+/// `CommandText.title(title_kind, title)`, the translated form.
 pub(crate) struct Command {
     key: &'static str,
     title_kind: &'static str,
@@ -151,23 +122,19 @@ pub(crate) const COMMANDS: [Command; 5] = [
 
 /// What a row does when it is chosen. Resolved when the list is built rather
 /// than from the key on the way out, so a callback carrying only an index can
-/// find the thing behind it — the arrangement `content/mod.rs`'s `CardTarget`
-/// uses.
+/// find the thing behind it.
 #[derive(Clone, Default)]
 pub(crate) enum Action {
-    /// A row with no action: only ever a blank `PendingItem` mid-build.
     #[default]
     None,
-    /// A command that switches the palette to another mode. `source` is only
-    /// there for `search-online`.
+    /// `source` is only used for `search-online`.
     EnterMode {
         kind: &'static str,
         source: &'static str,
     },
     CreateInstance,
     AddAccount,
-    /// Selects the instance, and opens the launch page when the row came out of
-    /// the "launch instance" mode.
+    /// Selects the instance, and opens the launch page when `launch` is set.
     SelectInstance {
         id: String,
         launch: bool,
@@ -179,11 +146,11 @@ pub(crate) enum Action {
     },
 }
 
-/// A row as it is built, before it becomes a `PaletteItem`.
+/// A row as plain data, before it becomes a `PaletteItem`.
 ///
-/// A `PaletteItem` holds a `ModelRc` (`loaders`) and an `Image`, and neither
-/// belongs in an `upgrade_in_event_loop` closure, so the search results cross as
-/// plain data and are finished here, on the UI thread.
+/// A `PaletteItem` holds a `ModelRc` and an `Image`, neither of which belongs in
+/// an `upgrade_in_event_loop` closure, so results cross as plain data and are
+/// finished here on the UI thread.
 #[derive(Clone, Default)]
 pub(crate) struct PendingItem {
     key: String,
@@ -196,15 +163,13 @@ pub(crate) struct PendingItem {
     icon: String,
     icon_is_brand: bool,
     icon_url: String,
-    /// The icon as it came off the network, when it was fetched for this row.
     icon_image: Option<PendingImage>,
     has_children: bool,
     action_kind: &'static str,
     section_kind: &'static str,
     action: Action,
-    /// The row's offset from the top of the list, heading included. Set by
-    /// `rebuild`, and only read for the selected row's reveal — the rows
-    /// themselves are placed by the list's own layout.
+    /// The row's offset from the top of the list, heading included. Only read for
+    /// the selected row's reveal; the rows are placed by the list's own layout.
     row_y: f32,
 }
 
@@ -225,8 +190,7 @@ impl PendingItem {
         }
     }
 
-    /// The Slint row. Runs on the UI thread, which is the only place a model may
-    /// be made.
+    /// The Slint row. Runs on the UI thread, the only place a model may be made.
     fn finish(&self) -> PaletteItem {
         PaletteItem {
             key: SharedString::from(self.key.as_str()),
@@ -255,11 +219,8 @@ impl PendingItem {
         }
     }
 
-    /// The row's icon: the one just decoded, or the one an earlier list already
-    /// decoded. `fetch_icon` reports a cache hit by returning nothing, and a
-    /// project icon is the same bitmap wherever it is shown, so the content
-    /// overlays' cache answers for it. A project with no icon at all gets the
-    /// same unknown world a content card would.
+    /// The icon just decoded, or the one an earlier list already decoded. A
+    /// project without an icon gets the same unknown world a content card would.
     fn icon(&self) -> slint::Image {
         match &self.icon_image {
             Some(pending) => content::resolve_icon(pending.clone())
@@ -272,7 +233,6 @@ impl PendingItem {
     }
 }
 
-/// A project as the search returned it, before it becomes a row.
 pub(crate) struct RemoteResult {
     key: String,
     title: String,
@@ -310,15 +270,11 @@ impl RemoteResult {
 }
 
 pub(crate) struct PaletteController {
-    /// The instance list, read from the crate when the palette opens.
     instances: Vec<Instance>,
-    /// The rows on screen, and where the selection is in them.
     items: Vec<PendingItem>,
     selected: usize,
-    /// The key last published as the selection. A reveal on every pointer move
-    /// would drag the list along with the pointer, and a move that reports the
-    /// index the row already has must not, so the sequence the view watches is
-    /// bumped only when the selected key actually changes.
+    /// A reveal on every pointer move would drag the list along with the pointer,
+    /// so the sequence the view watches is bumped only when this key changes.
     selected_key: String,
     selected_seq: u64,
     items_seq: u64,
@@ -350,19 +306,15 @@ impl PaletteController {
         }
     }
 
-    /// Everything is reset on the way in, never on the way out.
-    ///
-    /// The instance list is read on the runtime and the reset happens in the
-    /// event loop behind it, so opening the palette does not wait on a read of
-    /// every `instance.toml`.
+    /// Everything is reset on the way in. The instance list is read on the
+    /// runtime and the reset happens in the event loop behind it, so opening the
+    /// palette does not wait on a read of every `instance.toml`.
     fn open(ui: &App) {
         let weak = ui.as_weak();
         crate::support::runtime::spawn(async move {
-            // The list is read from the crate rather than borrowed from
-            // `game/controller.rs`'s rows, which are the *grouped, filtered*
-            // model the game view draws and not the instance list the palette
-            // filters. What it comes back sorted by does not matter: `filtered`
-            // sorts by last played itself.
+            // Read from the crate rather than borrowed from the game view's rows,
+            // which are the grouped, filtered model and not the instance list the
+            // palette filters. `filtered` sorts by last played itself.
             let instances = instance::list_instances(SortBy::Playtime)
                 .await
                 .unwrap_or_default();
@@ -396,7 +348,7 @@ impl PaletteController {
         ui.global::<CommandPaletteState>().set_visible(false);
     }
 
-    /// The `Ctrl`/`⌘` + `/` shortcut: toggles the palette's visibility.
+    /// The `Ctrl`/`⌘` + `/` shortcut.
     fn toggle(&mut self, ui: &App) {
         if ui.global::<CommandPaletteState>().get_visible() {
             self.close(ui);
@@ -405,8 +357,6 @@ impl PaletteController {
         }
     }
 
-    /// Switches mode and empties the query, which puts the search back to nothing
-    /// as well.
     fn enter_mode(&mut self, ui: &App, kind: &str, source: &str) {
         self.mode = match kind {
             "launch-instance" => "launch-instance",
@@ -421,11 +371,8 @@ impl PaletteController {
         self.reset_search(ui);
         let state = ui.global::<CommandPaletteState>();
         state.set_query(SharedString::new());
-        // The mode and the source are published, not just kept: the view reads
-        // them for the placeholder, the breadcrumb, which footer hint is drawn and
-        // what Escape and Backspace do, and it was still on "root" while a submode
-        // was open — so Escape closed the panel from inside one, and the search
-        // field kept the root placeholder while a search ran.
+        // The view reads these for the placeholder, the breadcrumb, the footer
+        // hint and what Escape and Backspace do, so they must be published.
         state.set_mode(SharedString::from(self.mode));
         state.set_source(SharedString::from(self.source));
         self.rebuild(ui);
@@ -441,10 +388,9 @@ impl PaletteController {
 
     /// Puts the rows on screen.
     ///
-    /// `reset_scroll` scrolls back to the top whenever the query, mode or results
-    /// change — but not what refilling the icons should do, since no row has
-    /// moved. Re-running it there would throw the reader back to the top every
-    /// time an image landed.
+    /// `reset_scroll` is set when the query, mode or results change, but not when
+    /// only icons land: re-running it there would throw the reader back to the
+    /// top every time an image arrived.
     fn publish(&mut self, ui: &App, reset_scroll: bool) {
         let state = ui.global::<CommandPaletteState>();
         let query = state.get_query().trim().to_lowercase();
@@ -468,15 +414,9 @@ impl PaletteController {
                 })
                 .collect(),
             _ => {
-                // The root mode's own filter: the commands whose title contains
-                // the query, or — when none of them does — the instances.
-                //
-                // The title it matches is the *source* string rather than the
-                // translated one. A model cannot be filtered in an expression
-                // (Slint can neither build a model nor index one), so the list has
-                // to be built here, and the translated titles do not exist here.
-                // The row still shows the translation, because that is resolved in
-                // the view.
+                // The commands whose title contains the query, or — when none of
+                // them does — the instances. It matches the *source* string; the
+                // row still shows the translation, resolved in the view.
                 let matched: Vec<&Command> = COMMANDS
                     .iter()
                     .filter(|command| {
@@ -529,8 +469,6 @@ impl PaletteController {
         self.push_selection(ui);
     }
 
-    /// Puts the icons that arrived into the rows that are already on screen,
-    /// each at the row it was fetched for.
     fn attach_icons(&mut self, ui: &App, icons: Vec<(usize, Option<PendingImage>)>) {
         for (index, icon) in icons {
             if let Some(item) = self.results.get_mut(index) {
@@ -541,11 +479,8 @@ impl PaletteController {
     }
 
     /// The instances whose name, Minecraft version or loader contains the query,
-    /// most recently played first.
-    ///
-    /// An instance that has never been played has no last-played time, so it
-    /// sorts last rather than first — the order the played instances already
-    /// have.
+    /// most recently played first. A never-played instance has no time, so it
+    /// sorts last.
     fn filtered(&self, query: &str) -> Vec<&Instance> {
         let mut instances: Vec<&Instance> = self
             .instances
@@ -555,7 +490,6 @@ impl PaletteController {
                     || [
                         instance.config.name.as_str(),
                         instance.config.runtime.minecraft.as_str(),
-                        // The loader name, or "vanilla" when there is none.
                         loader_name(instance).as_str(),
                     ]
                     .iter()
@@ -571,16 +505,12 @@ impl PaletteController {
         if count == 0 {
             return;
         }
-        // Wrap around both ends of the list.
         let next = (self.selected as i32 + delta).rem_euclid(count as i32) as usize;
         self.select(ui, next);
     }
 
-    /// The row the pointer is over, which is *not* the selection.
-    ///
-    /// The keyboard's selection stays where it was put and the pointer only says
-    /// where it is. `None` is "no row" — the pointer is over the panel rather
-    /// than over one.
+    /// The row the pointer is over, which is *not* the selection. The keyboard's
+    /// selection stays where it was put and the pointer only says where it is.
     fn hover(&mut self, ui: &App, index: Option<usize>) {
         let key = index
             .and_then(|index| self.items.get(index))
@@ -598,8 +528,6 @@ impl PaletteController {
         self.push_selection(ui);
     }
 
-    /// Publishes the selected row: its key (what the view highlights), its action
-    /// (what the footer shows) and its box (what the view scrolls to).
     fn push_selection(&mut self, ui: &App) {
         let item = self.items.get(self.selected);
         let key = item.map(|item| item.key.clone()).unwrap_or_default();
@@ -618,10 +546,9 @@ impl PaletteController {
         }
     }
 
-    /// A click on a row. A click on a row that is not the selection moves the
-    /// selection, and a click on the selected row opens it. Enter opens the
-    /// selection outright, so a pointer and the keyboard reach the same row by the
-    /// same two steps.
+    /// A click moves the selection to the row, or opens it if already selected.
+    /// Enter opens the selection outright, so the pointer and the keyboard reach
+    /// the same row in the same two steps.
     fn click(&mut self, ui: &App, index: usize) {
         if index >= self.items.len() {
             return;
@@ -674,20 +601,17 @@ impl PaletteController {
         }
     }
 
-    /// A query or mode change that is not the search itself: the selection goes
-    /// back to the first row.
     fn query_changed(&mut self, ui: &App) {
         self.selected = 0;
-        // An emptied query resets the results at once rather than 250ms later,
-        // so a list is never left under a field that has no keyword in it.
+        // An emptied query resets the results at once rather than 250ms later.
         if self.mode == "search-online" && keyword_of(ui).is_empty() {
             self.reset_search(ui);
         }
         self.rebuild(ui);
     }
 
-    /// The emptied-query reset: the results, the spinner and the error all go,
-    /// and every request in flight becomes stale.
+    /// Clears the results, the spinner and the error, and makes every request in
+    /// flight stale.
     fn reset_search(&mut self, ui: &App) {
         self.token += 1;
         self.results.clear();
@@ -791,8 +715,6 @@ pub(crate) fn instance_item(instance: &Instance, action_kind: &'static str) -> P
         key: format!("instance-{}", instance.id),
         title: instance.config.name.clone(),
         icon: "minecraft".to_string(),
-        // The loader and version together when there is a loader, the version
-        // alone when there is not.
         subtitle: match &loader {
             Some(loader) => format!("{loader} · {}", runtime.minecraft),
             None => runtime.minecraft.clone(),

@@ -21,9 +21,7 @@ export component SettingsAudio inherits VerticalLayout {
 
         SettingItem {
             group-first: true;
-            // The rows below round the group's bottom while they are revealed;
-            // while they are hidden this row is the group's last, so it takes
-            // the bottom corners then.
+            // Takes the bottom corners when the revealed rows below are hidden.
             group-last: !AppConfig.music-enabled;
             title: @tr("Enable background music");
             description: @tr("Play background music in the launcher.");
@@ -34,8 +32,8 @@ export component SettingsAudio inherits VerticalLayout {
             }
         }
 
-        // The four options that only mean anything while background music is on,
-        // so they are hidden — and take no space — otherwise.
+        // These options only apply while music is on, so they take no space
+        // otherwise.
         SettingReveal {
             shown: AppConfig.music-enabled;
 

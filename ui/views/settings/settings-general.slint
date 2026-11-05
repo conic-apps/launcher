@@ -68,8 +68,8 @@ export component SettingsGeneral inherits VerticalLayout {
 
         SettingItem {
             title: @tr("Auto update");
-            // A package-manager install (deb, rpm, Arch) is updated by the
-            // package manager, so the switch is greyed out and says so.
+            // A package-manager install updates through its package manager,
+            // so the switch is greyed out and says so.
             description: AppConfig.update-self-updating
                 ? @tr("Automatically download and install updates when available")
                 : @tr("Updates are provided by your package manager");
@@ -103,9 +103,8 @@ export component SettingsGeneral inherits VerticalLayout {
         }
     }
 
-    // The three storage roots. They are not part of `config.toml` — that file
-    // lives inside the launcher location — so clicking a row opens the folder
-    // chooser, writes the bootstrap file and asks for a restart.
+    // These roots live outside `config.toml`, so changing one writes the
+    // bootstrap file and asks for a restart.
     SettingCollapse {
         title: @tr("Data storage");
 
@@ -113,8 +112,7 @@ export component SettingsGeneral inherits VerticalLayout {
             title: @tr("Launcher data");
             description: AppConfig.launcher-location;
             navigable: true;
-            // A path is a single elided line, with the whole of it in the hover
-            // tooltip (see `SettingItem`'s `description-lines`).
+            // A path is one elided line; the full value is in the tooltip.
             description-lines: 1;
             clicked => { AppConfig.pick-data-location("launcher"); }
         }

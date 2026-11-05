@@ -2,12 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The instance settings overlay's "script": it owns the instance the overlay
-//! is editing, turns the UI's edits into an `InstanceConfig` and writes
-//! `instance.toml` on every edit.
-//!
-//! The delete dialog the overlay opens is wired here too, since it is handed
-//! the same instance.
+//! The instance settings overlay: it owns the instance being edited, turns the
+//! UI's edits into an `InstanceConfig` and writes `instance.toml` on every edit.
+//! The delete dialog is wired here too, since it uses the same instance.
 
 use std::{cell::RefCell, rc::Rc, time::Duration};
 

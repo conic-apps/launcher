@@ -4,14 +4,8 @@
 
 //! The CurseForge API client.
 //!
-//! The request plumbing this is built on: the mirror-first
-//! `request_with_fallback` with its `response_is_valid` test and its API-key
-//! gate, the `apply_query` coercion (strings verbatim, everything else through
-//! `Value::to_string`, `null` dropped), and `compute_fingerprint` with its
-//! private MurmurHash2.
-//!
-//! `build.rs` bakes in `CURSEFORGE_API_KEY`, which decides whether the
-//! official-API fallback exists.
+//! Requests go to the MCIM mirror first and fall back to the official API when
+//! `CURSEFORGE_API_KEY` is set. `build.rs` bakes that key in at build time.
 
 pub mod error;
 
@@ -62,14 +56,10 @@ fn apply_query(builder: reqwest::RequestBuilder, params: &Value) -> reqwest::Req
     }
 }
 
-/// Sends `request` and decodes the answer, recording the status.
+/// Sends `request`, logs the status, and decodes the answer.
 ///
-/// Every endpoint in this crate funnels through here, so this is the one place
-/// that can see what the server actually said. `send` and `json` both yield a
-/// `reqwest::Error` and neither carries the URL, and a non-2xx whose body happens
-/// to be JSON parses into a perfectly good `Value` — so without this, a `403`
-/// from a rejected API key and a `404` from a deleted mod reach the caller as
-/// ordinary empty data.
+/// `send` and `json` both lose the URL, and a non-2xx whose body is JSON would
+/// otherwise parse into ordinary empty data.
 async fn send(url: &Url, request: reqwest::RequestBuilder) -> Result<Value> {
     let url = url.as_str();
     let response = request.send().await.map_err(|error| {
@@ -141,10 +131,8 @@ async fn request_with_fallback(
     if matches!(&cache_result, Ok(value) if response_is_valid(value)) {
         return cache_result;
     }
-    // Recorded before the answer is dropped: when a key is configured the mirror's
-    // `Err` is discarded and replaced wholesale by the official call's result, so
-    // a mirror outage, a DNS failure and a mirror 500 all leave no trace unless
-    // they are written down here.
+    // Recorded before the answer is dropped: with a key configured, the mirror's
+    // result is replaced wholesale by the official call.
     let cache_verdict = match &cache_result {
         Ok(value) => format!("no usable data ({value})"),
         Err(error) => format!("{error}"),

@@ -2,18 +2,11 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The app-wide Escape shortcut.
-//!
-//! Escape is not just "navigate to the game page": every transient surface
-//! above it has to go too, or the user lands on the home page with a dialog or
-//! overlay still covering it. This service is the one place that knows the
-//! whole set: it closes each surface through its own close path (so pending
-//! work is cancelled and models are cleared, not just hidden) and then asks
-//! `Navigation` for the home page.
-//!
-//! The command palette consumes key events while it is open; its last Escape
-//! step calls the same `Navigation.escape` callback, so a press from the
-//! palette does the same thing.
+//! The app-wide Escape shortcut. Every transient surface must close too, or the
+//! user lands on the home page with a dialog still covering it, so each surface
+//! is closed through its own path (cancelling work and clearing models) rather
+//! than by hiding it. The command palette's last Escape step calls the same
+//! callback.
 
 use slint::ComponentHandle;
 
@@ -24,7 +17,6 @@ use crate::slint_backend::{
     NotificationState, TaskState,
 };
 
-/// Registers the Escape handler on the app.
 pub(crate) fn setup(ui: &App) {
     let weak = ui.as_weak();
     ui.global::<Navigation>().on_escape(move || {

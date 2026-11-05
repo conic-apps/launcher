@@ -13,7 +13,6 @@ use std::sync::mpsc::Sender;
 
 use crate::{AlreadyRunning, Launch};
 
-/// Claims the role unconditionally — there is nothing to claim it from.
 pub(crate) fn claim(_launches: Sender<Launch>) -> Result<Guard, AlreadyRunning> {
     log::warn!(
         target: "shell",

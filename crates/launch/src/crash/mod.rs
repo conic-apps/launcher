@@ -2,20 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Turning an abnormal Minecraft exit into something a screen can show.
-//!
-//! A crash leaves its evidence in a few places: what the game printed (captured
-//! while it ran), a `crash-reports/*.txt` it may have written, and the tail of
-//! `logs/latest.log`. None is guaranteed — a launcher, Java or JVM failure can
-//! exit before the game writes anything — so the analysis is best-effort and
-//! always returns a report, even if it is only the exit kind and code.
-//!
-//! The flow is a port of HMCL's (GPL-3.0): classify the exit from the code,
-//! signal and the words on the console; find the crash report from the game's
-//! own `#@!@#` location line or carve it out of the console; then run the
-//! [`analyzer`] rule table over the output. The report stays *raw* in the sense
-//! that reasons are named by rule and carry their capture groups rather than a
-//! translated sentence — the screen maps them.
+//! Turning an abnormal Minecraft exit into something a screen can show. The
+//! evidence is best-effort — captured console, any `crash-reports/*.txt`, and the
+//! tail of `logs/latest.log` — but a report is always returned. Reasons stay raw
+//! (rule name plus capture groups) for the screen to translate.
 
 pub mod analyzer;
 
@@ -56,7 +46,6 @@ pub enum ExitType {
     ApplicationError,
     /// The process was killed (OOM killer, the user, the OS).
     Sigkill,
-    /// A clean exit.
     Normal,
     /// We asked it to stop, or lost track of it.
     Interrupted,

@@ -56,7 +56,6 @@ fn java_model(runtimes: &[ScannedJava], disabled: &[String]) -> ModelRc<JavaRunt
     ModelRc::new(VecModel::from(rows))
 }
 
-/// Registers every settings callback on the `AppConfig` global.
 pub fn wire(ui: &App, shared: Rc<RefCell<config::Config>>, save_timer: Rc<Timer>) {
     wire_config_changes(ui, Rc::clone(&shared), Rc::clone(&save_timer));
     wire_link_actions(ui);
@@ -157,7 +156,6 @@ fn wire_config_changes(ui: &App, shared: Rc<RefCell<config::Config>>, save_timer
     }
 }
 
-/// The settings screens' link and data-directory openers.
 fn wire_link_actions(ui: &App) {
     let settings = ui.global::<AppConfig>();
 
@@ -246,7 +244,6 @@ fn wire_background_actions(ui: &App, shared: Rc<RefCell<config::Config>>, save_t
     }
 }
 
-/// Java runtime management: the on-disk scan and the enable/disable toggles.
 fn wire_java_actions(ui: &App, shared: Rc<RefCell<config::Config>>) {
     let settings = ui.global::<AppConfig>();
 

@@ -6,8 +6,6 @@
 
 use super::*;
 
-/// The component asked for a tile range: refresh the model from the cache,
-/// trim what left it, then queue the misses.
 pub(crate) fn request_tiles(ui: &App, x0: i32, x1: i32, z0: i32, z1: i32) {
     let range = Range {
         x0: x0.min(x1),
@@ -208,8 +206,7 @@ pub(crate) fn nearest_job(queue: &[Job], centre: (f64, f64), tile_size: i32) -> 
     })
 }
 
-/// Spends the free slots on the queue, nearest tile to the middle of the range
-/// first.
+/// Spends the free slots on the queue, nearest tile to the middle first.
 pub(crate) fn pump(ui: &App) {
     let started = STATE.with(|map| {
         let mut map = map.borrow_mut();
@@ -304,7 +301,6 @@ pub(crate) fn finish_tile(
                     map.visible.push(key);
                 }
                 prune_cache(&mut map);
-                // Clear the error on the first tile that arrives.
                 state.set_error(SharedString::new());
             }
             Err(error) => {

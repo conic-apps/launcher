@@ -59,9 +59,8 @@ pub struct LoggingFileDownload {
     pub url: String,
 }
 
-/// The raw version JSON as provided by Minecraft.
-///
-/// Resolve it into a [`ResolvedVersion`](crate::ResolvedVersion) to launch the game.
+/// The raw version JSON as provided by Minecraft. Resolve it into a
+/// [`ResolvedVersion`](crate::ResolvedVersion) to launch the game.
 #[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Version {
@@ -120,7 +119,6 @@ pub struct Platform {
     pub version: Option<String>,
 }
 
-/// A Minecraft version parsed from a version string into release, snapshot or unknown form.
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub enum MinecraftVersion {
     Release(u8, u8, Option<u8>),
