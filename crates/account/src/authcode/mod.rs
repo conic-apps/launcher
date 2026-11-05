@@ -4,41 +4,6 @@
 
 //! The loopback listener the Microsoft browser flow hands its authorization
 //! code to.
-//!
-//! # Why a listener at all
-//!
-//! The authorization-code flow ends with the browser being redirected to a URI
-//! the app is expected to receive. The alternative is a custom URI scheme
-//! (`conic-launcher://oauth2/microsoft/callback`) registered with the desktop
-//! environment, which means claiming single-instance ownership of it and
-//! trusting the platform to route it — something each of the three desktops
-//! the launcher ships on does differently. Microsoft's own guidance for a
-//! native app is a loopback redirect instead, and that is what this is: the
-//! browser is sent to `http://localhost:<port>/callback`, and the code arrives
-//! as an ordinary `GET` to a socket this process already holds.
-//!
-//! # Why so little of a server
-//!
-//! It answers one request and goes away. A web framework would bring a
-//! dependency tree, a router, a middleware stack and a connection state
-//! machine for a single `GET` carrying a code in its query string, so the
-//! framing is `http`'s: a request line, a status line, a body. All of it is
-//! bounded — a loopback listener is reachable by every process on the machine
-//! — and the bounds are in `http`.
-//!
-//! # Ports
-//!
-//! The socket is bound to port 0 and the port the OS hands back is read off
-//! the bound address, so there is no port to collide over: a second launcher,
-//! a leftover listener, or anything else already on the port cannot stop the
-//! flow. Microsoft accepts `http://localhost` on any port for a native client,
-//! so the port never has to be a fixed one either.
-//!
-//! `localhost` resolves to `127.0.0.1` or `::1` depending on the browser and
-//! the machine, and a listener on one of them does not answer for the other.
-//! The socket is bound on the IPv4 loopback and, if that same port also comes
-//! free on the IPv6 loopback, on both — one port, either address. A machine
-//! that can only do one of them keeps the one it can.
 
 mod error;
 mod http;
@@ -58,58 +23,27 @@ use uuid::Uuid;
 pub use error::{Error, Result};
 pub use page::{Messages, Palette, Rgba, Screen};
 
-/// The path the browser is redirected to, and the only one that can end the
-/// login; every other path only gets a page.
 const CALLBACK_PATH: &str = "/callback";
 
-/// What the browser's redirect turned out to be.
 #[derive(Debug, PartialEq, Eq)]
-pub enum Outcome {
-    /// The browser came back with an authorization code, and it belongs to
-    /// this listener: its `state` matched.
-    Code(String),
-    /// The sign-in was refused — by the user at Microsoft's consent screen, or
-    /// by Microsoft itself. Carries `error_description` where there was one and
-    /// `error` otherwise, which is what the caller's log line records; the
-    /// browser page itself only ever shows the generic failure sentence.
-    Declined(String),
-    /// Nothing usable came back: the caller's deadline passed, or the listener
-    /// could not go on accepting.
-    Nothing,
+pub enum BrowserRedirectOutcome {
+    AuthorizationCode(String),
+    Declined { reason: String },
+    NoRedirect,
 }
 
-/// A bound, not-yet-serving loopback callback.
-///
-/// [`start`](Self::start) binds and [`wait`](Self::wait) serves, and they are
-/// separate for the caller's sake: the dialog needs the URL the moment it
-/// draws the browser screen, and binding a loopback socket needs nothing but a
-/// `std` socket, so it can happen on the UI thread. `wait` is the half that
-/// blocks on a socket, and it is the half that needs a runtime. A connection
-/// that arrives in between waits in the kernel's backlog, so nothing is lost
-/// by the ordering.
-pub struct AuthCallback {
+pub struct BoundAuthCallback {
     listeners: Vec<std::net::TcpListener>,
     port: u16,
-    outcome: oneshot::Receiver<Outcome>,
-    shared: Arc<Shared>,
+    redirect_outcome_rx: oneshot::Receiver<BrowserRedirectOutcome>,
+    shared_state: Arc<Shared>,
 }
 
-impl AuthCallback {
+impl BoundAuthCallback {
     /// Binds the loopback socket and mints the `state` this callback answers
     /// to.
-    ///
-    /// Everything here is a `bind` and a `Uuid`, so this is callable from the
-    /// UI thread: the sockets stay `std` until [`wait`](Self::wait) hands them
-    /// to a runtime, which is what keeps this one off the async side.
     pub fn start(palette: Palette, messages: Messages) -> Result<Self> {
         let (listeners, port) = bind_loopback()?;
-        // The CSRF half of OAuth, and the reason the callback cannot simply
-        // take whatever arrives on the port. `state` is round-tripped through
-        // the browser by Microsoft untouched, so a page that guessed the port
-        // — a port scan, or another process on the machine — cannot hand this
-        // launcher a code of its own, and a replay of an earlier callback
-        // cannot either. It lives in the `Shared` because that is where it is
-        // compared, and the caller's copy is a read of the same one.
         let (sender, outcome) = oneshot::channel();
         let shared = Arc::new(Shared {
             state: Uuid::new_v4().simple().to_string(),
@@ -121,41 +55,28 @@ impl AuthCallback {
         Ok(Self {
             listeners,
             port,
-            outcome,
-            shared,
+            redirect_outcome_rx: outcome,
+            shared_state: shared,
         })
     }
 
-    /// The `redirect_uri` the authorize request has to carry. The token request
-    /// has to repeat it byte for byte, which is why it is kept as one string
-    /// from here all the way to the token endpoint.
     pub fn redirect_uri(&self) -> String {
         format!("http://localhost:{}{CALLBACK_PATH}", self.port)
     }
 
     /// The `state` the callback has to come back with.
     pub fn state(&self) -> &str {
-        &self.shared.state
+        &self.shared_state.state
     }
 
     /// Serves until an answer arrives or the deadline passes.
     ///
-    /// Consuming `self` is what ties the listener's life to the login's: a
-    /// `wait` that is never awaited — the user closed the dialog, or went back
-    /// to the device code — drops the sockets with it, and the port is free
-    /// again at once. That holds for an aborted `wait` too: the accept loops
-    /// own the listeners, and the guard below takes them down when the future
-    /// is dropped, because dropping a `JoinHandle` alone would only detach
-    /// them and leave every loop parked on `accept()` forever.
-    ///
-    /// This is the half that needs a runtime, and the first thing it does is
-    /// hand the `std` sockets over to one: a socket only becomes an async one
-    /// inside a reactor.
-    pub async fn wait(self, timeout: Duration) -> Outcome {
+    /// Consuming `self` is what ties the listener's life to the login's.
+    pub async fn wait(self, timeout: Duration) -> BrowserRedirectOutcome {
         let Self {
             listeners,
-            outcome,
-            shared,
+            redirect_outcome_rx: outcome,
+            shared_state: shared,
             ..
         } = self;
         let mut loops = AcceptLoops::new();
@@ -174,14 +95,14 @@ impl AuthCallback {
         }
         if loops.is_empty() {
             shared.finish();
-            return Outcome::Nothing;
+            return BrowserRedirectOutcome::NoRedirect;
         }
 
         let outcome = match tokio::time::timeout(timeout, outcome).await {
             Ok(Ok(outcome)) => outcome,
             // Every accept loop gave up, or the deadline passed. Both mean the
             // same thing here: no code arrived.
-            Ok(Err(_)) | Err(_) => Outcome::Nothing,
+            Ok(Err(_)) | Err(_) => BrowserRedirectOutcome::NoRedirect,
         };
         shared.finish();
         drop(loops);
@@ -221,7 +142,7 @@ impl Drop for AcceptLoops {
 /// The state every accept loop and every connection shares.
 struct Shared {
     state: String,
-    sender: Mutex<Option<oneshot::Sender<Outcome>>>,
+    sender: Mutex<Option<oneshot::Sender<BrowserRedirectOutcome>>>,
     /// Set as soon as the login has its answer, so the accept loops stop and
     /// anything still in flight knows not to answer twice.
     finished: AtomicBool,
@@ -231,7 +152,7 @@ struct Shared {
 impl Shared {
     /// Hands `outcome` to the waiting login. At most once: the first `take` to
     /// find a sender wins, and every later call finds none.
-    fn deliver(&self, outcome: Outcome) {
+    fn deliver(&self, outcome: BrowserRedirectOutcome) {
         let sender = self.sender.lock().expect("Internal error").take();
         if let Some(sender) = sender {
             self.finished.store(true, Ordering::SeqCst);
@@ -259,11 +180,6 @@ struct Page {
 
 /// Binds the loopback interface on one port, on every address family that
 /// port comes free on.
-///
-/// The first bind is the one that picks the port and the one whose failure is
-/// fatal: a machine with no IPv4 loopback cannot serve the browser at all, so
-/// there is nothing to fall back to. The second is a bonus, and a failure to
-/// take it is a debug line.
 fn bind_loopback() -> Result<(Vec<std::net::TcpListener>, u16)> {
     let ipv4 = std::net::TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).map_err(Error::Bind)?;
     let port = ipv4
@@ -279,9 +195,6 @@ fn bind_loopback() -> Result<(Vec<std::net::TcpListener>, u16)> {
             listeners.push(ipv6);
         }
         Err(error) => {
-            // Normal on an IPv4-only machine, and normal on a machine where
-            // something transient holds the port in the other family. Either
-            // way the IPv4 socket answers.
             debug!("port {port} is not free on the IPv6 loopback: {error}");
         }
     }
@@ -354,7 +267,7 @@ struct Response {
     status: u16,
     reason: &'static str,
     screen: Screen,
-    outcome: Option<Outcome>,
+    outcome: Option<BrowserRedirectOutcome>,
     /// The `Allow` header, on the one response that has one.
     allow: Option<&'static str>,
 }
@@ -372,12 +285,9 @@ impl Response {
     }
 }
 
-fn route(request: &http::Request, shared: &Shared) -> Response {
+fn route(request: &http::RequestLine, shared: &Shared) -> Response {
     match request.path.as_str() {
         CALLBACK_PATH => callback(request, shared),
-        // `/` is where a stray visit lands, and `/favicon.ico` is what every
-        // browser asks for on its own. Neither is a failure and neither ends
-        // anything: the page says to go on waiting, and the listener stays up.
         "/" | "/favicon.ico" => Response {
             status: 200,
             reason: "OK",
@@ -395,7 +305,7 @@ fn route(request: &http::Request, shared: &Shared) -> Response {
     }
 }
 
-fn callback(request: &http::Request, shared: &Shared) -> Response {
+fn callback(request: &http::RequestLine, shared: &Shared) -> Response {
     if request.param("state").as_deref() != Some(shared.state.as_str()) {
         // Someone else's callback, or a replay of an old one. Saying so and
         // staying up is the right pair: the real callback may still be on its
@@ -421,7 +331,7 @@ fn callback(request: &http::Request, shared: &Shared) -> Response {
             status: 200,
             reason: "OK",
             screen: Screen::Failure,
-            outcome: Some(Outcome::Declined(detail)),
+            outcome: Some(BrowserRedirectOutcome::Declined { reason: detail }),
             allow: None,
         };
     }
@@ -432,7 +342,7 @@ fn callback(request: &http::Request, shared: &Shared) -> Response {
                 status: 200,
                 reason: "OK",
                 screen: Screen::Success,
-                outcome: Some(Outcome::Code(code)),
+                outcome: Some(BrowserRedirectOutcome::AuthorizationCode(code)),
                 allow: None,
             }
         }

@@ -16,15 +16,10 @@ use crate::{
 };
 
 /// How many polls in a row may fail outright before the device code flow gives
-/// up. A pending or backed-off poll is an answer and not counted here — only a
-/// request that never reached an OAuth answer.
+/// up.
 const MAX_FAILED_POLLS: u32 = 3;
 
 /// Progress events reported while a Microsoft login task is running.
-///
-/// The UI maps most variants to a progress string; `WaitingForAuthorization`
-/// instead carries the device-code screen's data. No `serde` derives are
-/// needed: the events cross no process boundary.
 #[derive(Debug, Clone, PartialEq)]
 pub enum LoginEvent {
     Prepare,
@@ -112,8 +107,6 @@ pub(crate) async fn login_with_device_code(reporter: &LoginReporter) -> Result<M
         tokio::time::sleep(interval).await;
         polls += 1;
         if Instant::now() >= deadline {
-            // The user-visible outcome of the wait, recorded like the other
-            // terminal ones.
             log::info!(
                 "the device code expired after {polls} poll(s) over {} seconds",
                 response.expires_in
@@ -125,11 +118,6 @@ pub(crate) async fn login_with_device_code(reporter: &LoginReporter) -> Result<M
                 failed_polls = 0;
                 poll_result
             }
-            // The user is given minutes to finish in the browser, and the flow
-            // asks for a new code (a new code, a new wait) when this one
-            // expires: a single unreachable request should not throw away a
-            // code they are in the middle of authorizing. A few in a row
-            // means the network is really gone, so the error is reported.
             Err(error) => {
                 failed_polls += 1;
                 if failed_polls < MAX_FAILED_POLLS {

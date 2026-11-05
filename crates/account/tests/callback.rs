@@ -10,7 +10,7 @@
 
 use std::time::Duration;
 
-use account::authcode::{AuthCallback, Messages, Outcome, Palette, Rgba};
+use account::authcode::{BoundAuthCallback, BrowserRedirectOutcome, Messages, Palette, Rgba};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::sync::oneshot;
@@ -47,8 +47,8 @@ fn messages() -> Messages {
     }
 }
 
-fn callback() -> AuthCallback {
-    AuthCallback::start(palette(), messages()).expect("the loopback interface is available")
+fn callback() -> BoundAuthCallback {
+    BoundAuthCallback::start(palette(), messages()).expect("the loopback interface is available")
 }
 
 /// Where a callback is listening, in the two forms the tests need.
@@ -59,7 +59,7 @@ struct Endpoint {
 }
 
 impl Endpoint {
-    fn of(callback: &AuthCallback) -> Self {
+    fn of(callback: &BoundAuthCallback) -> Self {
         let authority = callback
             .redirect_uri()
             .strip_prefix("http://")
@@ -86,7 +86,10 @@ impl Endpoint {
 
 /// Starts serving and hands back the answer, the way the launcher does: the
 /// `wait` is already running by the time the browser is sent anywhere.
-fn serving(callback: AuthCallback, timeout: Duration) -> oneshot::Receiver<Outcome> {
+fn serving(
+    callback: BoundAuthCallback,
+    timeout: Duration,
+) -> oneshot::Receiver<BrowserRedirectOutcome> {
     let (sender, receiver) = oneshot::channel();
     tokio::spawn(async move {
         let _ = sender.send(callback.wait(timeout).await);
@@ -155,7 +158,7 @@ async fn a_callback_with_our_state_hands_over_the_code() {
 
     assert_eq!(
         answer.await.unwrap(),
-        Outcome::Code("0.AAe-9_x".to_string())
+        BrowserRedirectOutcome::AuthorizationCode("0.AAe-9_x".to_string())
     );
 }
 
@@ -169,7 +172,10 @@ async fn the_absolute_form_names_the_same_resource() {
 
     let response = get(&endpoint, &uri).await;
     assert!(response.starts_with("HTTP/1.1 200 OK\r\n"), "{response}");
-    assert_eq!(answer.await.unwrap(), Outcome::Code("abs".to_string()));
+    assert_eq!(
+        answer.await.unwrap(),
+        BrowserRedirectOutcome::AuthorizationCode("abs".to_string())
+    );
 }
 
 #[tokio::test]
@@ -186,7 +192,7 @@ async fn a_callback_with_someone_elses_state_is_refused_and_does_not_end_the_log
     assert!(body(&response).contains("Sign-in failed"), "{response}");
 
     // Still listening: the real callback, if one is coming, is unaffected.
-    assert_eq!(answer.await.unwrap(), Outcome::Nothing);
+    assert_eq!(answer.await.unwrap(), BrowserRedirectOutcome::NoRedirect);
 }
 
 #[tokio::test]
@@ -206,7 +212,9 @@ async fn a_refusal_carries_the_reason_and_ends_the_login() {
     assert!(body(&response).contains("Sign-in failed"), "{response}");
     assert_eq!(
         answer.await.unwrap(),
-        Outcome::Declined("The user said no".to_string())
+        BrowserRedirectOutcome::Declined {
+            reason: "The user said no".to_string()
+        }
     );
 }
 
@@ -220,7 +228,9 @@ async fn a_refusal_without_a_description_still_says_something() {
     get(&endpoint, &target).await;
     assert_eq!(
         answer.await.unwrap(),
-        Outcome::Declined("access_denied".to_string())
+        BrowserRedirectOutcome::Declined {
+            reason: "access_denied".to_string()
+        }
     );
 }
 
@@ -233,7 +243,7 @@ async fn the_root_says_to_go_on_waiting_and_ends_nothing() {
     let response = get(&endpoint, "/").await;
     assert!(response.starts_with("HTTP/1.1 200 OK\r\n"), "{response}");
     assert!(body(&response).contains("Still waiting"), "{response}");
-    assert_eq!(answer.await.unwrap(), Outcome::Nothing);
+    assert_eq!(answer.await.unwrap(), BrowserRedirectOutcome::NoRedirect);
 }
 
 #[tokio::test]
@@ -244,7 +254,7 @@ async fn a_favicon_request_is_not_a_failure() {
 
     let response = get(&endpoint, "/favicon.ico").await;
     assert!(response.starts_with("HTTP/1.1 200 OK\r\n"), "{response}");
-    assert_eq!(answer.await.unwrap(), Outcome::Nothing);
+    assert_eq!(answer.await.unwrap(), BrowserRedirectOutcome::NoRedirect);
 }
 
 #[tokio::test]
@@ -290,7 +300,10 @@ async fn only_the_first_code_ends_the_login() {
                 .await
                 .contains("200 OK")
         );
-        assert_eq!(answer.await.unwrap(), Outcome::Code("first".to_string()));
+        assert_eq!(
+            answer.await.unwrap(),
+            BrowserRedirectOutcome::AuthorizationCode("first".to_string())
+        );
         (endpoint, replay)
     };
 
@@ -335,7 +348,7 @@ async fn a_method_that_is_not_a_get_or_a_head_is_answered_and_ends_nothing() {
     assert!(response.contains("Allow: GET"), "{response}");
     // And, unlike a `HEAD`'s, it may carry the page.
     assert!(body(&response).contains("Sign-in failed"), "{response}");
-    assert_eq!(answer.await.unwrap(), Outcome::Nothing);
+    assert_eq!(answer.await.unwrap(), BrowserRedirectOutcome::NoRedirect);
 }
 
 #[tokio::test]
@@ -350,7 +363,7 @@ async fn a_head_gets_the_status_without_a_body_it_could_not_read() {
     // The trap this avoids: a `Content-Length` for bytes the client is not
     // allowed to read, and will sit waiting for until it gives up.
     assert_eq!(body(&response), "", "{response}");
-    assert_eq!(answer.await.unwrap(), Outcome::Nothing);
+    assert_eq!(answer.await.unwrap(), BrowserRedirectOutcome::NoRedirect);
 }
 
 #[tokio::test]

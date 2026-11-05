@@ -190,11 +190,6 @@ pub async fn refresh_account(uuid: Uuid, force_refresh: bool) -> Result<Microsof
 
 /// Makes `cape_id` the account's active cape on Mojang's side, then re-reads
 /// and stores the profile so its `capes[].state` reflects the change.
-///
-/// The account is refreshed first when its token is close to expiry, so the
-/// call does not ride an expired access token. Only a Microsoft account has
-/// capes: a Yggdrasil profile's textures are its server's to change, not this
-/// endpoint's, and the UI is expected to offer this for Microsoft accounts only.
 pub async fn set_active_cape(uuid: Uuid, cape_id: &str) -> Result<MicrosoftAccount> {
     let account = refresh_account(uuid, false).await?;
     minecraft_profile_step::set_active_cape(&account.minecraft_access_token, cape_id).await?;

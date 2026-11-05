@@ -32,7 +32,7 @@ use uuid::Uuid;
 
 use crate::slint_backend::{AccountAddState, App, Dialogs, GameState, YggdrasilProfileItem};
 use crate::ui::components::account_avatar;
-use account::authcode::Outcome;
+use account::authcode::BrowserRedirectOutcome;
 use account::{
     Error, LoginRequest, LoginTaskState, get_uuid_from_username,
     microsoft::{LoginEvent, LoginReporter},

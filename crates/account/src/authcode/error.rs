@@ -6,9 +6,6 @@ use std::io;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// The only way starting the listener can fail: the loopback socket could not
-/// be bound. Everything after that is reported to the browser as a page and to
-/// the caller as an [`Outcome`](crate::authcode::Outcome).
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("failed to bind the loopback callback listener: {0}")]

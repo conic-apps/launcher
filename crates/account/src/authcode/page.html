@@ -1,23 +1,10 @@
-<!doctype html>
 <!--
-  Conic Launcher
-  Copyright 2022-2026 ConicMC developers. All rights reserved.
-  SPDX-License-Identifier: GPL-3.0-only
-
-  The page the browser lands on when the OAuth redirect fires. `page.rs` next
-  door pulls this in with `include_str!`, fills in the `{{ … }}` placeholders and
-  the custom properties in `:root`, and hands the result to the loopback
-  listener — which is why every rule is inline and every glyph is inline too:
-  the whole thing goes over a loopback socket in one response, and a browser
-  that has to fetch a stylesheet to paint it would show nothing until it had.
-
-  It is styled from the app's own theme tokens (the caller reads them off
-  `Theme`), so the tab and the window the login was launched from are visibly
-  the same application: the same palette, the same dialog card, the same type
-  scale, the same glyphs. The glyphs are transcribed from `ui/icons.slint`:
-  `checkmark-outline` and `warning` are what `AppIcon` draws for the same two
-  states, and the arc is `Loading`'s, down to the 1.9s rotation.
+Conic Launcher
+Copyright 2022-2026 ConicMC developers. All rights reserved.
+SPDX-License-Identifier: GPL-3.0-only
 -->
+
+<!doctype html>
 <html lang="{{ lang }}">
   <head>
     <meta charset="utf-8" />
@@ -62,17 +49,10 @@
         padding: 24px;
         background: var(--window);
         color: var(--body-color);
-        /*
-         * `main.css`'s own stack, in its own order. Comfortaa and Nunito are
-         * embedded in the launcher binary rather than installed, so a browser
-         * resolves this to the system UI font — which is exactly what the Vue
-         * frontend fell back to for every user who had not installed them.
-         */
         font-family: var(--font-family);
         line-height: 1;
       }
 
-      /* `--dialog-background` on `--dialog-border`, at `--dialog-border-radius`. */
       .card {
         width: 100%;
         max-width: 400px;
@@ -83,8 +63,6 @@
         border-radius: 10px;
       }
 
-      /* A 28px glyph in a 56px disc: the inset the instance card leaves
-         around a 48px `AccountAvatar`, tinted the way an unlogged one is. */
       .badge {
         display: inline-flex;
         align-items: center;
@@ -120,8 +98,6 @@
         color: var(--body-color);
       }
 
-      /* `Loading`'s rotation, and the app's `prefers-reduced-motion`
-         escape hatch (main.css's `.no-animations`). */
       .waiting {
         animation: conic-spin 1.9s linear infinite;
         transform-origin: 50% 50%;
@@ -141,12 +117,9 @@
   <body data-screen="{{ screen }}">
     <main class="card">
       <span class="badge" aria-hidden="true">
-        <!-- `Loading { size: 40; stroke-width: 5 }`, scaled to the badge. -->
         <svg class="waiting" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round">
           <path d="M24 4A20 20 0 1 1 10.31 9.42" />
         </svg>
-        <!-- `AppIcon { name: "checkmark-outline" }`: the 512-box stroke glyph,
-             32 units of stroke, round caps and joins. -->
         <svg
           class="success"
           viewBox="0 0 512 512"
@@ -158,7 +131,6 @@
         >
           <path d="M416 128 192 384l-96-96" />
         </svg>
-        <!-- `AppIcon { name: "warning" }`: the 640-box filled glyph. -->
         <svg class="failure" viewBox="0 0 640 640" fill="currentColor">
           <path d="M85.57 446.25h340.86a32 32 0 0 0 28.17-47.17L284.18 82.58c-12.09-22.44-44.27-22.44-56.36 0L57.4 399.08a32 32 0 0 0 28.17 47.17 m250.26 195.39 5.74 122 5.73-121.95a5.74 5.74 0 0 0-5.79-6h0a5.74 5.74 0 0 0-5.68 5.95" />
         </svg>
