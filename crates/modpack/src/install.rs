@@ -101,6 +101,8 @@ pub async fn install(
     let install_out = sink.clone();
     let install_sink: install_crate::InstallSink =
         Arc::new(move |progress| install_out(Progress::Install(progress)));
+    let language_config = config.clone();
+    let language_instance = instance.clone();
     install_crate::install(config, instance, install_sink).await?;
 
     let instance_root = LOCATIONS.instances.get_instance_root(&id);
@@ -137,6 +139,11 @@ pub async fn install(
 
     sink(Progress::Extracting);
     extract_all(&plan.overrides, &instance_root).await?;
+
+    // The overrides may carry their own `options.txt`, which wins over the
+    // install-time language write; applying it again here keeps the launcher's
+    // language without dropping the pack's other options.
+    install_crate::configure_instance_language(&language_config, &language_instance, true).await;
 
     lock.disarm();
     Ok(())

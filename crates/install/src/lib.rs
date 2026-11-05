@@ -246,7 +246,7 @@ pub async fn install(config: Config, instance: Instance, sink: InstallSink) -> R
         install_mod_loader(runtime, installer_java.path.as_path(), &mod_reporter).await?;
     };
 
-    configure_first_launch_language(config, &instance).await;
+    configure_instance_language(&config, &instance, false).await;
 
     debug!("Saving lock file");
     tokio::fs::write(
@@ -354,13 +354,16 @@ pub async fn install_mod_loader(
     Ok(())
 }
 
-/// Sets the in-game language to match the launcher UI language before the first
-/// launch, by writing `options.txt` in the instance game directory.
+/// Applies the launcher UI language to an instance's `options.txt`.
 ///
 /// Only applies when the "change game language on first launch" setting is
 /// enabled. A failure to write the file is logged and does not abort the
 /// installation.
-async fn configure_first_launch_language(config: Config, instance: &Instance) {
+///
+/// `force` replaces an existing `lang` line instead of leaving the file alone;
+/// the modpack installer uses it after the pack's overrides, which may carry
+/// their own `options.txt`.
+pub async fn configure_instance_language(config: &Config, instance: &Instance, force: bool) {
     if !config.accessibility.change_game_language {
         return;
     }
@@ -372,26 +375,42 @@ async fn configure_first_launch_language(config: Config, instance: &Instance) {
         .language
         .as_deref()
         .unwrap_or_else(|| get_system_language());
+    let version_id = instance.config.runtime.minecraft.as_str();
     let release_time = get_version_release_time(instance).await;
-    if let Err(error) = language::configure_game_language(
-        &options_txt_path,
-        launcher_language,
-        release_time.as_deref(),
-    )
-    .await
-    {
+    let client_jar_path = LOCATIONS.minecraft.get_version_jar(version_id, None);
+    let result = if force {
+        language::force_game_language(
+            &options_txt_path,
+            launcher_language,
+            version_id,
+            release_time.as_deref(),
+            &client_jar_path,
+        )
+        .await
+    } else {
+        language::configure_game_language(
+            &options_txt_path,
+            launcher_language,
+            version_id,
+            release_time.as_deref(),
+            &client_jar_path,
+        )
+        .await
+    };
+    if let Err(error) = result {
         warn!("Failed to configure the game language: {error}");
     }
 }
 
 /// Reads the `releaseTime` of the Minecraft version from the version.json that has
 /// already been downloaded during the installation.
+///
+/// Only snapshots use it, because their id has no release number to compare; a
+/// missing or unreadable file therefore leaves a snapshot's era unknown and is
+/// skipped rather than guessed at.
 async fn get_version_release_time(instance: &Instance) -> Option<String> {
     let minecraft_location = LOCATIONS.minecraft.clone();
     let version_json_path = minecraft_location.get_version_json(&instance.config.runtime.minecraft);
-    // A silent `None` is not harmless: `language_era(None)` answers `Modern`,
-    // so an unreadable version.json gives a pre-1.6 instance the wrong `lang`
-    // casing and the game falls back to English.
     let raw_version_json = match tokio::fs::read_to_string(&version_json_path).await {
         Ok(raw) => raw,
         Err(error) => {
