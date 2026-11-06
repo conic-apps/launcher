@@ -79,6 +79,18 @@ RECONTEXT = {
     (None, "Open music folder"): ["MusicPlayerOverlay"],
     (None, "Playlist"): ["MusicPlayerOverlay"],
     (None, "Nothing here"): ["MusicPlayerOverlay"],
+    # The install progress moved from the launch screen to the strip beside the
+    # game view's launch button, so its sentences resolve under
+    # `GameInstallText` now. "Verifying game files", "Downloading game files {} /
+    # {}" and "Preparing" stay under `LaunchView`: the launch screen's own file
+    # check uses the same wording, so one entry still serves both surfaces.
+    ("LaunchView", "Preparing download"): ["GameInstallText"],
+    ("LaunchView", "Checking Java runtime"): ["GameInstallText"],
+    ("LaunchView", "Downloading Java {}/{}"): ["GameInstallText"],
+    ("LaunchView", "Installing {}"): ["GameInstallText"],
+    ("LaunchView", "Downloading {} installer"): ["GameInstallText"],
+    ("LaunchView", "Downloading dependencies"): ["GameInstallText"],
+    ("LaunchView", "Running {} installer: {}"): ["GameInstallText"],
     # `instances-list.slint`'s rows were split into `InstanceGroupRow` and
     # `InstanceListCard`, so their sentences now resolve under the new
     # components rather than the whole list.
@@ -109,6 +121,12 @@ DROP = {
         "AccountAddMicrosoft",
         " and paste it into the browser. To finish signing in on another device, ",
     ),
+    # The launch button's dropdown is gone: its one entry moved into the instance
+    # settings as a repair that only installs.
+    ("InstanceSummary", "Repair game and launch"),
+    # A launch is not a task card any more: it waits on its own screen, which
+    # carries the sentence below.
+    ("TaskText", "Launching {}"),
     # The notification centre now draws one body line instead of a title and a
     # message, so the per-kind titles and the old generic fallbacks are gone.
     # The crash notice is the one exception: it adds a title above its body (see
@@ -2102,6 +2120,153 @@ SAVE_TAGS.update({
 # catalogue, under `RemoteListView`.
 TRY_AGAIN = "Try adjusting keywords or filters and search again"
 
+
+# The game view's launch button, the install strip beside it, the launch screen's
+# wait and the instance settings' maintenance group.
+SAVE_TAGS.update({
+    # The launch page shows this while the task centre finishes whatever else it
+    # is running; it is the same sentence the task cards use for a queued task.
+    "LaunchView": {
+        "Waiting for other tasks to finish": {
+            "zh_CN": "等待其他任务完成",
+            "zh_TW": "等待其他任務完成",
+            "ja_JP": "他のタスクの完了を待っています",
+            "ko_KR": "다른 작업이 완료되기를 기다리는 중",
+            "de_DE": "Wartet auf andere Aufgaben",
+            "fr_FR": "En attente d'autres tâches",
+            "es_ES": "Esperando a que terminen otras tareas",
+            "pt_BR": "Aguardando outras tarefas",
+            "ru_RU": "Ожидание завершения других задач",
+            "tr_TR": "Diğer görevlerin bitmesi bekleniyor",
+            "pl_PL": "Oczekiwanie na zakończenie innych zadań",
+        },
+    },
+    "InstanceSummary": {
+        "Download": {
+            "zh_CN": "下载",
+            "zh_TW": "下載",
+            "ja_JP": "ダウンロード",
+            "ko_KR": "다운로드",
+            "de_DE": "Herunterladen",
+            "fr_FR": "Télécharger",
+            "es_ES": "Descargar",
+            "pt_BR": "Baixar",
+            "ru_RU": "Скачать",
+            "tr_TR": "İndir",
+            "pl_PL": "Pobierz",
+        },
+        "Cancel": {
+            "zh_CN": "取消",
+            "zh_TW": "取消",
+            "ja_JP": "キャンセル",
+            "ko_KR": "취소",
+            "de_DE": "Abbrechen",
+            "fr_FR": "Annuler",
+            "es_ES": "Cancelar",
+            "pt_BR": "Cancelar",
+            "ru_RU": "Отмена",
+            "tr_TR": "İptal",
+            "pl_PL": "Anuluj",
+        },
+        # A task waiting for the exclusive lane, in the strip.
+        "Waiting": {
+            "zh_CN": "排队中",
+            "zh_TW": "排隊中",
+            "ja_JP": "待機中",
+            "ko_KR": "대기 중",
+            "de_DE": "Wartet",
+            "fr_FR": "En attente",
+            "es_ES": "En espera",
+            "pt_BR": "Em espera",
+            "ru_RU": "В очереди",
+            "tr_TR": "Sırada",
+            "pl_PL": "W kolejce",
+        },
+    },
+    "InstanceSettings": {
+        "Maintenance": {
+            "zh_CN": "维护",
+            "zh_TW": "維護",
+            "ja_JP": "メンテナンス",
+            "ko_KR": "유지 관리",
+            "de_DE": "Wartung",
+            "fr_FR": "Maintenance",
+            "es_ES": "Mantenimiento",
+            "pt_BR": "Manutenção",
+            "ru_RU": "Обслуживание",
+            "tr_TR": "Bakım",
+            "pl_PL": "Konserwacja",
+        },
+        "View game logs": {
+            "zh_CN": "查看游戏日志",
+            "zh_TW": "檢視遊戲日誌",
+            "ja_JP": "ゲームログを表示",
+            "ko_KR": "게임 로그 보기",
+            "de_DE": "Spiellogs anzeigen",
+            "fr_FR": "Voir les journaux du jeu",
+            "es_ES": "Ver registros del juego",
+            "pt_BR": "Ver registros do jogo",
+            "ru_RU": "Просмотреть логи игры",
+            "tr_TR": "Oyun günlüklerini görüntüle",
+            "pl_PL": "Zobacz dzienniki gry",
+        },
+        "Opens the instance's logs folder": {
+            "zh_CN": "打开实例的日志文件夹",
+            "zh_TW": "開啟實例的日誌資料夾",
+            "ja_JP": "インスタンスのログフォルダーを開きます",
+            "ko_KR": "인스턴스의 로그 폴더를 엽니다",
+            "de_DE": "Öffnet den Log-Ordner der Instanz",
+            "fr_FR": "Ouvre le dossier des journaux de l'instance",
+            "es_ES": "Abre la carpeta de registros de la instancia",
+            "pt_BR": "Abre a pasta de registros da instância",
+            "ru_RU": "Открывает папку логов экземпляра",
+            "tr_TR": "Örneğin günlük klasörünü açar",
+            "pl_PL": "Otwiera folder dzienników instancji",
+        },
+        "Repair install": {
+            "zh_CN": "修复安装",
+            "zh_TW": "修復安裝",
+            "ja_JP": "インストールを修復",
+            "ko_KR": "설치 복구",
+            "de_DE": "Installation reparieren",
+            "fr_FR": "Réparer l'installation",
+            "es_ES": "Reparar la instalación",
+            "pt_BR": "Reparar a instalação",
+            "ru_RU": "Восстановить установку",
+            "tr_TR": "Kurulumu onar",
+            "pl_PL": "Napraw instalację",
+        },
+        "Verifies and re-downloads the game files. It does not start the game": {
+            "zh_CN": "校验并重新下载游戏文件，不会启动游戏",
+            "zh_TW": "校驗並重新下載遊戲檔案，不會啟動遊戲",
+            "ja_JP": "ゲームファイルを検証して再ダウンロードします。ゲームは起動しません",
+            "ko_KR": "게임 파일을 검사하고 다시 다운로드합니다. 게임은 시작하지 않습니다",
+            "de_DE": "Überprüft und lädt die Spieldateien erneut herunter. Das Spiel wird nicht gestartet",
+            "fr_FR": "Vérifie et retélécharge les fichiers du jeu. Ne lance pas le jeu",
+            "es_ES": "Verifica y vuelve a descargar los archivos del juego. No inicia el juego",
+            "pt_BR": "Verifica e baixa novamente os arquivos do jogo. Não inicia o jogo",
+            "ru_RU": "Проверяет и заново скачивает файлы игры. Игра не запускается",
+            "tr_TR": "Oyun dosyalarını doğrular ve yeniden indirir. Oyunu başlatmaz",
+            "pl_PL": "Weryfikuje i ponownie pobiera pliki gry. Nie uruchamia gry",
+        },
+    },
+    "TaskText": {
+        # A card whose task sits in the queue behind the exclusive lane.
+        "Waiting for other tasks to finish": {
+            "zh_CN": "等待其他任务完成",
+            "zh_TW": "等待其他任務完成",
+            "ja_JP": "他のタスクの完了を待っています",
+            "ko_KR": "다른 작업이 완료되기를 기다리는 중",
+            "de_DE": "Wartet auf andere Aufgaben",
+            "fr_FR": "En attente d'autres tâches",
+            "es_ES": "Esperando a que terminen otras tareas",
+            "pt_BR": "Aguardando outras tarefas",
+            "ru_RU": "Ожидание завершения других задач",
+            "tr_TR": "Diğer görevlerin bitmesi bekleniyor",
+            "pl_PL": "Oczekiwanie na zakończenie innych zadań",
+        },
+    },
+})
 
 def unescape(text: str) -> str:
     return text.replace('\\"', '"').replace("\\\\", "\\")

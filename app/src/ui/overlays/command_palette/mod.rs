@@ -583,10 +583,13 @@ impl PaletteController {
                 // The instance is selected *before* the palette closes, so the
                 // background has already been told by the time the palette is
                 // gone.
-                ui.global::<GameState>().invoke_select_instance(id.into());
+                ui.global::<GameState>()
+                    .invoke_select_instance(id.clone().into());
                 self.close(ui);
                 if launch {
-                    ui.global::<Navigation>().invoke_navigate("launch".into());
+                    // The launch button's own entry point, so the palette cannot
+                    // start a launch that skips the waiting and the cancel button.
+                    crate::ui::views::launch::request(ui, id);
                 }
             }
             Action::OpenProject { platform, id } => {

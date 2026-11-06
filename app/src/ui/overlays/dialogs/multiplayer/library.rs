@@ -5,10 +5,17 @@
 //! The Conic Nexus library download screen.
 
 use super::*;
+use crate::usecases::generation::Token;
+use crate::usecases::tasks::{TaskHandle, TaskWork};
+use shared::task::{TaskKind, TaskSpec, TaskTarget};
 
 /// Runs the library download. The `multiplayer` crate samples its own progress
-/// and reports through the sink built here; the task centre owns the card and
-/// the cancel policy.
+/// and reports through the sink built here; the task centre owns the card, the
+/// scheduling and the cancel policy.
+///
+/// Nothing starts until the centre admits the task — the download sits in the
+/// parallel lane, so it is admitted at once unless a task of its own kind is
+/// already queued ahead of it.
 pub(crate) fn start_download(ui: &App, controller: &Rc<Controller>) {
     abort_download(controller);
     let token = controller.download_gate.issue();
@@ -24,14 +31,29 @@ pub(crate) fn start_download(ui: &App, controller: &Rc<Controller>) {
     }
 
     let service = crate::ui::services::tasks::service();
-    let task = service.begin(shared::task::TaskSpec {
-        kind: shared::task::TaskKind::LibraryDownload,
+    let spec = TaskSpec {
+        kind: TaskKind::LibraryDownload,
         subject: "Conic Nexus".into(),
         context: String::new(),
-        target: shared::task::TaskTarget::MultiplayerLibrary,
-    });
+        target: TaskTarget::MultiplayerLibrary,
+    };
+    // The work needs the controller, which is a thread-local; the closure has to
+    // be `Send`, so it hops back onto the event loop first.
+    let work: TaskWork = {
+        let weak = ui.as_weak();
+        Box::new(move |task| {
+            let weak = weak.clone();
+            let token = token.clone();
+            let _ = weak.upgrade_in_event_loop(move |ui| admitted(&ui, task, token));
+        })
+    };
+    service.submit(spec, work);
+}
+
+/// The download was admitted: spawn it and wire its cancel hook.
+fn admitted(ui: &App, task: TaskHandle, token: Token) {
     let id = task.id();
-    controller.download_task_id.set(id);
+    with_controller(|controller| controller.download_task_id.set(id));
 
     let weak = ui.as_weak();
     let sink: multiplayer::LibrarySink = {
@@ -65,16 +87,18 @@ pub(crate) fn start_download(ui: &App, controller: &Rc<Controller>) {
             });
         }
     });
-    let gate = controller.download_gate.clone();
     let abort = handle.abort_handle();
-    service.attach_cancel(
-        id,
-        Arc::new(move || {
-            gate.invalidate();
-            abort.abort();
-        }),
-    );
-    *controller.download_task.borrow_mut() = Some(handle);
+    with_controller(|controller| {
+        let gate = controller.download_gate.clone();
+        crate::ui::services::tasks::service().attach_cancel(
+            id,
+            Arc::new(move || {
+                gate.invalidate();
+                abort.abort();
+            }),
+        );
+        *controller.download_task.borrow_mut() = Some(handle);
+    });
 }
 
 /// Stops the running download without the task centre's confirmation prompt.

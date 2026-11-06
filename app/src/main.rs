@@ -134,13 +134,17 @@ fn main() {
         let mut previous_page = ui.global::<Navigation>().get_current_page();
         ui.global::<Navigation>().on_page_changed(move |page| {
             let left_setup = previous_page.as_str() == "setup" && page.as_str() != "setup";
-            previous_page = page;
+            previous_page = page.clone();
             if let Some(ui) = weak_ui.upgrade() {
                 if left_setup {
                     ui::views::setup::notify_if_abandoned(&ui, &shared);
                 }
                 ui.global::<NewsState>().set_visible(false);
                 ui.global::<NotificationState>().set_visible(false);
+                // `Navigation.page-changed` holds one handler, so every surface
+                // that wants it is called from here; a second `on_page_changed`
+                // would be replaced by this one without a word.
+                ui::views::launch::page_left(&ui, page.as_str());
             }
         });
     }

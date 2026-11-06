@@ -13,6 +13,9 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     ui.global::<GameState>()
         .set_rows(ModelRc::new(controller.borrow().rows_model.clone()));
     CONTROLLER.with(|cell| *cell.borrow_mut() = Some(Rc::clone(&controller)));
+    // The launch/download button mirrors the task centre; `project` runs once now
+    // for the first paint and again after every task event.
+    install::watch();
     GameController::reload(ui);
 
     let state = ui.global::<GameState>();
@@ -177,31 +180,40 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         });
     }
     {
+        // `request` opens the page and lets it wait for the centre; the button
+        // does not get to decide when a launch may start.
         let weak = ui.as_weak();
         state.on_launch(move || {
-            if let Some(ui) = weak.upgrade() {
-                ui.global::<Navigation>().invoke_navigate("launch".into());
+            let Some(ui) = weak.upgrade() else { return };
+            let id = ui.global::<GameState>().get_current_id().to_string();
+            if id.is_empty() {
+                return;
             }
+            crate::ui::views::launch::request(&ui, id);
         });
     }
     {
-        let controller = Rc::clone(&controller);
         let weak = ui.as_weak();
-        state.on_repair_and_launch(move || {
-            let Some(id) = controller.borrow().current_id.clone() else {
+        state.on_start_download(move || {
+            let Some(ui) = weak.upgrade() else { return };
+            let id = ui.global::<GameState>().get_current_id().to_string();
+            if id.is_empty() {
                 return;
-            };
-            let weak = weak.clone();
-            crate::support::runtime::spawn(async move {
-                if let Err(error) = instance::remove_install_lock(&id).await {
-                    log::error!("failed to remove install lock: {error}");
-                    return;
-                }
-                crate::ui::services::report::report(&weak, move |ui| {
-                    // The launch page re-runs the install flow when the lock is gone.
-                    ui.global::<Navigation>().invoke_navigate("launch".into());
-                });
-            });
+            }
+            install::start(&ui, id);
+        });
+    }
+    {
+        // One button stops whatever this instance is doing. The centre applies
+        // the per-kind policy: a launch stops at once, an install asks after
+        // ten seconds, and a queued task never asks at all.
+        let weak = ui.as_weak();
+        state.on_cancel_task(move || {
+            let Some(ui) = weak.upgrade() else { return };
+            let id = ui.global::<GameState>().get_task_id();
+            if id >= 0 {
+                ui.global::<TaskState>().invoke_request_cancel(id);
+            }
         });
     }
     {

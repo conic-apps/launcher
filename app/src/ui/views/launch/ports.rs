@@ -5,56 +5,28 @@
 //! The launch flow's output port: [`update_sink`] is what the app hands
 //! [`crate::usecases::launch::run`], turning each [`LaunchUpdate`] into
 //! `LaunchState` writes and one-off dialogs, gated by the run's [`Token`].
+//!
+//! Every terminal report also settles the controller on the event loop, which
+//! hands the exclusive lane back: the launch does not schedule itself through the
+//! task centre, so it has to release the reservation it took.
 
 use std::sync::{
-    Arc, Mutex,
+    Arc,
     atomic::{AtomicBool, Ordering},
 };
 
-use shared::task::TaskSpec;
+use crate::ui::services::report::report;
 
 use super::*;
-use crate::ui::services::tasks::TaskStarter;
-use crate::usecases::tasks::TaskHandle;
-
-#[derive(Default)]
-struct InstallTask {
-    handle: Option<TaskHandle>,
-    finished: bool,
-}
 
 /// The sink the launch use case reports through.
-///
-/// The install card is started lazily when the first install event arrives:
-/// the launch flow may be refused during its account checks and never touch the
-/// disk, and an empty "installing" card would be a lie.
-pub(crate) fn update_sink(
-    weak: Weak<App>,
-    token: Token,
-    loader: String,
-    starter: TaskStarter,
-    install_spec: Option<TaskSpec>,
-    task_id: Arc<Mutex<Option<i32>>>,
-) -> Sink<LaunchUpdate> {
+pub(crate) fn update_sink(weak: Weak<App>, token: Token) -> Sink<LaunchUpdate> {
     // The game is up on the first of the three startup markers, and the quit
     // dialog has nothing left to warn about from then on. Latched so the
     // dismiss runs once.
     let game_up = Arc::new(AtomicBool::new(false));
-    let install_task = Mutex::new(InstallTask::default());
     Arc::new(move |update| match update {
-        LaunchUpdate::Install(progress) => {
-            if let Some(spec) = &install_spec {
-                update_install_task(&weak, &starter, &install_task, &task_id, spec, &progress);
-            }
-            let view = presenter::install_view(&progress, &loader);
-            deliver(&weak, &token, move |ui| {
-                presenter::apply_view(&ui.global::<LaunchState>(), view);
-            });
-        }
         LaunchUpdate::Launch(progress) => {
-            // The install is over as soon as the launch crate starts its own
-            // stages; the launch screen keeps the rest.
-            finish_install_task(&install_task, &task_id, None);
             if matches!(
                 progress,
                 launch::LaunchProgress::LogLwjglVersion
@@ -76,9 +48,16 @@ pub(crate) fn update_sink(
             state.set_progress_kind("refresh-account".into());
             state.set_progress_loading(true);
         }),
-        LaunchUpdate::Dialog(dialog) => show_dialog(&weak, &token, dialog),
+        LaunchUpdate::Dialog(dialog) => {
+            // The dialog is the whole answer; the page stays as it is, and the
+            // lane comes back so a queued install can run while the player reads
+            // it.
+            log::info!(target: "launch", "the launch was refused after the flow started");
+            settle_on_event_loop(&weak);
+            show_dialog(&weak, &token, dialog);
+        }
         LaunchUpdate::Error(message) => {
-            finish_install_task(&install_task, &task_id, Some(message.clone()));
+            settle_on_event_loop(&weak);
             set_error(&weak, &token, message);
         }
         LaunchUpdate::Account(account) => store_account(&weak, &token, account),
@@ -86,7 +65,7 @@ pub(crate) fn update_sink(
             quit_app,
             pause_music,
         } => {
-            finish_install_task(&install_task, &task_id, None);
+            settle_on_event_loop(&weak);
             deliver(&weak, &token, move |ui| {
                 if pause_music {
                     crate::ui::overlays::music_player::pause();
@@ -95,76 +74,25 @@ pub(crate) fn update_sink(
                     let _ = ui.hide();
                     let _ = slint::quit_event_loop();
                 } else {
-                    ui.global::<Navigation>().invoke_back();
+                    // The launch is what moved the play time on disk.
+                    ui.global::<GameState>().invoke_refresh();
+                    return_to_game_view(&ui);
                 }
             })
         }
     })
 }
 
-fn update_install_task(
-    weak: &Weak<App>,
-    starter: &TaskStarter,
-    state: &Mutex<InstallTask>,
-    task_id: &Mutex<Option<i32>>,
-    spec: &TaskSpec,
-    progress: &install::InstallProgress,
-) {
-    let mut state = state
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-    if state.finished {
-        return;
-    }
-    if state.handle.is_none() {
-        let handle = starter.begin(spec.clone());
-        let id = handle.id();
-        if let Ok(mut slot) = task_id.lock() {
-            *slot = Some(id);
-        }
-        let weak = weak.clone();
-        starter.attach_cancel(
-            id,
-            Arc::new(move || {
-                let weak = weak.clone();
-                let _ = weak.upgrade_in_event_loop(|ui| {
-                    crate::ui::views::launch::launch_controller()
-                        .borrow_mut()
-                        .cancel();
-                    ui.global::<Navigation>().invoke_back();
-                });
-            }),
-        );
-        state.handle = Some(handle);
-    }
-    if let Some(handle) = state.handle.as_ref() {
-        let (stage, progress) = crate::usecases::progress::install(progress);
-        handle.update(stage, progress);
-    }
-}
-
-fn finish_install_task(
-    state: &Mutex<InstallTask>,
-    task_id: &Mutex<Option<i32>>,
-    error: Option<String>,
-) {
-    if let Ok(mut slot) = task_id.lock() {
-        *slot = None;
-    }
-    let mut state = state
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-    if state.finished {
-        return;
-    }
-    state.finished = true;
-    let Some(handle) = state.handle.take() else {
-        return;
-    };
-    match error {
-        Some(error) => handle.fail(error),
-        None => handle.succeed(),
-    }
+/// Hands the exclusive lane back, on the event loop.
+///
+/// The controller is a thread-local and the sink runs on a worker thread, so this
+/// cannot be called from the sink itself: doing that panicked, which dropped the
+/// terminal report (the launch page stayed up for good) and leaked the
+/// reservation (every later install queued behind it forever). Ungated on
+/// purpose — the lane must come back even when the token is stale, or a launch
+/// the player abandoned would hold it.
+fn settle_on_event_loop(weak: &Weak<App>) {
+    report(weak, |_| launch_controller().borrow_mut().settle());
 }
 
 fn show_dialog(weak: &Weak<App>, token: &Token, dialog: LaunchDialog) {

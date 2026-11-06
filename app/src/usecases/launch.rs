@@ -2,8 +2,13 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The launch use case: the checks, the account refresh, the install (when the
-//! instance is not installed) and the launch.
+//! The launch use case: the checks, the account refresh and the launch.
+//!
+//! Installing is not part of it: an instance is installed by the `GameInstall`
+//! task (`app/src/ui/views/game/install.rs`), and a launch only starts once that
+//! task has left the exclusive lane. A caller that reaches here with an
+//! uninstalled instance gets a refusal rather than an install racing whatever
+//! else is touching the game files.
 //!
 //! UI-neutral. It reports through a [`LaunchSink`] of [`LaunchUpdate`]s; the
 //! frontend turns each into screen state. Nothing here knows Slint, the
@@ -30,8 +35,6 @@ pub enum LaunchDialog {
 
 /// What one launch run reports, in the order it reports it.
 pub enum LaunchUpdate {
-    /// The `install` crate's progress, passed straight through.
-    Install(install::InstallProgress),
     /// The `launch` crate's progress, passed straight through.
     Launch(launch::LaunchProgress),
     /// The account is being refreshed, before a stage bar is set.
@@ -88,20 +91,15 @@ pub async fn run(mut config: Config, instance: Option<Instance>, out: LaunchSink
     }
 
     if !instance.installed {
-        log::info!(
+        log::error!(
             target: "launch",
-            "instance '{}' is not installed, starting the install",
+            "refused: instance '{}' is not installed",
             instance.config.name
         );
-        let sink: install::InstallSink = {
-            let out = out.clone();
-            Arc::new(move |progress| out(LaunchUpdate::Install(progress)))
-        };
-        if let Err(error) = install::install(config.clone(), instance.clone(), sink).await {
-            log::error!(target: "launch", "install failed: {error}");
-            out(LaunchUpdate::Error(error.to_string()));
-            return;
-        }
+        out(LaunchUpdate::Error(
+            "the instance is not installed".to_string(),
+        ));
+        return;
     }
 
     log::info!(target: "launch", "launching instance '{}'", instance.config.name);
@@ -113,7 +111,7 @@ pub async fn run(mut config: Config, instance: Option<Instance>, out: LaunchSink
         Ok(pid) => {
             // The process id is the one handle a bug report can be correlated
             // with, against `running.rs`'s own lines about the same process.
-            log::info!(target: "launch", "launch task finished (pid {pid})");
+            log::info!(target: "launch", "the game is up (pid {pid})");
             let quit_app = instance
                 .config
                 .launch_config
@@ -135,6 +133,16 @@ pub async fn run(mut config: Config, instance: Option<Instance>, out: LaunchSink
             match error {
                 launch::Error::NoSuitableJavaRuntime => {
                     out(LaunchUpdate::Dialog(LaunchDialog::NoSuitableJava));
+                }
+                // The game is gone, the player is not: go back to the instance
+                // list rather than leaving the launch page up, and do not quit the
+                // app even when this instance is set to. The crash itself is
+                // reported by the session watcher, and its report is what to read.
+                launch::Error::FailedBeforeStart => {
+                    out(LaunchUpdate::Finished {
+                        quit_app: false,
+                        pause_music: false,
+                    });
                 }
                 other => out(LaunchUpdate::Error(other.to_string())),
             }

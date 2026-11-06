@@ -735,11 +735,6 @@ msgstr "Запустить игру"
 
 #: ui
 msgctxt "InstanceSummary"
-msgid "Repair game and launch"
-msgstr "Восстановить игру и запустить"
-
-#: ui
-msgctxt "InstanceSummary"
 msgid "Saves"
 msgstr "Сохранения"
 
@@ -1134,7 +1129,7 @@ msgid "Preparing"
 msgstr "Подготовка"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Preparing download"
 msgstr "Подготовка к загрузке"
 
@@ -1154,32 +1149,32 @@ msgid "Downloading game files {} / {}"
 msgstr "Загрузка файлов игры {0} / {1}"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Checking Java runtime"
 msgstr "Проверка среды Java"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Downloading Java {}/{}"
 msgstr "Загрузка Java {0}/{1}"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Installing {}"
 msgstr "Установка {0}"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Downloading {} installer"
 msgstr "Загрузка установщика {0}"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Downloading dependencies"
 msgstr "Загрузка зависимостей"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Running {} installer: {}"
 msgstr "Запуск установщика {0}: {1}"
 
@@ -3797,3 +3792,53 @@ msgstr "Minecraft {} вышел. Нажмите здесь, чтобы узна�
 msgctxt "NotificationText"
 msgid "Conic Launcher has been updated to version {}. Click here to view the release notes"
 msgstr "Conic Launcher обновлён до версии {}. Нажмите здесь, чтобы посмотреть примечания к выпуску"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Maintenance"
+msgstr "Обслуживание"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "View game logs"
+msgstr "Просмотреть логи игры"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Opens the instance's logs folder"
+msgstr "Открывает папку логов экземпляра"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Repair install"
+msgstr "Восстановить установку"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Verifies and re-downloads the game files. It does not start the game"
+msgstr "Проверяет и заново скачивает файлы игры. Игра не запускается"
+
+#: ui
+msgctxt "TaskText"
+msgid "Waiting for other tasks to finish"
+msgstr "Ожидание завершения других задач"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Download"
+msgstr "Скачать"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Cancel"
+msgstr "Отмена"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Waiting"
+msgstr "В очереди"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Waiting for other tasks to finish"
+msgstr "Ожидание завершения других задач"

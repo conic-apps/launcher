@@ -95,13 +95,9 @@ export component LaunchView inherits Rectangle {
         easing: cubic-bezier(0.165, 0.84, 0.44, 1);
     }
 
-    // The page stack recreates this component per navigation, so this starts it.
-    init => {
-        LaunchState.start();
-    }
-
-    // Beat one. Waits for `has-instance`, seeded asynchronously by the launch
-    // flow; without it the intro would run while the column is invisible.
+    // Beat one. Waits for `has-instance`, which the launch flow seeds when it
+    // opens the page; without it the intro would run while the column is
+    // invisible.
     intro-start-timer := Timer {
         interval: 50ms;
         running: LaunchState.has-instance && root.intro-stage == 0;

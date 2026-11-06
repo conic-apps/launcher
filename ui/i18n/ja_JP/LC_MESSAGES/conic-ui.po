@@ -735,11 +735,6 @@ msgstr "ゲームを起動"
 
 #: ui
 msgctxt "InstanceSummary"
-msgid "Repair game and launch"
-msgstr "ゲームを修復して起動"
-
-#: ui
-msgctxt "InstanceSummary"
 msgid "Saves"
 msgstr "ワールド"
 
@@ -1134,7 +1129,7 @@ msgid "Preparing"
 msgstr "準備中"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Preparing download"
 msgstr "ダウンロードを準備中"
 
@@ -1154,32 +1149,32 @@ msgid "Downloading game files {} / {}"
 msgstr "ゲームファイルをダウンロード中 {0} / {1}"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Checking Java runtime"
 msgstr "Javaランタイムを確認中"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Downloading Java {}/{}"
 msgstr "Javaをダウンロード中 {0}/{1}"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Installing {}"
 msgstr "{0} をインストール中"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Downloading {} installer"
 msgstr "{0} のインストーラーをダウンロード中"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Downloading dependencies"
 msgstr "依存関係をダウンロード中"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Running {} installer: {}"
 msgstr "{0} のインストーラーを実行中: {1}"
 
@@ -3797,3 +3792,53 @@ msgstr "Minecraft {} がリリースされました。ここをクリックし�
 msgctxt "NotificationText"
 msgid "Conic Launcher has been updated to version {}. Click here to view the release notes"
 msgstr "Conic Launcher がバージョン {} に更新されました。ここをクリックしてリリースノートを表示"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Maintenance"
+msgstr "メンテナンス"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "View game logs"
+msgstr "ゲームログを表示"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Opens the instance's logs folder"
+msgstr "インスタンスのログフォルダーを開きます"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Repair install"
+msgstr "インストールを修復"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Verifies and re-downloads the game files. It does not start the game"
+msgstr "ゲームファイルを検証して再ダウンロードします。ゲームは起動しません"
+
+#: ui
+msgctxt "TaskText"
+msgid "Waiting for other tasks to finish"
+msgstr "他のタスクの完了を待っています"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Download"
+msgstr "ダウンロード"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Waiting"
+msgstr "待機中"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Waiting for other tasks to finish"
+msgstr "他のタスクの完了を待っています"

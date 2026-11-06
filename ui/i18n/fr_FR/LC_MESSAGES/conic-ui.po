@@ -735,11 +735,6 @@ msgstr "Lancer le jeu"
 
 #: ui
 msgctxt "InstanceSummary"
-msgid "Repair game and launch"
-msgstr "Réparer le jeu et lancer"
-
-#: ui
-msgctxt "InstanceSummary"
 msgid "Saves"
 msgstr "Sauvegardes"
 
@@ -1134,7 +1129,7 @@ msgid "Preparing"
 msgstr "Préparation"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Preparing download"
 msgstr "Préparation du téléchargement"
 
@@ -1154,32 +1149,32 @@ msgid "Downloading game files {} / {}"
 msgstr "Téléchargement des fichiers du jeu {0} / {1}"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Checking Java runtime"
 msgstr "Vérification du runtime Java"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Downloading Java {}/{}"
 msgstr "Téléchargement de Java {0}/{1}"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Installing {}"
 msgstr "Installation de {0}"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Downloading {} installer"
 msgstr "Téléchargement de l'installateur de {0}"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Downloading dependencies"
 msgstr "Téléchargement des dépendances"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Running {} installer: {}"
 msgstr "Exécution de l'installateur de {0} : {1}"
 
@@ -3797,3 +3792,53 @@ msgstr "Minecraft {} est sorti. Cliquez ici pour plus de détails"
 msgctxt "NotificationText"
 msgid "Conic Launcher has been updated to version {}. Click here to view the release notes"
 msgstr "Conic Launcher a été mis à jour vers la version {}. Cliquez ici pour afficher les notes de version"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Maintenance"
+msgstr "Maintenance"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "View game logs"
+msgstr "Voir les journaux du jeu"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Opens the instance's logs folder"
+msgstr "Ouvre le dossier des journaux de l'instance"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Repair install"
+msgstr "Réparer l'installation"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Verifies and re-downloads the game files. It does not start the game"
+msgstr "Vérifie et retélécharge les fichiers du jeu. Ne lance pas le jeu"
+
+#: ui
+msgctxt "TaskText"
+msgid "Waiting for other tasks to finish"
+msgstr "En attente d'autres tâches"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Download"
+msgstr "Télécharger"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Cancel"
+msgstr "Annuler"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Waiting"
+msgstr "En attente"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Waiting for other tasks to finish"
+msgstr "En attente d'autres tâches"

@@ -5,9 +5,13 @@
 import { Theme } from "../../theme.slint";
 import { AppIcon } from "../../components/display/app-icon.slint";
 import { Loading } from "../../components/controls/loading.slint";
-import { Dropdown, DropdownOption } from "../../globals/dropdown.slint";
-import { FocusManager } from "../../globals/focus.slint";
-import { GameState, GameIntro, GameTime } from "../../globals/game.slint";
+import { Progress } from "../../components/controls/progress.slint";
+import {
+    GameState,
+    GameInstallText,
+    GameIntro,
+    GameTime,
+} from "../../globals/game.slint";
 
 component MetaColumn inherits Rectangle {
     in property <string> label;
@@ -150,6 +154,73 @@ component ContentRow inherits Rectangle {
     }
 }
 
+// The install strip beside the launch button.
+//
+// The box grows first and the contents fade in behind the clip, so the text
+// never reflows while the width slides; hiding runs the other way round. The
+// contents are laid out at their final width throughout, which is what keeps the
+// sentence from being re-wrapped mid-animation.
+component InstallStrip inherits Rectangle {
+    in property <bool> shown: false;
+    in property <bool> queued: false;
+    in property <string> text: "";
+
+    width: root.shown ? root.open-width : 0px;
+    height: 42px;
+    clip: true;
+    background: transparent;
+
+    // What is left of the summary's width once the launch button, the gap, the
+    // row's spacing and the action icons are placed: the content bars below are
+    // 400px with a 4px inset, so the opened strip ends on their right edge.
+    private property <length> open-width: 404px - 128px - 12px - 16px - 112px;
+
+    animate width {
+        duration: root.shown ? 220ms : 150ms;
+        easing: ease-out-quart;
+    }
+
+    content := Rectangle {
+        x: 0;
+        y: 0;
+        width: root.open-width;
+        height: root.height;
+        background: transparent;
+        opacity: root.shown ? 1.0 : 0.0;
+
+        animate opacity {
+            duration: 160ms;
+            delay: root.shown ? 60ms : 0ms;
+            easing: ease-out-quad;
+        }
+
+        VerticalLayout {
+            width: 100%;
+            height: 100%;
+            alignment: center;
+            spacing: 7px;
+
+            Text {
+                width: 100%;
+                height: 14px;
+                text: root.text;
+                font-size: 12px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.default-text-color.transparentize(0.2);
+                vertical-alignment: center;
+                overflow: elide;
+            }
+
+            Progress {
+                width: 100%;
+                loading: root.queued || GameState.install-loading;
+                value: GameState.install-value;
+                max: GameState.install-max;
+            }
+        }
+    }
+}
+
 // The current-instance panel: title, metadata row, launch/actions row and the
 // local-content previews.
 //
@@ -164,23 +235,6 @@ export component InstanceSummary inherits Rectangle {
 
     // The detail rows and content previews stagger by this.
     private property <duration> intro-stagger: 30ms;
-    private property <[DropdownOption]> launch-options: [
-        { key: "repair", label: @tr("Repair game and launch"), icon: "build" },
-    ];
-    private property <bool> launch-menu-is-open: Dropdown.open && Dropdown.owner == "launch-menu";
-    private property <float> launch-chevron-flip: root.launch-menu-is-open ? 1.0 : 0.0;
-    animate launch-chevron-flip {
-        duration: 200ms;
-        easing: ease-in-out;
-    }
-    out property <bool> launch-menu-opened: root.launch-menu-is-open;
-    private property <int> dropdown-serial: Dropdown.choose-serial;
-    changed dropdown-serial => {
-        if Dropdown.choose-owner == "launch-menu" {
-            Dropdown.open = false;
-            GameState.repair-and-launch();
-        }
-    }
 
     stack := VerticalLayout {
         spacing: 16px;
@@ -325,38 +379,85 @@ export component InstanceSummary inherits Rectangle {
                     vertical-stretch: 0;
                     horizontal-stretch: 0;
 
-                    // A 2px gap beside the 128px launch button.
+                    // The button and the install strip. The strip is a layout
+                    // child whose width animates from zero, and the gap with it,
+                    // so the row grows while the button stays put.
                     launch-buttons := HorizontalLayout {
                         vertical-stretch: 0;
-                        width: 154px;
                         height: 42px;
                         cross-axis-alignment: stretch;
-                        spacing: 2px;
+                        spacing: root.strip-gap;
 
                         launch-button := Rectangle {
                             width: 128px;
                             height: parent.height;
+                            border-radius: 8px;
                             background: #7287fd;
-                            border-top-left-radius: 8px;
-                            border-bottom-left-radius: 8px;
-                            opacity: launch-touch.pressed ? 0.9 : root-launch-disabled ? 0.6 : 1.0;
+                            opacity: launch-touch.pressed ? 0.9 : root.button-disabled ? 0.6 : 1.0;
+                            clip: true;
 
-                            HorizontalLayout {
-                                alignment: center;
-                                spacing: 4px;
-                                cross-axis-alignment: center;
-
-                                AppIcon {
-                                    name: "play";
-                                    size: 20px;
-                                    icon-color: #ffffff;
+                            // Three states, cross-faded: cancelling is a different
+                            // intent from starting, so it gets its own face.
+                            idle-face := Rectangle {
+                                width: 100%;
+                                height: 100%;
+                                background: transparent;
+                                opacity: root.button-kind == "cancel" ? 0.0 : 1.0;
+                                animate opacity {
+                                    duration: 120ms;
+                                    easing: ease-out-quad;
                                 }
 
-                                Text {
-                                    text: @tr("Launch");
-                                    font-size: 15px;
-                                    font-weight: Theme.font-weight-normal;
-                                    color: #ffffff;
+                                HorizontalLayout {
+                                    alignment: center;
+                                    spacing: 4px;
+                                    cross-axis-alignment: center;
+
+                                    AppIcon {
+                                        name: root.button-kind == "download" ? "download" : "play";
+                                        size: 20px;
+                                        icon-color: #ffffff;
+                                    }
+
+                                    Text {
+                                        text: root.button-kind == "download"
+                                            ? @tr("Download")
+                                            : @tr("Launch");
+                                        font-size: 15px;
+                                        font-weight: Theme.font-weight-normal;
+                                        color: #ffffff;
+                                        overflow: elide;
+                                    }
+                                }
+                            }
+
+                            cancel-face := Rectangle {
+                                width: 100%;
+                                height: 100%;
+                                background: transparent;
+                                opacity: root.button-kind == "cancel" ? 1.0 : 0.0;
+                                animate opacity {
+                                    duration: 120ms;
+                                    easing: ease-out-quad;
+                                }
+
+                                HorizontalLayout {
+                                    alignment: center;
+                                    spacing: 4px;
+                                    cross-axis-alignment: center;
+
+                                    AppIcon {
+                                        name: "xmark";
+                                        size: 18px;
+                                        icon-color: #ffffff;
+                                    }
+
+                                    Text {
+                                        text: @tr("Cancel");
+                                        font-size: 15px;
+                                        font-weight: Theme.font-weight-normal;
+                                        color: #ffffff;
+                                    }
                                 }
                             }
 
@@ -364,49 +465,22 @@ export component InstanceSummary inherits Rectangle {
                                 width: parent.width;
                                 height: parent.height;
                                 enabled: GameState.has-current;
-                                clicked => { GameState.launch(); }
-                            }
-                        }
-
-                        launch-sub-button := Rectangle {
-                            vertical-stretch: 1;
-                            width: 24px;
-                            background: #7287fd;
-                            border-top-right-radius: 8px;
-                            border-bottom-right-radius: 8px;
-                            opacity: sub-touch.pressed ? 0.9 : root-launch-disabled ? 0.6 : 1.0;
-
-                            AppIcon {
-                                name: "chevron-down";
-                                size: 16px;
-                                icon-color: #ffffff;
-                                transform-scale-y: (1.0 - 2.0 * root.launch-chevron-flip) * 100%;
-                                opacity: 1.0 - 0.3 * (1.0 - abs(1.0 - 2.0 * root.launch-chevron-flip));
-                            }
-
-                            sub-touch := TouchArea {
-                                width: parent.width;
-                                height: parent.height;
-                                enabled: GameState.has-current;
                                 clicked => {
-                                    FocusManager.clear();
-                                    if (root.launch-menu-is-open) {
-                                        Dropdown.open = false;
+                                    if root.button-kind == "cancel" {
+                                        GameState.cancel-task();
+                                    } else if root.button-kind == "download" {
+                                        GameState.start-download();
                                     } else {
-                                        Dropdown.options = root.launch-options;
-                                        Dropdown.accounts = [];
-                                        Dropdown.account-mode = false;
-                                        Dropdown.current = "";
-                                        Dropdown.owner = "launch-menu";
-                                        Dropdown.anchor-x = launch-buttons.absolute-position.x;
-                                        Dropdown.anchor-y = launch-buttons.absolute-position.y
-                                            + launch-buttons.height + 4px;
-                                        Dropdown.anchor-width = launch-buttons.width;
-                                        Dropdown.expand-upwards = false;
-                                        Dropdown.open = true;
+                                        GameState.launch();
                                     }
                                 }
                             }
+                        }
+
+                        InstallStrip {
+                            shown: root.task-active;
+                            queued: root.task-queued;
+                            text: root.strip-text;
                         }
                     }
 
@@ -574,5 +648,29 @@ export component InstanceSummary inherits Rectangle {
         }
     }
 
-    private property <bool> root-launch-disabled: !GameState.has-current;
+    // The button's state, and the strip that explains it.
+    //
+    // `current-task` is the task centre's own view of this instance, so the
+    // button follows a task that ended, was cancelled or was queued in another
+    // surface; nothing here remembers anything.
+    private property <bool> task-active: GameState.current-task != "idle";
+    private property <bool> task-queued: GameState.current-task == "queued";
+    private property <bool> button-disabled: !GameState.has-current;
+    // "cancel" | "download" | "launch"
+    private property <string> button-kind: root.task-active
+        ? "cancel"
+        : (GameState.current-installed ? "launch" : "download");
+    private property <string> strip-text: root.task-queued
+        ? @tr("Waiting")
+        : GameInstallText.description(
+            GameState.install-kind,
+            GameState.install-name,
+            GameState.install-current,
+            GameState.install-total,
+            GameState.install-message);
+    private property <length> strip-gap: root.task-active ? 12px : 0px;
+    animate strip-gap {
+        duration: 200ms;
+        easing: ease-out-quart;
+    }
 }
