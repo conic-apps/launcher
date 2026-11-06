@@ -70,10 +70,8 @@ pub fn apply_locale(locale: &str) {
             *applied = locale.to_string();
         }
     }
-    // The catalog only carries text; which font draws the Han characters in it
-    // is a separate, also locale-dependent choice (see `native`). Kept here so
-    // a language change picks up both.
-    crate::support::native::apply_cjk_fallbacks(locale);
+    // Locale also decides the font fallbacks (see `native`).
+    crate::support::native::apply_font_fallbacks(locale);
 }
 
 /// `CONIC_LOCALE` overrides both the config and the system locale and disables
