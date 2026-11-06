@@ -241,9 +241,8 @@ export global Theme {
     in-out property <color> dialog-border;
     in-out property <length> dialog-border-radius;
 
-    // Typography. The font is Latin + digits, and Slint only appends generic
-    // fallbacks behind it, so the CJK fallbacks have to be registered separately
-    // (`app/src/support/native/windows/cjk_font.rs`).
+    // Typography. The font is Latin + digits; the CJK and symbol fallbacks are
+    // registered in `app/src/support/native/`.
     in property <string> font-family: "Comfortaa Nunito";
     in property <length> font-size-base: 16px;
     in property <int> font-weight-normal: 400;
