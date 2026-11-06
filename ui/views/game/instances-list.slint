@@ -187,14 +187,24 @@ component InstanceListCard inherits Rectangle {
             : Theme.surface-0.with-alpha(0.4);
 
         // Starts 100px in to keep the colour strip and name clear; its left edge
-        // is pre-faded in the pixels (`load_background`) to dissolve into the card.
-        if root.item.has-background && root.item.background.width > 0: Image {
+        // is pre-faded in the pixels (`decode_background`) to dissolve into the card.
+        // Not behind an `if`: the picture is decoded on the runtime and lands in
+        // the row after it is up, so the element has to be there for that change
+        // to fade instead of pop.
+        Image {
             x: 100px;
             y: 0;
             width: parent.width - 100px;
             height: 100%;
             source: root.item.background;
             image-fit: cover;
+            // A picture that has not landed decodes to nothing, which reports a
+            // zero width.
+            opacity: root.item.has-background && root.item.background.width > 0 ? 1.0 : 0.0;
+            animate opacity {
+                duration: 200ms;
+                easing: ease-out;
+            }
         }
     }
 

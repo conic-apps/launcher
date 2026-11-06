@@ -51,6 +51,33 @@ pub(crate) fn inherit_launch_config(launcher: &LaunchConfig) -> InstanceLaunchCo
 /// card's left.
 const BACKGROUND_LEFT_FADE: f32 = 0.5;
 
+/// A picture's pixels, decoded and with its left edge faded out, and its size.
+///
+/// The pixels rather than an [`Image`] because the instance list decodes on the
+/// runtime and can only build the `Image` on the event loop, where the model it
+/// feeds lives; the settings overlay decodes on the thread it is opened from and
+/// builds it there ([`load_background`]).
+///
+/// The left edge is faded to transparent **in the pixels**: Slint has no masks,
+/// and the flat gradient overlay the cards used to draw could only *replace* the
+/// picture with a solid colour. That reads as a stray colour band where the card
+/// is translucent over the game background (the list cards), so the picture has
+/// to dissolve into the card itself instead.
+pub(crate) fn decode_background(path: &std::path::Path) -> Option<(u32, u32, Vec<u8>)> {
+    let bytes = std::fs::read(path).ok()?;
+    let mut rgba = image::load_from_memory(&bytes).ok()?.to_rgba8();
+    let (width, height) = rgba.dimensions();
+    let fade = (width as f32 * BACKGROUND_LEFT_FADE) as u32;
+    if fade > 0 {
+        for (x, _, pixel) in rgba.enumerate_pixels_mut() {
+            if x < fade {
+                pixel[3] = (pixel[3] as f32 * (x as f32 / fade as f32)) as u8;
+            }
+        }
+    }
+    Some((width, height, rgba.into_raw()))
+}
+
 /// The instance's background picture, or an empty image when it has none.
 ///
 /// Slint reads a runtime path only through Rust, so the file is decoded here
@@ -59,33 +86,13 @@ const BACKGROUND_LEFT_FADE: f32 = 0.5;
 /// from the bytes rather than the file name (the instance's copy is extensionless:
 /// `add_background_image` writes it to a plain `background`).
 ///
-/// The left edge is faded to transparent **in the pixels**: Slint has no masks,
-/// and the flat gradient overlay the cards used to draw could only *replace* the
-/// picture with a solid colour. That reads as a stray colour band where the card
-/// is translucent over the game background (the list cards), so the picture has
-/// to dissolve into the card itself instead.
-///
 /// An image that could not be decoded reports a zero width.
 pub(crate) fn load_background(instance: &Instance) -> Image {
     if !instance.has_background {
         return Image::default();
     }
     let path = instance::get_background_path(&instance.id);
-    let decode = || {
-        let bytes = std::fs::read(&path).ok()?;
-        let mut rgba = image::load_from_memory(&bytes).ok()?.to_rgba8();
-        let (width, height) = rgba.dimensions();
-        let fade = (width as f32 * BACKGROUND_LEFT_FADE) as u32;
-        if fade > 0 {
-            for (x, _, pixel) in rgba.enumerate_pixels_mut() {
-                if x < fade {
-                    pixel[3] = (pixel[3] as f32 * (x as f32 / fade as f32)) as u8;
-                }
-            }
-        }
-        Some((width, height, rgba.into_raw()))
-    };
-    match decode() {
+    match decode_background(&path) {
         Some((width, height, rgba)) => Image::from_rgba8(SharedPixelBuffer::clone_from_slice(
             rgba.as_slice(),
             width,

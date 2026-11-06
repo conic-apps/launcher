@@ -64,6 +64,21 @@ pub(crate) struct CachedBackground {
     image: Image,
 }
 
+/// The instance backgrounds the list draws, and the decodes still running for
+/// the ones it cannot draw yet.
+///
+/// A decode is not a list change: an instance background is tens of megabytes
+/// and takes hundreds of milliseconds, while `apply` runs on the event loop and
+/// on every keystroke in the search field. So the row is built without the
+/// picture and the picture is dropped into it when it lands.
+#[derive(Default)]
+pub(crate) struct BackgroundCache {
+    images: HashMap<String, CachedBackground>,
+    /// The instances whose decode is in flight, so a second apply cannot start a
+    /// second decode of the same picture.
+    decoding: HashSet<String>,
+}
+
 #[derive(Clone, Debug)]
 pub(crate) struct GroupRange {
     key: String,
@@ -84,8 +99,8 @@ pub(crate) struct GameController {
     /// be decoded and cropped, and `apply` runs on every list change.
     avatars: HashMap<String, Image>,
     /// Memoised by the background file's modified time, which is the
-    /// invalidation key.
-    backgrounds: RefCell<HashMap<String, CachedBackground>>,
+    /// invalidation key. See [`BackgroundCache`].
+    backgrounds: RefCell<BackgroundCache>,
     /// Cached so a wheel event can decide whether it crossed a group edge
     /// without rebuilding the rows.
     groups: Vec<GroupRange>,
