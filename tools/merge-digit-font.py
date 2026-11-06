@@ -21,7 +21,7 @@
 #   tools/fonts/Comfortaa-Latin.woff2 (variable, wght 300-700)
 #   tools/fonts/Nunito-Digits.woff2   (variable, wght 200-1000, digits only)
 # Output:
-#   ui/fonts/ComfortaaNunito.ttf  (family "Comfortaa Nunito")
+#   ui/assets/fonts/ComfortaaNunito.ttf  (family "Comfortaa Nunito")
 #
 # Usage: python3 merge-digit-font.py [--verify]
 
@@ -41,7 +41,7 @@ from fontTools.varLib.models import VariationModel
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
-MERGE_OUT = os.path.join(ROOT, "app", "ui", "fonts", "ComfortaaNunito.ttf")
+MERGE_OUT = os.path.join(ROOT, "ui", "assets", "fonts", "ComfortaaNunito.ttf")
 COMFORTAA = os.path.join(HERE, "fonts", "Comfortaa-Latin.woff2")
 NUNITO = os.path.join(HERE, "fonts", "Nunito-Digits.woff2")
 

@@ -27,7 +27,7 @@
 
   The heading and its subheading are `<text>` in the launcher's own face rather
   than outlines, so that they stay editable; the render script turns them into
-  paths from `app/ui/fonts/ComfortaaNunito.ttf`, because that font is embedded
+  paths from `ui/assets/fonts/ComfortaaNunito.ttf`, because that font is embedded
   in the binary and installed nowhere a rasterizer could find it.
 
   Regenerate the PNG:  python3 tools/render-dmg-background.py
