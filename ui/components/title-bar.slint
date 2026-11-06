@@ -296,8 +296,9 @@ export component TitleBar inherits Rectangle {
         }
     }
 
-    // Right-side actions (news, notifications, then music). One container rather
-    // than three absolute buttons, so news keeps its place when music is absent.
+    // Right-side actions (news, music, then notifications). One container rather
+    // than three absolute buttons: when music is absent the group is 36px
+    // narrower, so news and the bell stay where they are on screen.
     Rectangle {
         width: root.right-actions-width;
         height: 28px;
@@ -314,6 +315,13 @@ export component TitleBar inherits Rectangle {
                 clicked => { root.open-news(); }
             }
 
+            if root.music-enabled: TitleBarActionButton {
+                icon-commands: Icons.stroke-commands("musical-notes");
+                icon-stroke-width: root.stroked-icon-width;
+                accessible-label: @tr("Music");
+                clicked => { root.toggle-music(); }
+            }
+
             TitleBarActionButton {
                 icon-commands: Icons.stroke-commands("bell");
                 icon-viewbox: Icons.viewbox("bell");
@@ -321,13 +329,6 @@ export component TitleBar inherits Rectangle {
                 selected: NotificationState.visible;
                 accessible-label: @tr("Notifications");
                 clicked => { root.open-notifications(); }
-            }
-
-            if root.music-enabled: TitleBarActionButton {
-                icon-commands: Icons.stroke-commands("musical-notes");
-                icon-stroke-width: root.stroked-icon-width;
-                accessible-label: @tr("Music");
-                clicked => { root.toggle-music(); }
             }
         }
     }
