@@ -61,6 +61,13 @@ component TaskRow inherits Rectangle {
         height: 76px;
         border-radius: 10px;
         clip: true;
+        // A queued task has not written anything yet, so its card reads as
+        // pending rather than as work in progress.
+        opacity: root.item.queued ? 0.75 : 1.0;
+        animate opacity {
+            duration: 200ms;
+            easing: ease-out-quad;
+        }
         background: root.item.action-kind != "none" && card-click.pressed ? Theme.surface-2
             : root.item.action-kind != "none" && card-click.has-hover ? Theme.surface-1
             : Theme.surface-0;
@@ -161,7 +168,7 @@ component TaskRow inherits Rectangle {
             width: 100%;
             value: root.item.value;
             max: root.item.max;
-            loading: root.item.indeterminate;
+            loading: root.item.indeterminate || root.item.queued;
         }
     }
 }

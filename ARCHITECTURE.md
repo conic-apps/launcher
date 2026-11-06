@@ -123,25 +123,71 @@ The notification centre also shows running work. A task is not a notice: it is l
 removed when it ends, while a notice is the record of something that already happened. The two share
 one panel but not a model.
 
-- `crates/shared/src/task.rs` — the UI-neutral contract: ids, kinds, stages, progress, targets,
-  `TaskEvent` and the `TaskSink`/`TaskCancel` ports.
-- `app/src/usecases/tasks.rs` — `TaskCenter`, the only owner of a running task's lifecycle. `begin`
-  reports it, `update` records a stage, `succeed`/`fail` remove it and post the matching existing
-  notification, and `request_cancel` applies the ten-second rule: under ten seconds the task stops
-  immediately; over it the frontend asks first.
+The centre is a **scheduler**, not a registry. `submit` hands it a description and the work
+(`TaskWork`, a `Box<dyn FnOnce(TaskHandle)>`); nothing starts until the centre admits the task, which
+it decides by one rule:
+
+- **Lane** (`TaskKind::lane`) — the mutex. `GameInstall` and `ModpackInstall` share one exclusive lane
+  of capacity 1, so no two of them ever run at once; content and library downloads sit in a parallel
+  lane and run beside it. This is the one place that says what may overlap.
+
+The queue is FIFO and scanned, not read from the front, so a task waiting for the exclusive lane does
+not hold up the parallel download submitted after it. `started_at` is stamped at admission, which is
+why the ten-second confirmation grace measures the run and not the wait.
+
+A launch is **not** a task. It has a screen and a cancel button, so a card in the queue would be a
+second, worse copy of the same thing. It waits for the centre to go idle and then takes the lane
+(`TaskCenter::reserve_exclusive`), holding it for as long as the flow runs; dropping the guard admits
+whatever queued in the meantime. That keeps the invariant the lane exists for — no install under a
+launching instance — without scheduling the launch.
+
+- `crates/shared/src/task.rs` — the UI-neutral contract: ids, kinds (with their lane), states,
+  stages, progress, targets, `TaskEvent` and the `TaskSink`/`TaskCancel` ports.
+- `app/src/usecases/tasks.rs` — `TaskCenter`: `submit`, the admission scan (`drain`), the reservation
+  for work it does not schedule, `update`/`retarget`, `succeed`/`fail` and `request_cancel`, which
+  asks after ten seconds unless the task has not started at all.
 - `app/src/usecases/progress.rs` — the one mapping from `DownloadSnapshot` and `InstallProgress` to
   `TaskProgress`/`TaskStage`.
-- `app/src/ui/services/tasks.rs` — the Slint adapter and a `Send` starter for producers that decide
-  to start work on a worker thread (the launch flow). It projects tasks into `TaskState`, mirrors a
-  content task's progress into an open detail panel, implements the card's targets, and turns a
-  completed task's target into the action behind its “Click here to view” notice. New tasks also get
-  a five-second top-right preview while the centre keeps the ongoing card.
+- `app/src/ui/services/tasks.rs` — the Slint adapter. It projects tasks into `TaskState`, mirrors a
+  content task's progress into an open detail panel, implements the card's targets, turns a
+  completed task's target into the action behind its “Click here to view” notice, and notifies its
+  observers so a surface can re-derive its own state after every event. New tasks also get a
+  five-second top-right preview while the centre keeps the ongoing card.
 - `ui/globals/tasks.slint` and `ui/overlays/notifications.slint` — the “Active tasks” section above
-  the notices, its 4px bottom progress strip, and `ui/overlays/dialogs/confirm-cancel-task.slint`
-  for the ten-second confirmation.
+  the notices, its 4px bottom progress strip, the queued card, and
+  `ui/overlays/dialogs/confirm-cancel-task.slint` for the ten-second confirmation.
 
 Tasks are runtime-only and are not persisted across restarts. Self-update deliberately stays out of
 the section: it is a silent startup check, not work the user started.
+
+### Install and launch are separate
+
+Installing is not a step inside a launch. The game view's button is the whole story — a **Download**
+when the instance has no `.install.lock`, a **Launch** when it does, and **Cancel** while an install
+is queued or running:
+
+- `app/src/ui/views/game/install.rs` turns an instance id into a `GameInstall` task and mirrors its
+  progress into the strip beside the button (`install_progress.rs`, which is the launch screen's old
+  install panel). It is also the repair path: instance settings drops the lock and submits the same
+  task, which then only installs.
+- `app/src/ui/views/launch/wiring.rs`'s `request` is the only way to start a launch. It opens the
+  page at once, shows "Waiting for other tasks to finish" while the centre is busy, and starts
+  `usecases::launch::run` when `reserve_exclusive` hands it the lane. The wait lives on the launch
+  page because that is where the player can call it off. Leaving the page cancels the launch through
+  `page_left`, which `main`'s one `Navigation.page-changed` handler calls — a Slint callback keeps a
+  single handler, so a surface that registers `on_page_changed` for itself is replaced by the next
+  one and its teardown silently never runs.
+- `views/launch/ports.rs` runs on a worker thread: it may only reach the UI through `deliver`/`report`.
+  The controller is a thread-local, so a terminal report settles it on the event loop
+  (`settle_on_event_loop`) — settling in the sink itself panics there, which drops the terminal report
+  and leaks the lane reservation.
+- The startup wait in `crates/launch` ends on a start marker, or on the process itself exiting with
+  no marker (`running::ExitWatch`), or on its twenty-second timeout. An exit without a marker is
+  `Error::FailedBeforeStart`, which `usecases/launch.rs` reports as `Finished`: back to the instance
+  list, no error page, no quit, and the crash notice carries the reason.
+- `usecases/launch.rs` refuses an uninstalled instance rather than installing it.
+- `GameState.current-task`/`task-id` are the projection the button reads, re-derived from the centre
+  after every task event, so the UI never keeps a second copy of the scheduler's state.
 
 Naming, once a file is placed: `*View` is a page, `*Overlay`/`*Dialog`/`*Panel`/ `*Card` is a
 surface, `*Root` is an overlay layer host. There is **no `base-` family** — the control itself is

@@ -624,7 +624,7 @@ pub(crate) fn setup_detail_actions(ui: &App) {
             let subject = ui.global::<ContentState>().get_detail_title().to_string();
             let context = ui.global::<GameState>().get_current_name().to_string();
             let service = crate::ui::services::tasks::service();
-            let task = service.begin(shared::task::TaskSpec {
+            let spec = shared::task::TaskSpec {
                 kind: shared::task::TaskKind::ContentDownload,
                 subject: if subject.is_empty() {
                     detail.id.clone()
@@ -638,43 +638,53 @@ pub(crate) fn setup_detail_actions(ui: &App) {
                     platform: detail.platform.key().into(),
                     project_id: detail.id.clone(),
                 },
-            });
-            let id = task.id();
-            let completion = task.clone();
+            };
             ui.global::<ContentState>().set_detail_operating(true);
-            let weak = ui.as_weak();
-            let handle = crate::support::runtime::spawn(async move {
-                let outcome =
-                    crate::usecases::content_install::install(&instance, &detail, task).await;
-                match &outcome {
-                    Ok(()) => completion.succeed(),
-                    Err(error) => {
-                        completion.fail(error.clone());
-                        log::error!("failed to download content: {error}");
-                    }
-                }
-                crate::ui::services::report::report(&weak, move |ui| {
-                    let state = ui.global::<ContentState>();
-                    state.set_detail_operating(false);
-                    state.set_detail_progress(0.0);
-                    state.set_detail_progress_max(0.0);
-                    state.set_detail_progress_text("".into());
-                    match outcome {
-                        Ok(()) => {
-                            refresh_installed(&ui);
-                            // What landed is stale now — for this panel *and*
-                            // for the count on the summary behind it, which is
-                            // drawn from the same list. One re-read keeps the
-                            // two from disagreeing.
-                            if let Some(kind) = installed_kind(detail.kind) {
-                                reload(&ui, kind);
+            let work: crate::usecases::tasks::TaskWork = {
+                let weak = ui.as_weak();
+                Box::new(move |task| {
+                    let completion = task.clone();
+                    let id = completion.id();
+                    let instance = instance.clone();
+                    let detail = detail.clone();
+                    let weak_outer = weak.clone();
+                    let handle = crate::support::runtime::spawn(async move {
+                        let outcome =
+                            crate::usecases::content_install::install(&instance, &detail, task)
+                                .await;
+                        match &outcome {
+                            Ok(()) => completion.succeed(),
+                            Err(error) => {
+                                completion.fail(error.clone());
+                                log::error!("failed to download content: {error}");
                             }
                         }
-                        Err(error) => log::error!("failed to download content: {error}"),
-                    }
-                });
-            });
-            service.attach_cancel(id, std::sync::Arc::new(move || handle.abort()));
+                        crate::ui::services::report::report(&weak_outer, move |ui| {
+                            let state = ui.global::<ContentState>();
+                            state.set_detail_operating(false);
+                            state.set_detail_progress(0.0);
+                            state.set_detail_progress_max(0.0);
+                            state.set_detail_progress_text("".into());
+                            match outcome {
+                                Ok(()) => {
+                                    refresh_installed(&ui);
+                                    // What landed is stale now — for this panel *and*
+                                    // for the count on the summary behind it, which is
+                                    // drawn from the same list. One re-read keeps the
+                                    // two from disagreeing.
+                                    if let Some(kind) = installed_kind(detail.kind) {
+                                        reload(&ui, kind);
+                                    }
+                                }
+                                Err(error) => log::error!("failed to download content: {error}"),
+                            }
+                        });
+                    });
+                    crate::ui::services::tasks::service()
+                        .attach_cancel(id, std::sync::Arc::new(move || handle.abort()));
+                })
+            };
+            service.submit(spec, work);
         });
     }
     {

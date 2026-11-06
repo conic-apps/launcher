@@ -99,4 +99,10 @@ export global InstanceSettingsState {
     callback remove-background();
     /// "Delete instance": closes this overlay and opens the confirm dialog.
     callback open-delete();
+    /// "View game logs": opens the instance's `logs` folder in the system's file
+    /// manager.
+    callback open-game-log-folder();
+    /// "Repair install": drops `.install.lock` and queues the install again. It
+    /// only installs — starting the game is the launch button's job.
+    callback repair-install();
 }

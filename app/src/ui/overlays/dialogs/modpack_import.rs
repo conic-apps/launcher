@@ -109,63 +109,77 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
                 .global::<ModpackImportState>()
                 .get_pack_name()
                 .to_string();
-            let task = service.begin(TaskSpec {
+            let spec = TaskSpec {
                 kind: TaskKind::ModpackInstall,
                 subject,
                 context: name.clone(),
                 target: TaskTarget::None,
-            });
-            let id = task.id();
-            let completion = task.clone();
-            let weak = weak.clone();
-            let handle = runtime::spawn(async move {
-                match modpack::create_instance(&plan, &name).await {
-                    Ok(created) => {
-                        log::info!("modpack instance {created} created; starting the install");
-                        completion.retarget(TaskTarget::Instance {
-                            instance_id: created.clone(),
-                        });
-                        let created_id = created.clone();
-                        report::report(&weak, move |ui| {
-                            ui.global::<GameState>()
-                                .invoke_refresh_selecting(created_id.into());
-                        });
-                        let result = crate::usecases::modpack::install(
-                            created.clone(),
-                            plan,
-                            config,
-                            completion.clone(),
-                        )
-                        .await;
-                        match result {
-                            Ok(()) => {
-                                log::info!("modpack install into {created} finished");
-                                completion.succeed();
+            };
+            // The instance is created inside the work, so the task keeps its
+            // `None` target until `retarget` gives it one; the exclusive lane is
+            // what holds every other modpack and game install back meanwhile.
+            let work: crate::usecases::tasks::TaskWork = {
+                let weak = weak.clone();
+                let busy_task = Arc::clone(&busy_task);
+                let busy_cancel = Arc::clone(&busy);
+                Box::new(move |task| {
+                    let completion = task.clone();
+                    let id = completion.id();
+                    let weak = weak.clone();
+                    let handle = runtime::spawn(async move {
+                        match modpack::create_instance(&plan, &name).await {
+                            Ok(created) => {
+                                log::info!(
+                                    "modpack instance {created} created; starting the install"
+                                );
+                                completion.retarget(TaskTarget::Instance {
+                                    instance_id: created.clone(),
+                                });
+                                let created_id = created.clone();
+                                report::report(&weak, move |ui| {
+                                    ui.global::<GameState>()
+                                        .invoke_refresh_selecting(created_id.into());
+                                });
+                                let result = crate::usecases::modpack::install(
+                                    created.clone(),
+                                    plan,
+                                    config,
+                                    completion.clone(),
+                                )
+                                .await;
+                                match result {
+                                    Ok(()) => {
+                                        log::info!("modpack install into {created} finished");
+                                        completion.succeed();
+                                    }
+                                    Err(error) => {
+                                        log::error!(
+                                            "modpack install into {created} failed: {error}"
+                                        );
+                                        completion.fail(error.to_string());
+                                    }
+                                }
+                                report::report(&weak, |ui| {
+                                    ui.global::<GameState>().invoke_refresh();
+                                });
                             }
                             Err(error) => {
-                                log::error!("modpack install into {created} failed: {error}");
+                                log::error!("could not create the modpack instance: {error}");
                                 completion.fail(error.to_string());
                             }
                         }
-                        report::report(&weak, |ui| {
-                            ui.global::<GameState>().invoke_refresh();
-                        });
-                    }
-                    Err(error) => {
-                        log::error!("could not create the modpack instance: {error}");
-                        completion.fail(error.to_string());
-                    }
-                }
-                busy_task.store(false, Ordering::SeqCst);
-            });
-            let busy_cancel = Arc::clone(&busy);
-            service.attach_cancel(
-                id,
-                Arc::new(move || {
-                    busy_cancel.store(false, Ordering::SeqCst);
-                    handle.abort();
-                }),
-            );
+                        busy_task.store(false, Ordering::SeqCst);
+                    });
+                    crate::ui::services::tasks::service().attach_cancel(
+                        id,
+                        Arc::new(move || {
+                            busy_cancel.store(false, Ordering::SeqCst);
+                            handle.abort();
+                        }),
+                    );
+                })
+            };
+            service.submit(spec, work);
         });
     }
 

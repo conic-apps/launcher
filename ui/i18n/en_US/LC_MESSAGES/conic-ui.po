@@ -735,11 +735,6 @@ msgstr "Launch"
 
 #: ui
 msgctxt "InstanceSummary"
-msgid "Repair game and launch"
-msgstr "Repair game and launch"
-
-#: ui
-msgctxt "InstanceSummary"
 msgid "Saves"
 msgstr "Saves"
 
@@ -1134,7 +1129,7 @@ msgid "Preparing"
 msgstr "Preparing"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Preparing download"
 msgstr "Preparing download"
 
@@ -1154,32 +1149,32 @@ msgid "Downloading game files {} / {}"
 msgstr "Downloading game files {0} / {1}"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Checking Java runtime"
 msgstr "Checking Java runtime"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Downloading Java {}/{}"
 msgstr "Downloading Java {0}/{1}"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Installing {}"
 msgstr "Installing {0}"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Downloading {} installer"
 msgstr "Downloading {0} installer"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Downloading dependencies"
 msgstr "Downloading dependencies"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Running {} installer: {}"
 msgstr "Running {0} installer: {1}"
 
@@ -3802,3 +3797,53 @@ msgstr "Minecraft {} has been released. Click here for details"
 msgctxt "NotificationText"
 msgid "Conic Launcher has been updated to version {}. Click here to view the release notes"
 msgstr "Conic Launcher has been updated to version {}. Click here to view the release notes"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Maintenance"
+msgstr "Maintenance"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "View game logs"
+msgstr "View game logs"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Opens the instance's logs folder"
+msgstr "Opens the instance's logs folder"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Repair install"
+msgstr "Repair install"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Verifies and re-downloads the game files. It does not start the game"
+msgstr "Verifies and re-downloads the game files. It does not start the game"
+
+#: ui
+msgctxt "TaskText"
+msgid "Waiting for other tasks to finish"
+msgstr "Waiting for other tasks to finish"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Download"
+msgstr "Download"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Cancel"
+msgstr "Cancel"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Waiting"
+msgstr "Waiting"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Waiting for other tasks to finish"
+msgstr "Waiting for other tasks to finish"

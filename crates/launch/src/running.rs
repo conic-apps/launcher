@@ -240,12 +240,37 @@ pub fn shutdown() {
 /// pipeline.
 ///
 /// It is `pub(crate)`: only the launch pipeline spawns processes to track.
+/// The launched process's own exit, for a launch that is still waiting for its
+/// first startup marker.
+///
+/// The session watcher reports the exit only after both output pipes reach EOF;
+/// this asks the process itself. The status it collects stays cached in the
+/// `Child`, so the watcher's own wait still reads it.
+pub struct ExitWatch {
+    process: Arc<Mutex<Child>>,
+}
+
+impl ExitWatch {
+    /// Whether the process has exited. A status that cannot be read counts as an
+    /// exit: a process we cannot call running is not one to keep waiting on.
+    pub fn has_exited(&self) -> bool {
+        let mut child = self.process.lock().unwrap_or_else(PoisonError::into_inner);
+        match child.try_wait() {
+            Ok(status) => status.is_some(),
+            Err(error) => {
+                warn!("Could not read the exit status of a launching process: {error}");
+                true
+            }
+        }
+    }
+}
+
 pub(crate) fn register(
     instance: Instance,
     launch: LaunchInfo,
     mut process: Child,
     on_line: impl FnMut(&str) + Send + 'static,
-) {
+) -> ExitWatch {
     let pipes = Pipes {
         stdout: process.stdout.take(),
         stderr: process.stderr.take(),
@@ -255,6 +280,7 @@ pub(crate) fn register(
     let token = NEXT_TOKEN.fetch_add(1, Ordering::Relaxed);
     let pid = process.id();
     let process = Arc::new(Mutex::new(process));
+    let watch_process = Arc::clone(&process);
     let stop_requested = Arc::new(AtomicBool::new(false));
     let watch_context = CrashContext {
         instance: instance.clone(),
@@ -305,6 +331,9 @@ pub(crate) fn register(
             "The watcher for instance {id} had nowhere to be stored; the process had \
              already been reaped"
         );
+    }
+    ExitWatch {
+        process: watch_process,
     }
 }
 

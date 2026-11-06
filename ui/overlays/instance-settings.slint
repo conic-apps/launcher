@@ -422,6 +422,28 @@ export component InstanceSettings inherits Rectangle {
                 }
 
                 SettingGroup {
+                    title: @tr("InstanceSettings" => "Maintenance");
+
+                    SettingItem {
+                        group-first: true;
+                        title: @tr("InstanceSettings" => "View game logs");
+                        description: @tr("InstanceSettings" => "Opens the instance's logs folder");
+                        icon: "folder";
+                        navigable: true;
+                        clicked => { InstanceSettingsState.open-game-log-folder(); }
+                    }
+
+                    SettingItem {
+                        group-last: true;
+                        title: @tr("InstanceSettings" => "Repair install");
+                        description: @tr("InstanceSettings" => "Verifies and re-downloads the game files. It does not start the game");
+                        icon: "build";
+                        navigable: true;
+                        clicked => { InstanceSettingsState.repair-install(); }
+                    }
+                }
+
+                SettingGroup {
                     danger: true;
 
                     SettingItem {

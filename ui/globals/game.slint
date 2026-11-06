@@ -111,6 +111,54 @@ export global GameTime {
     }
 }
 
+/// The install strip's sentence, kept in Slint so it follows a language change.
+///
+/// These are the sentences the launch screen used to show while it installed; the
+/// install starts from the game view now, so they live beside the button. The
+/// parts are pre-formatted by Rust where Slint cannot format them (byte counts).
+///
+/// Two of the stages are shared with the launch screen's own file check, whose
+/// wording is the same, so they keep the `LaunchView` context and one catalogue
+/// entry serves both.
+export global GameInstallText {
+    public pure function description(kind: string, name: string, current: string, total: string, message: string) -> string {
+        if kind == "prepare-download" {
+            return @tr("GameInstallText" => "Preparing download");
+        }
+        if kind == "verify-files" {
+            return @tr("LaunchView" => "Verifying game files");
+        }
+        if kind == "download-files" {
+            return @tr("LaunchView" => "Downloading game files {} / {}", current, total);
+        }
+        if kind == "check-java" {
+            return @tr("GameInstallText" => "Checking Java runtime");
+        }
+        if kind == "download-java" {
+            return @tr("GameInstallText" => "Downloading Java {}/{}", current, total);
+        }
+        if kind == "install-mod-loader" {
+            return @tr("GameInstallText" => "Installing {}", name);
+        }
+        if kind == "download-installer" {
+            return @tr("GameInstallText" => "Downloading {} installer", name);
+        }
+        if kind == "download-installer-progress" {
+            return @tr("GameInstallText" => "Downloading {} installer", name) + " " + current + " / " + total;
+        }
+        if kind == "download-deps" {
+            return @tr("GameInstallText" => "Downloading dependencies");
+        }
+        if kind == "download-deps-progress" {
+            return @tr("GameInstallText" => "Downloading dependencies") + " " + current + " / " + total;
+        }
+        if kind == "run-installer" {
+            return @tr("GameInstallText" => "Running {} installer: {}", name, message);
+        }
+        return @tr("LaunchView" => "Preparing");
+    }
+}
+
 /// Entrance animation state of the game view. `GameView` resets `played` on every
 /// instantiation and flips it true once the list has been measured.
 export global GameIntro {
@@ -157,6 +205,28 @@ export global GameState {
     in-out property <string> current-playtime-kind: "";
     in-out property <string> current-playtime-value: "";
     in-out property <bool> current-starred: false;
+    /// Whether the instance has a `.install.lock`, i.e. whether the button
+    /// offers a download or a launch.
+    in-out property <bool> current-installed: false;
+
+    /// The current instance's install, as the task centre sees it:
+    /// "idle" | "queued" | "running". The button is the cancel button whenever
+    /// this is not "idle". A launch is not a task: it has its own page and its
+    /// own cancel button.
+    in-out property <string> current-task: "idle";
+    /// The task id that button stops, -1 when there is none.
+    in-out property <int> task-id: -1;
+
+    /// The install strip's parts. `GameInstallText.description` turns them into
+    /// the sentence, so a language change re-renders it.
+    in-out property <string> install-kind: "";
+    in-out property <string> install-name: "";
+    in-out property <string> install-current: "";
+    in-out property <string> install-total: "";
+    in-out property <string> install-message: "";
+    in-out property <bool> install-loading: false;
+    in-out property <float> install-value: 0;
+    in-out property <float> install-max: 0;
 
     // The four content counts: lengths of the same parsed lists the content
     // overlay draws from, not a second scan of the folder.
@@ -206,7 +276,11 @@ export global GameState {
     callback search-changed(string);
     // Footer / summary actions.
     callback launch();
-    callback repair-and-launch();
+    /// Starts (or queues) the install of the current instance.
+    callback start-download();
+    /// Stops that install. The centre asks after ten seconds unless the task has
+    /// not started at all.
+    callback cancel-task();
     callback open-instance-folder();
     callback toggle-starred();
     callback open-instance-settings();

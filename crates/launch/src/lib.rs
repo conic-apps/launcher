@@ -368,7 +368,7 @@ async fn spawn_minecraft_process(
     // The process outlives this call. `running::register` owns it from here:
     // it takes the stdout and stderr pipes, watches them to EOF, and reaps and
     // forgets the session on exit.
-    running::register(
+    let exit_watch = running::register(
         instance.clone(),
         crash::LaunchInfo {
             max_memory_mb: launch_options.max_memory,
@@ -404,6 +404,9 @@ async fn spawn_minecraft_process(
     );
     info!("Waiting up to 20 seconds for the game to report that it started");
     let start = Instant::now();
+    // `game_up` is checked first on purpose: a game that reported a marker and then
+    // died did start, and the crash is reported by the session watcher. Only an exit
+    // with no marker at all means this was never a launch.
     while start.elapsed().as_secs() < 20 {
         if game_up.load(Ordering::SeqCst) {
             info!(
@@ -411,6 +414,14 @@ async fn spawn_minecraft_process(
                 start.elapsed().as_secs()
             );
             break;
+        }
+        if exit_watch.has_exited() {
+            log::warn!(
+                "The game (pid {pid}) exited {} second(s) after the process was spawned, \
+                 before reporting a start",
+                start.elapsed().as_secs()
+            );
+            return Err(Error::FailedBeforeStart);
         }
         tokio::time::sleep(Duration::from_secs(1)).await;
     }

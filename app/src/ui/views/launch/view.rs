@@ -10,10 +10,8 @@ pub(crate) fn reset_state(ui: &App, instance: Option<&Instance>, config: &Config
     let state = ui.global::<LaunchState>();
     state.set_error(false);
     state.set_progress_kind("preparing".into());
-    state.set_progress_name("".into());
     state.set_progress_current("".into());
     state.set_progress_total("".into());
-    state.set_progress_message("".into());
     state.set_error_message("".into());
     state.set_progress_loading(true);
     state.set_progress_value(0.0);

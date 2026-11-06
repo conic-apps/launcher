@@ -16,7 +16,7 @@ use chrono::{Datelike, Local, TimeZone};
 use slint::{ComponentHandle, Model, ModelRc, SharedString, Timer, TimerMode, VecModel};
 
 use crate::slint_backend::{
-    AccountItem, App, Dialogs, GameRow, GameState, MultiplayerState, Navigation,
+    AccountItem, App, Dialogs, GameRow, GameState, MultiplayerState, TaskState,
 };
 use account::Account;
 use instance::{Instance, ModLoaderType, SortBy};
@@ -25,6 +25,8 @@ use slint::Image;
 use crate::usecases::game::{GroupMode, InstanceViewState, SortMode as SavedSortMode};
 
 mod controller;
+pub(crate) mod install;
+mod install_progress;
 mod wiring;
 
 pub(crate) use wiring::*;
