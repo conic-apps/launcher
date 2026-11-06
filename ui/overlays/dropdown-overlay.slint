@@ -40,164 +40,182 @@ export component DropdownOverlay inherits Rectangle {
         clicked => { Dropdown.open = false; }
     }
 
-    panel := Rectangle {
+    // The window the panel is revealed through, and the only thing here that
+    // animates. The panel keeps its final size for the whole open and close:
+    // the renderer reuses the blurred texture behind `drop-shadow-blur` and the
+    // layer a half-transparent panel is drawn through only while that size
+    // holds, so growing the panel itself — the obvious way to write this —
+    // reallocates both on every frame of the animation, and this panel
+    // animated visibly worse than everything else for exactly that reason.
+    viewport := Rectangle {
         x: Dropdown.anchor-x;
         y: Dropdown.expand-upwards
             ? Dropdown.anchor-y + root.natural-height - root.panel-height
             : Dropdown.anchor-y;
         width: Dropdown.anchor-width;
         height: root.panel-height;
-        opacity: root.panel-opacity;
+        // A rectangular clip is a scissors change. `clip` on a rounded box is
+        // drawn through an offscreen layer instead, which the animated height
+        // would rebuild every frame.
         clip: true;
-        border-radius: Theme.dialog-border-radius;
-        border-width: 1px;
-        border-color: Theme.controllers-border;
-        background: Theme.base;
-        drop-shadow-color: #4500611d;
-        drop-shadow-blur: 10px;
 
-        panel-touch := TouchArea {
+        panel := Rectangle {
+            // Upwards, the panel's bottom edge is pinned to the viewport's, so
+            // the rows are revealed from the last one up.
+            y: Dropdown.expand-upwards ? parent.height - root.natural-height : 0px;
             width: parent.width;
-            height: parent.height;
-            scroll-event(event) => {
-                if (Dropdown.open || root.panel-height > 0.5px) {
-                    return accept;
+            height: root.natural-height;
+            opacity: root.panel-opacity;
+            border-radius: Theme.dialog-border-radius;
+            border-width: 1px;
+            border-color: Theme.controllers-border;
+            background: Theme.base;
+            drop-shadow-color: #4500611d;
+            drop-shadow-blur: 10px;
+
+            panel-touch := TouchArea {
+                width: parent.width;
+                height: parent.height;
+                scroll-event(event) => {
+                    if (Dropdown.open || root.panel-height > 0.5px) {
+                        return accept;
+                    }
+                    return reject;
                 }
-                return reject;
             }
-        }
 
-        if Dropdown.account-mode: VerticalLayout {
-            x: 1px;
-            y: 1px;
-            width: parent.width - 2px;
-            height: root.natural-height - 2px;
-            padding-top: 8px;
-            padding-bottom: 8px;
-            padding-left: 10px;
-            padding-right: 10px;
-            spacing: 4px;
+            if Dropdown.account-mode: VerticalLayout {
+                x: 1px;
+                y: 1px;
+                width: parent.width - 2px;
+                height: parent.height - 2px;
+                padding-top: 8px;
+                padding-bottom: 8px;
+                padding-left: 10px;
+                padding-right: 10px;
+                spacing: 4px;
 
-            for player in Dropdown.accounts: Rectangle {
-                height: 26px;
-                // The controller radius (4px in Latte, 6px in the dark flavors).
-                border-radius: Theme.controllers-border-radius;
-                background: Dropdown.current == player.key ? #ffffff17
-                    : player-touch.has-hover ? #ffffff1f
-                    : transparent;
-                animate background { duration: 30ms; }
+                for player in Dropdown.accounts: Rectangle {
+                    height: 26px;
+                    // The controller radius (4px in Latte, 6px in the dark flavors).
+                    border-radius: Theme.controllers-border-radius;
+                    background: Dropdown.current == player.key ? #ffffff17
+                        : player-touch.has-hover ? #ffffff1f
+                        : transparent;
+                    animate background { duration: 30ms; }
 
-                AccountAvatar {
-                    size: 18px;
-                    skin: player.avatar;
-                    kind: player.kind;
-                    ring-width: 1px;
-                    x: 8px;
+                    AccountAvatar {
+                        size: 18px;
+                        skin: player.avatar;
+                        kind: player.kind;
+                        ring-width: 1px;
+                        x: 8px;
+                    }
+
+                    Text {
+                        text: player.name;
+                        font-size: 12px;
+                        font-weight: Theme.font-weight-normal;
+                        color: Theme.default-text-color.transparentize(0.1);
+                        x: 34px;
+                        width: parent.width - 42px;
+                        overflow: elide;
+                        wrap: no-wrap;
+                    }
+
+                    player-touch := TouchArea {
+                        width: parent.width;
+                        height: parent.height;
+                        clicked => {
+                            Dropdown.chosen = player.key;
+                            Dropdown.choose-owner = Dropdown.owner;
+                            Dropdown.choose-serial = Dropdown.choose-serial + 1;
+                            Dropdown.open = false;
+                        }
+                    }
                 }
 
-                Text {
-                    text: player.name;
-                    font-size: 12px;
-                    font-weight: Theme.font-weight-normal;
-                    color: Theme.default-text-color.transparentize(0.1);
-                    x: 34px;
-                    width: parent.width - 42px;
-                    overflow: elide;
-                    wrap: no-wrap;
-                }
+                if Dropdown.include-add-account: Rectangle {
+                    height: 26px;
+                    border-radius: Theme.controllers-border-radius;
+                    background: add-touch.has-hover ? #ffffff1f : transparent;
+                    animate background { duration: 30ms; }
 
-                player-touch := TouchArea {
-                    width: parent.width;
-                    height: parent.height;
-                    clicked => {
-                        Dropdown.chosen = player.key;
-                        Dropdown.choose-owner = Dropdown.owner;
-                        Dropdown.choose-serial = Dropdown.choose-serial + 1;
-                        Dropdown.open = false;
+                    AppIcon {
+                        name: "user-add";
+                        size: 14px;
+                        x: 8px;
+                    }
+
+                    Text {
+                        text: @tr("Add account");
+                        font-size: 12px;
+                        font-weight: Theme.font-weight-normal;
+                        color: Theme.default-text-color.transparentize(0.1);
+                        x: 30px;
+                        width: parent.width - 38px;
+                        overflow: elide;
+                        wrap: no-wrap;
+                    }
+
+                    add-touch := TouchArea {
+                        width: parent.width;
+                        height: parent.height;
+                        clicked => {
+                            Dropdown.chosen = "__add_account__";
+                            Dropdown.choose-owner = Dropdown.owner;
+                            Dropdown.choose-serial = Dropdown.choose-serial + 1;
+                            Dropdown.open = false;
+                        }
                     }
                 }
             }
 
-            if Dropdown.include-add-account: Rectangle {
-                height: 26px;
-                border-radius: Theme.controllers-border-radius;
-                background: add-touch.has-hover ? #ffffff1f : transparent;
-                animate background { duration: 30ms; }
+            if !Dropdown.account-mode: VerticalLayout {
+                x: 1px;
+                y: 1px;
+                width: parent.width - 2px;
+                height: parent.height - 2px;
+                padding-top: 8px;
+                padding-bottom: 8px;
+                padding-left: 10px;
+                padding-right: 10px;
+                spacing: 4px;
 
-                AppIcon {
-                    name: "user-add";
-                    size: 14px;
-                    x: 8px;
-                }
+                for option in Dropdown.options: Rectangle {
+                    height: 26px;
+                    border-radius: Theme.controllers-border-radius;
+                    background: Dropdown.current == option.key ? #ffffff17
+                        : option-touch.has-hover ? #ffffff1f
+                        : transparent;
+                    animate background { duration: 30ms; }
 
-                Text {
-                    text: @tr("Add account");
-                    font-size: 12px;
-                    font-weight: Theme.font-weight-normal;
-                    color: Theme.default-text-color.transparentize(0.1);
-                    x: 30px;
-                    width: parent.width - 38px;
-                    overflow: elide;
-                    wrap: no-wrap;
-                }
-
-                add-touch := TouchArea {
-                    width: parent.width;
-                    height: parent.height;
-                    clicked => {
-                        Dropdown.chosen = "__add_account__";
-                        Dropdown.choose-owner = Dropdown.owner;
-                        Dropdown.choose-serial = Dropdown.choose-serial + 1;
-                        Dropdown.open = false;
+                    if option.icon != "": AppIcon {
+                        name: option.icon;
+                        size: 14px;
+                        x: 8px;
                     }
-                }
-            }
-        }
 
-        if !Dropdown.account-mode: VerticalLayout {
-            x: 1px;
-            y: 1px;
-            width: parent.width - 2px;
-            height: root.natural-height - 2px;
-            padding-top: 8px;
-            padding-bottom: 8px;
-            padding-left: 10px;
-            padding-right: 10px;
-            spacing: 4px;
+                    Text {
+                        text: option.label;
+                        font-size: 12px;
+                        font-weight: Theme.font-weight-normal;
+                        color: Theme.default-text-color.transparentize(0.1);
+                        x: option.icon != "" ? 30px : 8px;
+                        width: parent.width - (option.icon != "" ? 38px : 16px);
+                        overflow: elide;
+                        wrap: no-wrap;
+                    }
 
-            for option in Dropdown.options: Rectangle {
-                height: 26px;
-                border-radius: Theme.controllers-border-radius;
-                background: Dropdown.current == option.key ? #ffffff17
-                    : option-touch.has-hover ? #ffffff1f
-                    : transparent;
-                animate background { duration: 30ms; }
-
-                if option.icon != "": AppIcon {
-                    name: option.icon;
-                    size: 14px;
-                    x: 8px;
-                }
-
-                Text {
-                    text: option.label;
-                    font-size: 12px;
-                    font-weight: Theme.font-weight-normal;
-                    color: Theme.default-text-color.transparentize(0.1);
-                    x: option.icon != "" ? 30px : 8px;
-                    width: parent.width - (option.icon != "" ? 38px : 16px);
-                    overflow: elide;
-                    wrap: no-wrap;
-                }
-
-                option-touch := TouchArea {
-                    width: parent.width;
-                    height: parent.height;
-                    clicked => {
-                        Dropdown.chosen = option.key;
-                        Dropdown.choose-owner = Dropdown.owner;
-                        Dropdown.choose-serial = Dropdown.choose-serial + 1;
-                        Dropdown.open = false;
+                    option-touch := TouchArea {
+                        width: parent.width;
+                        height: parent.height;
+                        clicked => {
+                            Dropdown.chosen = option.key;
+                            Dropdown.choose-owner = Dropdown.owner;
+                            Dropdown.choose-serial = Dropdown.choose-serial + 1;
+                            Dropdown.open = false;
+                        }
                     }
                 }
             }
