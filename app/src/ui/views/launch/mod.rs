@@ -2,15 +2,18 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The launch view's adapter: runs the [`crate::usecases::launch`] use case on
-//! the app's runtime and turns its [`LaunchUpdate`]s into `LaunchState`, gated
-//! by a [`Token`] so a cancelled or superseded run cannot draw.
+//! The launch view's adapter: it waits for the task centre to go idle, holds the
+//! exclusive lane while the launch runs, and turns the [`LaunchUpdate`]s into
+//! `LaunchState`, gated by a [`Token`] so a cancelled or superseded run cannot
+//! draw.
+//!
+//! A launch is not a task: it has its own screen and its own cancel button, so a
+//! card in the queue would be a second, worse copy of the same thing. It waits
+//! instead — the page says so — and then takes the lane
+//! (`TaskCenter::reserve_exclusive`) rather than joining it, which is what keeps
+//! an install from starting under a launching instance.
 
-use std::{
-    cell::RefCell,
-    rc::Rc,
-    sync::{Arc, Mutex},
-};
+use std::{cell::RefCell, rc::Rc};
 
 use slint::{ComponentHandle, Weak};
 
@@ -18,6 +21,7 @@ use crate::slint_backend::{App, Dialogs, GameState, LaunchState, Navigation};
 use crate::ui::services::report::deliver;
 use crate::usecases::generation::{Gate, Token};
 use crate::usecases::launch::{LaunchDialog, LaunchUpdate};
+use crate::usecases::tasks::TaskReservation;
 use account::Account;
 use config::Config;
 use instance::Instance;
@@ -57,50 +61,71 @@ pub(crate) fn launch_controller() -> Rc<RefCell<LaunchController>> {
         .expect("the launch controller is set up before any of its callbacks run")
 }
 
-/// One run of the launch flow.
+/// One launch, from the request to the game process.
 ///
-/// A run's [`Token`] is invalidated when it is cancelled or superseded, so a
-/// late report from a dead run is dropped instead of writing into a fresh one.
+/// A run's [`Token`] is invalidated when it is cancelled or superseded, so a late
+/// report from a dead run is dropped instead of writing into a fresh one.
+#[derive(Default)]
 pub(crate) struct LaunchController {
+    /// The request waiting for the centre to go idle. `None` once the flow runs.
+    pending: Option<(Instance, Config)>,
+    /// The flow's handle. `None` while the launch is still waiting, which is
+    /// exactly the window in which nothing has been started to abort.
     task: Option<tokio::task::JoinHandle<()>>,
+    /// The exclusive lane, held for as long as the flow runs. Dropping it is what
+    /// lets the queued installs start again.
+    reservation: Option<TaskReservation>,
     gate: Gate,
-    /// The task-centre card for the install stage, shared with the output sink
-    /// that starts it lazily. `None` when no install is running.
-    pub(crate) install_task_id: Arc<Mutex<Option<i32>>>,
 }
 
 impl LaunchController {
     fn new() -> Self {
-        Self {
-            task: None,
-            gate: Gate::new(),
-            install_task_id: Arc::new(Mutex::new(None)),
-        }
+        Self::default()
+    }
+
+    /// Whether anything at all is in flight — waiting, running or already settled.
+    fn busy(&self) -> bool {
+        self.pending.is_some() || self.task.is_some() || self.reservation.is_some()
     }
 
     fn begin(&mut self) -> Token {
         self.gate.issue()
     }
 
-    /// Cancels the running flow. Returns whether one was running, which tells
-    /// the caller to reload the instance list.
+    fn wait(&mut self, instance: Instance, config: Config) {
+        self.pending = Some((instance, config));
+    }
+
+    fn take_pending(&mut self) -> Option<(Instance, Config)> {
+        self.pending.take()
+    }
+
+    /// The flow has been spawned: it owns the lane from here on.
+    fn running(&mut self, task: tokio::task::JoinHandle<()>, reservation: TaskReservation) {
+        self.task = Some(task);
+        self.reservation = Some(reservation);
+    }
+
+    /// The flow reported its own ending and the page is showing it. The lane is
+    /// given back at once: an error page is not work, and queued installs should
+    /// not wait for the player to close it.
+    fn settle(&mut self) {
+        self.task = None;
+        self.reservation = None;
+    }
+
+    /// Cancels the waiting request or the running flow. Returns whether there was
+    /// anything to cancel.
     fn cancel(&mut self) -> bool {
-        let had_task = self.task.is_some();
+        let busy = self.busy();
         self.gate.invalidate();
+        self.pending = None;
         if let Some(task) = self.task.take() {
             task.abort();
         }
-        // The install card is started by the sink, not here, so its id is the
-        // only way a cancel from the launch page or the task centre can agree
-        // on which piece of work is being abandoned.
-        if let Some(id) = self
-            .install_task_id
-            .lock()
-            .ok()
-            .and_then(|mut slot| slot.take())
-        {
-            crate::ui::services::tasks::service().cancel_now(id);
-        }
-        had_task
+        // Dropping the guard hands the exclusive lane back and admits whatever
+        // queued behind the launch.
+        self.reservation = None;
+        busy
     }
 }

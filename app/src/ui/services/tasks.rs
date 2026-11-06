@@ -30,11 +30,34 @@ use crate::slint_backend::{
 };
 use crate::support::formatting::bytes;
 use crate::ui::services::report;
-use crate::usecases::tasks::{CancelDecision, TaskCenter, TaskHandle, TaskNoticeAction};
+use crate::usecases::tasks::{CancelDecision, TaskCenter, TaskNoticeAction};
 
 thread_local! {
     static CONTROLLER: Rc<TaskController> = Rc::new(TaskController::new());
     static SERVICE: RefCell<Option<Rc<TaskService>>> = const { RefCell::new(None) };
+    /// Surfaces that want to know when the registry changed, e.g. the game view's
+    /// launch button, which mirrors one instance's task into its own state.
+    static OBSERVERS: RefCell<Vec<Observer>> = const { RefCell::new(Vec::new()) };
+}
+
+/// A surface that re-reads the registry after every task event.
+type Observer = Rc<dyn Fn(&App)>;
+
+/// Registers a callback that runs after every task event was applied.
+///
+/// The service knows nothing about the surfaces that observe it, and the
+/// observer sees the registry through [`TaskService::active_on`] rather than a
+/// second copy of the state.
+pub(crate) fn observe(observer: impl Fn(&App) + 'static) {
+    OBSERVERS.with(|observers| observers.borrow_mut().push(Rc::new(observer)));
+}
+
+fn notify(ui: &App) {
+    OBSERVERS.with(|observers| {
+        for observer in observers.borrow().iter() {
+            observer(ui);
+        }
+    });
 }
 
 struct TaskController {
@@ -97,33 +120,23 @@ pub(crate) struct TaskService {
     center: Arc<TaskCenter>,
 }
 
-/// A `Send` handle for a producer that only learns it needs a task while it is
-/// already on a worker thread — the launch flow, which decides to install after
-/// its account checks.
-#[derive(Clone)]
-pub(crate) struct TaskStarter {
-    center: Arc<TaskCenter>,
-}
-
-impl TaskStarter {
-    pub(crate) fn begin(&self, spec: TaskSpec) -> TaskHandle {
-        self.center.begin(spec)
-    }
-
-    pub(crate) fn attach_cancel(&self, id: i32, cancel: shared::task::TaskCancel) {
-        self.center.attach_cancel(id, cancel);
-    }
-}
-
 impl TaskService {
-    pub(crate) fn begin(&self, spec: TaskSpec) -> TaskHandle {
-        self.center.begin(spec)
+    /// Hands a task to the scheduler; `work` runs when the centre admits it.
+    pub(crate) fn submit(
+        &self,
+        spec: TaskSpec,
+        work: crate::usecases::tasks::TaskWork,
+    ) -> shared::task::TaskId {
+        self.center.submit(spec, work)
     }
 
-    pub(crate) fn starter(&self) -> TaskStarter {
-        TaskStarter {
-            center: Arc::clone(&self.center),
-        }
+    /// The oldest active task of `kind` for `instance_id`, if any.
+    pub(crate) fn active_on(
+        &self,
+        kind: TaskKind,
+        instance_id: &str,
+    ) -> Option<shared::task::TaskSnapshot> {
+        self.center.active_on(kind, instance_id)
     }
 
     pub(crate) fn attach_cancel(&self, id: i32, cancel: shared::task::TaskCancel) {
@@ -134,6 +147,12 @@ impl TaskService {
     /// is being replaced by a new one, where a dialog would be noise.
     pub(crate) fn cancel_now(&self, id: i32) {
         self.center.cancel_now(id);
+    }
+
+    /// Takes the exclusive lane for work the centre does not schedule — the
+    /// launch. `None` while any task is still active.
+    pub(crate) fn reserve_exclusive(&self) -> Option<crate::usecases::tasks::TaskReservation> {
+        self.center.reserve_exclusive()
     }
 
     fn request_cancel(&self, ui: &App, id: i32) {
@@ -243,9 +262,15 @@ pub(crate) fn setup(ui: &App, notices: NoticeSink) -> Rc<TaskService> {
 /// The current service. Set up once by [`setup`], before any surface starts a
 /// task.
 pub(crate) fn service() -> Rc<TaskService> {
-    SERVICE
-        .with(|slot| slot.borrow().clone())
-        .expect("the task service is set up before any task starts")
+    service_if_ready().expect("the task service is set up before any task starts")
+}
+
+/// The service, when the app has set it up yet.
+///
+/// A surface that installs itself before the service — the game view, which
+/// `main` builds first — asks this instead of panicking on its first paint.
+pub(crate) fn service_if_ready() -> Option<Rc<TaskService>> {
+    SERVICE.with(|slot| slot.borrow().clone())
 }
 
 fn apply_event(ui: &App, event: TaskEvent) {
@@ -297,6 +322,7 @@ fn apply_event(ui: &App, event: TaskEvent) {
         ui.global::<TaskState>()
             .set_task_count(controller.tasks.row_count() as i32);
     });
+    notify(ui);
 }
 
 /// Mirrors a content task's progress into an open detail panel so a panel
@@ -340,6 +366,7 @@ fn item(snapshot: &shared::task::TaskSnapshot) -> TaskItem {
         value,
         max,
         indeterminate,
+        queued: snapshot.state == shared::task::TaskState::Queued,
         cancelling: snapshot.cancelling,
         closing: false,
         icon: kind_icon(snapshot.spec.kind).into(),
@@ -370,7 +397,6 @@ fn action_kind(target: &TaskTarget) -> &'static str {
     match target {
         TaskTarget::Content { .. } => "content",
         TaskTarget::Instance { .. } => "instance",
-        TaskTarget::Launch { .. } => "launch",
         TaskTarget::MultiplayerLibrary => "library",
         TaskTarget::None => "none",
     }
@@ -414,10 +440,7 @@ fn activate_target(ui: &App, target: &TaskTarget) {
             );
         }
         TaskTarget::Instance { instance_id } => {
-            select_instance(ui, instance_id, false);
-        }
-        TaskTarget::Launch { instance_id } => {
-            select_instance(ui, instance_id, true);
+            select_instance(ui, instance_id);
         }
         TaskTarget::MultiplayerLibrary => {
             ui.global::<MultiplayerState>().invoke_open();
@@ -426,13 +449,10 @@ fn activate_target(ui: &App, target: &TaskTarget) {
     }
 }
 
-fn select_instance(ui: &App, instance_id: &str, launch: bool) {
+fn select_instance(ui: &App, instance_id: &str) {
     ui.global::<GameState>()
         .invoke_select_instance(instance_id.into());
     if ui.global::<Navigation>().get_current_page() != "game" {
         ui.global::<Navigation>().invoke_navigate("game".into());
-    }
-    if launch {
-        ui.global::<Navigation>().invoke_navigate("launch".into());
     }
 }

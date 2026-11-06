@@ -735,11 +735,6 @@ msgstr "開始遊戲"
 
 #: ui
 msgctxt "InstanceSummary"
-msgid "Repair game and launch"
-msgstr "修復遊戲並啟動"
-
-#: ui
-msgctxt "InstanceSummary"
 msgid "Saves"
 msgstr "存檔"
 
@@ -1134,7 +1129,7 @@ msgid "Preparing"
 msgstr "正在準備"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Preparing download"
 msgstr "準備下載"
 
@@ -1154,32 +1149,32 @@ msgid "Downloading game files {} / {}"
 msgstr "下載遊戲檔案 {0} / {1}"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Checking Java runtime"
 msgstr "檢查 Java 執行環境"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Downloading Java {}/{}"
 msgstr "下載 Java {0}/{1}"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Installing {}"
 msgstr "安裝 {0}"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Downloading {} installer"
 msgstr "下載 {0} 安裝程式"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Downloading dependencies"
 msgstr "下載相依元件"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Running {} installer: {}"
 msgstr "正在執行 {0} 安裝程式：{1}"
 
@@ -3797,3 +3792,53 @@ msgstr "Minecraft {} 已發布，點擊此處查看詳細資訊"
 msgctxt "NotificationText"
 msgid "Conic Launcher has been updated to version {}. Click here to view the release notes"
 msgstr "Conic Launcher 已更新至 {}，點擊此處查看更新日誌"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Maintenance"
+msgstr "維護"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "View game logs"
+msgstr "檢視遊戲日誌"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Opens the instance's logs folder"
+msgstr "開啟實例的日誌資料夾"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Repair install"
+msgstr "修復安裝"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Verifies and re-downloads the game files. It does not start the game"
+msgstr "校驗並重新下載遊戲檔案，不會啟動遊戲"
+
+#: ui
+msgctxt "TaskText"
+msgid "Waiting for other tasks to finish"
+msgstr "等待其他任務完成"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Download"
+msgstr "下載"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Cancel"
+msgstr "取消"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Waiting"
+msgstr "排隊中"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Waiting for other tasks to finish"
+msgstr "等待其他任務完成"

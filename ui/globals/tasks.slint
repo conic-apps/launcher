@@ -20,6 +20,9 @@ export struct TaskItem {
     max: float,
     /// The size is not known yet; the bar sweeps instead of filling.
     indeterminate: bool,
+    /// Submitted but not started: a lane is busy or a dependency is still
+    /// running. Nothing has been written yet.
+    queued: bool,
     /// The user asked to stop it and the work has not acknowledged that yet.
     cancelling: bool,
     /// A preview that is leaving after its task ended.
@@ -101,6 +104,9 @@ export global TaskText {
     public pure function detail(item: TaskItem) -> string {
         if item.cancelling {
             return @tr("TaskText" => "Stopping…");
+        }
+        if item.queued {
+            return @tr("TaskText" => "Waiting for other tasks to finish");
         }
         // The title already says "Downloading", so the stage line would repeat it.
         if item.kind == "content-download" || item.kind == "library-download" {

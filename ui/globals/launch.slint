@@ -26,17 +26,17 @@ export global LaunchState {
     in-out property <string> profile-name: "";
 
     in-out property <bool> error: false;
-    /// The progress line's kind: "preparing", "refresh-account",
-    /// "prepare-download", "verify-files", "download-files", "check-java",
-    /// "download-java", "install-mod-loader", "download-installer",
-    /// "download-installer-progress", "download-deps", "download-deps-progress",
-    /// "run-installer", "preparing-launch", "generate-script", "wait-for-launch",
+    /// The progress line's kind: "waiting-tasks", "preparing", "refresh-account",
+    /// "prepare-download", "verify-files", "download-files",
+    /// "preparing-launch", "generate-script", "wait-for-launch",
     /// "game-started" or "error".
+    ///
+    /// Installing has its own screen state now — the game view's strip — so the
+    /// install stages (Java, loader, installer, dependencies) are not described
+    /// here any more; see `GameInstallText`.
     in-out property <string> progress-kind: "preparing";
-    in-out property <string> progress-name: "";
     in-out property <string> progress-current: "";
     in-out property <string> progress-total: "";
-    in-out property <string> progress-message: "";
     in-out property <string> error-message: "";
     in-out property <bool> progress-loading: true;
     in-out property <float> progress-value: 0;
@@ -45,14 +45,12 @@ export global LaunchState {
     /// cancel the launch.
     in-out property <bool> back-disabled: false;
 
-    /// The screen was mounted: start the launch flow.
-    callback start();
-    /// The back button — cancels any running task first.
+    /// The back button — cancels the launch, which the page then leaves.
     callback cancel();
     /// The progress line, translated from `progress-kind` and its parts.
     public pure function description() -> string {
-        if self.progress-kind == "prepare-download" {
-            return @tr("LaunchView" => "Preparing download");
+        if self.progress-kind == "waiting-tasks" {
+            return @tr("LaunchView" => "Waiting for other tasks to finish");
         }
         if self.progress-kind == "refresh-account" {
             return @tr("LaunchView" => "Refreshing account");
@@ -62,30 +60,6 @@ export global LaunchState {
         }
         if self.progress-kind == "download-files" {
             return @tr("LaunchView" => "Downloading game files {} / {}", self.progress-current, self.progress-total);
-        }
-        if self.progress-kind == "check-java" {
-            return @tr("LaunchView" => "Checking Java runtime");
-        }
-        if self.progress-kind == "download-java" {
-            return @tr("LaunchView" => "Downloading Java {}/{}", self.progress-current, self.progress-total);
-        }
-        if self.progress-kind == "install-mod-loader" {
-            return @tr("LaunchView" => "Installing {}", self.progress-name);
-        }
-        if self.progress-kind == "download-installer" {
-            return @tr("LaunchView" => "Downloading {} installer", self.progress-name);
-        }
-        if self.progress-kind == "download-installer-progress" {
-            return @tr("LaunchView" => "Downloading {} installer", self.progress-name) + " " + self.progress-current + " / " + self.progress-total;
-        }
-        if self.progress-kind == "download-deps" {
-            return @tr("LaunchView" => "Downloading dependencies");
-        }
-        if self.progress-kind == "download-deps-progress" {
-            return @tr("LaunchView" => "Downloading dependencies") + " " + self.progress-current + " / " + self.progress-total;
-        }
-        if self.progress-kind == "run-installer" {
-            return @tr("LaunchView" => "Running {} installer: {}", self.progress-name, self.progress-message);
         }
         if self.progress-kind == "preparing-launch" {
             return @tr("LaunchView" => "Preparing to launch");

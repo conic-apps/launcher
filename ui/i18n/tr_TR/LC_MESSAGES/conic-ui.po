@@ -735,11 +735,6 @@ msgstr "Oyunu başlat"
 
 #: ui
 msgctxt "InstanceSummary"
-msgid "Repair game and launch"
-msgstr "Oyunu onar ve başlat"
-
-#: ui
-msgctxt "InstanceSummary"
 msgid "Saves"
 msgstr "Kayıtlar"
 
@@ -1134,7 +1129,7 @@ msgid "Preparing"
 msgstr "Hazırlanıyor"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Preparing download"
 msgstr "İndirme hazırlanıyor"
 
@@ -1154,32 +1149,32 @@ msgid "Downloading game files {} / {}"
 msgstr "Oyun dosyaları indiriliyor {0} / {1}"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Checking Java runtime"
 msgstr "Java çalışma ortamı kontrol ediliyor"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Downloading Java {}/{}"
 msgstr "Java indiriliyor {0}/{1}"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Installing {}"
 msgstr "{0} kuruluyor"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Downloading {} installer"
 msgstr "{0} kurulum programı indiriliyor"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Downloading dependencies"
 msgstr "Bağımlılıklar indiriliyor"
 
 #: ui
-msgctxt "LaunchView"
+msgctxt "GameInstallText"
 msgid "Running {} installer: {}"
 msgstr "{0} kurulum programı çalıştırılıyor: {1}"
 
@@ -3797,3 +3792,53 @@ msgstr "Minecraft {} yayınlandı. Ayrıntılar için buraya tıklayın"
 msgctxt "NotificationText"
 msgid "Conic Launcher has been updated to version {}. Click here to view the release notes"
 msgstr "Conic Launcher {} sürümüne güncellendi. Sürüm notlarını görüntülemek için buraya tıklayın"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Maintenance"
+msgstr "Bakım"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "View game logs"
+msgstr "Oyun günlüklerini görüntüle"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Opens the instance's logs folder"
+msgstr "Örneğin günlük klasörünü açar"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Repair install"
+msgstr "Kurulumu onar"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Verifies and re-downloads the game files. It does not start the game"
+msgstr "Oyun dosyalarını doğrular ve yeniden indirir. Oyunu başlatmaz"
+
+#: ui
+msgctxt "TaskText"
+msgid "Waiting for other tasks to finish"
+msgstr "Diğer görevlerin bitmesi bekleniyor"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Download"
+msgstr "İndir"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Cancel"
+msgstr "İptal"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Waiting"
+msgstr "Sırada"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Waiting for other tasks to finish"
+msgstr "Diğer görevlerin bitmesi bekleniyor"

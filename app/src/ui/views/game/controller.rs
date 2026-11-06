@@ -640,6 +640,9 @@ impl GameController {
         apply_content(ui, current_id.as_deref());
         apply_account(&state, current_account.as_ref(), current_avatar);
         apply_background(ui, background_instance.as_ref());
+        // Last, because it reads the selection `apply_current` just wrote and
+        // the installed flag that goes with it.
+        install::project(ui);
     }
 
     fn apply_list(
@@ -707,6 +710,7 @@ fn apply_current(state: &GameState<'_>, current: Option<&Instance>, playtime: u6
             state.set_current_last_played_day(relative.day);
             state.set_current_last_played_year(relative.year);
             state.set_current_starred(instance.is_starred());
+            state.set_current_installed(instance.installed);
             state.set_current_has_playtime(playtime > 0);
             let (kind, value) = format_play_time(playtime);
             state.set_current_playtime_kind(kind.into());
@@ -718,6 +722,7 @@ fn apply_current(state: &GameState<'_>, current: Option<&Instance>, playtime: u6
             state.set_current_has_loader(false);
             state.set_current_has_playtime(false);
             state.set_current_starred(false);
+            state.set_current_installed(false);
         }
     }
 }

@@ -237,7 +237,64 @@ pub(crate) fn schedule_save(
 pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     setup_form(ui, config);
     setup_background(ui);
+    setup_maintenance(ui);
     setup_delete(ui);
+}
+
+/// The maintenance group: where the game writes its logs, and the repair pass
+/// that re-runs the install.
+///
+/// Repair only installs. Starting the game is the launch button's job, and
+/// nothing here navigates to the launch page.
+fn setup_maintenance(ui: &App) {
+    {
+        let weak = ui.as_weak();
+        ui.global::<InstanceSettingsState>()
+            .on_open_game_log_folder(move || {
+                let Some(ui) = weak.upgrade() else { return };
+                let Some(instance) = current_instance() else {
+                    return;
+                };
+                let root = storage::LOCATIONS.instances.get_instance_root(&instance.id);
+                let logs = root.join("logs");
+                // A game that never ran has no `logs` directory; the instance
+                // root is then the closest useful place to land.
+                let target = if logs.is_dir() { logs } else { root };
+                if let Err(error) =
+                    crate::ui::services::app_config::open_external(&target.to_string_lossy())
+                {
+                    log::warn!("failed to open the game logs: {error}");
+                }
+                ui.global::<InstanceSettingsState>().set_visible(false);
+            });
+    }
+
+    {
+        let weak = ui.as_weak();
+        ui.global::<InstanceSettingsState>()
+            .on_repair_install(move || {
+                let Some(ui) = weak.upgrade() else { return };
+                let Some(instance) = current_instance() else {
+                    return;
+                };
+                let id = instance.id.clone();
+                ui.global::<InstanceSettingsState>().set_visible(false);
+                let weak = weak.clone();
+                crate::support::runtime::spawn(async move {
+                    if let Err(error) = instance::remove_install_lock(&id).await {
+                        log::error!("failed to remove the install lock: {error}");
+                        return;
+                    }
+                    // The listing reads the lock as "installed", and the button
+                    // follows the listing; the install itself queues behind whatever
+                    // holds the exclusive lane.
+                    crate::ui::services::report::report(&weak, move |ui| {
+                        ui.global::<GameState>().invoke_refresh();
+                        crate::ui::views::game::install::start(&ui, id.clone());
+                    });
+                });
+            });
+    }
 }
 
 pub(crate) fn setup_form(ui: &App, config: Rc<RefCell<config::Config>>) {
