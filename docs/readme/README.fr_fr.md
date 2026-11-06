@@ -16,103 +16,74 @@
 
 ## Qu'est-ce que c'est
 
-Conic Launcher est un lanceur Minecraft petit, rapide et léger pour bureau : la logique principale
-est implémentée en Rust et l'interface est construite avec [Slint](https://slint.dev), une boîte à
-outils d'interface native. Il se caractérise par une petite taille d'installation, un démarrage
-rapide et une faible consommation de ressources, contribuant même à réduire les émissions de
-carbone.
+Conic Launcher est un lanceur Minecraft de bureau petit, rapide et léger, implémenté en Rust, avec une
+interface construite sur [Slint](https://slint.dev). Installation légère, démarrage rapide, faible
+consommation de ressources — il contribue même à réduire les émissions de CO₂.
 
-De la création d'instances et l'installation de chargeurs à la recherche de mods et l'invitation
-d'amis pour jouer ensemble, en passant par le lancement du jeu et le suivi du temps de jeu —
-l'ensemble du workflow peut être complété dans une seule application.
-
-> Le projet est actuellement en phase alpha précoce. Les fonctionnalités et l'interface évoluent
-> rapidement — n'hésitez pas à l'essayer et à signaler des problèmes.
+> Le projet est actuellement en début de phase Alpha ; les fonctionnalités et l'interface évoluent
+> rapidement. N'hésitez pas à l'essayer et à signaler les problèmes.
 
 ## Fonctionnalités
 
 ### Gestion multi-instances
 
-Parcourez les instances groupées par chargeur de mods, avec tri, recherche et favoris. Chaque
-instance possède ses propres paramètres, un arrière-plan personnalisé, le suivi du temps de jeu et
-l'horodatage de la dernière exécution.
+Parcourez les instances regroupées par chargeur de mods, avec tri, recherche et favoris ; chaque
+instance peut avoir ses propres réglages spécifiques.
 
 https://github.com/user-attachments/assets/ad4678ee-8462-4e55-89f6-99aea41107cb
 
-### Support de tous les chargeurs majeurs
+### Prise en charge de tous les chargeurs majeurs
 
-Choisissez votre version de Minecraft et votre version de chargeur — le lanceur s'occupe du reste.
-Vanilla, Forge, NeoForge, Fabric et Quilt sont tous supportés, avec une progression d'installation
-en temps réel.
+Prise en charge complète de Forge, NeoForge, Fabric et Quilt.
 
 https://github.com/user-attachments/assets/73d28bc7-e743-4d16-b126-7b997eae797e
 
-### Market de mods et packs de ressources
+### Marché de mods et de packs de ressources
 
-Recherche intégrée Modrinth et CurseForge : parcourez les détails des projets et les dépendances,
-lisez les résumés traduits et installez des mods ou des packs de ressources dans vos instances en un
-clic. Vous pouvez également gérer les mods installés localement directement.
+Recherche Modrinth et CurseForge intégrée : consultez les détails des projets et leurs dépendances
+dans le lanceur, installez un mod ou un pack de ressources dans une instance en un clic et gérez
+directement les mods installés localement.
 
 https://github.com/user-attachments/assets/78f9e850-473e-4587-92b4-c9bed78afb17
 
 ### Multijoueur cross-LAN Conic Nexus
 
-Pas d'outils supplémentaires nécessaires : créez un groupe, partagez le code d'invitation avec vos
-amis et rejoignez le même monde ensemble. Le lanceur détecte votre environnement réseau (type NAT)
-et fournit des suggestions d'amélioration.
+Aucun outil supplémentaire n'est nécessaire : créez un groupe, envoyez le code d'invitation à un ami
+et rejoignez le même monde ensemble. Le lanceur détecte votre environnement réseau (type de NAT) et
+suggère des améliorations.
 
 <img width="840" height="533" alt="Conic Nexus" src="https://github.com/user-attachments/assets/e689a0ed-ee06-4495-b963-22eb7371671b" />
 
 ### Plusieurs méthodes de connexion
 
-Prend en charge la connexion au compte Microsoft (flux code appareil), la connexion hors ligne et
-tout serveur d'authentification externe Authlib-Injector / Yggdrasil. Les comptes offrent aperçu 3D
-des skins, affichage des capes et téléchargement de skins.
+Prend en charge la connexion Microsoft (flux par code d'appareil), la connexion hors ligne et tout
+serveur d'authentification externe Authlib-Injector / Yggdrasil.
 
 <img width="840" height="533" alt="Capture d'écran 2026-08-24 16 30 02" src="https://github.com/user-attachments/assets/1bbcba1a-1c9b-4cd0-9984-b4acbb8e3a5d" />
 
 ### Expérience de lancement sans tracas
 
-Analyse automatique du Java sur votre système, ou téléchargement automatique d'un runtime approprié.
-La mémoire est allouée automatiquement (avec protection de la limite Java 32 bits). Le processus de
-lancement est entièrement visualisé : téléchargement des fichiers de jeu, installation des
-chargeurs, résolution des dépendances et attente du démarrage du processus.
-
-Les utilisateurs avancés ne sont pas oubliés — le ramasse-ordures JVM, les arguments JVM, les
-arguments de jeu, le classpath, la commande wrapper et les commandes avant/après le lancement sont
-tous personnalisables.
-
 https://github.com/user-attachments/assets/1a6943f9-4e35-4391-9984-799cf42ee49d
 
 ### Sauvegardes et données de jeu
 
-Parcourez les cartes de mondes des sauvegardes, gérez les packs de données et packs de ressources,
-et consultez les captures d'écran du jeu — le tout dans le lanceur.
+Parcourez les cartes des mondes sauvegardés, gérez les datapacks et les packs de ressources et
+consultez les captures d'écran du jeu, directement dans le lanceur.
 
 https://github.com/user-attachments/assets/195afb69-8c9f-4d83-aa40-50e7b4d61788
 
 ### Interface et personnalisation
 
-Quatre thèmes Catppuccin (Mocha · Macchiato · Frappé · Latte), plus des variantes à contraste élevé,
-avec passage automatique clair/sombre selon les paramètres de votre système. Arrière-plans de
-lanceur personnalisés supportés. Lecteur de musique intégré avec lecture de musique locale et
-visualisation spectrale.
+Quatre thèmes Catppuccin (Mocha · Macchiato · Frappé · Latte), ainsi que des variantes à fort
+contraste ; le fond du lanceur et la musique de fond sont personnalisables.
 
 https://github.com/user-attachments/assets/5a262ff9-2ba8-45d4-b326-38f5d3911a80
 
 https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
-### Et plus encore
-
-- Mises à jour automatiques intégrées et notifications de mise à jour des versions de jeu
-- Téléchargements multi-thread avec limites de connexions et débit ajustables ; support des serveurs
-  miroirs et proxy système
-- Recherche globale (`/`) et palette de commandes (`;`)
-- Suivi du temps de jeu et calendrier d'activité
-
 ## Téléchargement
 
-Téléchargez l'installateur pour votre plateforme sur
+Téléchargez l'installateur correspondant à votre plateforme depuis
 [GitHub Releases](https://github.com/conic-apps/launcher/releases) ou le
 [site officiel](https://conicmc.app) :
 
@@ -122,19 +93,16 @@ Téléchargez l'installateur pour votre plateforme sur
 | macOS      | Apple Silicon · Intel | DMG                  |
 | Linux      | x64 · arm64           | deb · rpm · AppImage |
 
-L'application intègre des mises à jour automatiques — aucune mise à niveau manuelle n'est nécessaire
-après l'installation.
+> Nécessite macOS 11.0 (Big Sur) ou une version ultérieure.
 
-> Nécessite macOS 11.0 (Big Sur) ou version ultérieure.
-
-> L'`.exe` autonome de Windows est un fichier unique, mais il importe `VCRUNTIME140.dll` : une
-> machine sans le Visual C++ Redistributable (la plupart de celles avec Office ou .NET l'ont déjà)
-> ne pourra pas le démarrer. Le `.msi` installe le même exécutable.
+> Si vous utilisez la version monofichier sous Windows, assurez-vous qu'une `VCRUNTIME140.dll` valide
+> est présente sur le système.
 
 ## Compilation depuis les sources
 
-Assurez-vous d'avoir [Rust 1.88+](https://rustup.rs/) installé ; sous Linux, installez également les
-[dépendances de compilation](../../CONTRIBUTING.md#linux-build-dependencies).
+Assurez-vous que [Rust 1.88+](https://rustup.rs/) est installé ; sous Linux, les
+[dépendances de compilation](../../CONTRIBUTING.md#linux-build-dependencies) sont également
+nécessaires.
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
@@ -145,51 +113,27 @@ cargo build --release  # Build de production
 
 ## Contribuer
 
-Les contributions sont les bienvenues ! Veuillez lire [CONTRIBUTING.md](../../CONTRIBUTING.md) pour
-les directives sur la façon de commencer, de configurer votre environnement de développement et de
-soumettre une pull request.
-
-## Architecture
-
-L'interface est construite avec [Slint](https://slint.dev) et reliée directement aux crates de
-domaine — il n'y a pas de couche IPC. `app/` contient le binaire et `ui/` l'arbre `.slint` ; chaque
-capacité réside dans son propre module `crates/*` du workspace, de sorte qu'elles évoluent
-indépendamment et se composent au besoin.
-
-Pour le tableau complet — emplacements de stockage, couches de l'application, organisation de l'UI
-et carte des crates — voir [ARCHITECTURE.md](../../ARCHITECTURE.md).
+Les contributions sont les bienvenues ! Consultez [CONTRIBUTING.md](../../CONTRIBUTING.md) pour savoir
+comment démarrer, configurer votre environnement de développement et soumettre une pull request.
 
 ## Licence
 
-Ce projet est distribué sous [GPL-3.0](../../LICENSE) avec des conditions supplémentaires selon la
-section 7 du GPLv3 :
-
-1. Lors de la distribution de versions modifiées, vous devez modifier raisonnablement le nom du
-   logiciel ou le numéro de version pour le distinguer de l'original (conformément à
-   [GPL-3.0 §7(c)](../../LICENSE)) ; vous devez remplacer toutes les références au nom du projet
-   dans le code source.
-2. Vous ne devez pas supprimer les avis de copyright affichés dans le logiciel (conformément à
-   [GPL-3.0 §7(b)](../../LICENSE)).
-3. Si quelqu'un entre dans des conditions contractuelles avec les destinataires et assume la
-   responsabilité, le concédant et les auteurs ne sont pas tenus solidairement responsables
-   (conformément à [GPL-3.0 §7(b)](../../LICENSE)).
+Ce projet est distribué sous [GPL-3.0](../../LICENSE), avec toutes les clauses supplémentaires prévues
+par la section 7 de la GPLv3.
 
 ## Remerciements
 
-- [Catppuccin](https://catppuccin.com) — Palette de thèmes pastel magnifique
+- [Catppuccin](https://catppuccin.com) — des couleurs de thème douces et harmonieuses
 - [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) par
-  bangbang93 — Amorçage de l'installation Forge
-- [MCIM](https://mod.mcimirror.top) — Résumés traduits CurseForge et cache miroir
-- [HMCL](https://github.com/HMCL-dev/HMCL) — Flux de gestion des plantages et règles de
-  détermination de leurs causes
-- [XMCL](https://github.com/Voxelum/x-minecraft-launcher) — Référence pour le flux d'analyse des
-  mods locaux
-- Tous les joueurs qui ont fourni des suggestions et des retours
+  bangbang93 — amorçage de l'installation de Forge
+- [MCIM](https://mod.mcimirror.top) — traductions chinoises CurseForge et mise en cache miroir
+- [HMCL](https://github.com/HMCL-dev/HMCL) — gestion des plantages
+- [XMCL](https://github.com/Voxelum/x-minecraft-launcher) — référence pour l'analyse des mods locaux
 
 ## Avertissement
 
-Conic Launcher n'est pas un produit Minecraft officiel et n'est ni approuvé ni affilié à Mojang
-Studios. « Minecraft » est une marque déposée de Mojang AB. Toute utilisation de la marque Minecraft
-dans ce projet est conforme aux
-<a href="https://www.minecraft.net/en-us/terms#terms-brand_guidelines">Directives de marque et
+Conic Launcher n'est pas un produit Minecraft officiel et n'est ni approuvé ni associé à Mojang
+Studios. « Minecraft » est une marque de Mojang AB. Toute utilisation de la marque Minecraft dans ce
+projet respecte les
+<a href="https://www.minecraft.net/en-us/terms#terms-brand_guidelines">directives de marque et
 d'actifs</a> de Mojang Studios.
