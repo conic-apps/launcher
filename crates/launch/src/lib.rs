@@ -16,7 +16,9 @@
 //! terminate running sessions, and each process's stdout watcher cleans the
 //! entry up when it exits. The app still cancels a *launch in progress* by
 //! aborting the task that awaits [`launch`]; stopping an already-running game
-//! goes through [`running::terminate`].
+//! goes through [`running::terminate`], which stops the session's whole process
+//! tree — on Windows the game is a child of the tracked shell, not the tracked
+//! process itself.
 
 use std::{
     path::{Path, PathBuf},
