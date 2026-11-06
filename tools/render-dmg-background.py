@@ -48,7 +48,7 @@ OUTPUT = DMG / "background.png"
 # The font the launcher embeds, which is also `Theme.font-family`
 # (`ui/theme.slint`). It is one variable font, so the heading's two weights
 # are two instances of this file rather than two files.
-FONT = ROOT / "ui/fonts/ComfortaaNunito.ttf"
+FONT = ROOT / "ui/assets/fonts/ComfortaaNunito.ttf"
 
 # Device pixels per point. 2, so that the one-point grid rules and the
 # gradient-filled heading stay sharp on a Retina display, where Finder asks the
