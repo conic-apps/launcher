@@ -346,18 +346,23 @@ export component SetupView inherits Rectangle {
         leave-timer.restart();
     }
 
+    // The slide's offset, not the bar's position: `footer.y` follows the window's
+    // bottom edge, and animating that would ease the bar into place on every
+    // resize instead of letting it ride the edge being dragged.
+    private property <length> footer-drop: root.motion == "shown" ? 0px : 100px;
+    animate footer-drop {
+        duration: root.motion == "leave" ? 150ms : 330ms;
+        delay: root.motion == "leave" ? 0ms : 90ms;
+        easing: cubic-bezier(0.215, 0.61, 0.355, 1);
+    }
+
     // No backdrop blur (Slint 1.18 has none), so content shows through.
     footer := Rectangle {
         x: 0px;
-        y: root.motion == "shown" ? root.height - self.height : root.height - self.height + 100px;
+        y: root.height - self.height + root.footer-drop;
         width: 100%;
         height: 48px;
         background: Theme.surface-0.with-alpha(0.6);
-        animate y {
-            duration: root.motion == "leave" ? 150ms : 330ms;
-            delay: root.motion == "leave" ? 0ms : 90ms;
-            easing: cubic-bezier(0.215, 0.61, 0.355, 1);
-        }
 
         // A plain `Rectangle` has no padding, so the 40px buttons are positioned
         // with numbers: 8px above the bar, 16px from its bottom edge.
