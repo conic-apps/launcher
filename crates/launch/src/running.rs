@@ -7,6 +7,13 @@
 //! stream through [`subscribe`]. An instance may have several live processes, so
 //! each id maps to a list and a per-launch token identifies which entry a watcher
 //! must drop (a pid can be reused).
+//!
+//! The tracked pid is not the game on every platform: the Unix launch script
+//! `exec`s java, so the pid is the game itself, while on Windows the pid is the
+//! `cmd.exe` running the launch `.bat` and the game is its child — see
+//! `kill_tree`. Ending only the tracked process there would not merely leave the
+//! game running: the child holds the output pipes, so the watcher would never see
+//! EOF and the session would stay in the registry for good.
 
 use std::{
     collections::{HashMap, VecDeque},
@@ -20,7 +27,7 @@ use std::{
     time::Duration,
 };
 
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use shared::Sink;
 
 use instance::Instance;
@@ -74,8 +81,10 @@ struct Session {
     pid: u32,
     /// The instance the process belongs to, kept for the crash analysis.
     instance: Instance,
-    /// The Minecraft process. Shared with the stdout watcher, which reaps it on
-    /// exit, while [`terminate`] only takes the lock long enough to signal it.
+    /// The process the launcher spawned, which on Windows is the shell running
+    /// the launch script rather than the game. Shared with the stdout watcher,
+    /// which reaps it on exit, while [`terminate`] only takes the lock long
+    /// enough to read whether it is still alive.
     process: Arc<Mutex<Child>>,
     /// Set by [`terminate`]/[`terminate_all`]/[`shutdown`] before the signal, so
     /// the watcher can tell a stop the app asked for from a crash.
@@ -136,11 +145,13 @@ pub fn is_running(id: &str) -> bool {
         .is_some_and(|sessions| !sessions.is_empty())
 }
 
-/// Asks the single process `pid` to stop.
+/// Asks the session with process id `pid` to stop.
 ///
-/// Returns whether it was found. The watcher observes the exit, reaps the
-/// process and removes its entry, so the session disappears from
-/// [`running_instances`] on its own once the process is really gone.
+/// Returns whether it was found. The stop takes the session's whole process tree
+/// with it (see `signal`), because the game is not always the tracked process.
+/// The watcher observes the exit, reaps the process and removes its entry, so the
+/// session disappears from [`running_instances`] on its own once the processes
+/// are really gone.
 pub fn terminate(pid: u32) -> bool {
     let found = registry()
         .values()
@@ -148,14 +159,15 @@ pub fn terminate(pid: u32) -> bool {
         .find(|session| session.pid == pid)
         .map(|session| {
             (
+                session.pid,
                 Arc::clone(&session.process),
                 Arc::clone(&session.stop_requested),
             )
         });
     match found {
-        Some((process, stop)) => {
+        Some((target, process, stop)) => {
             stop.store(true, Ordering::SeqCst);
-            kill(&process, &format!("(pid {pid})"));
+            signal(target, &process, &format!("(pid {target})"));
             true
         }
         None => false,
@@ -164,15 +176,17 @@ pub fn terminate(pid: u32) -> bool {
 
 /// Asks every process of instance `id` to stop, however many it launched.
 ///
-/// Returns whether any session was found. Each watcher observes its exit, reaps
-/// its process and removes its entry, so the sessions disappear from
-/// [`running_instances`] on their own once the processes are really gone.
+/// Returns whether any session was found. Each stop takes a whole process tree
+/// with it (see `signal`), and each watcher observes its exit, reaps its process
+/// and removes its entry, so the sessions disappear from [`running_instances`] on
+/// their own once the processes are really gone.
 pub fn terminate_all(id: &str) -> bool {
-    let sessions: Vec<(Arc<Mutex<Child>>, Arc<AtomicBool>)> = match registry().get(id) {
+    let sessions: Vec<(u32, Arc<Mutex<Child>>, Arc<AtomicBool>)> = match registry().get(id) {
         Some(sessions) => sessions
             .iter()
             .map(|session| {
                 (
+                    session.pid,
                     Arc::clone(&session.process),
                     Arc::clone(&session.stop_requested),
                 )
@@ -183,17 +197,43 @@ pub fn terminate_all(id: &str) -> bool {
     if sessions.is_empty() {
         return false;
     }
-    for (process, stop) in &sessions {
+    for (pid, process, stop) in &sessions {
         stop.store(true, Ordering::SeqCst);
-        kill(process, &format!("for instance {id}"));
+        signal(*pid, process, &format!("for instance {id}"));
     }
     true
 }
 
-/// Signals one process. A failed kill is only logged: the usual cause is that
-/// it exited between the lookup and the signal, which is not an error, and the
-/// watcher reaps it either way.
-fn kill(process: &Arc<Mutex<Child>>, what: &str) {
+/// Stops one session, including the processes under it where the platform needs
+/// that (see `kill_tree`).
+///
+/// A stop that finds nothing to stop is not an error: a process that exited
+/// between the lookup and this call is the common case, and the watcher clears the
+/// entry either way. That is decided here, from the process itself, rather than
+/// read out of a failed kill — a `Child` whose exit was already collected refuses
+/// to be killed, which would report a miss that never happened. The lock covers
+/// only that read, never the platform call, so the watcher keeps polling the exit
+/// in the meantime.
+fn signal(pid: u32, process: &Arc<Mutex<Child>>, what: &str) {
+    let polled = process
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .try_wait();
+    match polled {
+        Ok(Some(status)) => {
+            debug!("The Minecraft process {what} had already exited ({status})");
+            return;
+        }
+        Ok(None) => {}
+        Err(error) => {
+            // A status that cannot be read is not a reason to leave it running.
+            debug!("Could not read the exit status of the Minecraft process {what}: {error}");
+        }
+    }
+
+    if kill_tree(pid, what) {
+        return;
+    }
     match process
         .lock()
         .unwrap_or_else(PoisonError::into_inner)
@@ -202,6 +242,59 @@ fn kill(process: &Arc<Mutex<Child>>, what: &str) {
         Ok(()) => info!("Asked the Minecraft process {what} to stop"),
         Err(error) => warn!("Could not terminate the Minecraft process {what}: {error}"),
     }
+}
+
+/// Kills `pid` and every process it started, and reports whether that left
+/// nothing for the caller to do.
+///
+/// The launch `.bat` makes the game a child of the tracked `cmd.exe`, and a
+/// single-process kill orphans children, so the game would survive a stop and go
+/// on holding the output pipes — the reason a session stopped that way never
+/// leaves the registry. `taskkill /T` walks the parent chain from `pid` instead;
+/// a job object per session would be the alternative and is not worth a handle to
+/// keep alive for the one case this covers.
+///
+/// Known gap: if `cmd.exe` is gone before the stop, the chain it led is gone with
+/// it and nothing is left to walk. Wrapper processes that detach themselves
+/// (`start`) are outside the chain for the same reason.
+#[cfg(target_os = "windows")]
+fn kill_tree(pid: u32, what: &str) -> bool {
+    use std::{os::windows::process::CommandExt, process::Stdio};
+
+    // `CREATE_NO_WINDOW`: this is a launcher, not a terminal, so the console
+    // `taskkill` would otherwise be given must not flash for the moment it runs.
+    let mut taskkill = std::process::Command::new("taskkill");
+    taskkill
+        .args(["/F", "/T", "/PID"])
+        .arg(pid.to_string())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .creation_flags(0x08000000);
+    match taskkill.status() {
+        Ok(status) if status.success() => {
+            info!("Asked the process tree of the Minecraft process {what} to stop");
+            true
+        }
+        Ok(status) => {
+            // Most likely "no such process": it exited on its own between the
+            // lookup and the stop. Left at debug because the caller still signals
+            // the direct child, and that is what reports a real failure.
+            debug!("taskkill could not stop the process tree of {what}: {status}");
+            false
+        }
+        Err(error) => {
+            warn!("Could not run taskkill for the Minecraft process {what}: {error}");
+            false
+        }
+    }
+}
+
+/// Unix has nothing between the launcher and the game to kill: the launch script
+/// `exec`s java, so the tracked pid is the game and signalling it is the whole
+/// stop.
+#[cfg(not(target_os = "windows"))]
+fn kill_tree(_pid: u32, _what: &str) -> bool {
+    false
 }
 
 /// Terminates every session and waits for its watcher, for shutdown.
@@ -215,7 +308,8 @@ pub fn shutdown() {
         .collect();
     for session in &sessions {
         session.stop_requested.store(true, Ordering::SeqCst);
-        kill(
+        signal(
+            session.pid,
             &session.process,
             &format!("for instance {}", session.instance.id),
         );
@@ -548,6 +642,14 @@ mod tests {
 
     use super::*;
 
+    /// [`SUBSCRIBER`] holds one sink for the whole process, so two tests that
+    /// install one would replace each other's and each would then see the other
+    /// test's events. Every test that calls [`subscribe`] takes this first.
+    fn subscriber_lock() -> MutexGuard<'static, ()> {
+        static LOCK: Mutex<()> = Mutex::new(());
+        LOCK.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
     #[test]
     fn an_unknown_instance_is_not_running() {
         assert!(!is_running("no-such-instance"));
@@ -557,6 +659,7 @@ mod tests {
 
     #[test]
     fn a_clean_exit_is_not_a_crash() {
+        let _lock = subscriber_lock();
         let child = if cfg!(windows) {
             Command::new("cmd")
                 .args(["/C", "exit", "0"])
@@ -595,5 +698,66 @@ mod tests {
         };
         assert!(!exited.0, "a clean exit was flagged as a crash");
         assert!(exited.1.is_none(), "a clean exit carried a crash report");
+    }
+
+    /// The shape the launcher actually spawns on Windows: a `cmd.exe` running the
+    /// launch script, with the game as its child. The child is what holds the
+    /// output pipes, so a stop that ends only the shell reports no exit at all and
+    /// leaves the session in the registry — both assertions below are what a
+    /// single-process kill fails.
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn stopping_a_session_takes_its_child_with_it() {
+        let _lock = subscriber_lock();
+        // A shell that starts a child and waits for it, like `cmd /c` on the
+        // launch script. The child writes to the inherited stdout, which is what
+        // keeps the pipes open after the shell is gone.
+        let child = Command::new("cmd")
+            .args(["/C", "ping", "-n", "60", "127.0.0.1"])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .expect("a shell to spawn");
+        let instance = Instance {
+            id: "conic-tree-kill-test".to_string(),
+            ..Instance::default()
+        };
+
+        let (sender, receiver) = mpsc::channel();
+        subscribe(Arc::new(move |event| {
+            let _ = sender.send(event);
+        }));
+        register(instance.clone(), LaunchInfo::default(), child, |_| {});
+        let pid = running_instances()
+            .into_iter()
+            .find(|running| running.id == instance.id)
+            .expect("the session to be registered")
+            .pid;
+        // Otherwise the shell could be stopped before it starts its child, which
+        // would pass on the bug this test exists to catch.
+        thread::sleep(Duration::from_secs(1));
+
+        assert!(terminate(pid));
+
+        let (abnormal, crash) = loop {
+            let event = receiver
+                .recv_timeout(Duration::from_secs(30))
+                .expect("an exit event");
+            if let SessionEvent::Exited {
+                abnormal, crash, ..
+            } = event
+            {
+                break (abnormal, crash);
+            }
+        };
+        assert!(!abnormal, "a stop we asked for was flagged as a crash");
+        assert!(
+            crash.is_none(),
+            "a stop we asked for carried a crash report"
+        );
+        assert!(
+            !is_running(&instance.id),
+            "the session stayed in the registry"
+        );
     }
 }
