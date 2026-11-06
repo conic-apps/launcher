@@ -154,37 +154,71 @@ component ContentRow inherits Rectangle {
     }
 }
 
+// One of the launch button's cross-faded faces.
+//
+// The icon and the label are one centred row, as in the rest of the interface.
+// `pill-width` is what the pill sizes itself from: the row's own width plus the
+// padding, so a longer translation widens the pill instead of being elided.
+component LaunchFace inherits Rectangle {
+    in property <string> icon;
+    in property <length> icon-size: 20px;
+    in property <string> text;
+    /// Horizontal padding on each side of the icon and label. One property,
+    /// because `pill-width` and the row's own box have to agree on it.
+    private property <length> side-padding: 24px;
+    /// The pill width this face needs. The pill takes the width of the face that
+    /// is showing.
+    out property <length> pill-width: content.preferred-width + root.side-padding + root.side-padding;
+
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    content := HorizontalLayout {
+        x: root.side-padding;
+        y: 0;
+        width: parent.width - root.side-padding - root.side-padding;
+        height: 100%;
+        alignment: center;
+        spacing: 4px;
+        cross-axis-alignment: center;
+
+        AppIcon {
+            name: root.icon;
+            size: root.icon-size;
+            icon-color: Theme.text-inverse;
+        }
+
+        Text {
+            text: root.text;
+            font-size: 15px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.text-inverse;
+            overflow: elide;
+        }
+    }
+}
+
 // The install strip beside the launch button.
 //
-// The box grows first and the contents fade in behind the clip, so the text
-// never reflows while the width slides; hiding runs the other way round. The
-// contents are laid out at their final width throughout, which is what keeps the
-// sentence from being re-wrapped mid-animation.
+// It is a clipped box whose width the row gives it, so the strip is exactly the
+// space between the button and the action icons. The contents fade in behind
+// the clip and the text stays on one line, so opening and closing never reflows
+// the sentence into two lines.
 component InstallStrip inherits Rectangle {
     in property <bool> shown: false;
     in property <bool> queued: false;
     in property <string> text: "";
 
-    width: root.shown ? root.open-width : 0px;
     height: 42px;
     clip: true;
     background: transparent;
 
-    // What is left of the summary's width once the launch button, the gap, the
-    // row's spacing and the action icons are placed: the content bars below are
-    // 400px with a 4px inset, so the opened strip ends on their right edge.
-    private property <length> open-width: 404px - 128px - 12px - 16px - 112px;
-
-    animate width {
-        duration: root.shown ? 220ms : 150ms;
-        easing: ease-out-quart;
-    }
-
     content := Rectangle {
         x: 0;
         y: 0;
-        width: root.open-width;
-        height: root.height;
+        width: 100%;
+        height: 100%;
         background: transparent;
         opacity: root.shown ? 1.0 : 0.0;
 
@@ -350,10 +384,14 @@ export component InstanceSummary inherits Rectangle {
 
         row3-cell := Rectangle {
             background: transparent;
-            preferred-width: row3.preferred-width;
-            preferred-height: row3.preferred-height;
+            // The row spans the content bars below, so the action icons can sit
+            // on their right edge while the button keeps the width of its label.
+            preferred-width: contents-cell.preferred-width;
+            preferred-height: 42px;
 
             row3-slide := Rectangle {
+                width: 100%;
+                height: 100%;
                 background: transparent;
                 x: self.intro-dx;
                 opacity: self.intro-alpha;
@@ -373,119 +411,101 @@ export component InstanceSummary inherits Rectangle {
 
                 // Centring puts the 32px pills 5px below the top of the 42px
                 // launch button; pinning to the top did not.
-                row3 := HorizontalLayout {
-                    spacing: 16px;
-                    cross-axis-alignment: center;
-                    vertical-stretch: 0;
-                    horizontal-stretch: 0;
+                row3 := Rectangle {
+                    width: 100%;
+                    height: 42px;
+                    background: transparent;
 
-                    // The button and the install strip. The strip is a layout
-                    // child whose width animates from zero, and the gap with it,
-                    // so the row grows while the button stays put.
-                    launch-buttons := HorizontalLayout {
-                        vertical-stretch: 0;
-                        height: 42px;
-                        cross-axis-alignment: stretch;
-                        spacing: root.strip-gap;
+                    // The width is the showing face's own - the icon, its gap,
+                    // the label and the padding - so a long translation widens
+                    // the pill instead of being elided. It eases into the next
+                    // state's width rather than snapping.
+                    launch-button := Rectangle {
+                        x: 0;
+                        width: root.button-width;
+                        height: parent.height;
+                        border-radius: 10000px;
+                        background: root.button-fill;
+                        animate background, width {
+                            duration: 200ms;
+                            easing: ease;
+                        }
+                        opacity: launch-touch.pressed ? 0.9 : root.button-disabled ? 0.6 : 1.0;
+                        clip: true;
 
-                        launch-button := Rectangle {
-                            width: 128px;
-                            height: parent.height;
-                            border-radius: 8px;
-                            background: #7287fd;
-                            opacity: launch-touch.pressed ? 0.9 : root.button-disabled ? 0.6 : 1.0;
-                            clip: true;
-
-                            // Three states, cross-faded: cancelling is a different
-                            // intent from starting, so it gets its own face.
-                            idle-face := Rectangle {
-                                width: 100%;
-                                height: 100%;
-                                background: transparent;
-                                opacity: root.button-kind == "cancel" ? 0.0 : 1.0;
-                                animate opacity {
-                                    duration: 120ms;
-                                    easing: ease-out-quad;
-                                }
-
-                                HorizontalLayout {
-                                    alignment: center;
-                                    spacing: 4px;
-                                    cross-axis-alignment: center;
-
-                                    AppIcon {
-                                        name: root.button-kind == "download" ? "download" : "play";
-                                        size: 20px;
-                                        icon-color: #ffffff;
-                                    }
-
-                                    Text {
-                                        text: root.button-kind == "download"
-                                            ? @tr("Download")
-                                            : @tr("Launch");
-                                        font-size: 15px;
-                                        font-weight: Theme.font-weight-normal;
-                                        color: #ffffff;
-                                        overflow: elide;
-                                    }
-                                }
+                        // Three states, cross-faded: cancelling is a different
+                        // intent from starting, so it gets its own face.
+                        idle-face := Rectangle {
+                            width: 100%;
+                            height: 100%;
+                            background: transparent;
+                            opacity: root.button-kind == "cancel" ? 0.0 : 1.0;
+                            animate opacity {
+                                duration: 120ms;
+                                easing: ease-out-quad;
                             }
 
-                            cancel-face := Rectangle {
-                                width: 100%;
-                                height: 100%;
-                                background: transparent;
-                                opacity: root.button-kind == "cancel" ? 1.0 : 0.0;
-                                animate opacity {
-                                    duration: 120ms;
-                                    easing: ease-out-quad;
-                                }
-
-                                HorizontalLayout {
-                                    alignment: center;
-                                    spacing: 4px;
-                                    cross-axis-alignment: center;
-
-                                    AppIcon {
-                                        name: "xmark";
-                                        size: 18px;
-                                        icon-color: #ffffff;
-                                    }
-
-                                    Text {
-                                        text: @tr("Cancel");
-                                        font-size: 15px;
-                                        font-weight: Theme.font-weight-normal;
-                                        color: #ffffff;
-                                    }
-                                }
-                            }
-
-                            launch-touch := TouchArea {
-                                width: parent.width;
-                                height: parent.height;
-                                enabled: GameState.has-current;
-                                clicked => {
-                                    if root.button-kind == "cancel" {
-                                        GameState.cancel-task();
-                                    } else if root.button-kind == "download" {
-                                        GameState.start-download();
-                                    } else {
-                                        GameState.launch();
-                                    }
-                                }
+                            idle-pill := LaunchFace {
+                                icon: root.button-kind == "download" ? "download" : "play";
+                                text: root.button-kind == "download"
+                                    ? @tr("Download")
+                                    : @tr("Launch");
                             }
                         }
 
-                        InstallStrip {
-                            shown: root.task-active;
-                            queued: root.task-queued;
-                            text: root.strip-text;
+                        cancel-face := Rectangle {
+                            width: 100%;
+                            height: 100%;
+                            background: transparent;
+                            opacity: root.button-kind == "cancel" ? 1.0 : 0.0;
+                            animate opacity {
+                                duration: 120ms;
+                                easing: ease-out-quad;
+                            }
+
+                            cancel-pill := LaunchFace {
+                                icon: "xmark";
+                                icon-size: 18px;
+                                text: @tr("Cancel");
+                            }
+                        }
+
+                        launch-touch := TouchArea {
+                            width: parent.width;
+                            height: parent.height;
+                            enabled: GameState.has-current;
+                            clicked => {
+                                if root.button-kind == "cancel" {
+                                    GameState.cancel-task();
+                                } else if root.button-kind == "download" {
+                                    GameState.start-download();
+                                } else {
+                                    GameState.launch();
+                                }
+                            }
                         }
                     }
 
+                    // Whatever the button and the icons leave: the progress area
+                    // is the remaining space, not a width worked out from the
+                    // button's own.
+                    install-strip := InstallStrip {
+                        x: launch-button.width + 12px;
+                        y: 0;
+                        width: max(0px, actions.x - 12px - self.x);
+                        shown: root.task-active;
+                        queued: root.task-queued;
+                        text: root.strip-text;
+                    }
+
                     actions := Rectangle {
-                        vertical-stretch: 0;
+                        // Beside the button while it is idle, on the row's right
+                        // edge while the strip is open; `actions-slide` is what
+                        // makes the move between the two a slide instead of a
+                        // jump.
+                        x: (parent.width - self.width) * root.actions-slide
+                            + (launch-button.width + 16px) * (1 - root.actions-slide);
+                        y: (parent.height - self.height) / 2;
                         width: 112px;
                         height: 32px;
                         background: transparent;
@@ -660,6 +680,23 @@ export component InstanceSummary inherits Rectangle {
     private property <string> button-kind: root.task-active
         ? "cancel"
         : (GameState.current-installed ? "launch" : "download");
+    // The fill owned by that state, so the three colours cross-fade instead of
+    // snapping when the button changes what it does.
+    private property <color> button-fill: root.button-kind == "download" ? Theme.blue
+        : root.button-kind == "cancel" ? Theme.mauve
+        : Theme.green;
+    // The pill's target width, from the face that is showing. The pill animates
+    // towards it; the strip and the icons read the pill's own animated width.
+    private property <length> button-width: root.button-kind == "cancel"
+        ? cancel-pill.pill-width
+        : idle-pill.pill-width;
+    // 0 while the row is idle, 1 while the strip is open. It blends the action
+    // icons between beside the button and the row's right edge.
+    private property <float> actions-slide: root.task-active ? 1.0 : 0.0;
+    animate actions-slide {
+        duration: 220ms;
+        easing: ease-out-quart;
+    }
     private property <string> strip-text: root.task-queued
         ? @tr("Waiting")
         : GameInstallText.description(
@@ -668,9 +705,4 @@ export component InstanceSummary inherits Rectangle {
             GameState.install-current,
             GameState.install-total,
             GameState.install-message);
-    private property <length> strip-gap: root.task-active ? 12px : 0px;
-    animate strip-gap {
-        duration: 200ms;
-        easing: ease-out-quart;
-    }
 }
