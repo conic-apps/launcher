@@ -179,6 +179,9 @@ export global GameState {
     /// The current instance's row position and size, used to centre it on open.
     in-out property <length> current-row-y: -1px;
     in-out property <length> current-row-height: 0px;
+    /// The first listing has landed. The instances are read on the runtime, so
+    /// the entrance has to wait for it rather than play over an empty list.
+    in-out property <bool> listing-ready: false;
     in-out property <bool> has-instances: false;
     in-out property <bool> show-placeholder: false;
     in-out property <string> search-query: "";

@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { GameIntro } from "../globals/game.slint";
+import { GameIntro, GameState } from "../globals/game.slint";
 import { FocusManager } from "../globals/focus.slint";
 import { PageMotion } from "../globals/page-motion.slint";
 import { InstanceSummary } from "game/instance-summary.slint";
@@ -34,17 +34,25 @@ export component GameView inherits Rectangle {
     }
 
     // Centre the current instance without animating, then flip the shared flag
-    // so every element plays its own delayed `animate`.
+    // so every element plays its own delayed `animate`. The instances are read
+    // on the runtime, so on a cold start they are not there on the first tick:
+    // the timer keeps ticking until the first listing lands and the list is
+    // laid out, and only then runs the entrance. That is what centres the list
+    // and lets the cards stagger from the rows that are actually on screen.
+    private property <bool> intro-done: false;
+
     intro-timer := Timer {
         interval: 50ms;
-        running: true;
+        running: !root.intro-done;
         triggered => {
-            instance-list.scroll-to-current(false);
-            // Tell the list its window after centring, before the flag flips,
-            // so cards stagger from the visible area rather than the list top.
-            instance-list.begin-intro();
-            GameIntro.played = true;
-            intro-timer.running = false;
+            if GameState.listing-ready && instance-list.height > 0px {
+                instance-list.scroll-to-current(false);
+                // Tell the list its window after centring, before the flag flips,
+                // so cards stagger from the visible area rather than the list top.
+                instance-list.begin-intro();
+                GameIntro.played = true;
+                root.intro-done = true;
+            }
         }
     }
 
