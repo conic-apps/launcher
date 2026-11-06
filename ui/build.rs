@@ -61,7 +61,10 @@ fn compile_ui() {
 /// and every text run falls back to the system font -- with the app still
 /// running and nothing logged. Failing the build is the only loud signal.
 fn check_embedded_fonts() {
-    for file in ["fonts/ComfortaaNunito.ttf", "fonts/FiraCode-VF.ttf"] {
+    for file in [
+        "assets/fonts/ComfortaaNunito.ttf",
+        "assets/fonts/FiraCode-VF.ttf",
+    ] {
         let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(file);
         let data = fs::read(&path)
             .unwrap_or_else(|error| panic!("failed to read {}: {error}", path.display()));

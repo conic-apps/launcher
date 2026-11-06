@@ -47,7 +47,8 @@ Python tooling in `tools/` is not part of any CI gate:
 - **`ui/`** — the Slint interface crate (`conic-ui`). `ui/**.slint` is the whole interface and
   `ui/build.rs` compiles it into the generated Rust module that `app` re-exports as `slint_backend`,
   generating `ui/icons.slint` from the SVGs under `ui/assets/icons/` (gitignored). The crate also
-  owns the interface's assets, its embedded font and the translation catalogues, and it is separate
+  owns the interface's assets — `ui/assets/`, which holds the icons, artwork, skins and the two
+  embedded fonts — and the translation catalogues, and it is separate
   from `app` so a change to the app's Rust does not recompile the generated interface.
 - **`crates/*/`** — Rust domain crates, one per capability, independent of the UI. The interface
   talks to them directly; there is no IPC layer.
