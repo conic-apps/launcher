@@ -16,103 +16,81 @@
 
 ## これは何
 
-Conic
-Launcher は小さく、速く、軽いデスクトップ Minecraft ランチャーです。コアロジックは Rust で実装され、UI はネイティブ UI ツールキットの
+Conic Launcher は Rust で実装され、UI を
 [Slint](https://slint.dev)
-で構築されています。インストールサイズが小さく、起動が高速で、リソース消費が少なく、炭素排出の削減にも貢献します。
+で構築した、小さく速く軽いデスクトップ版 Minecraft ランチャーです。インストールサイズが小さく、起動が速く、リソース消費も少なく、CO₂ 排出量の削減にも役立ちます。
 
-インスタンスの作成、ローダーのインストール、Mod の検索、フレンドを招待して一緒にプレイ、ゲームの起動とプレイ時間の統計まで—すべてのワークフローを一つのアプリで完結できます。
-
-> プロジェクトは現在早期アルファ段階です。機能と UI は急速に迭代されていますので、ぜひ試してフィードバックをお寄せください。
+> 本プロジェクトは現在アーリー Alpha 段階です。機能と UI は活発に更新されているため、ぜひお試しいただき、問題があればご報告ください。
 
 ## 機能
 
 ### マルチインスタンス管理
 
-Mod ローダーごとにグループ分けされたインスタンスを閲覧でき、ソート、検索、お気に入りに対応。各インスタンスには個別の設定、カスタム背景、プレイ時間、最終プレイ日時が一目でわかります。
+MOD ローダーごとにグループ化してインスタンスを一覧表示し、並べ替え・検索・お気に入りに対応。インスタンスごとに個別の設定ができます。
 
 https://github.com/user-attachments/assets/ad4678ee-8462-4e55-89f6-99aea41107cb
 
 ### すべての主要ローダーをサポート
 
-Minecraft バージョンとローダーバージョンを選択するだけで、残りはランチャーが処理します。Vanilla、Forge、NeoForge、Fabric、Quilt すべて対応し、インストール進捗をリアルタイムで表示します。
+Forge、NeoForge、Fabric、Quilt を完全にサポートしています。
 
 https://github.com/user-attachments/assets/73d28bc7-e743-4d16-b126-7b997eae797e
 
-### Mod・リソースパックマーケットプレイス
+### MOD・リソースパックマーケットプレイス
 
-Modrinth と CurseForge の組み込み検索：プロジェクトの詳細や依存関係を閲覧、翻訳された概要を読み、ワンクリックで Mod やリソースパックをインスタンスにインストール。ローカルにインストールされた Mod の管理も直接できます。
+Modrinth と CurseForge の検索を内蔵。ランチャー内でプロジェクトの詳細と依存関係を確認し、ワンクリックで MOD やリソースパックをインスタンスに導入でき、インストール済みのローカル MOD も直接管理できます。
 
 https://github.com/user-attachments/assets/78f9e850-473e-4587-92b4-c9bed78afb17
 
-### Conic Nexus クロスLANマルチプレイ
+### Conic Nexus クロス LAN マルチプレイ
 
-追加ツールは不要：グループを作成し、招待コードをフレンドに送るだけで、同じワールドで一緒にプレイできます。ランチャーはネットワーク環境（NAT タイプ）を検出し、改善提案を行います。
+追加のツールは不要です。グループを作成し、招待コードを友だちに送るだけで、同じワールドに一緒に入れます。ランチャーはネットワーク環境（NAT タイプ）を検出し、改善の提案を行います。
 
 <img width="840" height="533" alt="Conic Nexus" src="https://github.com/user-attachments/assets/e689a0ed-ee06-4495-b963-22eb7371671b" />
 
 ### 複数のログイン方法
 
-Microsoft アカウントログイン（デバイスコードフロー）、オフラインログイン、Authlib-Injector /
-Yggdrasil 外部認証サーバーに対応。アカウントには3D スキンプレビューやケープ表示、スキンアップロード機能があります。
+Microsoft アカウントログイン（デバイスコードフロー）、オフラインログイン、および任意の Authlib-Injector /
+Yggdrasil 外部認証サーバーに対応しています。
 
 <img width="840" height="533" alt="スクリーンショット 2026-08-24 16 30 02" src="https://github.com/user-attachments/assets/1bbcba1a-1c9b-4cd0-9984-b4acbb8e3a5d" />
 
 ### 快適な起動体験
 
-システム上の Java を自動スキャンし、適切なランタイムを自動ダウンロードすることもできます。メモリは自動割り当て（32ビット Java の上限保護付き）。起動プロセスは完全に可視化：ゲームファイルのダウンロード、ローダーのインストール、依存関係の解決、プロセスの起動待ち。
-
-上級ユーザーも見逃されません—JVM ガベージコレクタ、JVM 引数、ゲーム引数、クラスパス、ラッパー コマンド、起動前后のコマンド実行がすべてカスタマイズ可能です。
-
 https://github.com/user-attachments/assets/1a6943f9-4e35-4391-9984-799cf42ee49d
 
 ### セーブデータとゲーム情報
 
-ランチャー内でセーブワールドのマップ閲覧、データパックやリソースパックの管理、ゲームスクリーンショットの表示が可能です。
+セーブデータのワールドマップを閲覧し、データパックとリソースパックを管理し、ゲームのスクリーンショットを表示できます。すべてランチャー内で完結します。
 
 https://github.com/user-attachments/assets/195afb69-8c9f-4d83-aa40-50e7b4d61788
 
-### UIとカスタマイズ
+### UI とカスタマイズ
 
-4つの Catppuccin テーマ（Mocha · Macchiato · Frappé ·
-Latte）、ハイコントラストバリアント、システム設定に連動したライト/ダークモード自動切り替え。カスタムランチャー背景にも対応。ローカルミュージック再生とスペクトラム可視化機能を備えた音楽プレイヤー内蔵。
+4 種類の Catppuccin テーマ（Mocha · Macchiato · Frappé · Latte）とハイコントラスト版を用意。ランチャーの背景と BGM をカスタマイズできます。
 
 https://github.com/user-attachments/assets/5a262ff9-2ba8-45d4-b326-38f5d3911a80
 
 https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
-### その他
-
-- アプリ内自動更新、ゲームバージョン更新通知
-- マルチスレッドダウンロード、接続数と速度制限の調整、ミラーサーバーとシステムプロキシ対応
-- グローバル検索（`/`）とコマンドパレット（`;`）
-- プレイ時間統計とアクティビティカレンダー
-
 ## ダウンロード
 
-[GitHub Releases](https://github.com/conic-apps/launcher/releases) または
-[公式サイト](https://conicmc.app)
-からお使いのプラットフォームに対応するインストーラーをダウンロード：
+[GitHub Releases](https://github.com/conic-apps/launcher/releases)
+または[公式サイト](https://conicmc.app)から、お使いのプラットフォーム向けのインストーラーをダウンロードしてください：
 
-| プラットフォーム | アーキテクチャ        | フォーマット         |
+| プラットフォーム | アーキテクチャ        | 形式                 |
 | ---------------- | --------------------- | -------------------- |
 | Windows          | x64 · arm64           | MSI · ポータブル exe |
 | macOS            | Apple Silicon · Intel | DMG                  |
 | Linux            | x64 · arm64           | deb · rpm · AppImage |
 
-アプリには自動更新機能が組み込まれており、インストール後の手動アップグレードは不要です。
-
 > macOS 11.0（Big Sur）以降が必要です。
 
-> 単体の Windows 用 `.exe` は 1 ファイルですが、`VCRUNTIME140.dll` をインポートします。Visual
-> C++ 再頒布可能パッケージが入っていないマシン（Office や .NET のあるマシンにはほぼ入っています）では起動しません。`.msi`
-> も同じ実行ファイルをインストールします。
+> Windows で単一ファイル版を使用する場合は、システムに有効な `VCRUNTIME140.dll` が存在することを確認してください。
 
 ## ソースからビルド
 
-[Rust 1.88+](https://rustup.rs/)
-がインストールされていることを確認してください。Linux では、[ビルド依存関係](../../CONTRIBUTING.md#linux-build-dependencies)
-もインストールしてください。
+[Rust 1.88+](https://rustup.rs/) がインストールされていることを確認してください。Linux では[ビルド依存関係](../../CONTRIBUTING.md#linux-build-dependencies)も必要です。
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
@@ -123,44 +101,24 @@ cargo build --release  # 本番ビルド
 
 ## コントリビュート
 
-コントリビュートを歓迎します！始め方、開発環境のセットアップ、Pull Request の提出方法については
-[CONTRIBUTING.md](../../CONTRIBUTING.md) をお読みください。
-
-## アーキテクチャ
-
-インターフェースは [Slint](https://slint.dev)
-で構築され、ドメイン crates に直接接続されています—IPC 層はありません。`app/` はバイナリを、`ui/`
-は `.slint` ツリーを保持し、各機能はそれぞれの `crates/*`
-ワークスペースモジュールに存在するため、独立して進化し、必要に応じて組み合わせられます。
-
-ストレージのルート、アプリのレイヤー構成、UI のバケット分け、crate 一覧などの全体像は
-[ARCHITECTURE.md](../../ARCHITECTURE.md) を参照してください。
+コントリビュートを歓迎します！始め方、開発環境のセットアップ、Pull Request の送り方は
+[CONTRIBUTING.md](../../CONTRIBUTING.md) をご覧ください。
 
 ## ライセンス
 
-本プロジェクトは [GPL-3.0](../../LICENSE) で配布され、GPLv3 第7条の追加条項が適用されます：
-
-1. 変更版を配布する場合、元のバージョンと区別できるよう、合理的にソフトウェア名またはバージョン番号を変更する必要があります（[GPL-3.0 §7(c)](../../LICENSE)
-   に対応）。ソースコード内のプロジェクト名に関連するすべての参照を置換する必要があります。
-2. ソフトウェアに表示されている著作権表示を削除してはなりません（[GPL-3.0 §7(b)](../../LICENSE)
-   に対応）。
-3. 誰かが受容者と契約上の条件を締結して責任を負った場合、ライセンサーと著者は連帯責任を負いません（[GPL-3.0 §7(b)](../../LICENSE)
-   に対応）。
+本プロジェクトは [GPL-3.0](../../LICENSE) の下で配布され、GPLv3 第 7 条に基づくすべての追加条項が適用されます。
 
 ## 謝辞
 
-- [Catppuccin](https://catppuccin.com) — 美しいパステルカラーテーマ
-- bangbang93 による
-  [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) —
-  Forge インストールブートストラップ
-- [MCIM](https://mod.mcimirror.top) — CurseForge 翻訳概要とミラーキャッシング
-- [HMCL](https://github.com/HMCL-dev/HMCL) — クラッシュ処理フローとクラッシュ原因の判定ルール
-- [XMCL](https://github.com/Voxelum/x-minecraft-launcher) — ローカル Mod 解析フローの参考
-- 提案やフィードバックをしていただいたすべてのプレイヤーの皆さん
+- [Catppuccin](https://catppuccin.com) — やわらかく美しいテーマカラー
+- [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) by
+  bangbang93 — Forge インストールのブートストラップ
+- [MCIM](https://mod.mcimirror.top) — CurseForge の中国語翻訳とミラーキャッシュ
+- [HMCL](https://github.com/HMCL-dev/HMCL) — クラッシュ処理
+- [XMCL](https://github.com/Voxelum/x-minecraft-launcher) — ローカル MOD 解析フローの参考
 
 ## 免責事項
 
-Conic Launcher は Minecraft の公式製品ではなく、Mojang
-Studios によって承認または関連付けられたものではありません。「Minecraft」は Mojang
-AB の商標であり、本プロジェクトにおける Minecraft ブランドの使用はすべて Mojang
-Studios の<a href="https://www.minecraft.net/en-us/terms#terms-brand_guidelines">ブランドとアセットガイドライン</a>に準拠しています。
+Conic Launcher は公式の Minecraft 製品ではなく、Mojang Studios の承認や提携を受けたものではありません。「Minecraft」は Mojang
+AB の商標です。本プロジェクトにおける Minecraft ブランドの使用は、Mojang
+Studios の<a href="https://www.minecraft.net/en-us/terms#terms-brand_guidelines">ブランドおよびアセットガイドライン</a>に準拠しています。

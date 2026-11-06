@@ -16,11 +16,9 @@
 
 ## 這是什麼
 
-Conic Launcher 是一款小快靈的桌面版 Minecraft 啟動器：核心邏輯由 Rust 實現，介面基於
+Conic Launcher 是一款小快靈的桌面版 Minecraft 啟動器，由 Rust 實現，介面基於
 [Slint](https://slint.dev)
-這一原生 UI 工具包建構。安裝包小、啟動快、資源佔用低，甚至有助於減少碳排放。
-
-從建立實例、安裝載入器，到搜尋模組、邀請好友連線，再到啟動遊戲與統計遊戲時長—整個流程都可以在一個應用裡完成。
+建構。體積小、啟動快、資源佔用低，甚至有助於減少碳排放。
 
 > 專案目前處於早期 Alpha 階段，功能與介面仍在快速迭代，歡迎試用並回饋問題。
 
@@ -28,19 +26,19 @@ Conic Launcher 是一款小快靈的桌面版 Minecraft 啟動器：核心邏輯
 
 ### 多實例管理
 
-按模組載入器分組瀏覽實例，支援排序、搜尋與收藏；每個實例都有獨立的設定與專屬背景，遊戲時長與上次執行時間一目了然。
+按模組載入器分組瀏覽實例，支援排序、搜尋與收藏；可為每個實例進行特殊設定。
 
 https://github.com/user-attachments/assets/ad4678ee-8462-4e55-89f6-99aea41107cb
 
 ### 支援所有主流載入器
 
-選擇 Minecraft 版本與載入器版本，剩下的交給啟動器：Vanilla、Forge、NeoForge、Fabric、Quilt 全部支援，安裝過程即時展示進度。
+完整支援 Forge、NeoForge、Fabric、Quilt。
 
 https://github.com/user-attachments/assets/73d28bc7-e743-4d16-b126-7b997eae797e
 
 ### 模組與資源包市場
 
-內建 Modrinth 與 CurseForge 搜尋：瀏覽專案詳情與依賴、閱讀翻譯摘要，一鍵把模組或資源包裝進實例，也可以直接管理已安裝的本地模組。
+內建 Modrinth 與 CurseForge 搜尋，可在啟動器內瀏覽專案詳情與依賴、一鍵把模組或資源包裝進實例、直接管理已安裝的本地模組。
 
 https://github.com/user-attachments/assets/78f9e850-473e-4587-92b4-c9bed78afb17
 
@@ -53,15 +51,11 @@ https://github.com/user-attachments/assets/78f9e850-473e-4587-92b4-c9bed78afb17
 ### 多種登入方式
 
 支援微軟正版登入（裝置碼流程）、離線登入，以及任意 Authlib-Injector /
-Yggdrasil 外部認證伺服器。帳戶支援 3D 鬥篷展示與皮膚上傳。
+Yggdrasil 外部認證伺服器。
 
-<img width="840" height="533" alt="截圖2026-08-24 16 30 02" src="https://github.com/user-attachments/assets/1bbcba1a-1c9b-4cd0-9984-b4acbb8e3a5d" />
+<img width="840" height="533" alt="截圖 2026-08-24 16 30 02" src="https://github.com/user-attachments/assets/1bbcba1a-1c9b-4cd0-9984-b4acbb8e3a5d" />
 
 ### 省心的啟動體驗
-
-自動掃描本機 Java，也可以自動下載合適的運行時；記憶體自動分配（含 32 位元 Java 上限保護）。啟動過程全程可視化：下載遊戲檔案、安裝載入器、補全依賴庫、等待行程啟動。
-
-進階玩家也沒有被遺忘—JVM 垃圾回收器、JVM 參數、遊戲參數、類別路徑、包裝命令、啟動前後執行命令均可自訂。
 
 https://github.com/user-attachments/assets/1a6943f9-4e35-4391-9984-799cf42ee49d
 
@@ -74,18 +68,11 @@ https://github.com/user-attachments/assets/195afb69-8c9f-4d83-aa40-50e7b4d61788
 ### 介面與個人化
 
 四種 Catppuccin 主題（Mocha · Macchiato · Frappé ·
-Latte），另有高對比度變體，可跟隨系統深淺色自動切換；支援自訂啟動器背景。內建音樂播放器，播放本地音樂並附帶頻譜視覺化。
+Latte），及高對比度變體；支援自訂啟動器背景和背景音樂。
 
 https://github.com/user-attachments/assets/5a262ff9-2ba8-45d4-b326-38f5d3911a80
 
 https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
-
-### 更多
-
-- 應用內自動更新，遊戲版本更新提醒
-- 多執行緒下載，可調連線數與限速，支援鏡像伺服器與系統代理
-- 全域搜尋（`/`）與命令輸入（`;`）
-- 遊戲時長統計與活動日曆
 
 ## 下載
 
@@ -98,13 +85,9 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 | macOS   | Apple Silicon · Intel | DMG                  |
 | Linux   | x64 · arm64           | deb · rpm · AppImage |
 
-應用內建自動更新，安裝後無需手動升級。
-
 > 需要 macOS 11.0（Big Sur）或以上版本。
 
-> 獨立的 Windows `.exe` 雖是單一檔案，但它匯入了 `VCRUNTIME140.dll`：未安裝 Visual C++
-> Redistributable 的機器（裝有 Office 或 .NET 的機器通常已有）將無法啟動它。`.msi`
-> 安裝的是同一個執行檔。
+> 若在 Windows 使用單一檔案版本，請確保系統中存在有效的 `VCRUNTIME140.dll`
 
 ## 從原始碼建構
 
@@ -123,23 +106,9 @@ cargo build --release  # 建構正式版本
 歡迎參與貢獻！請閱讀 [CONTRIBUTING.md](../../CONTRIBUTING.md)
 了解如何開始、設定開發環境以及提交 Pull Request。
 
-## 架構
-
-介面使用 [Slint](https://slint.dev) 建構，並直接連接各領域 crates—沒有 IPC 層。`app/` 存放二進位檔，
-`ui/` 存放 `.slint` 介面樹；每項能力各自位於獨立的 `crates/*` 工作區模組中，獨立演進、按需組合。
-
-完整內容—儲存位置、應用分層、UI 分桶結構與 crate 一覽—請見
-[ARCHITECTURE.md](../../ARCHITECTURE.md)。
-
 ## 授權條款
 
-本專案基於 [GPL-3.0](../../LICENSE) 分發，並附帶 GPLv3 第 7 條下的附加條款：
-
-1. 分發本軟體的修改版本時，必須以合理方式更改軟體名稱或版本號，以與原始版本區分（對應
-   [GPL-3.0 §7(c)](../../LICENSE)）；你需要替換原始碼中所有與本專案名稱相關的字樣。
-2. 不得移除軟體內展示的版權聲明（對應 [GPL-3.0 §7(b)](../../LICENSE)）。
-3. 若任何人與接受者簽訂具有合約性質的條款並作出責任承諾，由其自行承擔責任，許可人與作者不承擔連帶責任（對應
-   [GPL-3.0 §7(b)](../../LICENSE)）。
+本專案基於 [GPL-3.0](../../LICENSE) 分發，並附帶 GPLv3 第 7 條下的所有附加條款。
 
 ## 致謝
 
@@ -147,10 +116,9 @@ cargo build --release  # 建構正式版本
 - bangbang93 的
   [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) —
   Forge 安裝引導
-- [MCIM](https://mod.mcimirror.top) — CurseForge 翻譯摘要與鏡像快取
-- [HMCL](https://github.com/HMCL-dev/HMCL) — 崩潰處理流程與崩潰原因判定規則
-- [XMCL](https://github.com/Voxelum/x-minecraft-launcher) — 本地 Mod 解析流程參考
-- 所有為專案提出建議與回饋的玩家
+- [MCIM](https://mod.mcimirror.top) — CurseForge 中文翻譯與鏡像快取
+- [HMCL](https://github.com/HMCL-dev/HMCL) — 崩潰處理
+- [XMCL](https://github.com/Voxelum/x-minecraft-launcher) — 本地 Mod 解析流程
 
 ## 免責聲明
 
