@@ -7,7 +7,7 @@
 
 use super::*;
 
-use crate::ui::overlays::instance_settings::load_background;
+use crate::ui::overlays::instance_settings::decode_background;
 
 impl GameController {
     pub(crate) fn new(config: Rc<RefCell<config::Config>>) -> Self {
@@ -52,7 +52,7 @@ impl GameController {
             accounts: Vec::new(),
             playtime: HashMap::new(),
             avatars: HashMap::new(),
-            backgrounds: RefCell::new(HashMap::new()),
+            backgrounds: RefCell::new(BackgroundCache::default()),
             groups: Vec::new(),
             rows_model,
             reveal_timer,
@@ -463,32 +463,126 @@ impl GameController {
         }
     }
 
-    /// Memoised by the background file's modified time so a relayout does not
-    /// re-read and re-decode every instance's image.
+    /// Starts the decodes the rows are missing, one per picture and revision.
+    ///
+    /// Runs before the rows are built, so a card whose picture is already
+    /// decoded draws it in the same apply and a card whose picture is not is
+    /// left without one until [`GameController::land_background`] fills it in.
+    fn warm_backgrounds(&self, ui: &App) {
+        for instance in &self.instances {
+            let id = instance.id.clone();
+            if !instance.has_background {
+                let mut cache = self.backgrounds.borrow_mut();
+                cache.images.remove(&id);
+                cache.decoding.remove(&id);
+                continue;
+            }
+            // The file's stamp is the invalidation key: a replaced picture is a
+            // new revision, and a re-read of the same one is not.
+            let path = instance::get_background_path(&id);
+            let revision = std::fs::metadata(&path)
+                .and_then(|meta| meta.modified())
+                .ok();
+            {
+                let mut cache = self.backgrounds.borrow_mut();
+                if cache
+                    .images
+                    .get(&id)
+                    .is_some_and(|cached| cached.modified == revision)
+                {
+                    continue;
+                }
+                if !cache.decoding.insert(id.clone()) {
+                    continue;
+                }
+            }
+            // On the blocking pool, not a runtime worker: a decode is CPU work
+            // that would otherwise starve the listing and the downloads beside it.
+            let weak = ui.as_weak();
+            crate::support::runtime::spawn(async move {
+                let decoded =
+                    match crate::support::runtime::spawn_blocking(move || decode_background(&path))
+                        .await
+                    {
+                        Ok(decoded) => decoded,
+                        Err(error) => {
+                            log::error!("decoding the background of {id} panicked: {error}");
+                            None
+                        }
+                    };
+                crate::ui::services::report::report(&weak, move |ui| {
+                    controller()
+                        .borrow_mut()
+                        .land_background(&ui, id, revision, decoded);
+                });
+            });
+        }
+    }
+
+    /// Files a decoded picture and puts it into the rows.
+    ///
+    /// The rows are reconciled in place by `apply`, so the card element the
+    /// picture is drawn into survives and the view fades it in; a rebuilt row
+    /// could only pop it into place.
+    fn land_background(
+        &mut self,
+        ui: &App,
+        id: String,
+        revision: Option<SystemTime>,
+        decoded: Option<(u32, u32, Vec<u8>)>,
+    ) {
+        {
+            let mut cache = self.backgrounds.borrow_mut();
+            cache.decoding.remove(&id);
+            // The picture may have been replaced, or its instance deleted, while
+            // it was being decoded. The stale result is dropped; the next apply
+            // asks for whatever is on disk then.
+            let path = instance::get_background_path(&id);
+            let current = std::fs::metadata(&path)
+                .and_then(|meta| meta.modified())
+                .ok();
+            let live = self
+                .instances
+                .iter()
+                .any(|instance| instance.id == id && instance.has_background);
+            if !live || current != revision {
+                return;
+            }
+            let image = match decoded {
+                Some((width, height, rgba)) => Image::from_rgba8(
+                    slint::SharedPixelBuffer::clone_from_slice(&rgba, width, height),
+                ),
+                None => {
+                    // Filed under this revision rather than retried: a picture
+                    // that does not decode will not decode on the next apply
+                    // either, and a retry would be a full decode each time.
+                    log::warn!("failed to decode '{}'", path.display());
+                    Image::default()
+                }
+            };
+            cache.images.insert(
+                id,
+                CachedBackground {
+                    modified: revision,
+                    image,
+                },
+            );
+        }
+        self.apply(ui);
+    }
+
+    /// The picture a row draws, once its decode has landed. The decode itself is
+    /// started by [`GameController::warm_backgrounds`], off the event loop.
     fn instance_background(&self, instance: &Instance) -> Image {
         if !instance.has_background {
-            // The picture may have just been removed: drop the cached decode.
-            self.backgrounds.borrow_mut().remove(&instance.id);
             return Image::default();
         }
-        let path = instance::get_background_path(&instance.id);
-        let modified = std::fs::metadata(&path)
-            .and_then(|meta| meta.modified())
-            .ok();
-        if let Some(cached) = self.backgrounds.borrow().get(&instance.id)
-            && cached.modified == modified
-        {
-            return cached.image.clone();
-        }
-        let image = load_background(instance);
-        self.backgrounds.borrow_mut().insert(
-            instance.id.clone(),
-            CachedBackground {
-                modified,
-                image: image.clone(),
-            },
-        );
-        image
+        let cache = self.backgrounds.borrow();
+        cache
+            .images
+            .get(&instance.id)
+            .map(|cached| cached.image.clone())
+            .unwrap_or_default()
     }
 
     /// Matches by `uid` rather than position so reordering only changes `row_y`
@@ -546,6 +640,9 @@ impl GameController {
     }
 
     pub(crate) fn apply(&mut self, ui: &App) {
+        // Before the rows: this is what starts the decodes the cards are missing
+        // and what keeps a decoded picture in the row across applies.
+        self.warm_backgrounds(ui);
         let filtered = self.filtered();
         let show_placeholder =
             self.instances.is_empty() || (!self.search.trim().is_empty() && filtered.is_empty());
@@ -586,9 +683,9 @@ impl GameController {
         self.flip = true;
         {
             let live: HashSet<&str> = self.instances.iter().map(|it| it.id.as_str()).collect();
-            self.backgrounds
-                .borrow_mut()
-                .retain(|id, _| live.contains(id.as_str()));
+            let mut cache = self.backgrounds.borrow_mut();
+            cache.images.retain(|id, _| live.contains(id.as_str()));
+            cache.decoding.retain(|id| live.contains(id.as_str()));
         }
 
         let playtime = self
