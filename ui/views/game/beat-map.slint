@@ -17,7 +17,7 @@ export component BeatMap inherits Rectangle {
     in property <[float]> levels: MusicState.levels;
     /// Minimum bar width: the bar count is the container width divided by this.
     /// A plain number because Slint cannot divide one length by another.
-    in property <float> min-bar-width: 10;
+    in property <float> min-bar-width: 8;
     /// Reports a resize; the bar count follows, and through it the analyser's
     /// resolution.
     callback resized(int);
@@ -40,7 +40,10 @@ export component BeatMap inherits Rectangle {
         256,
     );
     private property <length> bar-width: root.width / root.bar-count;
-    private property <length> bar-gap: max(1px, floor(root.bar-width * 0.25 / 1px) * 1px);
+    /// Share of a bar's slot taken by the gap; the bar itself is what is left,
+    /// so widening the gap narrows the bars without changing their count.
+    private property <float> gap-ratio: 0.5;
+    private property <length> bar-gap: max(1px, floor(root.bar-width * root.gap-ratio / 1px) * 1px);
     /// The floor that keeps a silent bar visible.
     private property <length> min-bar-height: 1px;
     private property <length> idle-height: 2px;
@@ -70,6 +73,9 @@ export component BeatMap inherits Rectangle {
             y: root.height - self.height;
             width: root.bar-width - root.bar-gap;
             height: max(root.min-bar-height, level * root.height);
+            // Half the shorter side, so the cap is a semicircle on a grown bar
+            // and the whole shape on one that has barely left the floor.
+            border-radius: min(self.width, self.height) / 2;
             background: @linear-gradient(0deg, Theme.lavender 0%, Theme.lavender.mix(Theme.blue, level) 100%,);
         }
     }
@@ -82,6 +88,7 @@ export component BeatMap inherits Rectangle {
             y: root.height - root.idle-height;
             width: root.bar-width - root.bar-gap;
             height: root.idle-height;
+            border-radius: min(self.width, self.height) / 2;
             background: Theme.surface-2;
         }
     }
