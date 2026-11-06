@@ -16,174 +16,123 @@
 
 ## Was ist das
 
-Conic Launcher ist ein kleiner, schneller und wendiger Desktop-Minecraft-Launcher: Die Kernlogik ist
-in Rust implementiert, die Oberfläche ist mit [Slint](https://slint.dev), einem nativen UI-Toolkit,
-gebaut. Er zeichnet sich durch kleine Installationsgröße, schnellen Start und geringen
-Ressourcenverbrauch aus und hilft sogar, den CO2-Ausstoß zu reduzieren.
+Conic Launcher ist ein kleiner, schneller und wendiger Minecraft-Launcher für den Desktop, in Rust
+implementiert und mit [Slint](https://slint.dev) als Oberfläche. Kleine Downloadgröße, schneller
+Start, geringer Ressourcenverbrauch – und er hilft sogar, CO₂-Emissionen zu senken.
 
-Vom Erstellen von Instanzen und Installieren von Loadern über das Suchen nach Mods bis hin zum
-Einladen von Freunden zum gemeinsamen Spielen, Starten des Spiels und Verfolgen der Spielzeit — der
-gesamte Workflow kann in einer einzigen App abgeschlossen werden.
-
-> Das Projekt befindet sich derzeit in einer frühen Alpha-Phase. Funktionen und Oberfläche
-> entwickeln sich schnell weiter — probieren Sie es gerne aus und melden Sie Probleme.
+> Das Projekt befindet sich in einer frühen Alpha-Phase; Funktionen und Oberfläche entwickeln sich
+> schnell weiter. Probieren Sie es aus und melden Sie Probleme.
 
 ## Funktionen
 
 ### Multi-Instanz-Management
 
-Durchstöbern Sie Instanzen, nach Mod-Loadern gruppiert, mit Sortierung, Suche und Favoriten. Jede
-Instanz hat eigene Einstellungen, einen individuellen Hintergrund, Spielzeitverfolgung und einen
-Zeitstempel der letzten Ausführung.
+Instanzen nach Mod-Loader gruppiert durchsuchen, mit Sortierung, Suche und Favoriten; jede Instanz
+kann eigene spezielle Einstellungen haben.
 
 https://github.com/user-attachments/assets/ad4678ee-8462-4e55-89f6-99aea41107cb
 
 ### Unterstützung aller wichtigen Loader
 
-Wählen Sie Ihre Minecraft-Version und Loader-Version — der Launcher erledigt den Rest. Vanilla,
-Forge, NeoForge, Fabric und Quilt werden alle unterstützt, mit Echtzeit-Installationsfortschritt.
+Vollständige Unterstützung für Forge, NeoForge, Fabric und Quilt.
 
 https://github.com/user-attachments/assets/73d28bc7-e743-4d16-b126-7b997eae797e
 
-### Mod- & Resourcepack-Marktplatz
+### Mod- & Ressourcenpaket-Marktplatz
 
-Integrierte Modrinth- und CurseForge-Suche: Durchstöbern Sie Projektdetails und Abhängigkeiten,
-lesen Sie übersetzte Zusammenfassungen und installieren Sie Mods oder Resourcepacks mit einem Klick
-in Ihre Instanzen. Lokal installierte Mods können ebenfalls direkt verwaltet werden.
+Integrierte Modrinth- und CurseForge-Suche: Projektdetails und Abhängigkeiten im Launcher ansehen,
+Mods oder Ressourcenpakete mit einem Klick in eine Instanz installieren und lokal installierte Mods
+direkt verwalten.
 
 https://github.com/user-attachments/assets/78f9e850-473e-4587-92b4-c9bed78afb17
 
 ### Conic Nexus Cross-LAN-Mehrspieler
 
-Keine zusätzlichen Tools nötig: Erstellen Sie eine Gruppe, teilen Sie den Einladungscode mit
-Freunden und treten Sie gemeinsam derselben Welt bei. Der Launcher erkennt Ihre Netzwerkumgebung
-(NAT-Typ) und gibt Optimierungsvorschläge.
+Keine zusätzlichen Tools nötig: Gruppe erstellen, Einladungscode an Freunde schicken und gemeinsam
+dieselbe Welt betreten. Der Launcher erkennt die Netzwerkumgebung (NAT-Typ) und gibt
+Verbesserungsvorschläge.
 
 <img width="840" height="533" alt="Conic Nexus" src="https://github.com/user-attachments/assets/e689a0ed-ee06-4495-b963-22eb7371671b" />
 
 ### Mehrere Anmeldemethoden
 
-Unterstützt Microsoft-Kontoanmeldung (Gerätecode-Flow), Offline-Anmeldung und jeden Authlib-Injector
-/ Yggdrasil externen Authentifizierungsserver. Konten bieten 3D-Skin-Vorschau, Umhang-Anzeige und
-Skin-Upload.
+Unterstützt die Microsoft-Anmeldung (Device-Code-Verfahren), Offline-Anmeldung sowie beliebige
+Authlib-Injector- / Yggdrasil-Authentifizierungsserver.
 
 <img width="840" height="533" alt="Screenshot 2026-08-24 16 30 02" src="https://github.com/user-attachments/assets/1bbcba1a-1c9b-4cd0-9984-b4acbb8e3a5d" />
 
 ### Müheloses Start-Erlebnis
 
-Scannen Sie automatisch nach Java auf Ihrem System oder laden Sie eine passende Runtime automatisch
-herunter. Der Speicher wird automatisch zugewiesen (mit 32-Bit-Java-Obergrenze). Der Startvollzug
-wird vollständig visualisiert: Herunterladen von Spieldateien, Installieren von Loadern, Auflösen
-von Abhängigkeiten und Warten auf den Prozessstart.
-
-Auch fortgeschrittene Spieler werden nicht vergessen — JVM-Garbage-Collector, JVM-Argumente,
-Spielargumente, Klassenpfad, Wrapper-Befehl und Befehle vor und nach dem Start sind alle anpassbar.
-
 https://github.com/user-attachments/assets/1a6943f9-4e35-4391-9984-799cf42ee49d
 
 ### Spielstände & Spieldaten
 
-Durchstöbern Sie Spielstand-Weltkarten, verwalten Sie Datensätze und Resourcepacks und sehen Sie
-Spielcreenshots direkt im Launcher.
+Spielstand-Weltkarten durchsuchen, Datenpakete und Ressourcenpakete verwalten und Screenshots
+ansehen – alles direkt im Launcher.
 
 https://github.com/user-attachments/assets/195afb69-8c9f-4d83-aa40-50e7b4d61788
 
 ### Oberfläche & Personalisierung
 
-Vier Catppuccin-Themen (Mocha · Macchiato · Frappé · Latte) plus hohe Kontrast-Varianten mit
-automatischem Hell/Dunkel-Wechsel basierend auf Ihren Systemeinstellungen. Individuelle
-Launcher-Hintergründe werden unterstützt. Integrierter Musikplayer mit lokaler Musikwiedergabe und
-Spektrumvisualisierung.
+Vier Catppuccin-Themes (Mocha · Macchiato · Frappé · Latte) plus kontrastreiche Varianten; eigener
+Launcher-Hintergrund und Hintergrundmusik werden unterstützt.
 
 https://github.com/user-attachments/assets/5a262ff9-2ba8-45d4-b326-38f5d3911a80
 
 https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
-### Und mehr
-
-- In-App-Auto-Updates und Spielversions-Update-Benachrichtigungen
-- Mehrthread-Downloads mit anpassbaren Verbindungslimits und Geschwindigkeitsbegrenzung;
-  Mirror-Server- und Systemproxy-Unterstützung
-- Globale Suche (`/`) und Befehlspalette (`;`)
-- Spielzeitverfolgung und Aktivitätskalender
-
 ## Herunterladen
 
-Laden Sie den Installer für Ihre Plattform von
+Laden Sie das Installationspaket für Ihre Plattform von
 [GitHub Releases](https://github.com/conic-apps/launcher/releases) oder der
 [offiziellen Website](https://conicmc.app) herunter:
 
 | Plattform | Architektur           | Formate              |
 | --------- | --------------------- | -------------------- |
-| Windows   | x64 · arm64           | MSI · Portables exe  |
+| Windows   | x64 · arm64           | MSI · Portable exe   |
 | macOS     | Apple Silicon · Intel | DMG                  |
 | Linux     | x64 · arm64           | deb · rpm · AppImage |
 
-Die App verfügt über integrierte Auto-Updates — nach der Installation sind keine manuellen Upgrades
-erforderlich.
-
 > Erfordert macOS 11.0 (Big Sur) oder neuer.
 
-> Die eigenständige Windows-`.exe` ist eine einzelne Datei, importiert aber `VCRUNTIME140.dll`: Auf
-> einem Rechner ohne das Visual C++ Redistributable (die meisten mit Office oder .NET haben es
-> bereits) startet sie nicht. Die `.msi` installiert dieselbe ausführbare Datei.
+> Wenn Sie unter Windows die Einzeldatei-Version verwenden, stellen Sie sicher, dass eine gültige
+> `VCRUNTIME140.dll` im System vorhanden ist.
 
 ## Aus dem Quellcode erstellen
 
-Stellen Sie sicher, dass [Rust 1.88+](https://rustup.rs/) installiert ist; unter Linux installieren
-Sie zusätzlich die [Build-Abhängigkeiten](../../CONTRIBUTING.md#linux-build-dependencies).
+Stellen Sie sicher, dass [Rust 1.88+](https://rustup.rs/) installiert ist; unter Linux werden
+zusätzlich die [Build-Abhängigkeiten](../../CONTRIBUTING.md#linux-build-dependencies) benötigt.
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
 cd launcher
 cargo run              # Entwicklung & Debugging
-cargo build --release  # Produktionsbuild
+cargo build --release  # Produktions-Build
 ```
 
 ## Beiträge
 
-Beiträge sind willkommen! Bitte lesen Sie [CONTRIBUTING.md](../../CONTRIBUTING.md) für Richtlinien
-zum Einstieg, zum Einrichten Ihrer Entwicklungsumgebung und zum Einreichen eines Pull Requests.
-
-## Architektur
-
-Die Oberfläche ist mit [Slint](https://slint.dev) gebaut und direkt mit den Domänen-crates verbunden
-— es gibt keine IPC-Schicht. `app/` enthält das Binary und `ui/` den `.slint`-Baum; jede Fähigkeit
-liegt in ihrem eigenen `crates/*`-Workspace-Modul, sodass sie unabhängig weiterentwickelt und nach
-Bedarf kombiniert werden.
-
-Das vollständige Bild — Speicherorte, App-Schichtung, das UI-Bucket-Layout und die Crate-Übersicht —
-steht in [ARCHITECTURE.md](../../ARCHITECTURE.md).
+Beiträge sind willkommen! Lesen Sie [CONTRIBUTING.md](../../CONTRIBUTING.md), um zu erfahren, wie Sie
+beginnen, Ihre Entwicklungsumgebung einrichten und einen Pull Request einreichen.
 
 ## Lizenz
 
-Dieses Projekt wird unter [GPL-3.0](../../LICENSE) mit zusätzlichen Bedingungen gemäß GPLv3
-Abschnitt 7 verteilt:
-
-1. Bei Verteilung modifizierter Versionen müssen Sie den Softwarenamen oder die Versionsnummer
-   vernünftig ändern, um sie von der Originalversion zu unterscheiden (gemäß
-   [GPL-3.0 §7(c)](../../LICENSE)); Sie müssen alle Projektname-Referenzen im Quellcode ersetzen.
-2. Sie dürfen urheberrechtliche Hinweise in der Software nicht entfernen (gemäß
-   [GPL-3.0 §7(b)](../../LICENSE)).
-3. Wenn jemand vertragliche Bedingungen mit Empfängern eingeht und Haftung übernimmt, haften
-   Lizenzgeber und Autoren nicht gemeinsam (gemäß [GPL-3.0 §7(b)](../../LICENSE)).
+Dieses Projekt wird unter [GPL-3.0](../../LICENSE) verbreitet, zusammen mit allen zusätzlichen
+Bedingungen nach GPLv3 Abschnitt 7.
 
 ## Danksagungen
 
-- [Catppuccin](https://catppuccin.com) — Wunderschöne Pastell-Farbpalette
+- [Catppuccin](https://catppuccin.com) — sanfte, schöne Themenfarben
 - [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) von
-  bangbang93 — Forge-Installations-Bootstrapping
-- [MCIM](https://mod.mcimirror.top) — CurseForge-Übersetzungen und Mirror-Caching
-- [HMCL](https://github.com/HMCL-dev/HMCL) — Ablauf der Absturzbehandlung und Regeln zur
-  Bestimmung der Absturzursache
-- [XMCL](https://github.com/Voxelum/x-minecraft-launcher) — Referenz für den Ablauf der Analyse
-  lokaler Mods
-- Alle Spieler, die Vorschläge und Feedback gegeben haben
+  bangbang93 — Bootstrapping der Forge-Installation
+- [MCIM](https://mod.mcimirror.top) — chinesische CurseForge-Übersetzungen und Mirror-Caching
+- [HMCL](https://github.com/HMCL-dev/HMCL) — Absturzbehandlung
+- [XMCL](https://github.com/Voxelum/x-minecraft-launcher) — Referenz für die lokale Mod-Erkennung
 
 ## Haftungsausschluss
 
-Conic Launcher ist kein offizielles Minecraft-Produkt und wurde nicht von Mojang Studios genehmigt
-oder unterstützt. „Minecraft" ist ein eingetragenes Trademark von Mojang AB. Jede Verwendung der
-Marke Minecraft in diesem Projekt entspricht den
+Conic Launcher ist kein offizielles Minecraft-Produkt und wird von Mojang Studios weder genehmigt
+noch unterstützt. „Minecraft“ ist eine Marke von Mojang AB. Jede Verwendung der Minecraft-Marke in
+diesem Projekt entspricht den
 <a href="https://www.minecraft.net/en-us/terms#terms-brand_guidelines">Marken- und
 Asset-Richtlinien</a> von Mojang Studios.
