@@ -771,6 +771,7 @@ impl GameController {
                 state.set_current_row_height(0.0);
             }
         }
+        state.set_listing_ready(true);
         state.set_has_instances(!self.instances.is_empty());
         state.set_show_placeholder(show_placeholder);
         state.set_accounts(ModelRc::new(VecModel::from(accounts)));
