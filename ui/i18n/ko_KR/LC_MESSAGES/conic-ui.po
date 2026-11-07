@@ -2565,11 +2565,6 @@ msgstr "셰이더"
 
 #: ui
 msgctxt "CommandText"
-msgid "Switch to"
-msgstr "전환"
-
-#: ui
-msgctxt "CommandText"
 msgid "Launch"
 msgstr "실행"
 
@@ -3842,3 +3837,28 @@ msgstr "대기 중"
 msgctxt "LaunchView"
 msgid "Waiting for other tasks to finish"
 msgstr "다른 작업이 완료되기를 기다리는 중"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open settings"
+msgstr "설정 열기"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open saves list"
+msgstr "월드 목록 열기"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open mods list"
+msgstr "모드 목록 열기"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open resource packs list"
+msgstr "리소스 팩 목록 열기"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search actions…"
+msgstr "작업 검색…"

@@ -2565,11 +2565,6 @@ msgstr "Шейдер"
 
 #: ui
 msgctxt "CommandText"
-msgid "Switch to"
-msgstr "Переключиться на"
-
-#: ui
-msgctxt "CommandText"
 msgid "Launch"
 msgstr "Запустить"
 
@@ -3842,3 +3837,28 @@ msgstr "В очереди"
 msgctxt "LaunchView"
 msgid "Waiting for other tasks to finish"
 msgstr "Ожидание завершения других задач"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open settings"
+msgstr "Открыть настройки"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open saves list"
+msgstr "Открыть список сохранений"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open mods list"
+msgstr "Открыть список модов"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open resource packs list"
+msgstr "Открыть список ресурспаков"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search actions…"
+msgstr "Поиск действий…"

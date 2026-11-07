@@ -519,7 +519,8 @@ export component CommandPaletteOverlay inherits Rectangle {
                             horizontal-stretch: 1;
                             text: CommandText.breadcrumb(
                                 CommandPaletteState.mode,
-                                CommandPaletteState.source);
+                                CommandPaletteState.source,
+                                CommandPaletteState.target-name);
                             font-size: 12px;
                             font-weight: Theme.font-weight-normal;
                             color: Theme.subtext-0;
@@ -613,8 +614,14 @@ export component CommandPaletteOverlay inherits Rectangle {
         }
     }
 
-    // Only the online mode can be empty; the root and instance modes never are.
+    // The empty state. The online mode has one for its search, and an instance's
+    // sub-menu has one for a query that matches none of its five operations —
+    // the root mode always has its commands (or the instance fallback) and the
+    // launch mode its instances, so neither has an empty state. A chain of `if`s,
+    // tested in order.
     private property <string> empty-kind: {
+        if (CommandPaletteState.mode == "instance-actions"
+            && CommandPaletteState.items.length == 0) { return "no-matches"; }
         if (CommandPaletteState.mode != "search-online") { return "none"; }
         if (CommandPaletteState.online-searching) { return "searching"; }
         if (CommandPaletteState.query-empty) { return "type-to-search"; }
