@@ -3862,3 +3862,23 @@ msgstr "Открыть список ресурспаков"
 msgctxt "CommandText"
 msgid "Search actions…"
 msgstr "Поиск действий…"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Open instance folder"
+msgstr "Открыть папку сборки"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Add to favorites"
+msgstr "Добавить в избранное"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Remove from favorites"
+msgstr "Убрать из избранного"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Instance settings"
+msgstr "Настройки сборки"

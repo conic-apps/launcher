@@ -3862,3 +3862,23 @@ msgstr "Ressourcenpaketliste öffnen"
 msgctxt "CommandText"
 msgid "Search actions…"
 msgstr "Aktionen durchsuchen…"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Open instance folder"
+msgstr "Instanzordner öffnen"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Add to favorites"
+msgstr "Zu Favoriten hinzufügen"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Remove from favorites"
+msgstr "Aus Favoriten entfernen"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Instance settings"
+msgstr "Instanzeinstellungen"

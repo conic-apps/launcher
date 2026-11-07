@@ -3862,3 +3862,23 @@ msgstr "Kaynak paketleri listesini aç"
 msgctxt "CommandText"
 msgid "Search actions…"
 msgstr "İşlemlerde ara…"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Open instance folder"
+msgstr "Örnek klasörünü aç"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Add to favorites"
+msgstr "Favorilere ekle"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Remove from favorites"
+msgstr "Favorilerden kaldır"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Instance settings"
+msgstr "Örnek ayarları"

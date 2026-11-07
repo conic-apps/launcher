@@ -3862,3 +3862,23 @@ msgstr "開啟資源包列表"
 msgctxt "CommandText"
 msgid "Search actions…"
 msgstr "搜尋操作…"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Open instance folder"
+msgstr "開啟實例資料夾"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Add to favorites"
+msgstr "加入我的最愛"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Remove from favorites"
+msgstr "從我的最愛移除"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Instance settings"
+msgstr "實例設定"
