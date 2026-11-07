@@ -91,6 +91,17 @@ RECONTEXT = {
     ("LaunchView", "Downloading {} installer"): ["GameInstallText"],
     ("LaunchView", "Downloading dependencies"): ["GameInstallText"],
     ("LaunchView", "Running {} installer: {}"): ["GameInstallText"],
+    # Settings dropped its narrow page and the nav/body pair that the page and
+    # the drawer used to share. The drawer now owns both lists itself, so these
+    # labels resolve under `SettingsOverlay` instead of `SettingsView`.
+    ("SettingsView", "General"): ["SettingsOverlay"],
+    ("SettingsView", "Launch"): ["SettingsOverlay"],
+    ("SettingsView", "Java"): ["SettingsOverlay"],
+    ("SettingsView", "Appearance"): ["SettingsOverlay"],
+    ("SettingsView", "Audio"): ["SettingsOverlay"],
+    ("SettingsView", "Download"): ["SettingsOverlay"],
+    ("SettingsView", "Accessibility"): ["SettingsOverlay"],
+    ("SettingsView", "About"): ["SettingsOverlay"],
     # `instances-list.slint`'s rows were split into `InstanceGroupRow` and
     # `InstanceListCard`, so their sentences now resolve under the new
     # components rather than the whole list.

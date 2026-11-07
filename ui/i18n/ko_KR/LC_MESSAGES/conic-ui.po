@@ -29,42 +29,42 @@ msgid "Music"
 msgstr "음악"
 
 #: ui
-msgctxt "SettingsView"
+msgctxt "SettingsOverlay"
 msgid "General"
 msgstr "일반"
 
 #: ui
-msgctxt "SettingsView"
+msgctxt "SettingsOverlay"
 msgid "Launch"
 msgstr "실행"
 
 #: ui
-msgctxt "SettingsView"
+msgctxt "SettingsOverlay"
 msgid "Java"
 msgstr "Java"
 
 #: ui
-msgctxt "SettingsView"
+msgctxt "SettingsOverlay"
 msgid "Appearance"
 msgstr "외관"
 
 #: ui
-msgctxt "SettingsView"
+msgctxt "SettingsOverlay"
 msgid "Audio"
 msgstr "소리"
 
 #: ui
-msgctxt "SettingsView"
+msgctxt "SettingsOverlay"
 msgid "Download"
 msgstr "다운로드"
 
 #: ui
-msgctxt "SettingsView"
+msgctxt "SettingsOverlay"
 msgid "Accessibility"
 msgstr "접근성"
 
 #: ui
-msgctxt "SettingsView"
+msgctxt "SettingsOverlay"
 msgid "About"
 msgstr "정보"
 

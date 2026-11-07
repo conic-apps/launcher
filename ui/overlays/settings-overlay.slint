@@ -1,0 +1,427 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { FocusManager } from "../globals/focus.slint";
+import { ScrollView } from "../components/containers/scroll-view.slint";
+import { TooltipArea } from "../components/controls/tooltip-area.slint";
+import { AppIcon } from "../components/display/app-icon.slint";
+import { SettingsGeneral } from "../views/settings/settings-general.slint";
+import { SettingsGame } from "../views/settings/settings-game.slint";
+import { SettingsJvm } from "../views/settings/settings-jvm.slint";
+import {
+    SettingsAppearance,
+} from "../views/settings/settings-appearance.slint";
+import { SettingsAudio } from "../views/settings/settings-audio.slint";
+import { SettingsDownload } from "../views/settings/settings-download.slint";
+import {
+    SettingsAccessibility,
+} from "../views/settings/settings-accessibility.slint";
+import { SettingsAbout } from "../views/settings/settings-about.slint";
+
+component NavItem inherits Rectangle {
+    in property <string> icon;
+    in property <string> label;
+    in property <bool> active: false;
+    callback selected;
+
+    width: 100%;
+    height: 30px;
+    border-radius: 8px;
+    background: touch.pressed ? Theme.surface-1.transparentize(0.2)
+        : root.active ? Theme.surface-1.transparentize(0.2)
+        : touch.has-hover ? Theme.surface-0.transparentize(0.2)
+        : transparent;
+
+    Rectangle {
+        x: -6px;
+        width: 3px;
+        height: root.active ? 22px : 0px;
+        border-radius: 9999px;
+        background: Theme.mauve;
+        opacity: root.active ? 1.0 : 0.0;
+        animate height, opacity {
+            duration: 100ms;
+            easing: ease;
+        }
+    }
+
+    HorizontalLayout {
+        padding-left: 8px;
+        spacing: 6px;
+        cross-axis-alignment: center;
+
+        AppIcon {
+            name: root.icon;
+            size: 16px;
+            icon-color: Theme.default-text-color.transparentize(0.1);
+        }
+
+        // The label has the row's remaining width; a long translation elides
+        // and its full text is available on hover. `wrap: false` leaves the
+        // row's own `touch` to handle the nav click.
+        label-tooltip := TooltipArea {
+            horizontal-stretch: 1;
+            height: label.preferred-height;
+            wrap: false;
+            hovered: touch.has-hover;
+            show-on-press: false;
+            text: label.preferred-width > label.width + 0.5px ? root.label : "";
+
+            label := Text {
+                width: 100%;
+                text: root.label;
+                font-size: 13px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.default-text-color.transparentize(0.1);
+                overflow: elide;
+            }
+        }
+    }
+
+    touch := TouchArea {
+        clicked => {
+            FocusManager.clear();
+            root.selected();
+        }
+    }
+}
+
+component SettingsSection inherits VerticalLayout {
+    in property <string> title;
+
+    width: 100%;
+    // The body's inter-section gap plus this padding is the air before a
+    // heading; the gap alone reads as part of the previous group.
+    padding-top: 8px;
+    spacing: 18px;
+    alignment: start;
+
+    Rectangle {
+        height: 18px;
+        background: transparent;
+
+        title-tooltip := TooltipArea {
+            x: 8px;
+            width: parent.width - 8px;
+            height: parent.height;
+            show-on-press: false;
+            text: title-label.preferred-width > title-label.width + 0.5px ? root.title : "";
+
+            title-label := Text {
+                width: 100%;
+                text: root.title;
+                font-size: 18px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.text;
+                overflow: elide;
+            }
+        }
+    }
+
+    @children
+}
+
+// The settings surface: a drawer over the game view. The section list, the
+// scrolling body and the two entrance layers all belong to this one component;
+// there is no second host to keep them compatible with.
+export component SettingsOverlay inherits Rectangle {
+    in property <bool> open: false;
+
+    /// A click landed on the game view outside the drawer.
+    callback closed;
+
+    width: 100%;
+    height: 100%;
+    // The notification centre's scrim: the game view stays visible, dimmed.
+    background: #000000.with-alpha(0.35 * root.scrim-alpha);
+    // The drawer enters from outside the window; the root hides the part that
+    // has not arrived yet.
+    clip: true;
+
+    // A fixed drawer is either cramped on the 840px minimum window or too wide
+    // on a large display. The sidebar is fixed at 208px; trimming its padding by
+    // the same 16px keeps the longest translated label at its 224px text width.
+    // The body scales with the window and keeps 80px of game visible.
+    private property <length> sidebar-width: 208px;
+    private property <length> content-width:
+        min(
+            min(max(root.width * 0.60, 520px), 680px),
+            max(0px, root.width - root.sidebar-width - 80px),
+        );
+
+    // "closed" | "starting" | "shown" | "leaving", the same machine as the other
+    // overlay layers. `starting` is one frame at the off-screen values so the
+    // renderer sees them before the animated properties retarget.
+    private property <string> phase: "closed";
+    private property <float> scrim-alpha: root.phase == "shown" ? 1.0 : 0.0;
+    visible: root.phase != "closed";
+
+    animate scrim-alpha {
+        duration: 150ms;
+        easing: ease-out-quad;
+    }
+
+    changed open => {
+        if root.open {
+            if root.phase == "closed" {
+                root.phase = "starting";
+                start-timer.restart();
+            } else {
+                // An interrupted leave carries on from where it stopped.
+                root.phase = "shown";
+            }
+        } else if root.phase != "closed" && root.phase != "leaving" {
+            root.phase = "leaving";
+        }
+    }
+
+    start-timer := Timer {
+        interval: 16ms;
+        running: root.phase == "starting";
+        triggered => { root.phase = "shown"; }
+    }
+
+    // The longer of the two leave tracks.
+    leave-timer := Timer {
+        interval: 280ms;
+        running: root.phase == "leaving";
+        triggered => { root.phase = "closed"; }
+    }
+
+    init => {
+        if root.open {
+            root.phase = "shown";
+        }
+    }
+
+    private property <bool> arrived: root.phase == "shown";
+    private property <length> sidebar-x: root.arrived ? 0px : -root.sidebar-width;
+    // The body's resting x follows the responsive sidebar instantly; only the
+    // entrance/leave offset animates, so a live resize does not slide the body
+    // back under the sidebar for the duration of the transition.
+    private property <length> content-slide:
+        root.arrived ? 0px : -root.content-width - root.sidebar-width;
+    private property <length> content-x: root.sidebar-width + root.content-slide;
+    private property <float> sidebar-alpha: root.arrived ? 1.0 : 0.0;
+    private property <float> content-alpha: root.arrived ? 1.0 : 0.0;
+
+    animate sidebar-x, sidebar-alpha {
+        duration: root.phase == "leaving" ? 200ms : 260ms;
+        easing: root.phase == "leaving"
+            ? cubic-bezier(0.47, 0, 1, 0.75)
+            : cubic-bezier(0, 0.65, 0.26, 1);
+    }
+
+    animate content-slide, content-alpha {
+        duration: root.phase == "leaving" ? 260ms : 320ms;
+        easing: root.phase == "leaving"
+            ? cubic-bezier(0.47, 0, 1, 0.75)
+            : cubic-bezier(0, 0.65, 0.26, 1);
+    }
+
+    // The game view behind is inert while the drawer is open: a press outside
+    // closes it, and the wheel does not scroll the instance list.
+    outside-touch := TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => {
+            FocusManager.clear();
+            root.closed();
+        }
+        scroll-event(event) => { accept }
+    }
+
+    // The base colour and shadow live on a panel behind the content. The
+    // content stays transparent, so the base shows through and the scrolling
+    // body keeps its own clipping.
+    content-shadow := Rectangle {
+        x: root.content-x;
+        y: 0;
+        width: root.content-width;
+        height: 100%;
+        opacity: root.content-alpha;
+        background: Theme.base;
+        // The notification centre's shadow, cast to the right instead of the
+        // left; the opaque sidebar covers the part that falls back across it.
+        drop-shadow-color: #00000059;
+        drop-shadow-blur: 24px;
+        drop-shadow-offset-x: 6px;
+        drop-shadow-offset-y: 0px;
+    }
+
+    // The content is declared before the sidebar so the sidebar stays above it
+    // while the two cross during the entrance: the wide part appears from behind
+    // the narrow one instead of covering it.
+    content := Rectangle {
+        x: root.content-x;
+        y: 0;
+        width: root.content-width;
+        height: 100%;
+        opacity: root.content-alpha;
+        background: transparent;
+
+        scroll := ScrollView {
+            VerticalLayout {
+                padding-top: 24px;
+                padding-right: 24px;
+                padding-bottom: 24px;
+                padding-left: 16px;
+                spacing: 24px;
+                alignment: start;
+
+                s0 := SettingsSection {
+                    title: @tr("General");
+                    SettingsGeneral { }
+                }
+
+                s1 := SettingsSection {
+                    title: @tr("Launch");
+                    SettingsGame { }
+                }
+
+                s2 := SettingsSection {
+                    title: @tr("Java");
+                    // The drawer exists for the whole app lifetime; the disk
+                    // scan belongs to an opening, not to the app start.
+                    if root.phase != "closed": SettingsJvm { }
+                }
+
+                s3 := SettingsSection {
+                    title: @tr("Appearance");
+                    SettingsAppearance { }
+                }
+
+                s4 := SettingsSection {
+                    title: @tr("Audio");
+                    SettingsAudio { }
+                }
+
+                s5 := SettingsSection {
+                    title: @tr("Download");
+                    SettingsDownload { }
+                }
+
+                s6 := SettingsSection {
+                    title: @tr("Accessibility");
+                    SettingsAccessibility { }
+                }
+
+                s7 := SettingsSection {
+                    title: @tr("About");
+                    SettingsAbout { }
+                }
+            }
+        }
+    }
+
+    // Scroll-spy: the last section whose top has crossed 100px below the
+    // viewport top is active; at the very bottom the last section wins.
+    private property <length> vp: scroll.content-y;
+    private property <length> max-scroll: max(0px, scroll.content-height - scroll.height);
+    private property <bool> at-bottom: root.max-scroll > 0px && -root.vp >= root.max-scroll - 1px;
+    private property <int> active-index:
+        root.at-bottom ? 7
+        : s7.y + root.vp <= 100px ? 7
+        : s6.y + root.vp <= 100px ? 6
+        : s5.y + root.vp <= 100px ? 5
+        : s4.y + root.vp <= 100px ? 4
+        : s3.y + root.vp <= 100px ? 3
+        : s2.y + root.vp <= 100px ? 2
+        : s1.y + root.vp <= 100px ? 1
+        : 0;
+
+    // The `true` asks for a smooth scroll through the `ScrollView`'s lerp.
+    function scroll-to(index: int) {
+        if index == 0 { scroll.scroll-to(16px - s0.y, true); }
+        if index == 1 { scroll.scroll-to(16px - s1.y, true); }
+        if index == 2 { scroll.scroll-to(16px - s2.y, true); }
+        if index == 3 { scroll.scroll-to(16px - s3.y, true); }
+        if index == 4 { scroll.scroll-to(16px - s4.y, true); }
+        if index == 5 { scroll.scroll-to(16px - s5.y, true); }
+        if index == 6 { scroll.scroll-to(16px - s6.y, true); }
+        if index == 7 { scroll.scroll-to(16px - s7.y, true); }
+    }
+
+    sidebar := Rectangle {
+        x: root.sidebar-x;
+        y: 0;
+        width: root.sidebar-width;
+        height: 100%;
+        opacity: root.sidebar-alpha;
+        background: Theme.mantle;
+
+        // Empty sidebar space belongs to the drawer, not to the closing scrim.
+        TouchArea {
+            width: 100%;
+            height: 100%;
+            clicked => { FocusManager.clear(); }
+        }
+
+        VerticalLayout {
+            padding-top: 24px;
+            padding-right: 14px;
+            padding-bottom: 16px;
+            padding-left: 14px;
+            spacing: 4px;
+            alignment: start;
+
+            NavItem {
+                icon: "house";
+                label: @tr("General");
+                active: root.active-index == 0;
+                selected => { root.scroll-to(0); }
+            }
+
+            NavItem {
+                icon: "gamepad";
+                label: @tr("Launch");
+                active: root.active-index == 1;
+                selected => { root.scroll-to(1); }
+            }
+
+            NavItem {
+                icon: "java";
+                label: @tr("Java");
+                active: root.active-index == 2;
+                selected => { root.scroll-to(2); }
+            }
+
+            NavItem {
+                icon: "palette";
+                label: @tr("Appearance");
+                active: root.active-index == 3;
+                selected => { root.scroll-to(3); }
+            }
+
+            NavItem {
+                icon: "musical-notes";
+                label: @tr("Audio");
+                active: root.active-index == 4;
+                selected => { root.scroll-to(4); }
+            }
+
+            NavItem {
+                icon: "globe";
+                label: @tr("Download");
+                active: root.active-index == 5;
+                selected => { root.scroll-to(5); }
+            }
+
+            NavItem {
+                icon: "accessibility";
+                label: @tr("Accessibility");
+                active: root.active-index == 6;
+                selected => { root.scroll-to(6); }
+            }
+
+            NavItem {
+                icon: "about";
+                label: @tr("About");
+                active: root.active-index == 7;
+                selected => { root.scroll-to(7); }
+            }
+        }
+    }
+}

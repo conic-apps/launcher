@@ -1,0 +1,39 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Navigation } from "navigation.slint";
+
+// The settings drawer's open state. The drawer is the only settings surface and
+// it belongs over the game view, so opening it from another page first goes
+// home; mirroring `Navigation` here closes it on any later navigation without
+// every caller remembering to.
+export global SettingsShell {
+    /// Whether the settings drawer is open over the game view.
+    in-out property <bool> overlay-open: false;
+
+    private property <string> page: Navigation.current-page;
+
+    changed page => {
+        if self.page != "game" {
+            self.overlay-open = false;
+        }
+    }
+
+    /// The title bar's gear: close the drawer when it is open, otherwise show
+    /// settings over the game view.
+    public function toggle-settings() {
+        if self.overlay-open {
+            self.overlay-open = false;
+        } else {
+            self.open-settings();
+        }
+    }
+
+    function open-settings() {
+        if Navigation.current-page != "game" {
+            Navigation.navigate("game");
+        }
+        self.overlay-open = true;
+    }
+}

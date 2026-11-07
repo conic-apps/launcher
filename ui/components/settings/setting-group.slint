@@ -5,10 +5,11 @@
 import { Theme } from "../../theme.slint";
 import { AppIcon } from "../display/app-icon.slint";
 import { FocusManager } from "../../globals/focus.slint";
+import { TooltipArea } from "../controls/tooltip-area.slint";
 
 // A titled group of settings.
 //
-// It is a full-width layout whose items are inset by the settings page.
+// It is a full-width layout whose items are inset by the settings body.
 //
 // The corners are the rows', not the wrapper's, and the two obvious ways of
 // doing it are both wrong. Clipping the wrapper rounds the rows, but cuts off
@@ -38,6 +39,7 @@ export component SettingGroup inherits VerticalLayout {
         background: transparent;
 
         HorizontalLayout {
+            width: 100%;
             padding-left: 8px;
             // The title Text has no right padding; the layout's 3px spacing is
             // the gap between the two.
@@ -45,11 +47,20 @@ export component SettingGroup inherits VerticalLayout {
             cross-axis-alignment: center;
             alignment: start;
 
-            Text {
-                text: root.title;
-                font-size: 13.5px;
-                font-weight: Theme.font-weight-normal;
-                color: Theme.default-text-color.transparentize(0.1);
+            title-tooltip := TooltipArea {
+                horizontal-stretch: 1;
+                height: parent.height;
+                show-on-press: false;
+                text: title-label.preferred-width > title-label.width + 0.5px ? root.title : "";
+
+                title-label := Text {
+                    width: 100%;
+                    text: root.title;
+                    font-size: 13.5px;
+                    font-weight: Theme.font-weight-normal;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    overflow: elide;
+                }
             }
 
             if root.resetable: Rectangle {

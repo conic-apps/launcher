@@ -5,7 +5,7 @@
 // Global settings state.
 //
 // Rust owns the authoritative `Config` and seeds these properties before the
-// window is shown; the settings pages mutate them and call `changed()`, after
+// window is shown; the settings controls mutate them and call `changed()`, after
 // which Rust reads the properties back and persists them (debounced).
 //
 // Numeric text fields are strings on purpose: `TextInput` edits text, and Rust
