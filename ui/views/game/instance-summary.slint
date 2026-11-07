@@ -477,11 +477,11 @@ export component InstanceSummary inherits Rectangle {
                             enabled: GameState.has-current;
                             clicked => {
                                 if root.button-kind == "cancel" {
-                                    GameState.cancel-task();
+                                    GameState.cancel-task(GameState.task-id);
                                 } else if root.button-kind == "download" {
-                                    GameState.start-download();
+                                    GameState.start-download(GameState.current-id);
                                 } else {
-                                    GameState.launch();
+                                    GameState.launch(GameState.current-id);
                                 }
                             }
                         }
@@ -533,7 +533,7 @@ export component InstanceSummary inherits Rectangle {
                                     width: parent.width;
                                     height: parent.height;
                                     enabled: GameState.has-current;
-                                    clicked => { GameState.open-instance-folder(); }
+                                    clicked => { GameState.open-instance-folder(GameState.current-id); }
                                 }
 
                                 // The icons carry no label, so the hint is the
@@ -565,7 +565,7 @@ export component InstanceSummary inherits Rectangle {
                                     width: parent.width;
                                     height: parent.height;
                                     enabled: GameState.has-current;
-                                    clicked => { GameState.toggle-starred(); }
+                                    clicked => { GameState.toggle-starred(GameState.current-id); }
                                 }
 
                                 // The icon names the state, so the hint names the

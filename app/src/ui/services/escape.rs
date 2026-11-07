@@ -13,8 +13,8 @@ use slint::ComponentHandle;
 use crate::slint_backend::{
     AccountAddState, AccountViewState, App, CommandPaletteState, ContentState, CrashState,
     DeleteAccountState, DeleteInstanceState, DeleteSaveState, Dialogs, Dropdown, FocusManager,
-    InstanceSettingsState, ModpackImportState, MultiplayerState, MusicState, Navigation, NewsState,
-    NotificationState, SettingsShell, TaskState,
+    InstanceMenu, InstanceSettingsState, ModpackImportState, MultiplayerState, MusicState,
+    Navigation, NewsState, NotificationState, SettingsShell, TaskState,
 };
 
 pub(crate) fn setup(ui: &App) {
@@ -47,6 +47,7 @@ fn close(ui: &App) {
     ui.global::<MusicState>().invoke_close_panel();
     ui.global::<SettingsShell>().set_overlay_open(false);
     ui.global::<CommandPaletteState>().invoke_close();
+    ui.global::<InstanceMenu>().set_visible(false);
     ui.global::<Dropdown>().set_open(false);
     ui.global::<FocusManager>().invoke_clear();
 

@@ -136,6 +136,20 @@ pub(crate) fn open_delete_dialog(ui: &App, instance: &Instance) {
         .set_confirm_delete_instance_visible(true);
 }
 
+/// Reads the instance on the runtime, then opens the delete dialog for it.
+///
+/// Shared by the instance settings' "Delete instance" row and the instance
+/// list's right-click menu.
+pub(crate) fn open_delete_for(ui: &App, instance_id: String) {
+    let weak = ui.as_weak();
+    crate::support::runtime::spawn(async move {
+        let Some(instance) = instance::get_instance_by_id(&instance_id).await else {
+            return;
+        };
+        crate::ui::services::report::report(&weak, move |ui| open_delete_dialog(&ui, &instance));
+    });
+}
+
 pub(crate) fn setup_delete_dialog(ui: &App) {
     let delete = ui.global::<DeleteInstanceState>();
 

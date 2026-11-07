@@ -1,0 +1,37 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// The instance list's right-click menu: the instance it acts on, that instance's
+// state, and where the menu opened.
+//
+// The trigger is a card deep inside the list while the menu is mounted at the
+// app root, where the list's viewport cannot clip it; this global is what
+// carries the one to the other. Rust fills it in when the menu opens, because
+// the menu must act on the card that was right-clicked without making it the
+// current instance: `current-*` on `GameState` describes the selection, not the
+// menu's target.
+export global InstanceMenu {
+    in-out property <bool> visible: false;
+    /// The pointer's window position when the menu was opened, so it opens
+    /// under the cursor.
+    in-out property <length> anchor-x: 0px;
+    in-out property <length> anchor-y: 0px;
+
+    /// The right-clicked instance's id. Every item acts on this one.
+    in-out property <string> target: "";
+    /// Whether the target has a `.install.lock`, i.e. whether its launch button
+    /// offers a download or a launch. Same source as `GameState.current-installed`.
+    in-out property <bool> installed: false;
+    in-out property <bool> starred: false;
+    /// The task centre's view of the target's install: "idle" | "queued" |
+    /// "running", and the task id the first item stops. Same source as
+    /// `GameState.current-task`/`task-id`, read for the target instead of the
+    /// selection.
+    in-out property <string> task: "idle";
+    in-out property <int> task-id: -1;
+
+    public function close() {
+        self.visible = false;
+    }
+}

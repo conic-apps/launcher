@@ -16,7 +16,7 @@ use chrono::{Datelike, Local, TimeZone};
 use slint::{ComponentHandle, Model, ModelRc, SharedString, Timer, TimerMode, VecModel};
 
 use crate::slint_backend::{
-    AccountItem, App, Dialogs, GameRow, GameState, MultiplayerState, TaskState,
+    AccountItem, App, Dialogs, GameRow, GameState, InstanceMenu, MultiplayerState, TaskState,
 };
 use account::Account;
 use instance::{Instance, ModLoaderType, SortBy};
