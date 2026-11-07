@@ -222,8 +222,9 @@ component PaletteRow inherits Rectangle {
     }
 }
 
-// The command palette overlay: a scrim and the panel. It appears without an
-// entrance animation.
+// The command palette overlay: a scrim and the panel. `Dialog`'s phase machine
+// drives the fade in and out, so an interrupted transition resumes from where
+// it got to instead of snapping.
 //
 // Keys are handled in `capture-key-pressed`, not `key-pressed`: a `TextInput`
 // accepts Backspace and the arrows first, so an ancestor would never see them.
@@ -231,10 +232,79 @@ component PaletteRow inherits Rectangle {
 export component CommandPaletteOverlay inherits Rectangle {
     width: 100%;
     height: 100%;
-    background: #00000042;
+    // Alpha is in the colour: an element `opacity` would create a render layer.
+    background: #000000.with-alpha(0.259 * root.scrim-alpha);
     border-radius: 16px;
     // Between the content overlays and the dialogs (`z: 2000`).
     z: 1500;
+
+    private property <bool> shown: CommandPaletteState.visible;
+
+    // "closed" | "starting" | "shown" | "leaving".
+    //
+    // Visibility must not derive from an animated value: an unread animation
+    // snaps, so the palette would vanish in one frame. `starting` shows one
+    // frame at the start values so the entrance is not skipped, and `leaving`
+    // keeps the scrim up, and therefore clickable, until the fade ends.
+    private property <string> phase: "closed";
+    visible: root.phase != "closed";
+
+    changed shown => {
+        if root.shown {
+            if root.phase == "closed" {
+                root.phase = "starting";
+                start-timer.restart();
+            } else {
+                // Play the enter from wherever the leave got to.
+                root.phase = "shown";
+            }
+        } else if root.phase != "closed" && root.phase != "leaving" {
+            root.phase = "leaving";
+        }
+    }
+
+    // One frame at the start values is enough for the renderer to see them.
+    start-timer := Timer {
+        interval: 16ms;
+        running: root.phase == "starting";
+        triggered => { root.phase = "shown"; }
+    }
+
+    // The leave's longest track: 60ms delay plus 150ms scrim.
+    leave-timer := Timer {
+        interval: 210ms;
+        running: root.phase == "leaving";
+        triggered => { root.phase = "closed"; }
+    }
+
+    init => {
+        // `changed` does not fire for the value a component is created with.
+        if root.shown {
+            root.phase = "shown";
+        }
+    }
+
+    // Shorter than a dialog's, and with no delay in front of the panel: the
+    // palette is typed into, so it has to be there on the first keystroke. Only
+    // the scrim lags, and only on the way out, where it lets the panel leave the
+    // window before the window darkens.
+    private property <float> scrim-alpha: root.phase == "shown" ? 1.0 : 0.0;
+    animate scrim-alpha {
+        duration: 150ms;
+        delay: root.phase == "shown" ? 0ms : 60ms;
+        easing: ease-out-quad;
+    }
+
+    private property <float> panel-alpha: root.phase == "shown" ? 1.0 : 0.0;
+    private property <float> panel-scale: root.phase == "shown" ? 1.0 : 0.96;
+    animate panel-alpha {
+        duration: root.phase == "shown" ? 150ms : 120ms;
+        easing: ease-out-quad;
+    }
+    animate panel-scale {
+        duration: root.phase == "shown" ? 150ms : 120ms;
+        easing: root.phase == "shown" ? cubic-bezier(0.34, 1.56, 0.64, 1) : ease-out-quad;
+    }
 
     // Declared before the panel, so the panel stays on top: the last-declared
     // element is hit-tested first.
@@ -249,11 +319,23 @@ export component CommandPaletteOverlay inherits Rectangle {
     // Capped at 320px including padding, and shrinks to the taller of the list
     // and the empty state. The `max` keeps the 72px spinner from being clipped.
     private property <length> results-height: min(320px, max(CommandPaletteState.items-content-height, root.empty-height) + 12px);
+    // Animated at the source, so the list and the footer below it move together:
+    // `panel-height` follows this value, and easing the panel alone would let the
+    // footer slide across rows that had already jumped to their new size.
+    //
+    // `enabled` keeps the opening out, as in `Dialog`: a new mode's list must be
+    // in place on the frame the palette appears, not grow into it. The leave
+    // stays animated, so closing mid-change does not snap the panel back; the
+    // real snap happens once the root is hidden.
+    animate results-height {
+        enabled: root.phase == "shown" || root.phase == "leaving";
+        duration: 200ms;
+        // power3.out: a lazy start on a height change leaves the panel parked
+        // while the list has already moved.
+        easing: cubic-bezier(0.215, 0.61, 0.355, 1);
+    }
     // Border + input row + results + footer + border.
     private property <length> panel-height: 74px + root.results-height + 2px;
-
-    private property <bool> shown: CommandPaletteState.visible;
-    visible: root.shown;
 
     panel := Rectangle {
         // The same span the title bar's search field is given.
@@ -262,6 +344,10 @@ export component CommandPaletteOverlay inherits Rectangle {
         x: (root.width - self.width) / 2;
         // Hangs 4px below the top edge, inside the title bar.
         y: 4px;
+        opacity: root.panel-alpha;
+        transform-scale: root.panel-scale * 100%;
+        // Grows down out of the title bar, not up from the panel's middle.
+        transform-origin: { x: self.width / 2, y: 0px };
         drop-shadow-color: #00000071;
         drop-shadow-blur: 50px;
         background: Theme.base;
