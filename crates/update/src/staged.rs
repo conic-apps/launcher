@@ -56,9 +56,9 @@ pub fn read_pending() -> Result<Option<Staged>> {
 
 /// Removes the pending record.
 ///
-/// The bundle itself is not touched: on Windows a detached script consumes it
-/// after this process is gone. The in-process apply branches remove it once the
-/// swap has succeeded.
+/// The bundle itself is not touched: on Windows the script consumes it after
+/// this process is gone. The in-process apply branches remove it once the swap
+/// has succeeded.
 pub fn clear_pending() -> Result<()> {
     match std::fs::remove_file(pending_path()) {
         Ok(()) => Ok(()),
