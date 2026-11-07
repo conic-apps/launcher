@@ -3882,3 +3882,28 @@ msgstr "お気に入りから削除"
 msgctxt "InstanceSummary"
 msgid "Instance settings"
 msgstr "インスタンス設定"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Stop"
+msgstr "停止"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Stop the running game?"
+msgstr "実行中のゲームを停止しますか？"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "This may corrupt your game data. Only use it when Minecraft is stuck."
+msgstr "ゲームデータが破損する可能性があります。Minecraft が異常にフリーズした場合にのみ使用してください。"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Keep playing"
+msgstr "ゲームを続ける"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Stop game"
+msgstr "ゲームを停止"

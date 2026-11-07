@@ -11,6 +11,7 @@ pub(crate) mod minecraft_update;
 pub(crate) mod notifications;
 pub(crate) mod report;
 pub(crate) mod scroll;
+pub(crate) mod sessions;
 pub(crate) mod tasks;
 pub(crate) mod tooltip;
 pub(crate) mod update;

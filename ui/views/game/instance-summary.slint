@@ -7,6 +7,7 @@ import { AppIcon } from "../../components/display/app-icon.slint";
 import { Loading } from "../../components/controls/loading.slint";
 import { Progress } from "../../components/controls/progress.slint";
 import { TooltipArea } from "../../components/controls/tooltip-area.slint";
+import { Dialogs } from "../../globals/dialogs.slint";
 import {
     GameState,
     GameInstallText,
@@ -434,13 +435,14 @@ export component InstanceSummary inherits Rectangle {
                         opacity: launch-touch.pressed ? 0.9 : root.button-disabled ? 0.6 : 1.0;
                         clip: true;
 
-                        // Three states, cross-faded: cancelling is a different
-                        // intent from starting, so it gets its own face.
+                        // Four states, cross-faded: cancelling an install and
+                        // stopping a running game are different intents from
+                        // starting one, so each gets its own face.
                         idle-face := Rectangle {
                             width: 100%;
                             height: 100%;
                             background: transparent;
-                            opacity: root.button-kind == "cancel" ? 0.0 : 1.0;
+                            opacity: root.button-kind == "cancel" || root.button-kind == "stop" ? 0.0 : 1.0;
                             animate opacity {
                                 duration: 120ms;
                                 easing: ease-out-quad;
@@ -471,6 +473,25 @@ export component InstanceSummary inherits Rectangle {
                             }
                         }
 
+                        // A game that is already running: the same cross on the
+                        // same purple, but the click warns first.
+                        stop-face := Rectangle {
+                            width: 100%;
+                            height: 100%;
+                            background: transparent;
+                            opacity: root.button-kind == "stop" ? 1.0 : 0.0;
+                            animate opacity {
+                                duration: 120ms;
+                                easing: ease-out-quad;
+                            }
+
+                            stop-pill := LaunchFace {
+                                icon: "xmark";
+                                icon-size: 18px;
+                                text: @tr("Stop");
+                            }
+                        }
+
                         launch-touch := TouchArea {
                             width: parent.width;
                             height: parent.height;
@@ -478,6 +499,12 @@ export component InstanceSummary inherits Rectangle {
                             clicked => {
                                 if root.button-kind == "cancel" {
                                     GameState.cancel-task(GameState.task-id);
+                                } else if root.button-kind == "stop" {
+                                    // Killing a live session can lose unsaved
+                                    // progress, so the dialog owns the decision;
+                                    // the task centre's cancel does not warn.
+                                    Dialogs.stop-game-id = GameState.current-id;
+                                    Dialogs.confirm-stop-game-visible = true;
                                 } else if root.button-kind == "download" {
                                     GameState.start-download(GameState.current-id);
                                 } else {
@@ -705,20 +732,27 @@ export component InstanceSummary inherits Rectangle {
     // surface; nothing here remembers anything.
     private property <bool> task-active: GameState.current-task != "idle";
     private property <bool> task-queued: GameState.current-task == "queued";
+    private property <bool> running: GameState.current-running;
     private property <bool> button-disabled: !GameState.has-current;
-    // "cancel" | "download" | "launch"
+    // "cancel" | "download" | "launch" | "stop"
+    //
+    // An install wins over a running game: it holds the exclusive lane, so the
+    // two cannot belong to the same instance, and the task's own cancel is what
+    // the player can act on.
     private property <string> button-kind: root.task-active
         ? "cancel"
-        : (GameState.current-installed ? "launch" : "download");
-    // The fill owned by that state, so the three colours cross-fade instead of
-    // snapping when the button changes what it does.
+        : (root.running ? "stop" : (GameState.current-installed ? "launch" : "download"));
+    // The fill owned by that state, so the colours cross-fade instead of snapping
+    // when the button changes what it does. Stop and Cancel share the purple
+    // because both end work the player started.
     private property <color> button-fill: root.button-kind == "download" ? Theme.blue
-        : root.button-kind == "cancel" ? Theme.mauve
+        : root.button-kind == "cancel" || root.button-kind == "stop" ? Theme.mauve
         : Theme.green;
     // The pill's target width, from the face that is showing. The pill animates
     // towards it; the strip and the icons read the pill's own animated width.
     private property <length> button-width: root.button-kind == "cancel"
         ? cancel-pill.pill-width
+        : root.button-kind == "stop" ? stop-pill.pill-width
         : idle-pill.pill-width;
     // 0 while the row is idle, 1 while the strip is open. It blends the action
     // icons between beside the button and the row's right edge.

@@ -10,6 +10,11 @@
 //! stays here is the work itself: run the installer, mirror its progress into the
 //! strip beside the button, and re-read the listing when it ends so `.install.lock`
 //! turns the button from “Download” into “Launch”.
+//!
+//! [`project`] is the button's whole state, and it reads two registries: the task
+//! centre's install and the launch crate's running sessions. They are separate
+//! because a game outlives the flow that launched it — the centre has forgotten
+//! the launch by the time the player can stop the game.
 
 use std::sync::Arc;
 
@@ -18,9 +23,11 @@ use crate::usecases::tasks::{TaskHandle, TaskWork};
 use config::Config;
 use shared::task::{TaskKind, TaskSpec, TaskTarget};
 
-/// Hooks the button's state to the registry: every task event re-projects it.
+/// Hooks the button's state to both registries it mirrors: every task event and
+/// every session event re-projects it.
 pub(crate) fn watch() {
     crate::ui::services::tasks::observe(project);
+    crate::ui::services::sessions::observe(|ui, _| project(ui));
 }
 
 /// Asks for an install of `instance_id`, queueing it when the exclusive lane is
@@ -93,19 +100,20 @@ pub(crate) fn task_of(instance_id: &str) -> (&'static str, i32) {
 
 /// Re-derives the launch button's state from the registry.
 ///
-/// Called after every task event and on every apply of the game view, so the
-/// button follows a task that was cancelled, finished or queued elsewhere in the
-/// app — the UI owns no copy of the scheduler's state.
+/// Called after every task and session event and on every apply of the game
+/// view, so the button follows an install that was cancelled, finished or queued
+/// elsewhere in the app, and a game that started or ended — the UI owns no copy
+/// of either registry.
 pub(crate) fn project(ui: &App) {
     let state = ui.global::<GameState>();
     let id = state.get_current_id().to_string();
-    let (task, task_id) = if state.get_has_current() && !id.is_empty() {
-        task_of(&id)
-    } else {
-        ("idle", -1)
-    };
+    let current = state.get_has_current() && !id.is_empty();
+    let (task, task_id) = if current { task_of(&id) } else { ("idle", -1) };
     state.set_current_task(task.into());
     state.set_task_id(task_id);
+    // A launch is not a task and has already left the centre by the time its
+    // process is up, so the running bit can only come from the session registry.
+    state.set_current_running(current && launch::running::is_running(&id));
     if task_id < 0 {
         // Nothing is running for this instance, so whatever the strip last showed
         // belongs to work that has ended or to another instance.

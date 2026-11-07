@@ -2,18 +2,16 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The crash overlay: subscribes to the launch crate's session events, posts a
+//! The crash overlay: observes the launch crate's session events, posts a
 //! notification for the crash and raises the overlay when it is activated.
 //!
 //! The subscription is installed once for the whole app, because a game outlives
-//! the launch flow that started it. The report callback writes one combined
+//! the launch flow that started it; `ui::services::sessions` owns it, since the
+//! game view reads the same events. The report callback writes one combined
 //! report and opens it.
 
-use std::sync::Arc;
-
 use launch::crash::{CrashReport, Reason};
-use launch::running::{self, SessionEvent};
-use shared::Sink;
+use launch::running::SessionEvent;
 use shared::notification::{Notice, NoticeKind};
 use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
 
@@ -21,7 +19,7 @@ use crate::slint_backend::{App, CrashLogLine, CrashReason, CrashState};
 use crate::ui::services::{app_config, notifications};
 use crate::usecases::crash_report;
 
-/// Installs the app's running-session subscriber and the overlay's callbacks.
+/// Installs the overlay's callbacks and its running-session observer.
 pub(crate) fn setup(ui: &App) {
     let weak = ui.as_weak();
     ui.global::<CrashState>().on_close(move || {
@@ -38,48 +36,44 @@ pub(crate) fn setup(ui: &App) {
     });
 
     let weak = ui.as_weak();
-    // `running::subscribe` keeps one slot, so a second `setup` would replace this
-    // sink silently and no crash would ever reach the notification. Worth a
-    // line, since `main` wires this once and a future caller might not.
-    log::debug!("subscribing the crash overlay to the launch session events");
-    let sink: Sink<SessionEvent> = Arc::new(move |event| {
+    // `ui::services::sessions` keeps the app's one subscription and calls this
+    // on the event loop, so only the crash event is left to handle here.
+    log::debug!("observing the launch session events for crashes");
+    crate::ui::services::sessions::observe(move |ui, event| {
         let SessionEvent::Exited {
             crash: Some(crash), ..
         } = event
         else {
             return;
         };
-        let crash = *crash;
+        let crash = (**crash).clone();
         let action_weak = weak.clone();
-        crate::ui::services::report::report(&weak, move |ui| {
-            // The crash crate logs what it diagnosed; this is the line that
-            // says an instance crashed and where to look, which a support log
-            // is read for. Logged when the crash is posted, not when the user
-            // opens the report.
-            log::error!(
-                "'{}' crashed: {} ({}){}",
-                crash.instance_name,
-                crash.summary,
-                crash.exit_type.as_str(),
-                match crash.report_path {
-                    Some(ref path) => format!(" — report at {path}"),
-                    None => String::new(),
-                }
-            );
-            let instance_name = crash.instance_name.clone();
-            notifications::send(
-                &ui,
-                Notice::new(NoticeKind::GameCrashed)
-                    .with_arg(instance_name)
-                    .on_click(move || {
-                        if let Some(ui) = action_weak.upgrade() {
-                            show(&ui, crash);
-                        }
-                    }),
-            );
-        });
+        // The crash crate logs what it diagnosed; this is the line that
+        // says an instance crashed and where to look, which a support log
+        // is read for. Logged when the crash is posted, not when the user
+        // opens the report.
+        log::error!(
+            "'{}' crashed: {} ({}){}",
+            crash.instance_name,
+            crash.summary,
+            crash.exit_type.as_str(),
+            match crash.report_path {
+                Some(ref path) => format!(" — report at {path}"),
+                None => String::new(),
+            }
+        );
+        let instance_name = crash.instance_name.clone();
+        notifications::send(
+            ui,
+            Notice::new(NoticeKind::GameCrashed)
+                .with_arg(instance_name)
+                .on_click(move || {
+                    if let Some(ui) = action_weak.upgrade() {
+                        show(&ui, crash);
+                    }
+                }),
+        );
     });
-    running::subscribe(sink);
 }
 
 fn show(ui: &App, crash: CrashReport) {

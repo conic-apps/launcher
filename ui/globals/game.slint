@@ -219,6 +219,11 @@ export global GameState {
     in-out property <string> current-task: "idle";
     /// The task id that button stops, -1 when there is none.
     in-out property <int> task-id: -1;
+    /// Whether the instance has a live game process. A session is not a task:
+    /// it starts after the launch flow ends and outlives it, so this comes from
+    /// the launch crate's session registry. While true and no install is
+    /// running, the button is the purple Stop.
+    in-out property <bool> current-running: false;
 
     /// The install strip's parts. `GameInstallText.description` turns them into
     /// the sentence, so a language change re-renders it.
@@ -288,6 +293,10 @@ export global GameState {
     /// Stops that install by its task id. The centre asks after ten seconds
     /// unless the task has not started at all.
     callback cancel-task(int);
+    /// Stops the running game the confirmation dialog named. Killing a live
+    /// session can lose whatever it has not saved, which is why this only runs
+    /// after the warning dialog; the launch page's cancel does not warn.
+    callback stop-game(string);
     callback open-instance-folder(string);
     callback toggle-starred(string);
     callback open-instance-settings();

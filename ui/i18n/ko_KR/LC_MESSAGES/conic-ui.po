@@ -3882,3 +3882,28 @@ msgstr "즐겨찾기에서 제거"
 msgctxt "InstanceSummary"
 msgid "Instance settings"
 msgstr "인스턴스 설정"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Stop"
+msgstr "중지"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Stop the running game?"
+msgstr "실행 중인 게임을 중지할까요?"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "This may corrupt your game data. Only use it when Minecraft is stuck."
+msgstr "게임 데이터가 손상될 수 있습니다. Minecraft가 비정상적으로 멈춘 경우에만 사용하세요."
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Keep playing"
+msgstr "계속 플레이"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Stop game"
+msgstr "게임 중지"

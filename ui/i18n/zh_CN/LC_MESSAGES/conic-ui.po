@@ -3882,3 +3882,28 @@ msgstr "从收藏夹中移除"
 msgctxt "InstanceSummary"
 msgid "Instance settings"
 msgstr "实例设置"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Stop"
+msgstr "停止"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Stop the running game?"
+msgstr "停止正在运行的游戏？"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "This may corrupt your game data. Only use it when Minecraft is stuck."
+msgstr "这可能会导致你的游戏数据损坏，仅应在 Minecraft 异常卡死时使用。"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Keep playing"
+msgstr "继续游戏"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Stop game"
+msgstr "停止游戏"

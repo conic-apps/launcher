@@ -3882,3 +3882,28 @@ msgstr "Favorilerden kaldır"
 msgctxt "InstanceSummary"
 msgid "Instance settings"
 msgstr "Örnek ayarları"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Stop"
+msgstr "Durdur"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Stop the running game?"
+msgstr "Çalışan oyun durdurulsun mu?"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "This may corrupt your game data. Only use it when Minecraft is stuck."
+msgstr "Bu, oyun verilerinize zarar verebilir. Yalnızca Minecraft takıldığında kullanın."
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Keep playing"
+msgstr "Oynamaya devam et"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Stop game"
+msgstr "Oyunu durdur"

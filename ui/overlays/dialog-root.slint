@@ -13,6 +13,7 @@ import { ConfirmDeleteSave } from "dialogs/confirm-delete-save.slint";
 import { ConfirmDeleteAccount } from "dialogs/confirm-delete-account.slint";
 import { ConfirmQuitApp } from "dialogs/confirm-quit-app.slint";
 import { ConfirmCancelTask } from "dialogs/confirm-cancel-task.slint";
+import { ConfirmStopGame } from "dialogs/confirm-stop-game.slint";
 import { RestartRequired } from "dialogs/restart-required.slint";
 import { ModpackImportDialog } from "dialogs/modpack-import.slint";
 
@@ -45,6 +46,8 @@ export component DialogRoot inherits Rectangle {
     ConfirmDeleteAccount { }
 
     ConfirmCancelTask { }
+
+    ConfirmStopGame { }
 
     ConfirmQuitApp {
         confirm => { root.confirm-quit(); }

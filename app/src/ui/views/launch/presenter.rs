@@ -23,7 +23,6 @@ pub(crate) struct LaunchView {
     loading: bool,
     value: f32,
     max: f32,
-    back_disabled: bool,
 }
 
 impl LaunchView {
@@ -57,26 +56,24 @@ pub(crate) fn launch_view(progress: &LaunchProgress) -> Option<LaunchView> {
                     loading: false,
                     value: snapshot.completed_bytes as f32,
                     max: snapshot.total_bytes as f32,
-                    ..LaunchView::default()
                 }
             }
         }
         LaunchProgress::GenerateScriptlet => LaunchView::stage("generate-script"),
-        // The three startup markers share one screen state, but each still
-        // disables the back button: the flow is deliberately still running.
+        // The three startup markers share one screen state. Cancelling still
+        // works: the process exists by now, so the page stops it rather than
+        // leaving it running.
         LaunchProgress::WaitForLaunch
         | LaunchProgress::LogSettingUser
         | LaunchProgress::LogLwjglVersion
         | LaunchProgress::LogOpenALLoaded => LaunchView {
             kind: "wait-for-launch",
             loading: true,
-            back_disabled: true,
             ..LaunchView::default()
         },
         LaunchProgress::LogTextureLoaded => LaunchView {
             kind: "game-started",
             loading: true,
-            back_disabled: true,
             ..LaunchView::default()
         },
     };
@@ -90,7 +87,6 @@ pub(crate) fn apply_view(state: &LaunchState, view: LaunchView) {
     state.set_progress_loading(view.loading);
     state.set_progress_value(view.value);
     state.set_progress_max(view.max);
-    state.set_back_disabled(view.back_disabled);
 }
 
 #[cfg(test)]

@@ -5,6 +5,7 @@
 import { Theme } from "../theme.slint";
 import { AppIcon } from "../components/display/app-icon.slint";
 import { GameState } from "../globals/game.slint";
+import { Dialogs } from "../globals/dialogs.slint";
 import { InstanceMenu } from "../globals/instance-menu.slint";
 
 // One row of the instance menu. Hover and press are drawn here rather than by
@@ -79,16 +80,17 @@ export component InstanceMenuOverlay inherits Rectangle {
 
     private property <string> primary-kind: InstanceMenu.task != "idle"
         ? "cancel"
-        : (InstanceMenu.installed ? "launch" : "download");
+        : (InstanceMenu.running ? "stop" : (InstanceMenu.installed ? "launch" : "download"));
     private property <color> primary-ink: root.primary-kind == "download" ? Theme.blue
-        : root.primary-kind == "cancel" ? Theme.mauve
+        : root.primary-kind == "cancel" || root.primary-kind == "stop" ? Theme.mauve
         : Theme.green;
-    private property <string> primary-icon: root.primary-kind == "cancel"
+    private property <string> primary-icon: root.primary-kind == "cancel" || root.primary-kind == "stop"
         ? "xmark"
         : root.primary-kind == "download" ? "download"
         : "play";
     private property <string> primary-text: root.primary-kind == "cancel"
         ? @tr("InstanceSummary" => "Cancel")
+        : root.primary-kind == "stop" ? @tr("InstanceSummary" => "Stop")
         : root.primary-kind == "download" ? @tr("InstanceSummary" => "Download")
         : @tr("InstanceSummary" => "Launch");
 
@@ -175,6 +177,9 @@ export component InstanceMenuOverlay inherits Rectangle {
                         InstanceMenu.close();
                         if root.primary-kind == "cancel" {
                             GameState.cancel-task(InstanceMenu.task-id);
+                        } else if root.primary-kind == "stop" {
+                            Dialogs.stop-game-id = InstanceMenu.target;
+                            Dialogs.confirm-stop-game-visible = true;
                         } else if root.primary-kind == "download" {
                             GameState.start-download(InstanceMenu.target);
                         } else {

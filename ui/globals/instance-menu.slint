@@ -23,6 +23,9 @@ export global InstanceMenu {
     /// Whether the target has a `.install.lock`, i.e. whether its launch button
     /// offers a download or a launch. Same source as `GameState.current-installed`.
     in-out property <bool> installed: false;
+    /// Whether the target has a live game process. Same source as
+    /// `GameState.current-running`, read for the target instead of the selection.
+    in-out property <bool> running: false;
     in-out property <bool> starred: false;
     /// The task centre's view of the target's install: "idle" | "queued" |
     /// "running", and the task id the first item stops. Same source as

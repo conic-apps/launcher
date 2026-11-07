@@ -1,0 +1,38 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Dialog } from "dialog.slint";
+import { ConfirmWarningBody } from "confirm-warning.slint";
+import { Dialogs } from "../../globals/dialogs.slint";
+import { GameState } from "../../globals/game.slint";
+
+// Warns before the launch button's Stop kills a live game. The launch page's own
+// cancel does not ask: there the player is taking back a launch they just
+// started, not stopping a game they have been playing.
+export component ConfirmStopGame inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    dialog := Dialog {
+        dialog-visible: Dialogs.confirm-stop-game-visible;
+        dialog-width: 500px;
+        // `Dialog` keeps 32px of its own (16px each side).
+        dialog-height: body.preferred-height + 32px;
+
+        body := ConfirmWarningBody {
+            content-width: dialog.content-width;
+            title-text: @tr("ConfirmStopGame" => "Stop the running game?");
+            detail-text: @tr(
+                "ConfirmStopGame" => "This may corrupt your game data. Only use it when Minecraft is stuck."
+            );
+            cancel-text: @tr("ConfirmStopGame" => "Keep playing");
+            confirm-text: @tr("ConfirmStopGame" => "Stop game");
+            cancel => { Dialogs.confirm-stop-game-visible = false; }
+            // `stop-game` closes the dialog itself, after reading the id it acts
+            // on; closing it here too would be a second owner of the flag.
+            confirm => { GameState.stop-game(Dialogs.stop-game-id); }
+        }
+    }
+}

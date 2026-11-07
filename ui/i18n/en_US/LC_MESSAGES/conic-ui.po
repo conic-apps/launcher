@@ -3887,3 +3887,28 @@ msgstr "Remove from favorites"
 msgctxt "InstanceSummary"
 msgid "Instance settings"
 msgstr "Instance settings"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Stop"
+msgstr "Stop"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Stop the running game?"
+msgstr "Stop the running game?"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "This may corrupt your game data. Only use it when Minecraft is stuck."
+msgstr "This may corrupt your game data. Only use it when Minecraft is stuck."
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Keep playing"
+msgstr "Keep playing"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Stop game"
+msgstr "Stop game"

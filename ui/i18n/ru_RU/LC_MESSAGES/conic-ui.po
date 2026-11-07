@@ -3882,3 +3882,28 @@ msgstr "Убрать из избранного"
 msgctxt "InstanceSummary"
 msgid "Instance settings"
 msgstr "Настройки сборки"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Stop"
+msgstr "Остановить"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Stop the running game?"
+msgstr "Остановить запущенную игру?"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "This may corrupt your game data. Only use it when Minecraft is stuck."
+msgstr "Это может повредить данные игры. Используйте только если Minecraft завис."
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Keep playing"
+msgstr "Продолжить игру"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Stop game"
+msgstr "Остановить игру"
