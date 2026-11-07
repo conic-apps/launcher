@@ -3882,3 +3882,28 @@ msgstr "從我的最愛移除"
 msgctxt "InstanceSummary"
 msgid "Instance settings"
 msgstr "實例設定"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Stop"
+msgstr "停止"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Stop the running game?"
+msgstr "停止正在執行的遊戲？"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "This may corrupt your game data. Only use it when Minecraft is stuck."
+msgstr "這可能會導致你的遊戲資料損壞，僅應在 Minecraft 異常卡死時使用。"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Keep playing"
+msgstr "繼續遊戲"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Stop game"
+msgstr "停止遊戲"

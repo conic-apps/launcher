@@ -41,11 +41,11 @@ export global LaunchState {
     in-out property <bool> progress-loading: true;
     in-out property <float> progress-value: 0;
     in-out property <float> progress-max: 0;
-    /// A disabled back button ignores the pointer, so a stray click cannot
-    /// cancel the launch.
-    in-out property <bool> back-disabled: false;
 
-    /// The back button — cancels the launch, which the page then leaves.
+    /// The back button — cancels the launch, which the page then leaves. It is
+    /// never disabled: once the game process exists, cancelling stops it (see
+    /// `app/src/ui/views/launch/mod.rs`), so there is no waiting state without a
+    /// way out.
     callback cancel();
     /// The progress line, translated from `progress-kind` and its parts.
     public pure function description() -> string {

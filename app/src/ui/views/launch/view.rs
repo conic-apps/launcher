@@ -16,7 +16,6 @@ pub(crate) fn reset_state(ui: &App, instance: Option<&Instance>, config: &Config
     state.set_progress_loading(true);
     state.set_progress_value(0.0);
     state.set_progress_max(0.0);
-    state.set_back_disabled(false);
 
     match instance {
         Some(instance) => {

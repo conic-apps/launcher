@@ -12,6 +12,10 @@
 //! instead — the page says so — and then takes the lane
 //! (`TaskCenter::reserve_exclusive`) rather than joining it, which is what keeps
 //! an install from starting under a launching instance.
+//!
+//! Cancelling is not only dropping the flow: once the crate has spawned the game,
+//! the process outlives the task, so [`LaunchController::cancel`] stops the
+//! session too. That is why the page's cancel button is never disabled.
 
 use std::{cell::RefCell, rc::Rc};
 
@@ -25,6 +29,7 @@ use crate::usecases::tasks::TaskReservation;
 use account::Account;
 use config::Config;
 use instance::Instance;
+use launch::running;
 use shared::Sink;
 
 mod ports;
@@ -75,6 +80,13 @@ pub(crate) struct LaunchController {
     /// The exclusive lane, held for as long as the flow runs. Dropping it is what
     /// lets the queued installs start again.
     reservation: Option<TaskReservation>,
+    /// The instance the pending or running launch belongs to. It outlives
+    /// `pending` because a cancel must still name the process it has to stop.
+    instance_id: Option<String>,
+    /// The pids already running for that instance when the launch was requested.
+    /// A cancel stops only what this launch started: the instance may have had a
+    /// game of its own before, and leaving the page must not kill that one.
+    running_before: Vec<u32>,
     gate: Gate,
 }
 
@@ -93,6 +105,12 @@ impl LaunchController {
     }
 
     fn wait(&mut self, instance: Instance, config: Config) {
+        self.instance_id = Some(instance.id.clone());
+        self.running_before = running::running_instances()
+            .into_iter()
+            .filter(|session| session.id == instance.id)
+            .map(|session| session.pid)
+            .collect();
         self.pending = Some((instance, config));
     }
 
@@ -112,10 +130,14 @@ impl LaunchController {
     fn settle(&mut self) {
         self.task = None;
         self.reservation = None;
+        // The game stays as it is: this launch is over, not cancelled.
+        self.instance_id = None;
+        self.running_before.clear();
     }
 
-    /// Cancels the waiting request or the running flow. Returns whether there was
-    /// anything to cancel.
+    /// Cancels the waiting request or the running flow, and stops the process
+    /// this launch already spawned. Returns whether there was anything to
+    /// cancel.
     fn cancel(&mut self) -> bool {
         let busy = self.busy();
         self.gate.invalidate();
@@ -126,6 +148,32 @@ impl LaunchController {
         // Dropping the guard hands the exclusive lane back and admits whatever
         // queued behind the launch.
         self.reservation = None;
+        if busy {
+            self.stop_session();
+        }
         busy
+    }
+
+    /// Stops the session this launch started, when the game is already up.
+    ///
+    /// Aborting the task does not end the process: the crate registers it as
+    /// soon as it is spawned, and the flow is only waiting for its first startup
+    /// marker. The pids recorded at request time are skipped, so a game that was
+    /// already running before this request is left alone.
+    fn stop_session(&mut self) {
+        let Some(id) = self.instance_id.take() else {
+            return;
+        };
+        let before = std::mem::take(&mut self.running_before);
+        for session in running::running_instances() {
+            if session.id == id && !before.contains(&session.pid) {
+                log::info!(
+                    target: "launch",
+                    "cancelling the launch stops the process {} of '{id}'",
+                    session.pid
+                );
+                running::terminate(session.pid);
+            }
+        }
     }
 }

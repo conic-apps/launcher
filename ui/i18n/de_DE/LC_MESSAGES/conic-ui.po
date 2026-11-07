@@ -3882,3 +3882,28 @@ msgstr "Aus Favoriten entfernen"
 msgctxt "InstanceSummary"
 msgid "Instance settings"
 msgstr "Instanzeinstellungen"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Stop"
+msgstr "Beenden"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Stop the running game?"
+msgstr "Laufendes Spiel beenden?"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "This may corrupt your game data. Only use it when Minecraft is stuck."
+msgstr "Dies kann deine Spieldaten beschädigen. Nur verwenden, wenn Minecraft nicht mehr reagiert."
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Keep playing"
+msgstr "Weiterspielen"
+
+#: ui
+msgctxt "ConfirmStopGame"
+msgid "Stop game"
+msgstr "Spiel beenden"

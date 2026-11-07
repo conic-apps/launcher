@@ -39,7 +39,8 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     crate::ui::services::tasks::observe(try_start);
 }
 
-/// The launch page was left: the waiting request or the running flow ends with it.
+/// The launch page was left: the waiting request or the running flow ends with it,
+/// and a process the flow had already spawned is stopped with it.
 ///
 /// Called from `main`'s single `Navigation.page-changed` handler. Without it a
 /// launch that was left behind keeps its request pending, which then blocks every
@@ -188,5 +189,4 @@ fn show_waiting(ui: &App) {
     state.set_progress_loading(true);
     state.set_progress_value(0.0);
     state.set_progress_max(0.0);
-    state.set_back_disabled(false);
 }

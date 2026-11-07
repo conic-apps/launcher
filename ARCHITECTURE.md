@@ -77,7 +77,7 @@ any of them.
   `ui/components/…`, plus `app/src/ui/services/` for the cross-surface concerns (`report` — delivery
   onto the event loop; `app_config` — the `AppConfig` adapter and locale; `scroll`; `notifications` —
   the notification model and its action table; `tasks` — the task model, click targets and cancel
-  confirmation). The mirror is by surface/component, not per `.slint`
+  confirmation; `sessions` — the running-session fan-out). The mirror is by surface/component, not per `.slint`
   file, and `ui/components/` does not repeat the `controls`/`display`/… role split.
 
 `main.rs` is the composition root: it loads the config, seeds `AppConfig`, and wires every surface's
@@ -169,6 +169,11 @@ second, worse copy of the same thing. It waits for the centre to go idle and the
 whatever queued in the meantime. That keeps the invariant the lane exists for — no install under a
 launching instance — without scheduling the launch.
 
+The launch crate's `running` registry is separate again: a session outlives the flow that started
+it, so `ui/services/sessions.rs` owns the app's **one** subscription (`running::subscribe` keeps a
+single slot) and fans the events out to the crash overlay and the game view. A second `subscribe`
+would silently replace the first.
+
 - `crates/shared/src/task.rs` — the UI-neutral contract: ids, kinds (with their lane), states,
   stages, progress, targets, `TaskEvent` and the `TaskSink`/`TaskCancel` ports.
 - `app/src/usecases/tasks.rs` — `TaskCenter`: `submit`, the admission scan (`drain`), the reservation
@@ -191,8 +196,9 @@ the section: it is a silent startup check, not work the user started.
 ### Install and launch are separate
 
 Installing is not a step inside a launch. The game view's button is the whole story — a **Download**
-when the instance has no `.install.lock`, a **Launch** when it does, and **Cancel** while an install
-is queued or running:
+when the instance has no `.install.lock`, a **Launch** when it does, **Cancel** while an install is
+queued or running, and the purple **Stop** while the instance's game process is alive (behind the
+`ui/overlays/dialogs/confirm-stop-game.slint` warning, because a stop loses unsaved progress):
 
 - `app/src/ui/views/game/install.rs` turns an instance id into a `GameInstall` task and mirrors its
   progress into the strip beside the button (`install_progress.rs`, which is the launch screen's old
@@ -204,7 +210,10 @@ is queued or running:
   page because that is where the player can call it off. Leaving the page cancels the launch through
   `page_left`, which `main`'s one `Navigation.page-changed` handler calls — a Slint callback keeps a
   single handler, so a surface that registers `on_page_changed` for itself is replaced by the next
-  one and its teardown silently never runs.
+  one and its teardown silently never runs. A cancel also stops a process the flow has already
+  spawned (`LaunchController::cancel`); it only stops sessions whose pid was not running when the
+  request was made, so leaving the page never kills an older game of the same instance. The page's
+  cancel button is therefore never disabled.
 - `views/launch/ports.rs` runs on a worker thread: it may only reach the UI through `deliver`/`report`.
   The controller is a thread-local, so a terminal report settles it on the event loop
   (`settle_on_event_loop`) — settling in the sink itself panics there, which drops the terminal report
@@ -216,6 +225,8 @@ is queued or running:
 - `usecases/launch.rs` refuses an uninstalled instance rather than installing it.
 - `GameState.current-task`/`task-id` are the projection the button reads, re-derived from the centre
   after every task event, so the UI never keeps a second copy of the scheduler's state.
+  `GameState.current-running` is re-derived from the session registry after every session event and
+  turns the button into Stop; the right-click menu's `running` comes from the same query.
 
 Naming, once a file is placed: `*View` is a page, `*Overlay`/`*Dialog`/`*Panel`/ `*Card` is a
 surface, `*Root` is an overlay layer host. There is **no `base-` family** — the control itself is

@@ -218,6 +218,29 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         });
     }
     {
+        // The running game's Stop, which only the warning dialog can reach. The
+        // id is the dialog's target rather than the selection, because the
+        // right-click menu stops the card it was opened on.
+        let weak = ui.as_weak();
+        state.on_stop_game(move |id| {
+            let Some(ui) = weak.upgrade() else { return };
+            let dialogs = ui.global::<Dialogs>();
+            dialogs.set_confirm_stop_game_visible(false);
+            dialogs.set_stop_game_id("".into());
+            let id = id.to_string();
+            if id.is_empty() {
+                return;
+            }
+            // The session watcher re-projects the button when the process is
+            // really gone, so a stop that found nothing leaves it on Stop.
+            if launch::running::terminate_all(&id) {
+                log::info!("the player stopped the running instance '{id}'");
+            } else {
+                log::debug!("instance '{id}' had no running session to stop");
+            }
+        });
+    }
+    {
         let controller = Rc::clone(&controller);
         let weak = ui.as_weak();
         state.on_open_instance_menu(move |id, x, y| {
@@ -234,8 +257,11 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
             };
             let (task, task_id) = install::task_of(&id);
             let menu = ui.global::<InstanceMenu>();
-            menu.set_target(id.into());
+            menu.set_target(id.clone().into());
             menu.set_installed(installed);
+            // A launch is not a task, so the first item needs the session
+            // registry too: while a game runs it says Stop, not Launch.
+            menu.set_running(launch::running::is_running(&id));
             menu.set_starred(starred);
             menu.set_task(task.into());
             menu.set_task_id(task_id);
