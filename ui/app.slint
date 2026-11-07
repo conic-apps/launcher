@@ -7,6 +7,7 @@ import { TitleBar, WindowControl } from "components/title-bar.slint";
 import { AppConfig } from "globals/settings.slint";
 import { CommandPaletteState } from "globals/command-palette.slint";
 import { Navigation } from "globals/navigation.slint";
+import { SettingsShell } from "globals/settings-shell.slint";
 import { GameState } from "globals/game.slint";
 import { Dialogs } from "globals/dialogs.slint";
 import { DropdownOverlay } from "overlays/dropdown-overlay.slint";
@@ -15,6 +16,7 @@ import { TooltipOverlay } from "overlays/tooltip.slint";
 import { DialogRoot } from "overlays/dialog-root.slint";
 import { CommandPaletteOverlay } from "overlays/command-palette.slint";
 import { MusicPlayerOverlay } from "overlays/music-player.slint";
+import { SettingsOverlay } from "overlays/settings-overlay.slint";
 import { NewsRoot } from "overlays/news/news-root.slint";
 import { CrashRoot } from "overlays/crash/crash-root.slint";
 import {
@@ -25,7 +27,6 @@ import { NotificationState } from "globals/notifications.slint";
 import { NewsState } from "globals/news.slint";
 import { WindowDrag } from "globals/window-drag.slint";
 import { WindowBackground } from "components/display/window-background.slint";
-import { SettingsView } from "views/settings-view.slint";
 import { GameView } from "views/game-view.slint";
 import { LaunchView } from "views/launch-view.slint";
 import { SetupView } from "views/setup-view.slint";
@@ -34,6 +35,7 @@ import { TodoPlaceholder } from "views/todo-placeholder.slint";
 // Re-export so the Rust side can access the globals and the runtime model.
 export { AppConfig, JavaRuntime } from "globals/settings.slint";
 export { Navigation } from "globals/navigation.slint";
+export { SettingsShell } from "globals/settings-shell.slint";
 export { Dropdown } from "globals/dropdown.slint";
 export { FocusManager } from "globals/focus.slint";
 export { GameState, GameRow, AccountItem } from "globals/game.slint";
@@ -327,12 +329,22 @@ export component App inherits Window {
                     vertical-stretch: 1;
                     clip: true;
 
-                    if Navigation.current-page == "settings" || Navigation.leaving-page == "settings": SettingsView { }
                     if Navigation.current-page == "game" || Navigation.leaving-page == "game": GameView { }
                     if Navigation.current-page == "launch": LaunchView { }
                     if Navigation.current-page == "setup" || Navigation.leaving-page == "setup": SetupView { }
-                    if Navigation.current-page != "settings" && Navigation.current-page != "game" && Navigation.current-page != "launch" && Navigation.current-page != "setup": TodoPlaceholder { }
+                    if Navigation.current-page != "game" && Navigation.current-page != "launch" && Navigation.current-page != "setup": TodoPlaceholder { }
                 }
+            }
+
+            // The settings drawer. It is declared before the other app-root
+            // panels so news, music and notifications still cover it, and below
+            // the `z: 1000` dropdown layer so the settings controls' popups
+            // render above it.
+            SettingsOverlay {
+                y: root.title-bar-height;
+                height: root.height - root.title-bar-height;
+                open: SettingsShell.overlay-open;
+                closed => { SettingsShell.overlay-open = false; }
             }
 
             // Floating dropdown list + outside-click layer, above the page stack.
@@ -403,8 +415,21 @@ export component App inherits Window {
                 music-enabled: AppConfig.music-enabled;
 
                 // Navigation is global: the title bar drives it directly.
-                open-home => { Navigation.navigate("game"); }
-                open-settings => { Navigation.navigate("settings"); }
+                open-home => {
+                    SettingsShell.overlay-open = false;
+                    Navigation.navigate("game");
+                }
+                open-settings => {
+                    // The page swap used to close these through Rust's
+                    // `page-changed`; the drawer opens without a page change, so
+                    // close them here for the same result.
+                    if !SettingsShell.overlay-open {
+                        NewsState.visible = false;
+                        NewsState.detail-visible = false;
+                        NotificationState.visible = false;
+                    }
+                    SettingsShell.toggle-settings();
+                }
                 open-search => { CommandPaletteState.open(); }
                 open-news => {
                     NotificationState.visible = false;
