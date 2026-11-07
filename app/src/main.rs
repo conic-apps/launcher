@@ -108,7 +108,9 @@ fn main() {
     ui::overlays::instance_settings::setup(&ui, Rc::clone(&shared));
     ui::overlays::content::setup(&ui);
     ui::views::launch::setup(&ui, Rc::clone(&shared));
-    // Subscribes to the launch crate's session events, so before any launch.
+    // The app's one subscriber to the launch crate's session events, so before
+    // any launch. The crash overlay is one of its observers.
+    ui::services::sessions::setup(&ui);
     ui::overlays::crash::setup(&ui);
     ui::overlays::dialogs::create_instance::setup(&ui, Rc::clone(&shared));
     ui::overlays::dialogs::account_add::setup(&ui);

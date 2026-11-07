@@ -315,11 +315,10 @@ export component LaunchView inherits Rectangle {
                 border-radius: Theme.controllers-border-radius;
                 border-width: 1px;
                 border-color: Theme.red;
-                background: back-touch.has-hover && !LaunchState.back-disabled
+                background: back-touch.has-hover
                     ? Theme.red
                     : Theme.surface-0;
                 transform-scale: back-touch.pressed ? 98% : 100%;
-                opacity: LaunchState.back-disabled ? 0.5 : 1.0;
                 animate background, transform-scale {
                     duration: 200ms;
                     easing: ease;
@@ -328,7 +327,7 @@ export component LaunchView inherits Rectangle {
                 Text {
                     text: @tr("LaunchView" => "Cancel launch");
                     font-size: 11px;
-                    color: back-touch.has-hover && !LaunchState.back-disabled
+                    color: back-touch.has-hover
                         ? Theme.text-inverse
                         : Theme.red;
                     animate color {
@@ -340,7 +339,6 @@ export component LaunchView inherits Rectangle {
                 back-touch := TouchArea {
                     width: 100%;
                     height: 100%;
-                    enabled: !LaunchState.back-disabled;
                     clicked => {
                         LaunchState.cancel();
                     }

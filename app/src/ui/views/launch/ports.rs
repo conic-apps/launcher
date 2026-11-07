@@ -115,7 +115,6 @@ fn set_error(weak: &Weak<App>, token: &Token, message: String) {
         state.set_error(true);
         state.set_progress_kind("error".into());
         state.set_error_message(message.into());
-        state.set_back_disabled(false);
     });
 }
 
