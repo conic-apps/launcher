@@ -3862,3 +3862,23 @@ msgstr "리소스 팩 목록 열기"
 msgctxt "CommandText"
 msgid "Search actions…"
 msgstr "작업 검색…"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Open instance folder"
+msgstr "인스턴스 폴더 열기"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Add to favorites"
+msgstr "즐겨찾기에 추가"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Remove from favorites"
+msgstr "즐겨찾기에서 제거"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Instance settings"
+msgstr "인스턴스 설정"

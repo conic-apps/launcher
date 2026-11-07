@@ -3862,3 +3862,23 @@ msgstr "Otwórz listę paczek zasobów"
 msgctxt "CommandText"
 msgid "Search actions…"
 msgstr "Szukaj działań…"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Open instance folder"
+msgstr "Otwórz folder instancji"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Add to favorites"
+msgstr "Dodaj do ulubionych"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Remove from favorites"
+msgstr "Usuń z ulubionych"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Instance settings"
+msgstr "Ustawienia instancji"
