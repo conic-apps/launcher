@@ -121,15 +121,11 @@ export component MusicPlayerOverlay inherits Rectangle {
                 // Play the enter from wherever the leave got to.
                 root.phase = "shown";
             }
-            // The subtree is rebuilt with the overlay, so re-enter the playlist;
-            // its open flag lives in `MusicState`, not here.
-            if root.playlist-open {
-                root.playlist-phase = "starting";
-                playlist-start.restart();
-            }
         } else if root.phase != "closed" && root.phase != "leaving" {
-            // The playlist is inside this subtree, so it fades out with it.
             root.phase = "leaving";
+            // The panel closes as a whole, so the playlist goes with it — above
+            // all it must not still be open the next time the panel is.
+            MusicState.playlist-open = false;
         }
     }
 
@@ -139,8 +135,9 @@ export component MusicPlayerOverlay inherits Rectangle {
         triggered => { root.phase = "shown"; }
     }
 
+    // The leave's longest track: the scrim's 100ms delay plus its 200ms fade.
     leave-timer := Timer {
-        interval: 150ms;
+        interval: 300ms;
         running: root.phase == "leaving";
         triggered => {
             root.phase = "closed";
@@ -158,17 +155,21 @@ export component MusicPlayerOverlay inherits Rectangle {
     }
 
     // Its own phase machine: the playlist toggles while the overlay stays open,
-    // so it cannot share the overlay's transition. `Dialog`'s rules apply.
+    // so it cannot share the overlay's transition. The height is the dropdown's
+    // track (see `DropdownOverlay`): a clipped viewport grows while the card
+    // inside keeps its final size, so the blurred shadow and the layer a
+    // half-transparent card is drawn through are not rebuilt every frame.
     private property <bool> playlist-open: MusicState.playlist-open;
     private property <string> playlist-phase: "closed";
-    private property <float> playlist-alpha: root.playlist-phase == "shown" ? 1.0 : 0.0;
-    private property <length> playlist-dy: root.playlist-phase == "shown" ? 0px : -4px;
-    animate playlist-alpha {
-        duration: 120ms;
+    private property <bool> playlist-shown: root.playlist-phase == "shown";
+    private property <length> playlist-height: root.playlist-shown ? root.playlist-natural-height : 0px;
+    private property <float> playlist-alpha: root.playlist-shown ? 1.0 : 0.0;
+    animate playlist-height {
+        duration: 200ms;
         easing: Easing.ease;
     }
-    animate playlist-dy {
-        duration: 120ms;
+    animate playlist-alpha {
+        duration: 200ms;
         easing: Easing.ease;
     }
 
@@ -193,25 +194,26 @@ export component MusicPlayerOverlay inherits Rectangle {
     }
 
     playlist-leave := Timer {
-        interval: 120ms;
+        interval: 200ms;
         running: root.playlist-phase == "leaving";
         triggered => { root.playlist-phase = "closed"; }
     }
 
+    // `Dialog`'s two tracks: the scrim fades under everything, then the card
+    // scales up from 0.9 with that overshoot, and the leave runs them back in
+    // the reverse order.
     private property <float> scrim-alpha: root.phase == "shown" ? 1.0 : 0.0;
     animate scrim-alpha {
-        duration: 150ms;
-        easing: Easing.ease;
+        duration: 200ms;
+        delay: root.phase == "shown" ? 0ms : 100ms;
+        easing: ease-out-quad;
     }
     private property <float> card-alpha: root.phase == "shown" ? 1.0 : 0.0;
-    private property <length> card-dy: root.phase == "shown" ? 0px : -8px;
-    animate card-alpha {
-        duration: 150ms;
-        easing: Easing.ease;
-    }
-    animate card-dy {
-        duration: 150ms;
-        easing: Easing.ease;
+    private property <float> card-scale: root.phase == "shown" ? 1.0 : 0.9;
+    animate card-alpha, card-scale {
+        duration: root.phase == "shown" ? 300ms : 180ms;
+        delay: root.phase == "shown" ? 200ms : 0ms;
+        easing: root.phase == "shown" ? cubic-bezier(0.34, 1.56, 0.64, 1) : ease-out-quad;
     }
 
     private property <bool> dragging: false;
@@ -257,6 +259,12 @@ export component MusicPlayerOverlay inherits Rectangle {
     320px,
     root.height - 2 * root.overlay-padding - root.card-height - root.card-gap,
     );
+    // The height the card keeps for the whole reveal, clamped so both cards fit
+    // at the minimum window height.
+    private property <length> playlist-natural-height: min(
+    root.playlist-max-height,
+    16px + root.playlist-items-height,
+    );
 
     // Closes on a press outside a card; each card has its own area declared after.
     scrim-touch := TouchArea {
@@ -267,8 +275,8 @@ export component MusicPlayerOverlay inherits Rectangle {
         }
     }
 
-    // Each card is wrapped in a cell: a layout child cannot set its own `y`, so
-    // the cell keeps the geometry and the inner card keeps the animation.
+    // Each card is wrapped in a cell so the layout owns the slot and the inner
+    // card keeps the transition.
     VerticalLayout {
         padding: 16px;
         spacing: 12px;
@@ -282,8 +290,8 @@ export component MusicPlayerOverlay inherits Rectangle {
             card := Rectangle {
                 width: 100%;
                 height: 100%;
-                y: root.card-dy;
                 opacity: root.card-alpha;
+                transform-scale: root.card-scale * 100%;
                 border-radius: 8px;
                 background: Theme.base;
                 border-width: 1px;
@@ -473,15 +481,22 @@ export component MusicPlayerOverlay inherits Rectangle {
 
         // Height is computed from the row height, not measured (see above). It
         // stays mounted while its phase is not "closed", so the leave can animate.
-        if root.playlist-phase != "closed": playlist-cell := Rectangle {
+        if root.playlist-phase != "closed": playlist-viewport := Rectangle {
             width: 340px;
-            height: min(root.playlist-max-height, 16px + root.playlist-items-height);
+            height: root.playlist-height;
             background: Colors.transparent;
+            // A rectangular clip is a scissors change; `clip` on the rounded card
+            // would draw through an offscreen layer that the animated height
+            // rebuilds every frame.
+            clip: true;
 
             playlist-card := Rectangle {
-                width: 100%;
-                height: 100%;
-                y: root.playlist-dy;
+                // Top-left, or the card is centred in the viewport and the
+                // reveal would pull the rows down with its bottom edge.
+                x: 0;
+                y: 0;
+                width: parent.width;
+                height: root.playlist-natural-height;
                 opacity: root.playlist-alpha;
                 border-radius: 8px;
                 background: Theme.base;
