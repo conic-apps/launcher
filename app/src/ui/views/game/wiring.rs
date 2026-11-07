@@ -181,11 +181,13 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     }
     {
         // `request` opens the page and lets it wait for the centre; the button
-        // does not get to decide when a launch may start.
+        // does not get to decide when a launch may start. The id is the
+        // caller's, so the right-click menu can launch a card that is not the
+        // current instance.
         let weak = ui.as_weak();
-        state.on_launch(move || {
+        state.on_launch(move |id| {
             let Some(ui) = weak.upgrade() else { return };
-            let id = ui.global::<GameState>().get_current_id().to_string();
+            let id = id.to_string();
             if id.is_empty() {
                 return;
             }
@@ -194,9 +196,9 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     }
     {
         let weak = ui.as_weak();
-        state.on_start_download(move || {
+        state.on_start_download(move |id| {
             let Some(ui) = weak.upgrade() else { return };
-            let id = ui.global::<GameState>().get_current_id().to_string();
+            let id = id.to_string();
             if id.is_empty() {
                 return;
             }
@@ -208,9 +210,8 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         // the per-kind policy: a launch stops at once, an install asks after
         // ten seconds, and a queued task never asks at all.
         let weak = ui.as_weak();
-        state.on_cancel_task(move || {
+        state.on_cancel_task(move |id| {
             let Some(ui) = weak.upgrade() else { return };
-            let id = ui.global::<GameState>().get_task_id();
             if id >= 0 {
                 ui.global::<TaskState>().invoke_request_cancel(id);
             }
@@ -218,10 +219,33 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     }
     {
         let controller = Rc::clone(&controller);
-        state.on_open_instance_folder(move || {
-            let Some(id) = controller.borrow().current_id.clone() else {
+        let weak = ui.as_weak();
+        state.on_open_instance_menu(move |id, x, y| {
+            let Some(ui) = weak.upgrade() else { return };
+            let id = id.to_string();
+            let Some((installed, starred)) = controller
+                .borrow()
+                .instances
+                .iter()
+                .find(|instance| instance.id == id)
+                .map(|instance| (instance.installed, instance.is_starred()))
+            else {
                 return;
             };
+            let (task, task_id) = install::task_of(&id);
+            let menu = ui.global::<InstanceMenu>();
+            menu.set_target(id.into());
+            menu.set_installed(installed);
+            menu.set_starred(starred);
+            menu.set_task(task.into());
+            menu.set_task_id(task_id);
+            menu.set_anchor_x(x);
+            menu.set_anchor_y(y);
+            menu.set_visible(true);
+        });
+    }
+    {
+        state.on_open_instance_folder(|id| {
             let path = storage::LOCATIONS.instances.get_instance_root(&id);
             if let Err(error) =
                 crate::ui::services::app_config::open_external(&path.to_string_lossy())
@@ -233,8 +257,14 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     {
         let controller = Rc::clone(&controller);
         let weak = ui.as_weak();
-        state.on_toggle_starred(move || {
-            let Some(instance) = controller.borrow().current().cloned() else {
+        state.on_toggle_starred(move |id| {
+            let Some(instance) = controller
+                .borrow()
+                .instances
+                .iter()
+                .find(|instance| instance.id == id.as_str())
+                .cloned()
+            else {
                 return;
             };
             let mut config = instance.config.clone();
@@ -267,6 +297,33 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
             if let Some(ui) = weak.upgrade() {
                 crate::ui::overlays::instance_settings::open(&ui);
             }
+        });
+    }
+    {
+        // The right-click menu's repair, which is the instance settings' own
+        // action; both go through `install::repair` so the lock handling and
+        // the queued install cannot drift apart.
+        let weak = ui.as_weak();
+        state.on_repair_install(move |id| {
+            let Some(ui) = weak.upgrade() else { return };
+            let id = id.to_string();
+            if id.is_empty() {
+                return;
+            }
+            install::repair(&ui, id);
+        });
+    }
+    {
+        // The right-click menu's delete: the settings' confirm dialog, opened
+        // without the settings overlay in the way.
+        let weak = ui.as_weak();
+        state.on_open_delete_instance(move |id| {
+            let Some(ui) = weak.upgrade() else { return };
+            let id = id.to_string();
+            if id.is_empty() {
+                return;
+            }
+            crate::ui::overlays::instance_settings::open_delete_for(&ui, id);
         });
     }
     // `open-content` and `open-packs` belong to the content overlays' script

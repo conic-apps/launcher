@@ -269,6 +269,9 @@ export global GameState {
     callback select-first-account();
     /// An instance card was clicked.
     callback select-instance(string);
+    /// Opens the right-click menu on an instance, at a window position. Every
+    /// menu item acts on that instance, so this does not select it.
+    callback open-instance-menu(string, length, length);
     /// Moves the current instance by one in the displayed order: -1 previous, 1
     /// next. Used by Up/Down and Alt/Option + wheel.
     callback move-selection(int);
@@ -277,16 +280,23 @@ export global GameState {
     callback set-sort(string);
     callback set-group-mode(string);
     callback search-changed(string);
-    // Footer / summary actions.
-    callback launch();
-    /// Starts (or queues) the install of the current instance.
-    callback start-download();
-    /// Stops that install. The centre asks after ten seconds unless the task has
-    /// not started at all.
-    callback cancel-task();
-    callback open-instance-folder();
-    callback toggle-starred();
+    // Footer / summary actions. Each takes the instance it acts on, because the
+    // right-click menu acts on a card that is not the current instance.
+    callback launch(string);
+    /// Starts (or queues) the install of an instance.
+    callback start-download(string);
+    /// Stops that install by its task id. The centre asks after ten seconds
+    /// unless the task has not started at all.
+    callback cancel-task(int);
+    callback open-instance-folder(string);
+    callback toggle-starred(string);
     callback open-instance-settings();
+    /// Drops `.install.lock` and queues the install again, exactly as the
+    /// instance settings' "Repair install" does.
+    callback repair-install(string);
+    /// Opens the confirm dialog for deleting an instance, exactly as the
+    /// instance settings' "Delete instance" does.
+    callback open-delete-instance(string);
     callback open-content(string);
     callback select-account(string);
     callback open-accounts();

@@ -277,22 +277,8 @@ fn setup_maintenance(ui: &App) {
                 let Some(instance) = current_instance() else {
                     return;
                 };
-                let id = instance.id.clone();
                 ui.global::<InstanceSettingsState>().set_visible(false);
-                let weak = weak.clone();
-                crate::support::runtime::spawn(async move {
-                    if let Err(error) = instance::remove_install_lock(&id).await {
-                        log::error!("failed to remove the install lock: {error}");
-                        return;
-                    }
-                    // The listing reads the lock as "installed", and the button
-                    // follows the listing; the install itself queues behind whatever
-                    // holds the exclusive lane.
-                    crate::ui::services::report::report(&weak, move |ui| {
-                        ui.global::<GameState>().invoke_refresh();
-                        crate::ui::views::game::install::start(&ui, id.clone());
-                    });
-                });
+                crate::ui::views::game::install::repair(&ui, instance.id);
             });
     }
 }
@@ -473,21 +459,12 @@ pub(crate) fn setup_delete(ui: &App) {
             let Some(ui) = weak.upgrade() else {
                 return;
             };
-            let id = ui.global::<GameState>().get_current_id();
+            let id = ui.global::<GameState>().get_current_id().to_string();
             if id.is_empty() {
                 return;
             }
             ui.global::<InstanceSettingsState>().set_visible(false);
-            let id = id.to_string();
-            let weak = weak.clone();
-            crate::support::runtime::spawn(async move {
-                let Some(instance) = instance::get_instance_by_id(&id).await else {
-                    return;
-                };
-                crate::ui::services::report::report(&weak, move |ui| {
-                    open_delete_dialog(&ui, &instance)
-                });
-            });
+            open_delete_for(&ui, id);
         });
     }
 

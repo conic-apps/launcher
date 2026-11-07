@@ -11,6 +11,7 @@ import { SettingsShell } from "globals/settings-shell.slint";
 import { GameState } from "globals/game.slint";
 import { Dialogs } from "globals/dialogs.slint";
 import { DropdownOverlay } from "overlays/dropdown-overlay.slint";
+import { InstanceMenuOverlay } from "overlays/instance-menu.slint";
 import { DescriptionTooltipOverlay } from "overlays/description-tooltip.slint";
 import { TooltipOverlay } from "overlays/tooltip.slint";
 import { DialogRoot } from "overlays/dialog-root.slint";
@@ -37,6 +38,7 @@ export { AppConfig, JavaRuntime } from "globals/settings.slint";
 export { Navigation } from "globals/navigation.slint";
 export { SettingsShell } from "globals/settings-shell.slint";
 export { Dropdown } from "globals/dropdown.slint";
+export { InstanceMenu } from "globals/instance-menu.slint";
 export { FocusManager } from "globals/focus.slint";
 export { GameState, GameRow, AccountItem } from "globals/game.slint";
 export { LaunchState } from "globals/launch.slint";
@@ -352,6 +354,12 @@ export component App inherits Window {
             // scrollbars (`z: 500`) would otherwise paint over the panel.
             DropdownOverlay {
                 z: 1000;
+            }
+
+            // The instance list's right-click menu, above the dropdown panel and
+            // the page's own floating rows, below the notices and dialogs.
+            InstanceMenuOverlay {
+                z: 1050;
             }
 
             // The description tooltip, drawn here because both the settings
