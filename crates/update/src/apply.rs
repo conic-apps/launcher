@@ -52,7 +52,7 @@ pub fn apply_pending() -> Result<bool> {
     }
     // The next launch is the first process that can tell whether the swap took
     // effect; the record names the version it should be running. On Windows the
-    // detached script may still fail, which the version check there covers.
+    // script may still fail, which the version check there covers.
     if let Err(error) = applied::record(&staged.version) {
         log::warn!(
             "could not record the applied update {} for the next launch: {error}",
@@ -62,9 +62,9 @@ pub fn apply_pending() -> Result<bool> {
     Ok(true)
 }
 
-/// [`clear_pending`] drops only the record: on Windows a detached script still
-/// needs the bundle. In-process applies can remove it, or `updates/` would keep
-/// one tarball per update.
+/// [`clear_pending`] drops only the record: on Windows the script still needs
+/// the bundle. In-process applies can remove it, or `updates/` would keep one
+/// tarball per update.
 #[cfg(not(windows))]
 fn discard_artifact(staged: &Staged) {
     if let Err(error) = std::fs::remove_file(&staged.artifact)
@@ -220,24 +220,41 @@ fn apply_portable(staged: &Staged) -> Result<()> {
     #[cfg(windows)]
     {
         // Windows will not let a running process replace its own image, so a
-        // detached script waits for this process to exit and swaps the file.
+        // script outlives this process and swaps the file. The swap is retried
+        // rather than polled for, because the image stays locked for a moment
+        // after exit (and antivirus may hold it too); the retry also covers the
+        // gap between spawning the script and this process actually exiting.
         let target = std::env::current_exe()?;
         clear_pending()?;
+        // The script is UTF-8 while `cmd` reads its default OEM code page, so
+        // `chcp` is what keeps a non-ASCII install path intact.
         let script = format!(
             "@echo off\r\n\
+             chcp 65001 >NUL\r\n\
              setlocal\r\n\
-             :wait\r\n\
-             tasklist /FI \"PID eq {pid}\" 2>NUL | find \"{pid}\" >NUL\r\n\
-             if not errorlevel 1 (\r\n\
-             \x20 ping -n 2 127.0.0.1 >NUL\r\n\
-             \x20 goto wait\r\n\
-             )\r\n\
-             move /Y \"{new}\" \"{target}\" >NUL\r\n\
+             set \"log=%~dp0apply.log\"\r\n\
+             echo [%DATE% %TIME%] applying update {version} >\"%log%\"\r\n\
+             set /a tries=0\r\n\
+             :retry\r\n\
+             if not exist \"{new}\" goto failed\r\n\
+             move /Y \"{new}\" \"{target}\" >>\"%log%\" 2>&1\r\n\
+             if not errorlevel 1 goto moved\r\n\
+             set /a tries+=1\r\n\
+             if %tries% geq 60 goto failed\r\n\
+             ping -n 2 127.0.0.1 >NUL\r\n\
+             goto retry\r\n\
+             :moved\r\n\
+             echo [%DATE% %TIME%] replaced the launcher; starting it >>\"%log%\"\r\n\
              start \"\" \"{target}\"\r\n\
+             goto end\r\n\
+             :failed\r\n\
+             echo [%DATE% %TIME%] could not replace the launcher after %tries% attempts >>\"%log%\"\r\n\
+             start \"\" \"{target}\"\r\n\
+             :end\r\n\
              del \"%~f0\"\r\n",
-            pid = std::process::id(),
-            new = staged.artifact.display(),
-            target = target.display(),
+            version = staged.version,
+            new = batch_path(&staged.artifact),
+            target = batch_path(&target),
         );
         run_detached_script(&script)?;
         Ok(())
@@ -276,22 +293,38 @@ fn apply_msi(staged: &Staged) -> Result<()> {
     #[cfg(windows)]
     {
         // The installer has to run once this process is gone, or Windows
-        // Installer cannot replace the executable it is running from.
+        // Installer cannot replace the executable it is running from. The wait
+        // is bounded: an update that never gets its turn is better retried on
+        // the next launch than left as a script that waits forever.
         clear_pending()?;
+        // The script is UTF-8 while `cmd` reads its default OEM code page, so
+        // `chcp` is what keeps a non-ASCII install path intact.
         let script = format!(
             "@echo off\r\n\
+             chcp 65001 >NUL\r\n\
              setlocal\r\n\
+             set \"log=%~dp0apply.log\"\r\n\
+             echo [%DATE% %TIME%] waiting for the launcher to exit before msiexec >\"%log%\"\r\n\
+             set /a tries=0\r\n\
              :wait\r\n\
              tasklist /FI \"PID eq {pid}\" 2>NUL | find \"{pid}\" >NUL\r\n\
-             if not errorlevel 1 (\r\n\
-             \x20 ping -n 2 127.0.0.1 >NUL\r\n\
-             \x20 goto wait\r\n\
-             )\r\n\
+             if errorlevel 1 goto gone\r\n\
+             set /a tries+=1\r\n\
+             if %tries% geq 120 goto timeout\r\n\
+             ping -n 2 127.0.0.1 >NUL\r\n\
+             goto wait\r\n\
+             :gone\r\n\
+             echo [%DATE% %TIME%] running msiexec >>\"%log%\"\r\n\
              start \"\" /WAIT msiexec /i \"{msi}\" /passive /norestart\r\n\
+             echo [%DATE% %TIME%] msiexec returned %errorlevel% >>\"%log%\"\r\n\
              del \"{msi}\" >NUL 2>NUL\r\n\
+             goto end\r\n\
+             :timeout\r\n\
+             echo [%DATE% %TIME%] the launcher did not exit; the installer was left at \"{msi}\" >>\"%log%\"\r\n\
+             :end\r\n\
              del \"%~f0\"\r\n",
             pid = std::process::id(),
-            msi = staged.artifact.display(),
+            msi = batch_path(&staged.artifact),
         );
         run_detached_script(&script)?;
         Ok(())
@@ -307,20 +340,34 @@ fn apply_nsis(staged: &Staged) -> Result<()> {
     #[cfg(windows)]
     {
         clear_pending()?;
+        // The script is UTF-8 while `cmd` reads its default OEM code page, so
+        // `chcp` is what keeps a non-ASCII install path intact.
         let script = format!(
             "@echo off\r\n\
+             chcp 65001 >NUL\r\n\
              setlocal\r\n\
+             set \"log=%~dp0apply.log\"\r\n\
+             echo [%DATE% %TIME%] waiting for the launcher to exit before the installer >\"%log%\"\r\n\
+             set /a tries=0\r\n\
              :wait\r\n\
              tasklist /FI \"PID eq {pid}\" 2>NUL | find \"{pid}\" >NUL\r\n\
-             if not errorlevel 1 (\r\n\
-             \x20 ping -n 2 127.0.0.1 >NUL\r\n\
-             \x20 goto wait\r\n\
-             )\r\n\
+             if errorlevel 1 goto gone\r\n\
+             set /a tries+=1\r\n\
+             if %tries% geq 120 goto timeout\r\n\
+             ping -n 2 127.0.0.1 >NUL\r\n\
+             goto wait\r\n\
+             :gone\r\n\
+             echo [%DATE% %TIME%] running the installer >>\"%log%\"\r\n\
              start \"\" /WAIT \"{setup}\" /S\r\n\
+             echo [%DATE% %TIME%] the installer returned %errorlevel% >>\"%log%\"\r\n\
              del \"{setup}\" >NUL 2>NUL\r\n\
+             goto end\r\n\
+             :timeout\r\n\
+             echo [%DATE% %TIME%] the launcher did not exit; the installer was left at \"{setup}\" >>\"%log%\"\r\n\
+             :end\r\n\
              del \"%~f0\"\r\n",
             pid = std::process::id(),
-            setup = staged.artifact.display(),
+            setup = batch_path(&staged.artifact),
         );
         run_detached_script(&script)?;
         Ok(())
@@ -332,26 +379,54 @@ fn apply_nsis(staged: &Staged) -> Result<()> {
     }
 }
 
+/// A path for a batch file. `cmd` expands `%NAME%` even inside quotes, so a
+/// literal percent has to be doubled.
+#[cfg(windows)]
+fn batch_path(path: &std::path::Path) -> String {
+    path.to_string_lossy().replace('%', "%%")
+}
+
 #[cfg(windows)]
 fn run_detached_script(script: &str) -> Result<()> {
     use std::os::windows::process::CommandExt;
-    // CREATE_NO_WINDOW | DETACHED_PROCESS: the script outlives this process and
-    // must not flash a console.
+    // CREATE_NO_WINDOW only. `DETACHED_PROCESS` leaves the shell without a
+    // console, and `tasklist` then writes nothing — a wait on the process id
+    // either hangs on its pipe or reports it gone at once. A hidden console is
+    // still invisible and still outlives this process.
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-    const DETACHED_PROCESS: u32 = 0x0000_0008;
     let path = updates_dir().join("apply.cmd");
     std::fs::write(&path, script)?;
+    let log = path.with_file_name("apply.log");
     // `spawn` succeeding only means the shell started; the script may still fail.
     // Logging the hand-off is what distinguishes "queued and run" from "queued
     // and lost", which were otherwise the same silence.
     log::info!(
-        "handing the update to the detached script at {}",
-        path.display()
+        "handing the update to the detached script at {}; it writes its own log to {}",
+        path.display(),
+        log.display()
     );
+    // The launcher has no console, so the shell must not inherit its standard
+    // handles; the helpers it runs need valid ones even with a hidden console.
     std::process::Command::new("cmd")
         .arg("/C")
         .arg(&path)
-        .creation_flags(CREATE_NO_WINDOW | DETACHED_PROCESS)
+        .creation_flags(CREATE_NO_WINDOW)
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
         .spawn()?;
     Ok(())
+}
+
+#[cfg(all(test, windows))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_percent_in_a_path_is_doubled_for_cmd() {
+        assert_eq!(
+            batch_path(std::path::Path::new(r"C:\100%\conic-launcher.exe")),
+            r"C:\100%%\conic-launcher.exe"
+        );
+    }
 }
