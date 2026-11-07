@@ -46,6 +46,51 @@ pub(crate) fn start(ui: &App, instance_id: String) {
     });
 }
 
+/// The repair path: drop `.install.lock` so the listing reads the instance as
+/// uninstalled, then queue the install again over what is already on disk.
+///
+/// Shared by the instance settings and the instance list's right-click menu, so
+/// the two can never disagree about what repairing does.
+pub(crate) fn repair(ui: &App, instance_id: String) {
+    let weak = ui.as_weak();
+    crate::support::runtime::spawn(async move {
+        if let Err(error) = instance::remove_install_lock(&instance_id).await {
+            log::error!("failed to remove the install lock: {error}");
+            return;
+        }
+        // The listing reads the lock as "installed" and the button follows the
+        // listing; the install itself queues behind whatever holds the
+        // exclusive lane.
+        crate::ui::services::report::report(&weak, move |ui| {
+            ui.global::<GameState>().invoke_refresh();
+            start(&ui, instance_id);
+        });
+    });
+}
+
+/// The task centre's view of one instance's install: the launch button's three
+/// states and the task id that stops it.
+///
+/// One projection for both readers — the current instance's button and the
+/// right-click menu's target, which need not be the same instance.
+pub(crate) fn task_of(instance_id: &str) -> (&'static str, i32) {
+    // The game view is built before the task service in `main`, so the first
+    // paint has nothing to read and says so.
+    let Some(service) = crate::ui::services::tasks::service_if_ready() else {
+        return ("idle", -1);
+    };
+    // Only an install is a task. A launch has its own page and its own cancel
+    // button, so nothing about it belongs on these.
+    let Some(task) = service.active_on(TaskKind::GameInstall, instance_id) else {
+        return ("idle", -1);
+    };
+    let kind = match task.state {
+        shared::task::TaskState::Queued => "queued",
+        shared::task::TaskState::Running => "running",
+    };
+    (kind, task.id)
+}
+
 /// Re-derives the launch button's state from the registry.
 ///
 /// Called after every task event and on every apply of the game view, so the
@@ -54,38 +99,18 @@ pub(crate) fn start(ui: &App, instance_id: String) {
 pub(crate) fn project(ui: &App) {
     let state = ui.global::<GameState>();
     let id = state.get_current_id().to_string();
-    if !state.get_has_current() || id.is_empty() {
-        state.set_current_task("idle".into());
-        state.set_task_id(-1);
-        install_progress::clear(&state);
-        return;
-    }
-    // The game view is built before the task service in `main`, so the first
-    // paint has nothing to read and says so.
-    let Some(service) = crate::ui::services::tasks::service_if_ready() else {
-        state.set_current_task("idle".into());
-        state.set_task_id(-1);
-        install_progress::clear(&state);
-        return;
+    let (task, task_id) = if state.get_has_current() && !id.is_empty() {
+        task_of(&id)
+    } else {
+        ("idle", -1)
     };
-    // Only an install is a task. A launch has its own page and its own cancel
-    // button, so nothing about it belongs on this button.
-    let Some(task) = service.active_on(TaskKind::GameInstall, &id) else {
-        state.set_current_task("idle".into());
-        state.set_task_id(-1);
+    state.set_current_task(task.into());
+    state.set_task_id(task_id);
+    if task_id < 0 {
         // Nothing is running for this instance, so whatever the strip last showed
         // belongs to work that has ended or to another instance.
         install_progress::clear(&state);
-        return;
-    };
-    state.set_current_task(
-        match task.state {
-            shared::task::TaskState::Queued => "queued",
-            shared::task::TaskState::Running => "running",
-        }
-        .into(),
-    );
-    state.set_task_id(task.id);
+    }
 }
 
 fn enqueue(ui: &App, instance: Instance) {

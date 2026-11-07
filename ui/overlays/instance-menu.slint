@@ -1,0 +1,246 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { AppIcon } from "../components/display/app-icon.slint";
+import { GameState } from "../globals/game.slint";
+import { InstanceMenu } from "../globals/instance-menu.slint";
+
+// One row of the instance menu. Hover and press are drawn here rather than by
+// the panel, so the row owns the only `TouchArea` and the ink it draws with is
+// decided by the caller (the first row takes the launch button's colour).
+component MenuRow inherits Rectangle {
+    in property <string> label;
+    in property <string> icon;
+    in property <color> ink: Theme.default-text-color.transparentize(0.1);
+    callback clicked();
+
+    height: 30px;
+    border-radius: Theme.controllers-border-radius;
+    background: row-touch.pressed ? Theme.surface-1
+        : row-touch.has-hover ? Theme.surface-0
+        : transparent;
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 10px;
+        cross-axis-alignment: center;
+
+        // `horizontal-stretch: 0` keeps the glyph at its own size; the label
+        // takes the rest of the row.
+        AppIcon {
+            name: root.icon;
+            size: 16px;
+            icon-color: root.ink;
+            horizontal-stretch: 0;
+        }
+
+        Text {
+            text: root.label;
+            font-size: 13px;
+            font-weight: Theme.font-weight-normal;
+            color: root.ink;
+            horizontal-stretch: 1;
+            overflow: elide;
+            wrap: no-wrap;
+        }
+    }
+
+    row-touch := TouchArea {
+        width: parent.width;
+        height: parent.height;
+        clicked => { root.clicked(); }
+    }
+}
+
+// The instance list's right-click menu: the right-clicked instance's actions,
+// opened where the card was right-clicked.
+//
+// Mounted at the app root, not inside the list: the list's viewport clips its
+// rows, and the menu has to be able to open over the summary and the scrollbar.
+// A `ContextMenuArea` would give a native menu and the keyboard menu key, but a
+// native menu cannot carry the launch button's state colour on the first item,
+// nor the red the delete item is drawn in.
+//
+// Every item acts on `InstanceMenu.target` — the card that was right-clicked —
+// so opening the menu never changes the selection. Only "Instance settings"
+// switches to it first, because the settings overlay edits the current instance.
+//
+// The labels resolve under the context of the surface they are the same action
+// in — the launch button and its action-icon hints (`InstanceSummary`), and the
+// instance settings rows (`InstanceSettings`) — so one catalogue entry serves
+// both and a wording change cannot make them disagree.
+export component InstanceMenuOverlay inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    private property <string> primary-kind: InstanceMenu.task != "idle"
+        ? "cancel"
+        : (InstanceMenu.installed ? "launch" : "download");
+    private property <color> primary-ink: root.primary-kind == "download" ? Theme.blue
+        : root.primary-kind == "cancel" ? Theme.mauve
+        : Theme.green;
+    private property <string> primary-icon: root.primary-kind == "cancel"
+        ? "xmark"
+        : root.primary-kind == "download" ? "download"
+        : "play";
+    private property <string> primary-text: root.primary-kind == "cancel"
+        ? @tr("InstanceSummary" => "Cancel")
+        : root.primary-kind == "download" ? @tr("InstanceSummary" => "Download")
+        : @tr("InstanceSummary" => "Launch");
+
+    private property <length> menu-width: 224px;
+    private property <length> natural-height: rows.preferred-height;
+    /// Whether the menu has to grow left of, and above, the pointer: the pointer
+    /// plus the menu would otherwise break the window's 16px edge. The four
+    /// placements are tried bottom-right, bottom-left, top-right, top-left.
+    private property <bool> flip-x: InstanceMenu.anchor-x + root.menu-width + 16px
+        > root.width;
+    private property <bool> flip-y: InstanceMenu.anchor-y + root.natural-height + 16px
+        > root.height;
+    private property <length> panel-x: clamp(
+        root.flip-x ? InstanceMenu.anchor-x - root.menu-width : InstanceMenu.anchor-x,
+        8px,
+        root.width - root.menu-width - 8px,
+    );
+    private property <length> panel-y: clamp(
+        root.flip-y ? InstanceMenu.anchor-y - root.natural-height : InstanceMenu.anchor-y,
+        8px,
+        root.height - root.natural-height - 8px,
+    );
+
+    // The same reveal the dropdowns use: a clipped viewport that grows from the
+    // anchor, with the panel kept at its final size behind it. Growing the panel
+    // itself reallocates the layer its shadow and opacity are drawn through on
+    // every frame. Downwards the top edge stays on the pointer and the rows are
+    // revealed from the first one down; upwards the bottom edge stays on the
+    // pointer and they are revealed from the last one up.
+    private property <length> revealed: InstanceMenu.visible ? root.natural-height : 0px;
+    private property <float> panel-opacity: InstanceMenu.visible ? 1.0 : 0.0;
+    animate revealed, panel-opacity {
+        duration: 200ms;
+        easing: ease;
+    }
+
+    // Fading out has to outlive `visible`, or the panel would vanish in one
+    // frame; the backdrop stays armed until the reveal is over.
+    visible: root.revealed > 0.5px;
+
+    // Any click outside the panel dismisses, and a wheel over the page must not
+    // scroll it while the menu is up.
+    dismiss := TouchArea {
+        width: parent.width;
+        height: parent.height;
+        enabled: root.revealed > 0.5px;
+        scroll-event(event) => { accept }
+        clicked => { InstanceMenu.close(); }
+    }
+
+    viewport := Rectangle {
+        x: root.panel-x;
+        // Upwards, the viewport's bottom edge is pinned to the panel's, so the
+        // rows are revealed from the last one up.
+        y: root.flip-y ? root.panel-y + root.natural-height - root.revealed : root.panel-y;
+        width: root.menu-width;
+        height: root.revealed;
+        // A rectangular clip is a scissors change. `clip` on a rounded box is
+        // drawn through an offscreen layer instead, which the animated height
+        // would rebuild every frame.
+        clip: true;
+
+        panel := Rectangle {
+            y: root.flip-y ? parent.height - root.natural-height : 0px;
+            width: parent.width;
+            height: root.natural-height;
+            opacity: root.panel-opacity;
+            border-radius: Theme.dialog-border-radius;
+            border-width: 1px;
+            border-color: Theme.controllers-border;
+            background: Theme.base;
+            drop-shadow-color: #4500611d;
+            drop-shadow-blur: 10px;
+
+            rows := VerticalLayout {
+                padding: 6px;
+                spacing: 2px;
+
+                MenuRow {
+                    label: root.primary-text;
+                    icon: root.primary-icon;
+                    ink: root.primary-ink;
+                    clicked => {
+                        InstanceMenu.close();
+                        if root.primary-kind == "cancel" {
+                            GameState.cancel-task(InstanceMenu.task-id);
+                        } else if root.primary-kind == "download" {
+                            GameState.start-download(InstanceMenu.target);
+                        } else {
+                            GameState.launch(InstanceMenu.target);
+                        }
+                    }
+                }
+
+                MenuRow {
+                    label: @tr("InstanceSettings" => "Instance settings");
+                    icon: "settings";
+                    clicked => {
+                        InstanceMenu.close();
+                        // The one item that switches: the settings overlay edits
+                        // the game view's current instance, so this is the same
+                        // thing as selecting the card and pressing its gear.
+                        GameState.select-instance(InstanceMenu.target);
+                        GameState.open-instance-settings();
+                    }
+                }
+
+                MenuRow {
+                    label: InstanceMenu.starred
+                        ? @tr("InstanceSummary" => "Remove from favorites")
+                        : @tr("InstanceSummary" => "Add to favorites");
+                    icon: InstanceMenu.starred ? "star" : "star-outline";
+                    clicked => {
+                        InstanceMenu.close();
+                        GameState.toggle-starred(InstanceMenu.target);
+                    }
+                }
+
+                MenuRow {
+                    label: @tr("InstanceSummary" => "Open instance folder");
+                    icon: "folder";
+                    clicked => {
+                        InstanceMenu.close();
+                        GameState.open-instance-folder(InstanceMenu.target);
+                    }
+                }
+
+                MenuRow {
+                    label: @tr("InstanceSettings" => "Repair install");
+                    icon: "build";
+                    clicked => {
+                        InstanceMenu.close();
+                        GameState.repair-install(InstanceMenu.target);
+                    }
+                }
+
+                // Separates the red item, as the settings' danger group does.
+                Rectangle {
+                    height: 1px;
+                    background: Theme.controllers-border;
+                }
+
+                MenuRow {
+                    label: @tr("InstanceSettings" => "Delete instance");
+                    icon: "trash";
+                    ink: Theme.red;
+                    clicked => {
+                        InstanceMenu.close();
+                        GameState.open-delete-instance(InstanceMenu.target);
+                    }
+                }
+            }
+        }
+    }
+}

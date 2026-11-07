@@ -24,6 +24,8 @@ component InstanceListCard inherits Rectangle {
     /// The loader tag's colour, from `InstanceListContent.accent`.
     in property <color> accent;
     callback clicked();
+    /// The pointer's window position, so the menu opens where it was pressed.
+    callback right-clicked(length, length);
 
     private property <length> current-shift: root.item.current ? -20px : 0px;
     animate current-shift {
@@ -273,6 +275,17 @@ component InstanceListCard inherits Rectangle {
         clicked => {
             root.clicked();
         }
+        pointer-event(event) => {
+            // Only the press: the menu belongs to the right button and this is
+            // where the card can report the window position it happened at.
+            // (`clicked` is the left button's.)
+            if event.kind == PointerEventKind.down && event.button == PointerEventButton.right {
+                root.right-clicked(
+                    self.absolute-position.x + self.mouse-x,
+                    self.absolute-position.y + self.mouse-y,
+                );
+            }
+        }
     }
 }
 
@@ -380,6 +393,7 @@ component InstanceListContent inherits Rectangle {
     in property <length> viewport-height: 0px;
     callback group-clicked(string);
     callback card-clicked(string);
+    callback card-right-clicked(string, length, length);
 
     // The card content starts 200px in; the group box rests 40px to the left of
     // that, at 160px.
@@ -534,6 +548,9 @@ component InstanceListContent inherits Rectangle {
             accent: root.accent(row.loader-key);
             clicked => {
                 root.card-clicked(row.key);
+            }
+            right-clicked(x, y) => {
+                root.card-right-clicked(row.key, x, y);
             }
         }
     }
@@ -746,6 +763,11 @@ export component InstancesList inherits Rectangle {
                     GameState.select-instance(key);
                     // Centre even when the card was already current.
                     root.scroll-to-current(true);
+                }
+                card-right-clicked(key, x, y) => {
+                    // Opens the menu on that card without selecting it: only the
+                    // menu's settings item switches the current instance.
+                    GameState.open-instance-menu(key, x, y);
                 }
             }
         }
