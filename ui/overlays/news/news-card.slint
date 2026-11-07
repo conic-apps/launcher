@@ -17,6 +17,11 @@ component CardMedia inherits Rectangle {
     in property <bool> loading: false;
 
     background: Theme.surface-0;
+    // Bound here, not by the callers: Slint's clip pass copies a radius onto the
+    // generated clip element only when the element itself binds
+    // `border-radius`, so a radius assigned from outside clips the image to a
+    // square while the loading background under it draws rounded.
+    border-radius: 8px;
     clip: true;
 
     Image {
@@ -66,7 +71,6 @@ export component NewsBannerCard inherits Rectangle {
         height: root.media-height;
         source: root.card.image;
         loading: root.card.image-loading;
-        border-radius: 8px;
     }
 
     // Declared after the media so it paints over the banner's corner.
@@ -177,7 +181,6 @@ export component NewsRowCard inherits Rectangle {
         height: parent.height;
         source: root.card.image;
         loading: root.card.image-loading;
-        border-radius: 8px;
     }
 
     info := Rectangle {
