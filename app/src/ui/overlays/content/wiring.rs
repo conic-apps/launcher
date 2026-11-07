@@ -50,7 +50,7 @@ pub(crate) fn setup_open_content(ui: &App) {
     ui.global::<GameState>().on_open_content(move |kind| {
         let Some(ui) = weak.upgrade() else { return };
         let kind = kind.to_string();
-        {
+        let remote_kind = {
             let state = controller();
             let mut state = state.borrow_mut();
             state.sync_instance(&ui);
@@ -64,11 +64,15 @@ pub(crate) fn setup_open_content(ui: &App) {
                 // is only reachable from the footer.
                 state.kind = RemoteKind::ResourcePacks;
             }
-        }
-        ui.global::<ContentState>()
-            .set_open_panel(SharedString::from(kind.as_str()));
-        ui.global::<ContentState>()
-            .set_source(SharedString::from("local"));
+            state.kind
+        };
+        // The detail header and the search row are drawn from this mirror, so
+        // it has to follow the list being opened; a stale one titled a mod's
+        // details "Modpack info".
+        let ui_state = ui.global::<ContentState>();
+        ui_state.set_open_panel(SharedString::from(kind.as_str()));
+        ui_state.set_source(SharedString::from("local"));
+        ui_state.set_remote_kind(SharedString::from(remote_kind.key()));
         // The pagination bar is drawn from the list's own `totalPages`, so
         // opening a panel shows whatever that list had — nothing, the first
         // time.
