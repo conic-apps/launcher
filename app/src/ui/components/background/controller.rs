@@ -40,6 +40,12 @@ const WORLD_PIXEL_BUDGET: u32 = 1_400_000;
 /// from the tick interval.
 const TICK_MS: u64 = 8;
 
+/// A resize settles for this long before the sky is redrawn at the new size.
+/// The old image stretches in the meantime; a full-resolution sky pass for every
+/// intermediate size is what makes a live resize crawl. The GPU framebuffer
+/// uses the same settle, so the whole background updates once after the drag.
+const SKY_SETTLE_MS: u64 = 350;
+
 const FADE_MS: f32 = 400.0;
 
 /// How many decoded backgrounds are kept. The fixed on-disk names mean a path
@@ -320,18 +326,21 @@ impl SkyCache {
             return None;
         }
         self.key = Some(key);
-        log::debug!(
-            target: "background",
-            "sky redrawn at {}x{}",
-            request.width,
-            request.height,
-        );
-        Some(sky::render(&SkyRequest {
+        let started = Instant::now();
+        let pixels = sky::render(&SkyRequest {
             width: request.width,
             height: request.height,
             scale: request.sky_scale,
             dark: request.dark,
-        }))
+        });
+        log::debug!(
+            target: "background",
+            "sky redrawn at {}x{} in {:.1}ms",
+            request.width,
+            request.height,
+            started.elapsed().as_secs_f64() * 1000.0,
+        );
+        Some(pixels)
     }
 }
 
@@ -355,6 +364,8 @@ pub struct Controller {
     last_tick: Instant,
     /// Set when something other than the camera needs a fresh frame.
     world_dirty: bool,
+    /// A resize is still moving; the sky waits until this instant.
+    resize_settle: Option<Instant>,
     gpu_shared: gl::Handle,
     gpu_engaged: bool,
     gpu_asked: Instant,
@@ -394,6 +405,7 @@ impl Controller {
             cam_z: 0.0,
             last_tick: Instant::now(),
             world_dirty: true,
+            resize_settle: None,
             gpu_shared,
             gpu_engaged: false,
             gpu_asked: Instant::now(),
@@ -772,18 +784,30 @@ impl Controller {
 
         self.push_parallax(ui, dt, now);
 
+        let gpu_resizing = self.gpu_shared.resizing.get();
         if self.world_visible() || self.software_only {
             // The window is asked to redraw either way: the GPU draws inside
             // that frame's callback, and the rasteriser's new image needs a
             // frame to appear in.
-            if self.world_dirty || self.camera_moves() {
+            if self.world_dirty || self.camera_moves() || gpu_resizing {
                 ui.window().request_redraw();
-                if self.world_dirty && self.request_frame(ui) {
+                // With the GPU drawing, only the sky is ours and it can wait
+                // for the resize to settle; its old image is stretched by the
+                // window until then.
+                let sky_ready = self.gpu() != Gpu::Running
+                    || self.resize_settle.is_none_or(|until| now >= until);
+                if self.world_dirty && sky_ready && self.request_frame(ui) {
                     self.world_dirty = false;
+                    self.resize_settle = None;
                 }
             }
+        } else if gpu_resizing {
+            // The world is hidden, but the GPU still has to reach the frame where
+            // it can drop the resize and stop the ticker.
+            ui.window().request_redraw();
         } else {
             self.world_dirty = false;
+            self.resize_settle = None;
         }
 
         self.sync(ui, now);
@@ -1023,6 +1047,7 @@ impl Controller {
             || self.debounce_until.is_some()
             || self.target != self.settled
             || self.world_dirty
+            || self.gpu_shared.resizing.get()
             || (self.world_visible() && (self.camera_moves() || self.gpu_waiting()));
         if busy {
             if !self.ticking.swap(true, Ordering::Relaxed) {
@@ -1217,6 +1242,8 @@ fn install_window_hook(ui: &App) {
                 };
                 let mut controller = controller.borrow_mut();
                 controller.world_dirty = true;
+                controller.resize_settle =
+                    Some(Instant::now() + Duration::from_millis(SKY_SETTLE_MS));
                 controller.sync(&ui, Instant::now());
             }
             _ => {}

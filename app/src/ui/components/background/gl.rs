@@ -14,7 +14,7 @@ use std::num::NonZeroU32;
 use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU8, Ordering};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use euclid::default::Size2D;
 use glow::HasContext;
@@ -29,6 +29,12 @@ use crate::slint_backend::{App, Background};
 /// The parallax wrapper is scaled up by this so the images land 1:1 on device
 /// pixels.
 const WRAPPER_SCALE: f32 = 1.08;
+
+/// A live resize changes the window size every frame. Recreating the color,
+/// depth and resolve attachments at each of those sizes stalls the GPU in the
+/// middle of the drag, so the framebuffer keeps its old size and the texture is
+/// stretched until the window has been still for this long.
+const RESIZE_SETTLE: Duration = Duration::from_millis(350);
 
 /// Whether the GPU renderer is drawing the world. The CPU rasteriser keeps
 /// drawing until the first GPU frame reaches the window, so a renderer without
@@ -73,6 +79,9 @@ pub struct Shared {
     pub cam_z: Cell<f32>,
     pub moving: Cell<bool>,
     pub frames: Cell<u64>,
+    /// A live resize is waiting for the framebuffer to catch up; the controller
+    /// keeps asking for frames until it does.
+    pub resizing: Cell<bool>,
 }
 
 impl Shared {
@@ -82,6 +91,7 @@ impl Shared {
             cam_z: Cell::new(0.0),
             moving: Cell::new(false),
             frames: Cell::new(0),
+            resizing: Cell::new(false),
         })
     }
 }
@@ -500,6 +510,10 @@ struct Renderer {
     scene: Scene,
     started: Instant,
     last_draw: Option<Instant>,
+    /// The size the window most recently asked for, and when it first asked for
+    /// it. The framebuffer is recreated only after the resize settles.
+    pending_size: Option<(i32, i32)>,
+    pending_since: Instant,
     dumped: bool,
 }
 
@@ -632,6 +646,8 @@ impl Renderer {
             scene: Scene::new(),
             started: Instant::now(),
             last_draw: None,
+            pending_size: None,
+            pending_since: Instant::now(),
             dumped: false,
         };
         renderer.resize(size)?;
@@ -742,14 +758,36 @@ impl Renderer {
             self.resolved_framebuffer = Some(resolved_framebuffer);
             self.resolved = Some(resolved);
         }
+        log::debug!(
+            target: "background",
+            "GPU attachments resized to {}x{}",
+            size.0,
+            size.1,
+        );
         Ok(())
     }
 
     fn draw(&mut self, ui: &App, shared: &Shared) -> bool {
-        if let Err(error) = self.resize(target_size(ui)) {
-            log::warn!(target: "background", "no GPU background: {error}");
-            shared.gpu.set(Gpu::Failed);
-            return false;
+        let target = target_size(ui);
+        if target != self.size {
+            if self.pending_size != Some(target) {
+                self.pending_size = Some(target);
+                self.pending_since = Instant::now();
+            }
+            shared.resizing.set(true);
+            if self.pending_since.elapsed() >= RESIZE_SETTLE {
+                if let Err(error) = self.resize(target) {
+                    log::warn!(target: "background", "no GPU background: {error}");
+                    shared.gpu.set(Gpu::Failed);
+                    shared.resizing.set(false);
+                    return false;
+                }
+                self.pending_size = None;
+                shared.resizing.set(false);
+            }
+        } else {
+            self.pending_size = None;
+            shared.resizing.set(false);
         }
         let (Some(framebuffer), Some(_), Some(resolved)) =
             (self.framebuffer, self.color, self.resolved)
@@ -784,15 +822,19 @@ impl Renderer {
 
         let cam_z = self.advance(shared);
         let started = Instant::now();
-        if self.scene.update(cam_z, aspect, true) {
-            self.upload();
-            log::debug!(
-                target: "background",
-                "world rebuilt in {:.1}ms — {} faces, {} outlines",
-                started.elapsed().as_secs_f64() * 1000.0,
-                self.scene.faces.len(),
-                self.scene.edge_vertices.len() / 8 / 6,
-            );
+        match self.scene.update(cam_z, aspect, true) {
+            scene::Rebuilt::Nothing => {}
+            scene::Rebuilt::Ground => self.upload_ground(),
+            scene::Rebuilt::World => {
+                self.upload();
+                log::debug!(
+                    target: "background",
+                    "world rebuilt in {:.1}ms — {} faces, {} outlines",
+                    started.elapsed().as_secs_f64() * 1000.0,
+                    self.scene.faces.len(),
+                    self.scene.edge_vertices.len() / 8 / 6,
+                );
+            }
         }
 
         let state = State::save(&self.gl);
@@ -982,6 +1024,25 @@ impl Renderer {
             };
         shared.cam_z.set(cam_z);
         cam_z
+    }
+
+    /// An aspect change moves only the four ground vertices; the terrain
+    /// buffers stay exactly as they were.
+    fn upload_ground(&mut self) {
+        unsafe {
+            let gl = &self.gl;
+            let previous_array_buffer = gl.get_parameter_i32(glow::ARRAY_BUFFER_BINDING);
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.fill_vertices));
+            gl.buffer_sub_data_u8_slice(
+                glow::ARRAY_BUFFER,
+                0,
+                bytemuck::cast_slice(&self.scene.fill_vertices[..16]),
+            );
+            gl.bind_buffer(
+                glow::ARRAY_BUFFER,
+                NonZeroU32::new(previous_array_buffer as u32).map(glow::NativeBuffer),
+            );
+        }
     }
 
     fn upload(&mut self) {

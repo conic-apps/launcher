@@ -188,22 +188,72 @@ impl Scene {
             buffers: false,
         }
     }
+}
 
-    /// Rebuilds when the camera block, the aspect or the buffer set changed;
-    /// returns whether it did.
-    pub fn update(&mut self, cam_z: f32, aspect: f32, buffers: bool) -> bool {
+/// What an [`Scene::update`] changed, so the GPU path can upload only that.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Rebuilt {
+    Nothing,
+    /// The ground slab, whose reach depends on the aspect.
+    Ground,
+    /// The whole world: the camera crossed a block or the buffer set changed.
+    World,
+}
+
+impl Scene {
+    /// Rebuilds when the camera block, the aspect or the buffer set changed.
+    pub fn update(&mut self, cam_z: f32, aspect: f32, buffers: bool) -> Rebuilt {
         let floor = cam_z.floor() as i32;
-        // The aspect decides how far down the ground quad reaches, so a window
-        // resize has to rebuild even when the camera has not moved.
+        // The aspect decides how far down the ground quad reaches. The terrain
+        // itself does not depend on it, so an aspect-only change updates four
+        // ground vertices instead of rebuilding every face.
         let aspect_changed = (aspect - self.built_aspect).abs() > 1e-4;
-        if self.built_floor == Some(floor) && self.buffers == buffers && !aspect_changed {
-            return false;
+        if self.built_floor == Some(floor) && self.buffers == buffers {
+            if !aspect_changed {
+                return Rebuilt::Nothing;
+            }
+            self.built_aspect = aspect;
+            self.update_ground(cam_z, aspect);
+            return Rebuilt::Ground;
         }
         self.built_floor = Some(floor);
         self.built_aspect = aspect;
         self.buffers = buffers;
         self.build(cam_z, aspect);
-        true
+        Rebuilt::World
+    }
+
+    /// The slab's four corners. Its horizontal reach is fixed; only the
+    /// vertical reach follows the aspect, because a taller window sees farther
+    /// down the far plane.
+    fn ground_quad(cam_z: f32, aspect: f32) -> [[f32; 3]; 4] {
+        let x_reach = FADE_END * FOV_HALF_TAN;
+        let y_reach = FADE_END * aspect * FOV_HALF_TAN;
+        let wz = cam_z + FADE_END;
+        [
+            [CAM_X - x_reach, CAM_Y, wz],
+            [CAM_X + x_reach, CAM_Y, wz],
+            [CAM_X - x_reach, CAM_Y - y_reach, wz],
+            [CAM_X + x_reach, CAM_Y - y_reach, wz],
+        ]
+    }
+
+    /// Moves the ground slab without touching the terrain. The four vertices
+    /// are the first ones `build` writes, followed by their two triangles.
+    fn update_ground(&mut self, cam_z: f32, aspect: f32) {
+        self.ground = Self::ground_quad(cam_z, aspect);
+        if !self.buffers {
+            return;
+        }
+        debug_assert!(self.fill_vertices.len() >= 16);
+        for (vertex, corner) in self.fill_vertices[..16]
+            .as_chunks_mut::<4>()
+            .0
+            .iter_mut()
+            .zip(self.ground)
+        {
+            vertex.copy_from_slice(&[corner[0], corner[1], corner[2], 1.0]);
+        }
     }
 
     fn build(&mut self, cam_z: f32, aspect: f32) {
@@ -222,15 +272,7 @@ impl Scene {
 
         // The ground base quad: a background-coloured slab on the far plane
         // that hides the hyperbola sky below the horizon.
-        let x_reach = FADE_END * FOV_HALF_TAN;
-        let y_reach = FADE_END * aspect * FOV_HALF_TAN;
-        let wz = cam_z + FADE_END;
-        self.ground = [
-            [CAM_X - x_reach, CAM_Y, wz],
-            [CAM_X + x_reach, CAM_Y, wz],
-            [CAM_X - x_reach, CAM_Y - y_reach, wz],
-            [CAM_X + x_reach, CAM_Y - y_reach, wz],
-        ];
+        self.ground = Self::ground_quad(cam_z, aspect);
         if self.buffers {
             for corner in self.ground {
                 self.fill_vertices
@@ -526,6 +568,37 @@ mod tests {
         (74, 39, 5, 0.826588593),
         (74, 105, 5, 0.591652714),
     ];
+
+    /// A resize changes the aspect, and the terrain does not depend on it.
+    /// Only the ground slab may move; rebuilding the faces would put a full
+    /// scene build on every resize frame.
+    #[test]
+    fn an_aspect_change_only_moves_the_ground() {
+        let mut scene = Scene::new();
+        assert_eq!(scene.update(0.0, 0.5, true), Rebuilt::World);
+
+        let faces = scene.faces.len();
+        let edges = scene.edge_vertices.clone();
+        let fill_tail = scene.fill_vertices[16..].to_vec();
+        let ground = scene.ground;
+
+        assert_eq!(scene.update(0.0, 0.75, true), Rebuilt::Ground);
+        assert_eq!(scene.faces.len(), faces);
+        assert_eq!(scene.edge_vertices, edges);
+        assert_eq!(&scene.fill_vertices[16..], &fill_tail[..]);
+        assert_ne!(scene.ground, ground);
+        for (vertex, corner) in scene.fill_vertices[..16]
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .zip(scene.ground)
+        {
+            assert_eq!(&vertex[..3], &corner[..]);
+            assert_eq!(vertex[3], 1.0);
+        }
+
+        assert_eq!(scene.update(0.0, 0.75, true), Rebuilt::Nothing);
+    }
 
     #[test]
     fn terrain_matches_the_original() {

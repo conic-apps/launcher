@@ -29,42 +29,42 @@ msgid "Music"
 msgstr "Música"
 
 #: ui
-msgctxt "SettingsView"
+msgctxt "SettingsOverlay"
 msgid "General"
 msgstr "General"
 
 #: ui
-msgctxt "SettingsView"
+msgctxt "SettingsOverlay"
 msgid "Launch"
 msgstr "Inicio"
 
 #: ui
-msgctxt "SettingsView"
+msgctxt "SettingsOverlay"
 msgid "Java"
 msgstr "Java"
 
 #: ui
-msgctxt "SettingsView"
+msgctxt "SettingsOverlay"
 msgid "Appearance"
 msgstr "Apariencia"
 
 #: ui
-msgctxt "SettingsView"
+msgctxt "SettingsOverlay"
 msgid "Audio"
 msgstr "Audio"
 
 #: ui
-msgctxt "SettingsView"
+msgctxt "SettingsOverlay"
 msgid "Download"
 msgstr "Descarga"
 
 #: ui
-msgctxt "SettingsView"
+msgctxt "SettingsOverlay"
 msgid "Accessibility"
 msgstr "Accesibilidad"
 
 #: ui
-msgctxt "SettingsView"
+msgctxt "SettingsOverlay"
 msgid "About"
 msgstr "Acerca de"
 

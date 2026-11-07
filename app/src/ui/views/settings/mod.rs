@@ -316,3 +316,76 @@ fn wire_java_actions(ui: &App, shared: Rc<RefCell<config::Config>>) {
         });
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::time::Duration;
+
+    use slint::ComponentHandle;
+
+    use crate::slint_backend::{App, Navigation, SettingsShell};
+
+    fn app() -> App {
+        i_slint_backend_testing::init_no_event_loop();
+        App::new().expect("the app")
+    }
+
+    // Slint queues the `changed` handlers, so the page mirror runs when the
+    // loop is given a turn even though no window exists.
+    fn settle() {
+        i_slint_backend_testing::mock_elapsed_time(Duration::ZERO);
+    }
+
+    /// The gear is the drawer's toggle; it never changes the page from the game.
+    #[test]
+    fn the_gear_toggles_the_drawer() {
+        let ui = app();
+        let navigation = ui.global::<Navigation>();
+        let shell = ui.global::<SettingsShell>();
+
+        shell.invoke_toggle_settings();
+        settle();
+        assert!(shell.get_overlay_open());
+        assert_eq!(navigation.get_current_page(), "game");
+
+        shell.invoke_toggle_settings();
+        settle();
+        assert!(!shell.get_overlay_open());
+        assert_eq!(navigation.get_current_page(), "game");
+    }
+
+    /// The drawer lives over the game view, so opening it from another page
+    /// first navigates home.
+    #[test]
+    fn opening_settings_from_another_page_goes_home_first() {
+        let ui = app();
+        let navigation = ui.global::<Navigation>();
+        let shell = ui.global::<SettingsShell>();
+
+        navigation.invoke_navigate("setup".into());
+        settle();
+        shell.invoke_toggle_settings();
+        settle();
+
+        assert!(shell.get_overlay_open());
+        assert_eq!(navigation.get_current_page(), "game");
+    }
+
+    /// Any navigation away from the game closes the drawer; the page mirror is
+    /// the one place that knows this.
+    #[test]
+    fn leaving_the_game_closes_the_drawer() {
+        let ui = app();
+        let navigation = ui.global::<Navigation>();
+        let shell = ui.global::<SettingsShell>();
+
+        shell.invoke_toggle_settings();
+        settle();
+        assert!(shell.get_overlay_open());
+
+        navigation.invoke_navigate("launch".into());
+        settle();
+
+        assert!(!shell.get_overlay_open());
+    }
+}

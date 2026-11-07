@@ -6,6 +6,7 @@ import { Theme } from "../../theme.slint";
 import { AppIcon } from "../display/app-icon.slint";
 import { Loading } from "../controls/loading.slint";
 import { DescriptionTooltip } from "../../globals/tooltip.slint";
+import { TooltipArea } from "../controls/tooltip-area.slint";
 import { FocusManager } from "../../globals/focus.slint";
 
 // A single settings row: a 40px icon column, a title/description text column and
@@ -147,20 +148,42 @@ export component SettingItem inherits Rectangle {
             }
 
             text-column := VerticalLayout {
+                // `horizontal-stretch` and the elided title are what keep a long
+                // translated title from taking width away from the control.
+                horizontal-stretch: 1;
+                min-width: 0px;
                 spacing: 2px;
                 alignment: center;
                 cross-axis-alignment: start;
 
                 if root.title != "": HorizontalLayout {
+                    width: 100%;
                     spacing: 4px;
                     cross-axis-alignment: center;
                     alignment: start;
 
-                    Text {
-                        text: root.title;
-                        font-size: 13px;
-                        font-weight: Theme.font-weight-normal;
-                        color: Theme.default-text-color.transparentize(0.1);
+                    // The text is the only stretch item in this row, so the
+                    // suffix and tags keep their natural width. The tooltip is
+                    // attached only when the title is actually elided.
+                    title-tooltip := TooltipArea {
+                        horizontal-stretch: 1;
+                        height: title-label.preferred-height;
+                        // The row's own `touch` owns the click; a wrapping area
+                        // here would swallow it. It still reports hover for the
+                        // whole row, which is where the truncated title lives.
+                        wrap: false;
+                        hovered: touch.has-hover;
+                        show-on-press: false;
+                        text: title-label.preferred-width > title-label.width + 0.5px ? root.title : "";
+
+                        title-label := Text {
+                            width: 100%;
+                            text: root.title;
+                            font-size: 13px;
+                            font-weight: Theme.font-weight-normal;
+                            color: Theme.default-text-color.transparentize(0.1);
+                            overflow: elide;
+                        }
                     }
 
                     if root.title-suffix != "": title-suffix-box := HorizontalLayout {
@@ -238,6 +261,7 @@ export component SettingItem inherits Rectangle {
                 // The description at its natural height. Safe where the row is not
                 // measured across a width it is not given — see `description-lines`.
                 if root.description != "" && root.description-lines <= 0: Text {
+                    width: 100%;
                     text: root.description;
                     font-size: 12px;
                     font-weight: Theme.font-weight-normal;
