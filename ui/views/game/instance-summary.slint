@@ -6,6 +6,7 @@ import { Theme } from "../../theme.slint";
 import { AppIcon } from "../../components/display/app-icon.slint";
 import { Loading } from "../../components/controls/loading.slint";
 import { Progress } from "../../components/controls/progress.slint";
+import { TooltipArea } from "../../components/controls/tooltip-area.slint";
 import {
     GameState,
     GameInstallText,
@@ -534,6 +535,17 @@ export component InstanceSummary inherits Rectangle {
                                     enabled: GameState.has-current;
                                     clicked => { GameState.open-instance-folder(); }
                                 }
+
+                                // The icons carry no label, so the hint is the
+                                // only name they have. Hover comes from the
+                                // button's own area, which hides the wrapping
+                                // one.
+                                TooltipArea {
+                                    text: @tr("Open instance folder");
+                                    hovered: folder-touch.has-hover;
+                                    wrap: false;
+                                    show-on-press: false;
+                                }
                             }
 
                             Rectangle {
@@ -555,6 +567,17 @@ export component InstanceSummary inherits Rectangle {
                                     enabled: GameState.has-current;
                                     clicked => { GameState.toggle-starred(); }
                                 }
+
+                                // The icon names the state, so the hint names the
+                                // action that changes it.
+                                TooltipArea {
+                                    text: GameState.current-starred
+                                        ? @tr("Remove from favorites")
+                                        : @tr("Add to favorites");
+                                    hovered: star-touch.has-hover;
+                                    wrap: false;
+                                    show-on-press: false;
+                                }
                             }
 
                             Rectangle {
@@ -575,6 +598,13 @@ export component InstanceSummary inherits Rectangle {
                                     height: parent.height;
                                     enabled: GameState.has-current;
                                     clicked => { GameState.open-instance-settings(); }
+                                }
+
+                                TooltipArea {
+                                    text: @tr("Instance settings");
+                                    hovered: settings-touch.has-hover;
+                                    wrap: false;
+                                    show-on-press: false;
                                 }
                             }
                         }

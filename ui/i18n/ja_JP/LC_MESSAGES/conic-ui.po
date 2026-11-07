@@ -3862,3 +3862,23 @@ msgstr "リソースパック一覧を開く"
 msgctxt "CommandText"
 msgid "Search actions…"
 msgstr "操作を検索…"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Open instance folder"
+msgstr "インスタンスのフォルダーを開く"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Add to favorites"
+msgstr "お気に入りに追加"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Remove from favorites"
+msgstr "お気に入りから削除"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Instance settings"
+msgstr "インスタンス設定"

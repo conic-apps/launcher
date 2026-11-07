@@ -3867,3 +3867,23 @@ msgstr "Open resource packs list"
 msgctxt "CommandText"
 msgid "Search actions…"
 msgstr "Search actions…"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Open instance folder"
+msgstr "Open instance folder"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Add to favorites"
+msgstr "Add to favorites"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Remove from favorites"
+msgstr "Remove from favorites"
+
+#: ui
+msgctxt "InstanceSummary"
+msgid "Instance settings"
+msgstr "Instance settings"
