@@ -2,10 +2,14 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The command palette: three modes over one list. The list is built here because
-//! Slint can neither build nor index a model, and rows carry label *keys* rather
-//! than translated text so a language change re-resolves them. Searches run on the
-//! tokio runtime and report back through `upgrade_in_event_loop`.
+//! The command palette: four modes over one list. The root mode offers the five
+//! fixed commands and — when the query matches none of them — the instance list;
+//! "launch-instance" offers the instances alone; "instance-actions" offers the
+//! five operations of one instance; "search-online" offers whatever Modrinth or
+//! CurseForge has for the keyword. The list is built here because Slint can neither
+//! build nor index a model, and rows carry label *keys* rather than translated
+//! text so a language change re-resolves them. Searches run on the tokio runtime
+//! and report back through `upgrade_in_event_loop`.
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -120,6 +124,66 @@ pub(crate) const COMMANDS: [Command; 5] = [
     },
 ];
 
+/// One operation of an instance's sub-menu.
+///
+/// `title` is the source string the filter matches, like `Command::title`; the
+/// row draws `CommandText.title(title_kind, title)`.
+pub(crate) struct InstanceCommand {
+    key: &'static str,
+    title_kind: &'static str,
+    title: &'static str,
+    icon: &'static str,
+    kind: InstanceCommandKind,
+}
+
+/// The five operations, in the order the sub-menu lists them.
+pub(crate) const INSTANCE_COMMANDS: [InstanceCommand; 5] = [
+    InstanceCommand {
+        key: "instance-launch",
+        title_kind: "instance-launch",
+        title: "Launch",
+        icon: "play",
+        kind: InstanceCommandKind::Launch,
+    },
+    InstanceCommand {
+        key: "instance-settings",
+        title_kind: "instance-settings",
+        title: "Open settings",
+        icon: "settings",
+        kind: InstanceCommandKind::Settings,
+    },
+    InstanceCommand {
+        key: "instance-saves",
+        title_kind: "instance-saves",
+        title: "Open saves list",
+        icon: "save",
+        kind: InstanceCommandKind::Content("saves"),
+    },
+    InstanceCommand {
+        key: "instance-mods",
+        title_kind: "instance-mods",
+        title: "Open mods list",
+        icon: "extension-puzzle",
+        kind: InstanceCommandKind::Content("mods"),
+    },
+    InstanceCommand {
+        key: "instance-resourcepacks",
+        title_kind: "instance-resourcepacks",
+        title: "Open resource packs list",
+        icon: "folder",
+        kind: InstanceCommandKind::Content("resourcepacks"),
+    },
+];
+
+/// Which of the instance summary's buttons an operation stands for.
+#[derive(Clone, Copy)]
+pub(crate) enum InstanceCommandKind {
+    Launch,
+    Settings,
+    /// What `GameState.open-content` takes: "saves" | "mods" | "resourcepacks".
+    Content(&'static str),
+}
+
 /// What a row does when it is chosen. Resolved when the list is built rather
 /// than from the key on the way out, so a callback carrying only an index can
 /// find the thing behind it.
@@ -134,10 +198,22 @@ pub(crate) enum Action {
     },
     CreateInstance,
     AddAccount,
-    /// Selects the instance, and opens the launch page when `launch` is set.
-    SelectInstance {
+    /// Selects the instance and opens the launch page: the "launch instance"
+    /// mode's rows.
+    LaunchInstance {
         id: String,
-        launch: bool,
+    },
+    /// The root mode's instance row: switches the list to that instance's five
+    /// operations instead of selecting it.
+    EnterInstanceActions {
+        id: String,
+        name: String,
+    },
+    /// One operation of an instance's sub-menu. Selecting it switches to the
+    /// instance and then presses the matching button in the summary.
+    InstanceCommand {
+        id: String,
+        kind: InstanceCommandKind,
     },
     /// The game page, then the project's detail panel.
     OpenProject {
@@ -286,6 +362,10 @@ pub(crate) struct PaletteController {
     token: u64,
     mode: &'static str,
     source: &'static str,
+    /// The instance the "instance-actions" sub-menu belongs to, and the name the
+    /// breadcrumb shows for it.
+    target_id: String,
+    target_name: String,
 }
 
 impl PaletteController {
@@ -303,6 +383,8 @@ impl PaletteController {
             token: 0,
             mode: "root",
             source: "modrinth",
+            target_id: String::new(),
+            target_name: String::new(),
         }
     }
 
@@ -329,6 +411,8 @@ impl PaletteController {
         self.instances = instances;
         self.mode = "root";
         self.source = "modrinth";
+        self.target_id.clear();
+        self.target_name.clear();
         self.results.clear();
         self.searching = false;
         self.error = false;
@@ -337,6 +421,7 @@ impl PaletteController {
         state.set_query(SharedString::new());
         state.set_mode(SharedString::from("root"));
         state.set_source(SharedString::from("modrinth"));
+        state.set_target_name(SharedString::new());
         state.set_hovered_key(SharedString::new());
         state.set_online_searching(false);
         state.set_online_error(false);
@@ -358,8 +443,28 @@ impl PaletteController {
     }
 
     fn enter_mode(&mut self, ui: &App, kind: &str, source: &str) {
+        self.target_id.clear();
+        self.target_name.clear();
+        self.set_mode(ui, kind, source);
+    }
+
+    /// Opens one instance's five operations, in place of the row that was
+    /// chosen.
+    ///
+    /// The instance is *not* selected here: the sub-menu only names it, and the
+    /// switch happens when one of its operations is chosen — so backing out of
+    /// the menu leaves the game view exactly where it was.
+    fn enter_instance_actions(&mut self, ui: &App, id: String, name: String) {
+        self.target_id = id;
+        self.target_name = name;
+        self.selected = 0;
+        self.set_mode(ui, "instance-actions", "");
+    }
+
+    fn set_mode(&mut self, ui: &App, kind: &str, source: &str) {
         self.mode = match kind {
             "launch-instance" => "launch-instance",
+            "instance-actions" => "instance-actions",
             "search-online" => "search-online",
             _ => "root",
         };
@@ -375,6 +480,7 @@ impl PaletteController {
         // hint and what Escape and Backspace do, so they must be published.
         state.set_mode(SharedString::from(self.mode));
         state.set_source(SharedString::from(self.source));
+        state.set_target_name(SharedString::from(self.target_name.as_str()));
         self.rebuild(ui);
     }
 
@@ -402,6 +508,11 @@ impl PaletteController {
                 .into_iter()
                 .map(|instance| instance_item(instance, "launch"))
                 .collect(),
+            "instance-actions" => INSTANCE_COMMANDS
+                .iter()
+                .filter(|command| query.is_empty() || command.title.to_lowercase().contains(&query))
+                .map(|command| instance_command_item(command, &self.target_id))
+                .collect(),
             "search-online" => self
                 .results
                 .iter()
@@ -428,7 +539,7 @@ impl PaletteController {
                         .into_iter()
                         .enumerate()
                         .map(|(index, instance)| {
-                            let mut item = instance_item(instance, "select");
+                            let mut item = instance_item(instance, "actions");
                             item.section_kind = if index == 0 { "instances" } else { "" };
                             item
                         })
@@ -579,17 +690,48 @@ impl PaletteController {
                 self.close(ui);
                 ui.global::<Dialogs>().set_account_add_visible(true);
             }
-            Action::SelectInstance { id, launch } => {
+            Action::LaunchInstance { id } => {
                 // The instance is selected *before* the palette closes, so the
                 // background has already been told by the time the palette is
                 // gone.
                 ui.global::<GameState>()
                     .invoke_select_instance(id.clone().into());
                 self.close(ui);
-                if launch {
-                    // The launch button's own entry point, so the palette cannot
-                    // start a launch that skips the waiting and the cancel button.
-                    crate::ui::views::launch::request(ui, id);
+                // The launch page's own entry point, so the palette cannot start a
+                // launch that skips the waiting and the cancel button.
+                crate::ui::views::launch::request(ui, id);
+            }
+            Action::EnterInstanceActions { id, name } => {
+                self.enter_instance_actions(ui, id, name);
+            }
+            Action::InstanceCommand { id, kind } => {
+                // Switching first is what makes each operation the summary's own
+                // button: the settings overlay and the content panel both read
+                // the current instance off `GameState`.
+                ui.global::<GameState>()
+                    .invoke_select_instance(id.clone().into());
+                self.close(ui);
+                // Every operation but launch is one of the game page's buttons,
+                // and the palette is opened from the title bar on every page — so
+                // bring that page up before the overlay reads its global.
+                if !matches!(kind, InstanceCommandKind::Launch)
+                    && ui.global::<Navigation>().get_current_page() != "game"
+                {
+                    ui.global::<Navigation>().invoke_navigate("game".into());
+                }
+                match kind {
+                    InstanceCommandKind::Launch => {
+                        // The launch page's own entry point, so the palette cannot
+                        // start a launch that skips the waiting and the cancel
+                        // button.
+                        crate::ui::views::launch::request(ui, id);
+                    }
+                    InstanceCommandKind::Settings => {
+                        crate::ui::overlays::instance_settings::open(ui);
+                    }
+                    InstanceCommandKind::Content(panel) => {
+                        ui.global::<GameState>().invoke_open_content(panel.into());
+                    }
                 }
             }
             Action::OpenProject { platform, id } => {
@@ -714,6 +856,7 @@ pub(crate) fn keyword_of(ui: &App) -> String {
 pub(crate) fn instance_item(instance: &Instance, action_kind: &'static str) -> PendingItem {
     let runtime = &instance.config.runtime;
     let loader = runtime.mod_loader_type.as_ref().map(ToString::to_string);
+    let launch = action_kind == "launch";
     PendingItem {
         key: format!("instance-{}", instance.id),
         title: instance.config.name.clone(),
@@ -722,12 +865,21 @@ pub(crate) fn instance_item(instance: &Instance, action_kind: &'static str) -> P
             Some(loader) => format!("{loader} · {}", runtime.minecraft),
             None => runtime.minecraft.clone(),
         },
-        action_kind,
-        action: Action::SelectInstance {
-            id: instance.id.clone(),
-            // The "launch instance" mode launches what it selects; the root mode's
-            // instance list only switches.
-            launch: action_kind == "launch",
+        // Only the root mode's row opens a list, so only it gets the chevron.
+        has_children: !launch,
+        action_kind: if launch { "launch" } else { "open" },
+        action: if launch {
+            // The "launch instance" mode launches what it selects.
+            Action::LaunchInstance {
+                id: instance.id.clone(),
+            }
+        } else {
+            // The root mode's instance row offers the instance's operations in a
+            // sub-menu instead of switching to it.
+            Action::EnterInstanceActions {
+                id: instance.id.clone(),
+                name: instance.config.name.clone(),
+            }
         },
         ..Default::default()
     }
@@ -746,6 +898,21 @@ pub(crate) fn command_item(command: &Command, first: bool) -> PendingItem {
         action_kind: "open",
         section_kind: if first { "commands" } else { "" },
         action: command.action.clone(),
+        ..Default::default()
+    }
+}
+
+pub(crate) fn instance_command_item(command: &InstanceCommand, id: &str) -> PendingItem {
+    PendingItem {
+        key: command.key.to_string(),
+        title: command.title.to_string(),
+        title_kind: command.title_kind.to_string(),
+        icon: command.icon.to_string(),
+        action_kind: "open",
+        action: Action::InstanceCommand {
+            id: id.to_string(),
+            kind: command.kind,
+        },
         ..Default::default()
     }
 }
@@ -799,5 +966,52 @@ mod tests {
     fn loader_slugs_are_the_only_tags() {
         let categories = serde_json::json!(["fabric", "game-mechanic", "forge", "nope"]);
         assert_eq!(strings(Some(&categories)), vec!["fabric", "forge"]);
+    }
+
+    #[test]
+    fn root_instance_rows_open_the_action_menu() {
+        let instance = Instance {
+            id: "abc".to_string(),
+            config: instance::InstanceConfig::new("World", "1.21"),
+            ..Default::default()
+        };
+
+        let item = instance_item(&instance, "actions");
+
+        assert_eq!(item.action_kind, "open");
+        assert!(item.has_children);
+        assert!(matches!(
+            item.action,
+            Action::EnterInstanceActions { ref id, ref name }
+                if id == "abc" && name == "World"
+        ));
+    }
+
+    #[test]
+    fn launch_instance_rows_still_launch() {
+        let instance = Instance {
+            id: "abc".to_string(),
+            ..Default::default()
+        };
+
+        let item = instance_item(&instance, "launch");
+
+        assert_eq!(item.action_kind, "launch");
+        assert!(!item.has_children);
+        assert!(matches!(item.action, Action::LaunchInstance { ref id } if id == "abc"));
+    }
+
+    #[test]
+    fn every_instance_operation_targets_its_instance() {
+        assert_eq!(INSTANCE_COMMANDS.len(), 5);
+
+        for command in &INSTANCE_COMMANDS {
+            let item = instance_command_item(command, "abc");
+            assert_eq!(item.action_kind, "open");
+            assert!(matches!(
+                item.action,
+                Action::InstanceCommand { ref id, .. } if id == "abc"
+            ));
+        }
     }
 }

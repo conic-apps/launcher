@@ -2565,11 +2565,6 @@ msgstr "シェーダー"
 
 #: ui
 msgctxt "CommandText"
-msgid "Switch to"
-msgstr "切り替え"
-
-#: ui
-msgctxt "CommandText"
 msgid "Launch"
 msgstr "起動"
 
@@ -3842,3 +3837,28 @@ msgstr "待機中"
 msgctxt "LaunchView"
 msgid "Waiting for other tasks to finish"
 msgstr "他のタスクの完了を待っています"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open settings"
+msgstr "設定を開く"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open saves list"
+msgstr "ワールド一覧を開く"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open mods list"
+msgstr "Mod一覧を開く"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open resource packs list"
+msgstr "リソースパック一覧を開く"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search actions…"
+msgstr "操作を検索…"

@@ -127,6 +127,9 @@ DROP = {
     # A launch is not a task card any more: it waits on its own screen, which
     # carries the sentence below.
     ("TaskText", "Launching {}"),
+    # Selecting an instance in the command palette now opens its operations
+    # sub-menu instead of switching to it, so the "Switch to" hint is gone.
+    ("CommandText", "Switch to"),
     # The notification centre now draws one body line instead of a title and a
     # message, so the per-kind titles and the old generic fallbacks are gone.
     # The crash notice is the one exception: it adds a title above its body (see
@@ -2043,6 +2046,73 @@ SAVE_TAGS.update({
             "ru_RU": "Остановка…",
             "tr_TR": "Durduruluyor…",
             "pl_PL": "Zatrzymywanie…",
+        },
+    },
+    "CommandText": {
+        "Open settings": {
+            "zh_CN": "打开设置",
+            "zh_TW": "開啟設定",
+            "ja_JP": "設定を開く",
+            "ko_KR": "설정 열기",
+            "de_DE": "Einstellungen öffnen",
+            "fr_FR": "Ouvrir les paramètres",
+            "es_ES": "Abrir ajustes",
+            "pt_BR": "Abrir configurações",
+            "ru_RU": "Открыть настройки",
+            "tr_TR": "Ayarları aç",
+            "pl_PL": "Otwórz ustawienia",
+        },
+        "Open saves list": {
+            "zh_CN": "打开存档列表",
+            "zh_TW": "開啟存檔列表",
+            "ja_JP": "ワールド一覧を開く",
+            "ko_KR": "월드 목록 열기",
+            "de_DE": "Weltenliste öffnen",
+            "fr_FR": "Ouvrir la liste des sauvegardes",
+            "es_ES": "Abrir lista de partidas guardadas",
+            "pt_BR": "Abrir lista de mundos",
+            "ru_RU": "Открыть список сохранений",
+            "tr_TR": "Kayıt listesini aç",
+            "pl_PL": "Otwórz listę światów",
+        },
+        "Open mods list": {
+            "zh_CN": "打开模组列表",
+            "zh_TW": "開啟模組列表",
+            "ja_JP": "Mod一覧を開く",
+            "ko_KR": "모드 목록 열기",
+            "de_DE": "Mod-Liste öffnen",
+            "fr_FR": "Ouvrir la liste des mods",
+            "es_ES": "Abrir lista de mods",
+            "pt_BR": "Abrir lista de mods",
+            "ru_RU": "Открыть список модов",
+            "tr_TR": "Mod listesini aç",
+            "pl_PL": "Otwórz listę modów",
+        },
+        "Open resource packs list": {
+            "zh_CN": "打开资源包列表",
+            "zh_TW": "開啟資源包列表",
+            "ja_JP": "リソースパック一覧を開く",
+            "ko_KR": "리소스 팩 목록 열기",
+            "de_DE": "Ressourcenpaketliste öffnen",
+            "fr_FR": "Ouvrir la liste des packs de ressources",
+            "es_ES": "Abrir lista de paquetes de recursos",
+            "pt_BR": "Abrir lista de pacotes de recursos",
+            "ru_RU": "Открыть список ресурспаков",
+            "tr_TR": "Kaynak paketleri listesini aç",
+            "pl_PL": "Otwórz listę paczek zasobów",
+        },
+        "Search actions…": {
+            "zh_CN": "搜索操作…",
+            "zh_TW": "搜尋操作…",
+            "ja_JP": "操作を検索…",
+            "ko_KR": "작업 검색…",
+            "de_DE": "Aktionen durchsuchen…",
+            "fr_FR": "Rechercher des actions…",
+            "es_ES": "Buscar acciones…",
+            "pt_BR": "Pesquisar ações…",
+            "ru_RU": "Поиск действий…",
+            "tr_TR": "İşlemlerde ara…",
+            "pl_PL": "Szukaj działań…",
         },
     },
     "NotificationOverlay": {

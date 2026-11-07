@@ -11,11 +11,16 @@
 /// string pushed into a model would not follow a language change.
 export struct PaletteItem {
     /// What `hover` / `perform` report and what `selected-key` is compared
-    /// against: `instance-<id>`, `modrinth-<id>`, `curseforge-<id>`, or the
-    /// command's name.
+    /// against: `instance-<id>`, `modrinth-<id>`, `curseforge-<id>`, or a
+    /// command's own name.
     key: string,
     title: string,
-    /// "" for data titles, or the command's key for the five fixed commands.
+    /// "" for a title that is data (an instance's name, a project's), or the
+    /// command's key when the title is one of the five fixed commands, or the
+    /// operation's key in an instance's sub-menu: "launch-instance" |
+    /// "create-instance" | "add-account" | "search-modrinth" |
+    /// "search-curseforge" | "instance-launch" | "instance-settings" |
+    /// "instance-saves" | "instance-mods" | "instance-resourcepacks".
     title-kind: string,
     /// The project's author, or "".
     author: string,
@@ -36,7 +41,7 @@ export struct PaletteItem {
     has-icon-image: bool,
     /// Whether the trailing chevron is drawn.
     has-children: bool,
-    /// The footer action for the selected row: "open" | "select" | "launch".
+    /// The action the footer reports for the selected row: "open" | "launch".
     action-kind: string,
     /// The section heading above this row, or "" — "commands" | "instances" |
     /// "results". Only the first row of a section carries one.
@@ -57,6 +62,11 @@ export global CommandText {
         if kind == "add-account" { return @tr("CommandText" => "Add game profile"); }
         if kind == "search-modrinth" { return @tr("CommandText" => "Search on Modrinth"); }
         if kind == "search-curseforge" { return @tr("CommandText" => "Search on CurseForge"); }
+        if kind == "instance-launch" { return @tr("CommandText" => "Launch"); }
+        if kind == "instance-settings" { return @tr("CommandText" => "Open settings"); }
+        if kind == "instance-saves" { return @tr("CommandText" => "Open saves list"); }
+        if kind == "instance-mods" { return @tr("CommandText" => "Open mods list"); }
+        if kind == "instance-resourcepacks" { return @tr("CommandText" => "Open resource packs list"); }
         return text;
     }
 
@@ -77,7 +87,6 @@ export global CommandText {
 
     /// The footer's action hint for the selected row.
     public pure function action(kind: string) -> string {
-        if kind == "select" { return @tr("CommandText" => "Switch to"); }
         if kind == "launch" { return @tr("CommandText" => "Launch"); }
         if kind == "open" { return @tr("CommandText" => "Open"); }
         return "";
@@ -94,6 +103,7 @@ export global CommandText {
     /// The search field's placeholder, which depends on the mode.
     public pure function placeholder(mode: string, source: string) -> string {
         if mode == "launch-instance" { return @tr("CommandText" => "Select an instance to launch…"); }
+        if mode == "instance-actions" { return @tr("CommandText" => "Search actions…"); }
         if mode == "search-online" {
             if source == "curseforge" { return @tr("CommandText" => "Search on CurseForge…"); }
             return @tr("CommandText" => "Search on Modrinth…");
@@ -101,8 +111,11 @@ export global CommandText {
         return @tr("CommandText" => "Search commands or instances…");
     }
 
-    /// The footer's left-hand label, which names the current mode.
-    public pure function breadcrumb(mode: string, source: string) -> string {
+    /// The footer's left-hand label, which names the current mode. In an
+    /// instance's sub-menu it is the instance's own name, so the menu always says
+    /// which instance it will act on.
+    public pure function breadcrumb(mode: string, source: string, target: string) -> string {
+        if mode == "instance-actions" { return target; }
         if mode == "launch-instance" { return @tr("CommandText" => "Launch instance"); }
         if mode == "search-online" {
             if source == "curseforge" { return @tr("CommandText" => "Search on CurseForge"); }
@@ -120,8 +133,9 @@ export global CommandText {
         return @tr("CommandText" => "Close");
     }
 
-    /// The empty-list messages. `kind` is "searching" | "type-to-search" |
-    /// "failed" | "none"; `source` names the site where relevant.
+    /// The empty-list messages. `kind` is one of "searching" | "type-to-search"
+    /// | "failed" | "no-matches" | "none", and `source` is the site for the one
+    /// that names it.
     public pure function empty(kind: string, source: string) -> string {
         if kind == "type-to-search" {
             // Name the site: only Enter performs a search, so do not promise that
@@ -132,7 +146,9 @@ export global CommandText {
             return @tr("CommandText" => "Type keywords to search on Modrinth");
         }
         if kind == "failed" { return @tr("CommandText" => "Search failed, please try again"); }
-        if kind == "none" { return @tr("CommandText" => "No matching results"); }
+        if kind == "no-matches" || kind == "none" {
+            return @tr("CommandText" => "No matching results");
+        }
         return "";
     }
 }
@@ -140,10 +156,13 @@ export global CommandText {
 /// The command palette's state and the callbacks its controller answers.
 export global CommandPaletteState {
     in-out property <bool> visible: false;
-    /// "root" | "launch-instance" | "search-online".
+    /// "root" | "launch-instance" | "instance-actions" | "search-online".
     in-out property <string> mode: "root";
     /// "modrinth" | "curseforge" — which site `search-online` searches.
     in-out property <string> source: "modrinth";
+    /// The instance name the "instance-actions" breadcrumb shows. "" outside
+    /// that mode.
+    in-out property <string> target-name: "";
     in-out property <string> query: "";
     /// Whether the trimmed query is empty. Slint has no `trim`, so Rust answers.
     in-out property <bool> query-empty: true;

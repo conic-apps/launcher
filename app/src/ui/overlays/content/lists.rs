@@ -257,7 +257,10 @@ pub(crate) fn resourcepack_card(pack: &content::resourcepack::Resourcepack) -> P
             .unwrap_or_default()
             .to_string(),
         tags,
-        icon: pack.icon.as_deref().and_then(fetch_icon),
+        // Deferred, like a local mod's: `fetch_icon` blocks on the runtime, and
+        // this projection runs on the UI thread. The cards go up with a spinner
+        // and `load_icons` fills them in as the data URLs decode.
+        icon_url: pack.icon.clone(),
         action_kind: "file",
         ..Default::default()
     }
@@ -352,5 +355,25 @@ pub(crate) fn refresh_favorite_flags(ui: &App) {
     }
     if let Some(detail) = &state.detail {
         ui_state.set_detail_favorited(state.is_favorited(detail.platform, &detail.id));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_resourcepacks_icon_is_fetched_after_the_card_is_built() {
+        let pack = ::content::resourcepack::Resourcepack {
+            metadata: serde_json::json!({ "pack": { "description": "A pack" } }),
+            icon: Some("data:image/png;base64,AAAA".to_string()),
+            name: "Pack".to_string(),
+            path: std::path::PathBuf::from("/tmp/pack"),
+        };
+
+        let card = resourcepack_card(&pack);
+
+        assert!(card.icon.is_none());
+        assert_eq!(card.icon_url.as_deref(), pack.icon.as_deref());
     }
 }

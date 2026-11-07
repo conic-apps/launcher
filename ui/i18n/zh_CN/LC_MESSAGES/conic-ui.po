@@ -2595,11 +2595,6 @@ msgstr "着色器"
 
 #: ui
 msgctxt "CommandText"
-msgid "Switch to"
-msgstr "切换实例"
-
-#: ui
-msgctxt "CommandText"
 msgid "Launch"
 msgstr "启动"
 
@@ -3842,3 +3837,28 @@ msgstr "排队中"
 msgctxt "LaunchView"
 msgid "Waiting for other tasks to finish"
 msgstr "等待其他任务完成"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open settings"
+msgstr "打开设置"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open saves list"
+msgstr "打开存档列表"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open mods list"
+msgstr "打开模组列表"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open resource packs list"
+msgstr "打开资源包列表"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search actions…"
+msgstr "搜索操作…"

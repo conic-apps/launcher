@@ -2565,11 +2565,6 @@ msgstr "Shader"
 
 #: ui
 msgctxt "CommandText"
-msgid "Switch to"
-msgstr "Przełącz na"
-
-#: ui
-msgctxt "CommandText"
 msgid "Launch"
 msgstr "Uruchom"
 
@@ -3842,3 +3837,28 @@ msgstr "W kolejce"
 msgctxt "LaunchView"
 msgid "Waiting for other tasks to finish"
 msgstr "Oczekiwanie na zakończenie innych zadań"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open settings"
+msgstr "Otwórz ustawienia"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open saves list"
+msgstr "Otwórz listę światów"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open mods list"
+msgstr "Otwórz listę modów"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open resource packs list"
+msgstr "Otwórz listę paczek zasobów"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search actions…"
+msgstr "Szukaj działań…"
