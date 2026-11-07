@@ -5,9 +5,8 @@
 //! Human-readable formatting shared by the views.
 //!
 //! These are presentation concerns, not domain ones, so they live beside the
-//! UI instead of in a crate. `bytes` is used by `multiplayer`; `launch` still
-//! carries its own `format_bytes` copy. Nothing else has been duplicated enough
-//! to earn a place here.
+//! UI instead of in a crate. Nothing has been duplicated enough to earn a place
+//! here beyond `bytes`.
 
 /// Human-readable byte sizes: binary units, two decimals, and a bare `B` below a
 /// kibibyte.

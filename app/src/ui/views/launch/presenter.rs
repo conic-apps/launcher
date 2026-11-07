@@ -10,6 +10,7 @@
 //! button (`app/src/ui/views/game/install_progress.rs`).
 
 use crate::slint_backend::LaunchState;
+use crate::support::formatting::bytes;
 use download::progress::DownloadPhase;
 use launch::LaunchProgress;
 
@@ -42,15 +43,17 @@ pub(crate) fn launch_view(progress: &LaunchProgress) -> Option<LaunchView> {
         // The authlib-injector step updates no screen state.
         LaunchProgress::InstallAuthlibInjector(_) => return None,
         LaunchProgress::CompleteFiles(snapshot) => {
-            if snapshot.phase == DownloadPhase::VerifyExistingFiles {
+            // A zero total is not a download of nothing to show as "0 / 0": it is
+            // the snapshot before `complete_files` has produced any, or a batch
+            // with everything already on disk. The install strip and the
+            // multiplayer screen fold the same reading into their stage text.
+            if snapshot.phase == DownloadPhase::VerifyExistingFiles || snapshot.total_bytes == 0 {
                 LaunchView::stage("verify-files")
             } else {
-                // Raw byte counts here, unlike the install path, which formats
-                // them with `bytes`.
                 LaunchView {
                     kind: "download-files",
-                    current: snapshot.completed_bytes.to_string(),
-                    total: snapshot.total_bytes.to_string(),
+                    current: bytes(snapshot.completed_bytes),
+                    total: bytes(snapshot.total_bytes),
                     loading: false,
                     value: snapshot.completed_bytes as f32,
                     max: snapshot.total_bytes as f32,
@@ -116,15 +119,16 @@ mod tests {
     }
 
     #[test]
-    fn launch_bytes_stay_raw() {
+    fn a_counted_download_formats_its_byte_counts() {
         let launch = launch_view(&LaunchProgress::CompleteFiles(snapshot(
             DownloadPhase::DownloadFiles,
             1024,
             2048,
         )))
         .expect("shown");
-        assert_eq!(launch.current, "1024");
-        assert_eq!(launch.total, "2048");
+        assert_eq!(launch.kind, "download-files");
+        assert_eq!(launch.current, "1.00 KB");
+        assert_eq!(launch.total, "2.00 KB");
     }
 
     #[test]
