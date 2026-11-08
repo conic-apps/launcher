@@ -1,0 +1,15 @@
+# `main` instantiates the whole Slint component tree on the main thread, and the
+# PE header fixes that thread's stack at rustc's default 1 MB. It needs slightly
+# more: on some Windows machines the launch dies with EXCEPTION_STACK_OVERFLOW
+# before a window exists and without a word, because the release build has no
+# console and `panic = "abort"` swallows the report.
+#
+# 8 MB is what Linux and macOS already give their main thread, so this brings
+# Windows to parity with the platforms the interface is developed and tested on
+# rather than inventing a number. The reserve is address space, not memory —
+# only the pages actually touched are committed.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "link-arg=/STACK:8388608"]
+
+[target.aarch64-pc-windows-msvc]
+rustflags = ["-C", "link-arg=/STACK:8388608"]
