@@ -23,26 +23,7 @@ use slint::{ComponentHandle, Timer, Weak};
 use slint_backend::{App, AppConfig, Navigation, NewsState, NotificationState};
 use window::WindowService;
 
-/// Claims the single-instance role. A relaunch retries briefly because the
-/// parent it replaces is still releasing the claim.
-fn acquire_single_instance() -> Option<single_instance::SingleInstance> {
-    let relaunch = std::env::var_os("CONIC_RELAUNCH").is_some();
-    let attempts = if relaunch { 50 } else { 1 };
-    for attempt in 0..attempts {
-        match single_instance::try_acquire() {
-            Ok(instance) => return Some(instance),
-            Err(_) if attempt + 1 < attempts => {
-                std::thread::sleep(std::time::Duration::from_millis(100));
-            }
-            Err(_) => return None,
-        }
-    }
-    None
-}
-
 fn main() {
-    // Create the data directory layout before anything reads from it — the
-    // logger writes into it.
     storage::LOCATIONS.init();
     support::logs::init();
 
@@ -51,14 +32,12 @@ fn main() {
         "Conic Launcher is open source, You can view the source code on Github: https://github.com/conic-apps/launcher"
     );
 
-    // The claim must happen before a window exists; later launches queue until
-    // the watcher below picks them up.
     let Some(single_instance) = acquire_single_instance() else {
         log::info!(target: "shell", "another instance is already running");
         return;
     };
 
-    // The winit backend hook must be installed before any window exists.
+    // NOTE: The winit backend hook must be installed before any window exists.
     support::native::install_backend();
 
     let ui = App::new().expect("failed to construct the app UI");
@@ -117,7 +96,6 @@ fn main() {
     ui::views::setup::setup(&ui, Rc::clone(&shared));
     ui::overlays::dialogs::multiplayer::setup(&ui);
     ui::services::scroll::setup(&ui);
-    // Slint has no global cursor accessor; `CursorMoved` feeds `TooltipState`.
     ui::services::tooltip::setup(&ui);
     // After the clock above, whose tick drives its tile fades.
     ui::overlays::content::world_map::setup(&ui);
@@ -248,6 +226,23 @@ fn main() {
     ui.run().expect("failed to run the shell event loop");
 
     run_exit_work();
+}
+
+/// Claims the single-instance role. A relaunch retries briefly because the
+/// parent it replaces is still releasing the claim.
+fn acquire_single_instance() -> Option<single_instance::SingleInstance> {
+    let relaunch = std::env::var_os("CONIC_RELAUNCH").is_some();
+    let attempts = if relaunch { 50 } else { 1 };
+    for attempt in 0..attempts {
+        match single_instance::try_acquire() {
+            Ok(instance) => return Some(instance),
+            Err(_) if attempt + 1 < attempts => {
+                std::thread::sleep(std::time::Duration::from_millis(100));
+            }
+            Err(_) => return None,
+        }
+    }
+    None
 }
 
 /// Exit work, run once whether the window closed or the process is being
