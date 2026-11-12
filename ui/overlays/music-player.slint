@@ -199,9 +199,9 @@ export component MusicPlayerOverlay inherits Rectangle {
         triggered => { root.playlist-phase = "closed"; }
     }
 
-    // `Dialog`'s two tracks: the scrim fades under everything, then the card
-    // scales up from 0.9 with that overshoot, and the leave runs them back in
-    // the reverse order.
+    // `Dialog`'s two tracks: the scrim fades under the card as the card scales
+    // up from 0.9 with that overshoot, and the leave runs them back in the
+    // reverse order.
     private property <float> scrim-alpha: root.phase == "shown" ? 1.0 : 0.0;
     animate scrim-alpha {
         duration: 200ms;
@@ -212,7 +212,6 @@ export component MusicPlayerOverlay inherits Rectangle {
     private property <float> card-scale: root.phase == "shown" ? 1.0 : 0.9;
     animate card-alpha, card-scale {
         duration: root.phase == "shown" ? 300ms : 180ms;
-        delay: root.phase == "shown" ? 200ms : 0ms;
         easing: root.phase == "shown" ? cubic-bezier(0.34, 1.56, 0.64, 1) : ease-out-quad;
     }
 
