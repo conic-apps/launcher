@@ -11,9 +11,10 @@ import { FocusManager } from "../../globals/focus.slint";
 // an auto-sized row. Slint has no such two-way sizing, so the *preferred* width
 // is the label plus the 16px horizontal padding — and it is a preference rather
 // than a `width`, so a `HorizontalLayout` can still grow the button with
-// `horizontal-stretch: 1`. That is why callers that put two buttons in a row
-// (the create-instance dialog, the account dialogs, the multiplayer screens)
-// give each a share rather than hand-computing a half-width.
+// `horizontal-stretch: 1`. That share comes out of the space the labels leave
+// over, so two buttons with different labels end up different widths; a row that
+// needs them equal, like the multiplayer download screen's, pins `button-width`
+// to half of its own width instead.
 export component Button inherits Rectangle {
     in property <string> text: "";
     in property <color> text-color: Theme.default-text-color.transparentize(0.1);
