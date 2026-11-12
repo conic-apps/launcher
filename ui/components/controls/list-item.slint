@@ -41,6 +41,17 @@ export component ListItem inherits Rectangle {
             easing: cubic-bezier(0, 0.43, 0.25, 1);
         }
 
+        touch := TouchArea {
+            width: parent.width;
+            height: parent.height;
+            clicked => {
+                FocusManager.clear();
+                if (root.clickable) {
+                    root.clicked();
+                }
+            }
+        }
+
         HorizontalLayout {
             padding-left: 12px;
             padding-right: 12px;
@@ -137,17 +148,6 @@ export component ListItem inherits Rectangle {
                         FocusManager.clear();
                         root.button-clicked(button);
                     }
-                }
-            }
-        }
-
-        touch := TouchArea {
-            width: parent.width;
-            height: parent.height;
-            clicked => {
-                FocusManager.clear();
-                if (root.clickable) {
-                    root.clicked();
                 }
             }
         }
