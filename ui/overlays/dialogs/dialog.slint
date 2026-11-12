@@ -87,16 +87,16 @@ export component Dialog inherits Rectangle {
         easing: ease-out-quad;
     }
 
+    // No delay in front of the panel: the entrance starts on the click's own
+    // frame, so the scrim and the panel run from the same instant.
     private property <float> content-alpha: root.phase == "shown" ? 1.0 : 0.0;
     private property <float> content-scale: root.phase == "shown" ? 1.0 : 0.9;
     animate content-alpha {
         duration: root.phase == "shown" ? 300ms : 180ms;
-        delay: root.phase == "shown" ? 200ms : 0ms;
         easing: root.phase == "shown" ? cubic-bezier(0.34, 1.56, 0.64, 1) : ease-out-quad;
     }
     animate content-scale {
         duration: root.phase == "shown" ? 300ms : 180ms;
-        delay: root.phase == "shown" ? 200ms : 0ms;
         easing: root.phase == "shown" ? cubic-bezier(0.34, 1.56, 0.64, 1) : ease-out-quad;
     }
 
