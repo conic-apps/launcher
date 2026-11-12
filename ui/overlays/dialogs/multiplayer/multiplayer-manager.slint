@@ -219,6 +219,10 @@ component WaitingScreen inherits VerticalLayout {
     spacing: 0px;
     alignment: start;
 
+    // An exact half each. `horizontal-stretch` alone only splits the space the
+    // two cards' own text leaves over, which would make one card wider.
+    private property <length> action-width: (root.width - 12px) / 2;
+
     InfoNote {
         note: @tr("Multiplayer" => "How well multiplayer works depends on your network environment and the other participants'. If it fails, try improving your NAT type, or connect to a network with IPv6 to make it more likely to succeed.");
     }
@@ -236,7 +240,7 @@ component WaitingScreen inherits VerticalLayout {
             spacing: 12px;
 
             WaitAction {
-                horizontal-stretch: 1;
+                width: root.action-width;
                 icon: "add-circle";
                 label: @tr("Multiplayer" => "Create a group");
                 description: @tr("Multiplayer" => "Create a group and get an invite code");
@@ -244,7 +248,7 @@ component WaitingScreen inherits VerticalLayout {
             }
 
             WaitAction {
-                horizontal-stretch: 1;
+                width: root.action-width;
                 icon: "enter";
                 label: @tr("Multiplayer" => "Join a group");
                 description: @tr("Multiplayer" => "Join with an invite code and enter the world");

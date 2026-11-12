@@ -11,6 +11,10 @@ export component MultiplayerDownloadDescription inherits VerticalLayout {
     width: 100%;
     alignment: start;
 
+    // An exact half each. `horizontal-stretch` alone only splits the space the
+    // labels leave over, which would make "Start download" wider than "Cancel".
+    private property <length> action-width: (root.width - 12px) / 2;
+
     Text {
         text: @tr("Multiplayer" => "Download the Conic Nexus extension");
         font-size: 22px;
@@ -83,12 +87,14 @@ export component MultiplayerDownloadDescription inherits VerticalLayout {
 
         Button {
             horizontal-stretch: 1;
+            button-width: root.action-width;
             text: @tr("Multiplayer" => "Cancel");
             clicked => { MultiplayerState.close(); }
         }
 
         Button {
             horizontal-stretch: 1;
+            button-width: root.action-width;
             text: @tr("Multiplayer" => "Start download");
             text-color: Theme.text-inverse;
             button-background: Theme.blue;
