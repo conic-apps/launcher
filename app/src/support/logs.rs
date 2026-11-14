@@ -2,15 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The log sink.
-//!
-//! Debug builds write to stdout; release builds write a rotating file (50 kB,
-//! ten files) in the data directory's `logs` folder. The file format stays
-//! plain because it is read with a text editor.
-//!
-//! Every record is also kept in a bounded in-memory buffer, which the crash
-//! report embeds. `env_logger` has no rotation, so the writer is a
-//! `Target::Pipe` around one.
+//! The app's log sink: stdout in a debug build, a rotating file (50 kB, ten
+//! files, under `<data>/logs`) in a release build, and the newest records kept in
+//! memory for the crash report.
 
 use std::{
     collections::VecDeque,
@@ -33,7 +27,7 @@ pub(crate) fn log_path(directory: &Path) -> PathBuf {
     directory.join(format!("{FILE_NAME}.log"))
 }
 
-/// Records kept in memory for the crash report.
+/// Records the crash report embeds.
 const RECENT_LINES: usize = 1_000;
 
 static RECENT: LazyLock<Mutex<VecDeque<String>>> =
@@ -101,8 +95,8 @@ impl Rotating {
     }
 }
 
-/// Sorts by the timestamp in the name rather than the file's mtime, so a copied
-/// folder keeps its order. Only `<stem>_<timestamp>.log` files are touched.
+/// Deletes all but the newest `keep` of `<stem>_<timestamp>.log`; the timestamp
+/// is the one in the name, so a copied folder keeps its order.
 fn prune_archives(directory: &Path, stem: &str, keep: usize) {
     let Ok(entries) = fs::read_dir(directory) else {
         // This may run before the logger exists, so stderr is the only channel.
@@ -139,8 +133,7 @@ struct FileLog {
 }
 
 impl FileLog {
-    /// `env_logger` discards the writer's errors, so report on stderr. Only once:
-    /// a permanently unwritable file would otherwise log on every record.
+    /// Reports a write failure on stderr, once per process.
     fn report_once(&self, error: &io::Error, path: &std::path::Path) {
         static REPORTED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
         if !REPORTED.swap(true, std::sync::atomic::Ordering::Relaxed) {
@@ -170,7 +163,7 @@ impl io::Write for FileLog {
     }
 }
 
-/// `[date][time][target][LEVEL] message`, shared by every sink.
+/// `<date> - <LEVEL> / <target>: message`, the line every sink writes.
 fn format_record(buffer: &mut Formatter, record: &Record) -> std::io::Result<()> {
     let now = Local::now();
     let style = buffer.default_level_style(record.level());
@@ -213,8 +206,7 @@ pub(crate) fn recent(lines: usize) -> String {
         .join("\n")
 }
 
-/// Installs the logger. `RUST_LOG` overrides the default level; use
-/// `default_filter_or` rather than `filter_level`, which would discard it.
+/// Installs the logger. `RUST_LOG` overrides the default level.
 pub fn init() {
     // `cfg!` keeps both arms compiled, so the release file path is still checked.
     if cfg!(debug_assertions) {

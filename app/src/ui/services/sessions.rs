@@ -2,16 +2,11 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The app's running-session fan-out.
+//! The app's running-session fan-out. `launch::running` keeps one subscriber, so
+//! the one `subscribe` call lives here and surfaces register as observers.
 //!
-//! `launch::running` keeps one subscriber, so the one `subscribe` call lives
-//! here and surfaces register as observers instead of subscribing themselves.
-//! The game view needs the events to turn its button into Stop, and the crash
-//! overlay needs them to post the crash notice; a second `subscribe` would
-//! silently replace the first.
-//!
-//! The crate's sink runs on a watcher thread, so every event is delivered onto
-//! the event loop before an observer sees it.
+//! The crate's sink runs on a watcher thread, so every event is delivered onto the
+//! event loop before an observer sees it.
 
 use std::{cell::RefCell, rc::Rc, sync::Arc};
 

@@ -2,23 +2,16 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// State of the two tooltips the app has.
+// State of the two tooltips the app has, both drawn at the application root so no
+// clipping container cuts them off.
 //
-// `DescriptionTooltip` is the full text of a `SettingItem` description that the
-// row pinned to a fixed number of lines, shown on hover. The panel itself is
-// drawn by `DescriptionTooltipOverlay` at the application root, the same reason
-// `DropdownOverlay` draws the dropdown lists there: the panel is several lines
-// tall and starts on the description line, so it covers the rows below it, and
-// both the settings collapse (`SettingCollapse`'s `clip: true` height) and the
-// settings scroll area clip everything inside them. The row fills in the anchor
-// — the description's own position in the window — so the panel is placed
-// relative to the description line and not to the pointer.
+// `DescriptionTooltip` shows the full text of a `SettingItem` description the row
+// pinned to a few lines. It is anchored to the description's own window position,
+// not the pointer, so it starts on the line it explains.
 //
-// `TooltipState` is the generic pointer tooltip: any control can show a short
-// label under the cursor through `TooltipArea` (`components/controls/`), and
-// `TooltipOverlay` (`overlays/tooltip.slint`) draws the one panel at the
-// application root. It is anchored to the pointer, so it is never clipped by the
-// container the trigger sits in — the same reason both tooltips live at the root.
+// `TooltipState` is the generic pointer tooltip any control shows through
+// `TooltipArea`; it is anchored to the pointer. Slint has no cursor accessor, so
+// the Rust service `ui/services/tooltip.rs` writes its position.
 export global DescriptionTooltip {
     /// The full text, written by the row on hover.
     in-out property <string> text: "";
@@ -36,24 +29,17 @@ export global DescriptionTooltip {
     in-out property <bool> over-panel: false;
     /// Which pinned box the anchor currently belongs to, and the counter the boxes
     /// take their numbers from. The row that opened the panel keeps refreshing the
-    /// anchor even after a scroll has taken it out from under the pointer and left
-    /// the pointer on the panel — otherwise the panel would sit still while the
-    /// content slid out from under it, which is the one thing it must never do.
-    /// A number rather than a flag because the flag would be global: every pinned
-    /// row would see it and every one of them would push its own anchor, and the
-    /// last push of the tick would win.
+    /// anchor while it owns it, even once a scroll has left the pointer on the
+    /// panel, so the panel travels with the content. A number rather than a flag: a
+    /// global flag would let every row push its own anchor.
     in-out property <int> anchor-seq: 0;
     in-out property <int> next-anchor-seq: 0;
 }
 
-// State of the generic pointer tooltip.
-//
-// A trigger (`TooltipArea`) writes `text` and raises `wanted`; the overlay owns
-// the reveal and reads `wanted` only as the target it animates towards. The
-// pointer position is *not* filled in by the trigger: Slint has no global cursor
-// accessor, so the window has to say where the pointer is — the Rust service
-// `ui/services/tooltip.rs` watches winit's `CursorMoved` and writes both
-// coordinates here, continuously, for as long as the app runs.
+// State of the generic pointer tooltip. A trigger (`TooltipArea`) writes `text` and
+// raises `wanted`; the overlay owns the reveal and reads `wanted` only as the target
+// it animates towards. The pointer position is written by the Rust service
+// `ui/services/tooltip.rs`, because Slint has no global cursor accessor.
 export global TooltipState {
     /// The text to show. Written by the trigger that raised `wanted`.
     in-out property <string> text: "";

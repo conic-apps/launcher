@@ -5,20 +5,14 @@
 //! The launch pipeline: turning an installed instance into a running Minecraft
 //! process.
 //!
-//! [`launch`] runs the whole pipeline — file completion, version resolution,
-//! Java selection, authlib-injector setup, the argument list and the generated
-//! launch script with its stdout log watcher — and reports progress through the
-//! [`LaunchSink`] the caller hands in. The crate samples its own download
-//! counters; the caller never sees one.
+//! [`launch`] runs the whole pipeline — file completion, version resolution, Java
+//! selection, authlib-injector setup, the argument list and the launch script —
+//! and reports progress through the [`LaunchSink`] the caller hands in.
 //!
-//! The process outlives the call: [`launch`] returns once the game is up, and
-//! the process is registered in [`running`]. The app can then list and
-//! terminate running sessions, and each process's stdout watcher cleans the
-//! entry up when it exits. The app still cancels a *launch in progress* by
-//! aborting the task that awaits [`launch`]; stopping an already-running game
-//! goes through [`running::terminate`], which stops the session's whole process
-//! tree — on Windows the game is a child of the tracked shell, not the tracked
-//! process itself.
+//! The process outlives the call: [`launch`] returns once the game is up and the
+//! process is registered in [`running`]. Cancelling a launch in progress means
+//! aborting the task that awaits [`launch`]; stopping a running game goes through
+//! [`running::terminate`], which takes the session's whole process tree.
 
 use std::{
     path::{Path, PathBuf},
@@ -63,9 +57,6 @@ pub mod running;
 pub use error::*;
 
 /// What a launch reports, in the order it reports it.
-///
-/// Each download variant holds a plain [`DownloadSnapshot`] rather than a
-/// [`DownloadState`], so an event can cross a thread and compare by value.
 #[derive(Debug, Clone, PartialEq)]
 pub enum LaunchProgress {
     Prepare,
@@ -212,15 +203,9 @@ fn print_instance_info(instance: &Instance) {
     };
 }
 
-/// Quotes one argument for the shell the generated launch script runs under.
-///
-/// The Unix script is `sh`/`bash`, so POSIX single-quoting is used: the value
-/// is wrapped in `'…'` and an inner `'` is closed and reopened around
-/// (`'\''`). That leaves every byte literal — spaces, `$`, backticks, double
-/// quotes — which is what keeps a data path with spaces (the macOS default,
-/// `…/Application Support/…`) in one piece. A Windows batch file understands
-/// only `"…"`, and an argument with no space or tab is left bare; the launch
-/// arguments never contain a `"`.
+/// Quotes one argument for the shell the generated launch script runs under:
+/// POSIX single-quoting on Unix, `"…"` in a Windows batch file, and bare when
+/// there is nothing to protect.
 fn quote_shell_arg(argument: &str) -> String {
     #[cfg(target_os = "windows")]
     {
@@ -236,11 +221,9 @@ fn quote_shell_arg(argument: &str) -> String {
     }
 }
 
-/// Builds the `java …` command line for the launch script.
-///
-/// Every argument is shell-quoted; an empty one is dropped, because once quoting
-/// wraps each argument an empty `extra_jvm_args` becomes an explicit empty word
-/// and `java` reads the next word as the main class.
+/// Builds the `java …` command line for the launch script. Every argument is
+/// shell-quoted, and an empty one is dropped so `java` cannot read it as the
+/// main class.
 fn build_launch_command(java_path: &Path, command_arguments: &[String]) -> String {
     let mut command = match PLATFORM_INFO.os_family {
         OsFamily::Windows => String::new(),

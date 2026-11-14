@@ -2,12 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Assets the Rust side hands to Slint as bytes.
-//!
-//! A `.slint` file's `@image-url` is embedded by the compiler and never reaches
-//! Rust. The textures below are different: the app decodes or forwards them, so
-//! it needs the bytes, and they live here to keep the interface's assets with
-//! the interface instead of reaching into this crate's directory.
+//! Assets the Rust side hands to Slint as bytes. A `.slint` file's `@image-url` is
+//! embedded by the compiler and never reaches Rust; these textures are different,
+//! because the app decodes or forwards them.
 
 /// The bundled default skins, slim models first, then wide.
 ///

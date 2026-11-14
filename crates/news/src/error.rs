@@ -2,10 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Errors for the launcher-content client.
-//!
-//! Nothing here reaches the frontend: a failed fetch only makes the panel show
-//! its empty state, so the error carries no `Serialize` shape.
+//! Errors for the launcher-content client. Nothing here reaches the frontend: a
+//! failed fetch only makes the panel show its empty state.
 
 use thiserror::Error;
 

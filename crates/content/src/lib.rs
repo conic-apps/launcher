@@ -2,13 +2,12 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The instance's local content: offline readers for mods, resource packs,
-//! saves, screenshots and favorites, plus `remote/` for resolving installed
-//! archives against Modrinth and CurseForge.
+//! The instance's local content: offline readers for mods, resource packs, saves,
+//! screenshots and favorites, plus `remote/` for resolving installed archives
+//! against Modrinth and CurseForge.
 //!
-//! There is deliberately no cheap content-count scan here. Only the parsers
-//! agree on what counts (jar-in-jar mods, jars that are not mods), so callers
-//! parse once and count the result; see `ui/overlays/content/cache.rs`.
+//! There is no cheap content-count scan: only the parsers agree on what counts, so
+//! callers parse once and count the result.
 
 use std::path::PathBuf;
 

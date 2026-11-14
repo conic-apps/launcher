@@ -4,10 +4,9 @@ We support using AI (i.e., LLMs) as tools for coding. However, you remain respon
 you publish and we are responsible for any code we merge and release. We hold a high bar for all
 contributions to our projects.
 
-Conic Launcher is a launcher, not a website: it holds Microsoft account credentials, spawns the JVM
-with arguments you control, listens on a loopback port for the browser login callback, and ships
-signed packages for three platforms. Code in this repository is trusted to run on a user's machine
-with their permissions, so the bar below is not a formality.
+Conic Launcher holds Microsoft account credentials, spawns the JVM with arguments you control. Code
+in this repository is trusted to run on a user's machine with their permissions, so the bar below is
+not a formality.
 
 **AI should not be used to generate comments when communicating with maintainers**. We expect
 comments on our projects to be written by humans. We may hide any comments that we believe are AI

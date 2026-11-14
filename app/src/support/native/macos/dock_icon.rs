@@ -2,18 +2,11 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Sets the macOS Dock / task-switcher icon.
-//!
-//! The Slint `Window.icon` binding can't reach it: the winit backend forwards
-//! that to `winit::Window::set_window_icon`, which is a no-op on macOS. Instead
-//! the embedded PNG is loaded into an `NSImage` and handed to the shared
-//! `NSApplication`. Windows and Linux use the `icon:` binding in `app.slint`.
+//! Sets the macOS Dock and app-switcher icon, which the Slint `Window.icon`
+//! binding cannot reach; Windows and Linux use it in `app.slint`.
 
-/// Defers [`set`] until the app has finished launching.
-///
-/// `setApplicationIconImage:` only sticks after `applicationDidFinishLaunching:`
-/// (which AppKit runs inside `ui.run()`); setting it before that is discarded
-/// when AppKit initializes the app icon during launch.
+/// Defers [`set`] until the app has finished launching: AppKit discards an icon
+/// set earlier during its own launch.
 pub(super) fn install() {
     use core::ptr::NonNull;
     use objc2_foundation::{NSNotification, NSNotificationCenter, ns_string};
@@ -24,9 +17,7 @@ pub(super) fn install() {
 
     unsafe {
         // The observer token is dropped on purpose: the centre keeps the block
-        // alive for the process. A registration that fails cannot be told apart
-        // here — the return is non-null by construction — so the failure surfaces
-        // in `set`.
+        // alive for the process.
         let _observer = NSNotificationCenter::defaultCenter()
             .addObserverForName_object_queue_usingBlock(
                 Some(ns_string!("NSApplicationDidFinishLaunchingNotification")),
@@ -57,10 +48,8 @@ fn set() {
         }
         let image: *mut AnyObject = msg_send![class!(NSImage), alloc];
         let image: *mut AnyObject = msg_send![image, initWithData: data];
-        // `initWithData:` returns nil for a PNG it cannot decode, and passing
-        // that nil straight to `setApplicationIconImage:` is what this whole file
-        // exists to avoid — the `Window.icon` route silently does nothing, and so
-        // does this one if the embedded bytes are wrong.
+        // `initWithData:` returns nil for a PNG it cannot decode, and
+        // `setApplicationIconImage:` silently does nothing with nil.
         if image.is_null() {
             log::warn!(
                 target: "shell",

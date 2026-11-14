@@ -2,12 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The one-shot record of an update that was applied as a session ended.
-//!
-//! The swap happens after the window closes, so [`record`] leaves the target
-//! version for the next launch to [`take`]: only the new build can know the
-//! update took effect. A record whose version is not the running one is
-//! discarded, which covers a Windows hand-off whose script never completed.
+//! The one-shot record of an update applied as a session ended: [`record`] leaves
+//! the target version for the next launch to [`take`], since only the new build can
+//! know the update took effect. A record whose version is not the running one is
+//! discarded.
 
 use std::path::{Path, PathBuf};
 

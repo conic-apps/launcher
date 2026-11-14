@@ -3,11 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The hyperbola sky: six anti-aliased curves rotated -40°, erased through a
-//! gradient below a band so they dissolve into the terrain rather than being cut
-//! off at the horizon.
-//!
-//! The result depends only on size and palette, so it is cached and uploaded
-//! once rather than re-rendered per frame.
+//! gradient below a band so they dissolve into the terrain. Cached per size and
+//! palette rather than re-rendered per frame.
 
 use slint::{Rgba8Pixel, SharedPixelBuffer};
 

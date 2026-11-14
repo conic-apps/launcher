@@ -4,10 +4,7 @@
 
 //! The window background: a hyperbola sky and a 3D block world, software
 //! rasterised here (with a direct GPU path in [`gl`]) and crossed by the user's
-//! custom background images.
-//!
-//! The world renders on a worker thread so a slow frame cannot stall the UI, and
-//! the camera only advances when the world can actually be seen.
+//! custom background images. The world renders on a worker thread.
 
 pub mod controller;
 pub mod gl;
@@ -22,12 +19,7 @@ mod tests {
 
     /// The outlines are the whole picture on a dark palette: every fill is the
     /// crust, which is also the window's own colour, so a face is visible only
-    /// through its edges. They are white on the dark flavours and black on
-    /// Latte (`const c = latte ? 0 : 255`); with that backwards the world
-    /// disappears into a flat window colour.
-    ///
-    /// Rendering the same scene both ways leaves the fills identical and only
-    /// the outlines different, so those pixels can be compared directly.
+    /// through its edges. They are white on the dark flavours and black on Latte.
     #[test]
     fn outlines_contrast_with_the_crust() {
         let (width, height) = (400u32, 300u32);

@@ -19,13 +19,11 @@ use version::{Version, resolve_version};
 
 use crate::error::*;
 
-/// Completes and verifies all assets, libraries and Mojang-provided Java
-/// runtime files for the given instance.
+/// Completes and verifies all assets, libraries and Mojang-provided Java runtime
+/// files for the given instance.
 ///
-/// A lock file is honoured until its TTL; when one is missing or stale the
-/// corresponding set is re-verified and the lock rewritten. An abnormal last
-/// run (its crash marker set) deletes the locks first, forcing one full
-/// re-check, then clears the marker.
+/// A lock file is honoured until its TTL; an abnormal last run deletes the locks
+/// first, forcing one full re-check, then clears the marker.
 pub async fn complete_files(
     instance: &Instance,
     minecraft_location: &MinecraftLocation,

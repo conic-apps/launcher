@@ -69,19 +69,9 @@ pub(crate) const CARD_SHIFT: i32 = 4;
 /// given the room below.
 pub(crate) const TITLE_BAR_HEIGHT: i32 = 52;
 
-/// A card's height.
-///
-/// Every card of one list has the same shape, so it comes to a single number
-/// per list. That number is the info block's padding plus its lines, and the
-/// line box of each `<p>` is **its own** font size — `line-height: 1` is set on
-/// `*`, and a block's strut comes from its own font, not its parent's:
-///
-///   16 padding + 14 (name) + 2+11+2 (authors) + 2+10+2 (description)
-///   + 16 (the tags' line, whose strut *is* the block's 16px) = 75
-///
-/// Getting this wrong stretches the icon: `img { width: 72px; height: 100% }`
-/// makes the icon as tall as the card — near square at 75px — so an over-tall
-/// card shows a visibly squeezed one.
+/// A card's height. Every card of one list has the same shape, so it comes to one
+/// number per list: the info block's padding plus its lines. Getting it wrong
+/// stretches the icon, which is sized to the card's height.
 pub(crate) const CARD_HEIGHT: i32 = 75;
 /// The same sum for the resource-pack cards, which have no authors line.
 pub(crate) const CARD_HEIGHT_NO_SUBTITLE: i32 = 60;
@@ -226,13 +216,10 @@ impl ContentController {
         if self.instance_id != id {
             self.instance_id = id;
             self.targets.clear();
-            // Only the entries that belong to an instance go. A remote icon is
-            // keyed by a `cdn.modrinth.com` URL and belongs to no instance at
-            // all, so clearing those meant that switching instances and back
-            // re-downloaded every project icon on screen — which is what the disk
-            // cache in `shared::http_cache` exists to stop, and it is undone here
-            // the moment this runs. A `data:` URL is a save's or a pack's own
-            // image and is read out of the instance, so those do go.
+            // Only the entries that belong to an instance go. A remote icon is keyed
+            // by a `cdn.modrinth.com` URL and belongs to no instance, so clearing
+            // those would re-download every project icon on screen. A `data:` URL is
+            // a save's or a pack's own image, read out of the instance, so those go.
             ICONS.with(|icons| {
                 icons
                     .borrow_mut()

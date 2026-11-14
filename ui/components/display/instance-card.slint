@@ -6,19 +6,13 @@ import { Theme } from "../../theme.slint";
 import { AppIcon } from "app-icon.slint";
 import { FocusManager } from "../../globals/focus.slint";
 
-// The instance card. The instance settings and the delete-confirmation dialog
-// draw the same block, so it is one component rather than two near-copies.
+// The instance card. The instance settings and the delete-confirmation dialog draw
+// the same block, so it is one component rather than two near-copies.
 //
-// Geometry:
-//
-//   the content box starts at  x = 16 (the colour strip) + 16 (the title inset)
-//                        and   y =  1 (the 1px frame)    +  8 (the top inset),
-//   so the title row sits at (32, 9) and the details 6px under it.
-//
-// The card is two stacked rounded cards — the lavender frame, and the inset
-// content card inside it. The background image is a child of the content card,
-// so it starts at the content card's own x = 100 (clear of the strip and the
-// title inset) and runs flush to its right edge.
+// The card is two stacked rounded cards — the lavender frame, and the inset content
+// card inside it — and the title row sits at (32, 9): 16px colour strip plus 16px
+// title inset, and 1px frame plus 8px top inset. The background image is a child of
+// the content card, so it starts clear of both.
 export component InstanceCard inherits Rectangle {
     /// The instance's name; two-way, because the card is where it is edited.
     in-out property <string> name: "";
@@ -65,12 +59,9 @@ export component InstanceCard inherits Rectangle {
 
     // Two stacked rounded cards, the same pair `InstanceListCard` draws: an 8px
     // rounded frame carrying the lavender, with the content card's 6px rounded
-    // rectangle punched out (the inner subpath wound the other way under the
-    // default nonzero fill rule). That fills the 16px left strip *and* the thin
-    // frame behind the content card's rounded corners — a border + strip left
-    // those corners showing the panel through. The width is `100%` here (the
-    // list card's is a fixed 480px), so the path is bound to `root.width / 1px`
-    // rather than a constant command string.
+    // rectangle punched out (the inner subpath wound the other way under the default
+    // nonzero fill rule). That fills the 16px left strip and the frame behind the
+    // content card's corners. The width is bound, since this card sizes to its row.
     Path {
         width: 100%;
         height: 100%;

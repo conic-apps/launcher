@@ -3,13 +3,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The command palette: four modes over one list. The root mode offers the five
-//! fixed commands and — when the query matches none of them — the instance list;
-//! "launch-instance" offers the instances alone; "instance-actions" offers the
-//! five operations of one instance; "search-online" offers whatever Modrinth or
-//! CurseForge has for the keyword. The list is built here because Slint can neither
-//! build nor index a model, and rows carry label *keys* rather than translated
-//! text so a language change re-resolves them. Searches run on the tokio runtime
-//! and report back through `upgrade_in_event_loop`.
+//! fixed commands and, when the query matches none, the instance list;
+//! "launch-instance" offers the instances alone; "instance-actions" the five
+//! operations of one instance; "search-online" whatever Modrinth or CurseForge
+//! has for the keyword. Rows carry label *keys* rather than translated text, so a
+//! language change re-resolves them.
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -448,12 +446,9 @@ impl PaletteController {
         self.set_mode(ui, kind, source);
     }
 
-    /// Opens one instance's five operations, in place of the row that was
-    /// chosen.
-    ///
-    /// The instance is *not* selected here: the sub-menu only names it, and the
-    /// switch happens when one of its operations is chosen — so backing out of
-    /// the menu leaves the game view exactly where it was.
+    /// Opens one instance's five operations, in place of the row that was chosen.
+    /// The instance is not selected here: that happens when one of the operations
+    /// is chosen, so backing out leaves the game view where it was.
     fn enter_instance_actions(&mut self, ui: &App, id: String, name: String) {
         self.target_id = id;
         self.target_name = name;

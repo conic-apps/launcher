@@ -2,17 +2,13 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Windows window controls over the app's custom title bar.
+//! Windows window controls over the app's custom title bar: real non-client area,
+//! hit-tested as `HTMINBUTTON`/`HTMAXBUTTON`/`HTCLOSE`, so Windows supplies the
+//! snap-layout flyout, the system menu and the accessibility entries.
 //!
-//! The controls are real non-client area, hit-tested as
-//! `HTMINBUTTON`/`HTMAXBUTTON`/`HTCLOSE`, so Windows supplies the snap-layout
-//! flyout, system menu and accessibility entries. A press posts the same
-//! `WM_SYSCOMMAND` a caption button sends, on release.
-//!
-//! DWM will not paint caption buttons over a window whose caption was removed,
-//! and `DrawThemeBackground` cannot supply them per theme, so the glyphs come
-//! from the Windows caption font and the hover fills are DWM's colours. The fill
-//! is published separately so the app can animate it.
+//! DWM will not paint caption buttons over a window whose caption was removed, so
+//! the glyphs come from the Windows caption font and the hover fills are DWM's
+//! colours. The fill is published separately so the app can animate it.
 //!
 //! Rust owns the geometry because the platform hit-tests against it: three
 //! [`CONTROL_WIDTH`]-wide slots in the client area's top-right corner, as tall as
@@ -97,8 +93,7 @@ fn fill(color: (u8, u8, u8), alpha: u8) -> Color {
     Color::from_argb_u8(alpha, color.0, color.1, color.2)
 }
 
-/// The alpha a press layer needs to reach `pressed` when stacked on `hover`:
-/// washes composite as `a + b - a·b`.
+/// The alpha that reaches `pressed` when the layer is stacked on `hover`.
 fn press_increment(hover: u8, pressed: u8) -> u8 {
     if hover == 255 {
         return pressed;
@@ -835,9 +830,8 @@ fn frame_thickness(hwnd: HWND) -> (i32, i32) {
     }
 }
 
-/// Makes a maximized window exactly the monitor's work area. The system would
-/// grow it by the frame, which for this frameless client area draws over the
-/// taskbar.
+/// Makes a maximized window exactly the monitor's work area, rather than the
+/// frame grown by the system.
 fn fit_work_area(hwnd: HWND, lparam: LPARAM) {
     // SAFETY: the window is live and this runs on the thread that owns it;
     // `lparam` is the `MINMAXINFO` Windows filled in.

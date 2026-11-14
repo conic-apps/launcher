@@ -33,25 +33,14 @@ pub(crate) const LOAD_DEBOUNCE: Duration = Duration::from_millis(50);
 /// only needs it to publish how long the fade window stays open.
 pub(crate) const FADE_MS: f32 = 100.0;
 
-/// How many tiles the cache holds before it starts letting go.
-///
-/// A 64×64 RGBA tile is 16 KiB, and a map the user has panned right across is
-/// thousands of them — 2048 is about 32 MiB, and roughly twenty screens of the
-/// default zoom, which is what makes coming back to where you were a hit rather
-/// than a re-render.
-///
-/// What is dropped is re-rendered on demand, off the region cache the world
-/// keeps alive in `MapCache`, which is what a cache miss costs.
+/// How many tiles the cache holds before it starts letting go: a 64×64 RGBA tile is
+/// 16 KiB, so a few thousand is a few tens of MiB. What is dropped is re-rendered on
+/// demand.
 pub(crate) const MAX_CACHED_TILES: usize = 2048;
 
-/// How far outside the visible range a queued render is kept.
-///
-/// A drag or a zoom glide moves the range many times a second, and without this
-/// the queue would keep every tile of every range it passed through: a long pan
-/// leaves hundreds of jobs for tiles that are off screen, all of them competing
-/// for the 24 slots with the ones the user is actually looking at. A tile that
-/// leaves by more than this is very unlikely to be wanted again, and dropping it
-/// from the queue costs nothing — the cache is what remembers it.
+/// How far outside the visible range a queued render is kept. A drag moves the
+/// range many times a second, and without this the queue would hold every tile of
+/// every range it passed through, competing with the ones the user is looking at.
 pub(crate) const QUEUE_MARGIN: i32 = 8;
 
 /// A tile's position in the tile grid: which square of the world it is. This is

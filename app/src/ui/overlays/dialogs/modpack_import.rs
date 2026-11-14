@@ -6,11 +6,10 @@
 //!
 //! The drop opens a confirmation dialog and resolves the manifest in the
 //! background; confirming creates the instance and installs it as a task-centre
-//! card, so progress survives the dialog closing. A failed lookup keeps the
-//! dialog open so the pack name and the typed instance name are not lost.
-//!
-//! The OS drop only reaches Rust through `window::on_window_event`, so the
-//! filter is registered here; the work stays on the tokio runtime.
+//! card, so progress survives the dialog closing. A failed lookup keeps the dialog
+//! open so the pack name and the typed instance name are not lost. The OS drop
+//! only reaches Rust through `window::on_window_event`, so the filter is
+//! registered here.
 
 use std::cell::RefCell;
 use std::rc::Rc;

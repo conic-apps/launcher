@@ -2,11 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The account-details overlay: builds its state and answers its callbacks.
-//!
-//! The account files are read synchronously so the header can be drawn in the
-//! same frame the overlay opens; the slower statistics and Yggdrasil server-name
-//! reads run on the runtime and land later.
+//! The account-details overlay: builds its state and answers its callbacks. The
+//! account files are read synchronously so the header is drawn in the same frame;
+//! the slower statistics and server-name reads land later.
 
 mod skin;
 
@@ -360,12 +358,9 @@ fn default_auth_server(account: &Account) -> String {
     }
 }
 
-/// The last token refresh, as `("year-month-day" | "never", y, m, d)`.
-///
-/// A Microsoft access token is minted at the refresh and lives 24 hours, so the
-/// refresh moment is the expiry less that lifetime. A Yggdrasil account's token
-/// is only ever obtained when the account is added, so its `added_at` is the
-/// refresh. An offline account has no auth service at all.
+/// The last token refresh, as `("year-month-day" | "never", y, m, d)`. A Microsoft
+/// access token lives 24 hours from its refresh, so the refresh moment is the
+/// expiry less that lifetime; a Yggdrasil account's `added_at` is its refresh.
 fn refresh_date(account: &Account) -> (&'static str, i32, i32, i32) {
     let seconds = match account {
         Account::Microsoft(account) if account.expires_at > 86_400 => account.expires_at - 86_400,

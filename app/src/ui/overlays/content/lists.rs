@@ -2,20 +2,14 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The local lists: saves, mods, resource packs, screenshots and favourites.
-//!
-//! None of these read the instance. They turn what [`cache`] parsed into cards,
-//! so opening a panel is a walk over a list that is already in memory — the
-//! parse happened when the game view asked for the summary's counts.
+//! The local lists: saves, mods, resource packs, screenshots and favourites. They
+//! turn what [`cache`] parsed into cards, so opening a panel is a walk over a list
+//! that is already in memory.
 
 use super::*;
 
-/// The saves grid, from the shared cache.
-///
-/// A save's icon is read here rather than by the parse: the summary needs the
-/// world's name and game mode but not its picture, and reading an `icon.png` out
-/// of every world to show five of them is the kind of work that should follow
-/// the panel, not the selection.
+/// The saves grid, from the shared cache. A save's icon is read here rather than by
+/// the parse, which needs the world's name and game mode but not its picture.
 pub(crate) fn project_saves(ui: &App) {
     let instance = current_instance(ui);
     let Some(levels) = cache::saves(&instance) else {
@@ -266,12 +260,9 @@ pub(crate) fn resourcepack_card(pack: &content::resourcepack::Resourcepack) -> P
     }
 }
 
-/// The screenshot gallery, from the shared cache.
-///
-/// Every screenshot is decoded, not just the five the summary draws — the panel
-/// is a gallery and a person pages through all of them. The decodes go through
-/// the same memo the previews read, so a screenshot that was on the summary
-/// costs nothing here.
+/// The screenshot gallery, from the shared cache. Every screenshot is decoded,
+/// since the panel pages through all of them; the decodes go through the same memo
+/// the previews read, so one that was on the summary costs nothing here.
 pub(crate) fn project_screenshots(ui: &App) {
     let Some(paths) = cache::screenshots(&current_instance(ui)) else {
         return;

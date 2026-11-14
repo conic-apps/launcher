@@ -3,10 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! Routes AppKit's terminate requests (`⌘Q`, the application menu's Quit, a
-//! system logout) through the window's own close flow: `applicationShouldTerminate:`
-//! is added to winit's delegate to cancel and replay the quit as a close, so the
-//! "a task is running" confirm still runs. Both the delegate and the added method
-//! run on the main thread; `install` runs from `main` before `ui.run`.
+//! system logout) through the window's close flow, so the "a task is running"
+//! confirm still runs.
 
 use core::ffi::{CStr, c_char, c_void};
 use core::ptr::NonNull;
@@ -23,21 +21,16 @@ type Id = *mut AnyObject;
 /// An Objective-C selector.
 type SelPtr = *const ffi::objc_selector;
 
-// `applicationShouldTerminate:`'s implementation, stored for the runtime method
-// below: a C function cannot capture the shell handle, so it reads it here.
-//
-// Thread-local rather than a global: the method only runs on the main thread,
-// and the handle is not `Sync`.
+// A C function cannot capture the shell handle, so it reads it here. Thread-local
+// rather than a global: the method only runs on the main thread, and the handle is
+// not `Sync`.
 thread_local! {
     static REQUEST_CLOSE: RefCell<Option<Box<dyn Fn()>>> = const { RefCell::new(None) };
 }
 
 /// Registers `request_close` as the answer to AppKit's terminate requests, and
-/// `run_exit_work` as the exit-time work.
-///
-/// `request_close` runs on the main thread and is expected to hand the request
-/// to the shell's event loop and return immediately, so a slow confirm does not
-/// block the delegate call that is waiting for its reply.
+/// `run_exit_work` as the exit-time work. Both run on the main thread;
+/// `request_close` must hand the request to the event loop and return at once.
 pub(super) fn install(request_close: impl Fn() + 'static, run_exit_work: impl Fn() + 'static) {
     REQUEST_CLOSE.with(|slot| *slot.borrow_mut() = Some(Box::new(request_close)));
 
@@ -85,9 +78,8 @@ fn install_should_terminate() {
         ) as i8)
             != 0;
 
-        // The delegate is not expected to implement this, so a failure means a
-        // future winit took the selector over. Say so loudly rather than
-        // silently replacing an implementation whose contract we do not know.
+        // A failure means a future winit took the selector over; say so rather
+        // than replace an implementation whose contract is not known here.
         if added {
             log::debug!(
                 target: "shell",
@@ -102,11 +94,8 @@ fn install_should_terminate() {
     }
 }
 
-/// `-[<delegate> applicationShouldTerminate:]`.
-///
-/// Cancels the terminate and asks the shell to close instead, so the request
-/// takes the same path as `⌘W`: confirm first when a task is running, close
-/// outright otherwise.
+/// `-[<delegate> applicationShouldTerminate:]`. Cancels the terminate and replays
+/// it as the shell's close request, so `⌘Q` confirms first exactly as `⌘W` does.
 unsafe extern "C" fn application_should_terminate(_this: Id, _cmd: SelPtr, _sender: Id) -> usize {
     log::debug!(
         target: "shell",
@@ -133,11 +122,8 @@ unsafe extern "C" fn application_should_terminate(_this: Id, _cmd: SelPtr, _send
 }
 
 /// The runtime type encoding for `selector` on the `NSApplicationDelegate`
-/// protocol.
-///
-/// Read from the protocol rather than hardcoded, so the encoding cannot drift
-/// from the SDK the app is linked against. Falls back to the `NSUInteger`
-/// spelling if the protocol is not registered.
+/// protocol, read from the protocol where it is registered; otherwise the
+/// `NSUInteger` spelling.
 fn method_types(selector: &CStr) -> *const c_char {
     // SAFETY: the protocol and selector names are NUL-terminated, and the
     // returned pointer either comes from the runtime or is a static literal.
@@ -156,10 +142,8 @@ fn method_types(selector: &CStr) -> *const c_char {
             }
         }
     }
-    // A hardcoded encoding is a guess: if the protocol is not registered — an
-    // unusual runtime, or a future SDK — this is the encoding AppKit will decode
-    // the selector through, and a wrong one fails as an unrecognised selector with
-    // nothing to say which of the two paths produced it.
+    // A wrong encoding fails as an unrecognised selector, so say which path
+    // produced this one.
     log::debug!(
         target: "shell",
         "terminate: no protocol method description for {selector:?}; using the \

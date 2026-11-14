@@ -4,10 +4,9 @@
 
 //! Decoding a track.
 //!
-//! [`TrackSource`] streams: opening it reads only the container header, so the
-//! duration is known and playback can start immediately while audio is pulled as
-//! the device consumes it. One [`TrackSource`] belongs to one thread — the
-//! player's worker, never the audio callback.
+//! [`TrackSource`] streams: the duration is known before playback starts, while
+//! audio is pulled as the device consumes it. One [`TrackSource`] belongs to one
+//! thread — the player's worker, never the audio callback.
 
 use std::path::{Path, PathBuf};
 
@@ -235,13 +234,9 @@ impl TrackSource {
         Ok(out.len() - written)
     }
 
-    /// Moves the reader to `seconds`, clamped to the track.
-    ///
-    /// The container is asked for an accurate seek — which on a compressed track
-    /// can mean decoding from a frame just before the target — and the decoder is
-    /// reset, because a seek makes the next packet discontinuous with the last.
-    /// That re-decode is why this runs on the worker rather than on the thread
-    /// that asked for it.
+    /// Moves the reader to `seconds`, clamped to the track. The container is asked
+    /// for an accurate seek and the decoder is reset, because a seek makes the next
+    /// packet discontinuous with the last — which is why this runs on the worker.
     pub fn seek(&mut self, seconds: f64) -> Result<()> {
         if !seconds.is_finite() || seconds < 0.0 {
             return Ok(());

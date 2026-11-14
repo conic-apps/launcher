@@ -567,12 +567,8 @@ fn the_list_never_renders_before_it_is_asked_for() {
 #[test]
 fn a_table_cells_hold_their_text_inside_them() {
     // A cell's padding moves its content down, so the row's height has to be the
-    // content's height plus that padding. A row that forgot leaves the fill short:
-    // the last line of a cell hangs off the bottom of it onto the page, and the top
-    // of the fill is left as a band of nothing above the first line. The same goes
-    // sideways when a cell is squeezed narrower than its own padding: it starts its
-    // text outside itself, in whatever width is left over, which is how a word
-    // comes to need a line to itself.
+    // content's height plus that padding; a row that forgot leaves the fill short and
+    // the last line hanging off the bottom.
     let source = "| Feature | State |\n| --- | :---: |\n\
         | **Markdown** | done |\n| `hover` underline | a longer line of text |\n";
     for font_size in [4.0, 8.0, 14.0, 28.0] {

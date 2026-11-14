@@ -3,12 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! Human-readable formatting shared by the views.
-//!
-//! These are presentation concerns, not domain ones, so they live beside the
-//! UI instead of in a crate. Nothing has been duplicated enough to earn a place
-//! here beyond `bytes`.
 
-/// Human-readable byte sizes: binary units, two decimals, and a bare `B` below a
+/// `value` as a byte size: 1024-based units, two decimals, a bare `B` below a
 /// kibibyte.
 pub(crate) fn bytes(value: u64) -> String {
     const UNITS: [&str; 4] = ["KB", "MB", "GB", "TB"];

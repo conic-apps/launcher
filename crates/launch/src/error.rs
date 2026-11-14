@@ -17,9 +17,8 @@ pub enum Error {
     #[error("Another instance is launching")]
     AnothorInstanceLaunching,
     /// The process exited before it printed any of the startup markers, so the
-    /// launch never became a game. Not a failure of the launcher's own work — the
-    /// crash report (if any) is the thing to read — which is why the app returns
-    /// to the instance list instead of showing an error page.
+    /// launch never became a game. The crash report, if any, is the thing to
+    /// read.
     #[error("The game failed to start")]
     FailedBeforeStart,
     #[error(transparent)]

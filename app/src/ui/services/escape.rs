@@ -2,11 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The app-wide Escape shortcut. Every transient surface must close too, or the
-//! user lands on the home page with a dialog still covering it, so each surface
+//! The app-wide Escape shortcut. Every transient surface must close too, so each
 //! is closed through its own path (cancelling work and clearing models) rather
-//! than by hiding it. The command palette's last Escape step calls the same
-//! callback.
+//! than by hiding it.
 
 use slint::ComponentHandle;
 

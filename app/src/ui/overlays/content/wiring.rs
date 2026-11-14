@@ -719,16 +719,10 @@ pub(crate) fn setup_detail_actions(ui: &App) {
     }
 }
 
-/// Re-reads one kind of the current instance.
-///
-/// The write has already happened by the time this runs, so the cache is
-/// invalidated rather than merely read: the summary's count and this panel both
-/// come back from the one re-parse, which is what stops them from drifting
-/// apart. An install does not invalidate the other three kinds, and neither does
-/// a removal — that is the whole reason this is a [`Kind`] and not a reload.
-///
-/// The redraw is not asked for here. The parse calls back into `repanel`, so
-/// there is exactly one place that turns a fresh list into cards.
+/// Re-reads one kind of the current instance after a write, invalidating that
+/// kind's cache entry: the summary's count and this panel both come back from the
+/// one re-parse, so they cannot drift apart. The other three kinds are left alone,
+/// which is why this takes a [`Kind`].
 fn reload(ui: &App, kind: Kind) {
     let instance = ui.global::<GameState>().get_current_id().to_string();
     refresh(ui, &instance, kind);
@@ -776,12 +770,9 @@ pub(crate) fn setup_grid_resize(ui: &App) {
         });
 }
 
-/// The instance's loader and Minecraft version, read off `instance.toml`.
-///
-/// The remote lists are seeded from it, so it is fetched on the runtime whenever
-/// a list opens rather than on the UI thread. An instance that cannot be read
-/// seeds nothing, which is the empty-loader/version key the seeding below
-/// compares against.
+/// The instance's loader and Minecraft version, read off `instance.toml` on the
+/// runtime, since the remote lists are seeded from it. An instance that cannot be
+/// read seeds nothing.
 pub(crate) async fn instance_runtime(instance_id: &str) -> InstanceRuntime {
     instance::get_instance_by_id(instance_id)
         .await

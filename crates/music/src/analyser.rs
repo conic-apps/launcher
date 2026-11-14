@@ -3,11 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The frequency analyser the footer visualizer reads, reproducing the Web Audio
-//! `AnalyserNode` step for step.
-//!
-//! Smoothing the magnitudes and only then taking the logarithm is deliberate: a
-//! plain average of the previous frame's dB is a different filter. The analyser
-//! taps the signal after the gain, so volume scales the bars along with the sound.
+//! `AnalyserNode` step for step. It taps the signal after the gain, so volume
+//! scales the bars along with the sound.
 
 use std::sync::Arc;
 

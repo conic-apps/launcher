@@ -428,9 +428,8 @@ export component App inherits Window {
                     Navigation.navigate("game");
                 }
                 open-settings => {
-                    // The page swap used to close these through Rust's
-                    // `page-changed`; the drawer opens without a page change, so
-                    // close them here for the same result.
+                    // The drawer opens without a page change, so the page swap's
+                    // own teardown does not run: close these here for the same result.
                     if !SettingsShell.overlay-open {
                         NewsState.visible = false;
                         NewsState.detail-visible = false;

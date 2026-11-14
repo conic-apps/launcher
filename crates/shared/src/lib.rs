@@ -40,11 +40,9 @@ pub fn app_version() -> &'static str {
     })
 }
 
-/// The output port every domain crate reports through.
-///
-/// `Send + Sync` lets a use case report from any worker, and `'static` lets the
-/// handle outlive a single call. A use case reports a plain snapshot and returns;
-/// the app's sink marshals it onto the event loop.
+/// The output port every domain crate reports through: `Send + Sync + 'static`, so
+/// any worker can report a plain snapshot. The app's sink marshals it onto the
+/// event loop.
 pub type Sink<T> = Arc<dyn Fn(T) + Send + Sync + 'static>;
 
 pub fn silent<T>() -> Sink<T> {
@@ -53,9 +51,8 @@ pub fn silent<T>() -> Sink<T> {
 
 /// A [`Sink`] wrapper that drops repeated values.
 ///
-/// Progress counters are sampled on a clock, so only a change is worth waking
-/// the event loop for. The value must be a plain snapshot: state behind shared
-/// handles compares equal to its own past and would drop every update (see
+/// The value must be a plain snapshot: state behind shared handles compares equal
+/// to its own past and would drop every update (see
 /// `download::progress::DownloadSnapshot`).
 ///
 /// ```
@@ -116,10 +113,8 @@ pub static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
     } else {
         info!("Shouldn't use system proxy")
     }
-    // The one place the client is built, and therefore the only place the proxy
-    // choice and the User-Agent can be stated together. Both were decided by
-    // whichever call reached the `Lazy` first, and a network failure downstream
-    // has no other way to be tied to either.
+    // The proxy choice and the User-Agent have no other way to be tied to a
+    // network failure downstream.
     info!(
         "The shared HTTP client identifies as ConicApps/{}",
         app_version()

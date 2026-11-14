@@ -2,13 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The task centre's Slint adapter.
-//!
-//! The registry itself is [`crate::usecases::tasks::TaskCenter`]; this module
-//! only projects its events into `TaskState`, applies the card's click targets
-//! and drives the confirmation dialog. Everything here runs on the event loop;
-//! the sink handed to the centre marshals background reports through
-//! [`crate::ui::services::report`].
+//! The task centre's Slint adapter: it projects [`TaskCenter`]'s events into
+//! `TaskState`, applies the card's click targets and drives the confirmation
+//! dialog. Everything here runs on the event loop.
 
 use std::{
     cell::{Cell, RefCell},

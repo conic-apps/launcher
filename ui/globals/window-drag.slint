@@ -2,16 +2,13 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// Window drag regions.
+// Window drag regions: an element the window can be dragged by — the dialog's
+// scrim, the app's title bar, the multiplayer dialog. The drag starts on a press
+// inside the marked element itself, never on one of its children.
 //
-// A drag region is an element the window can be dragged by — the dialog's
-// scrim, the app's title bar, the multiplayer dialog. The drag starts on a
-// press inside the marked element itself, never on one of its children.
-//
-// Slint has no drag region and no window-drag method of its own, so a marked
-// element calls this global instead: `WindowDrag.start()` from the press
-// handler. `app/src/main.rs` wires it to `WindowService::drag_window()`, which
-// hands the drag to the platform.
+// Slint has no drag region and no window-drag method, so a marked element calls
+// `WindowDrag.start()` from the press handler; `app/src/main.rs` wires it to
+// `WindowService::drag_window()`.
 export global WindowDrag {
     /// Raised on a press inside a drag region. Must be answered by starting the
     /// platform's own window drag while the press is still being handled: on

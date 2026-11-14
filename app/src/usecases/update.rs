@@ -2,16 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The self-update use case: decide whether to look, run the check, and stage
-//! the bundle.
-//!
-//! It runs once at startup and reports every step to the log. Once a bundle is
-//! staged it posts one notice; the swap itself happens as the process exits
-//! (`update::apply_pending`), so the notice is informational rather than a
-//! prompt to restart. The next launch with the new build posts the matching
-//! "updated" notice, because the session that staged the bundle cannot know the
-//! swap succeeded. Failures stay in the log: a background check that found
-//! nothing must not interrupt the user.
+//! The self-update use case: decide whether to look, run the check, and stage the
+//! bundle. Once a bundle is staged it posts one notice; the swap happens as the
+//! process exits, and the next launch with the new build posts the matching
+//! "updated" notice. Failures stay in the log.
 
 use std::sync::OnceLock;
 
@@ -31,9 +25,8 @@ pub(crate) fn is_self_updating() -> bool {
     install_form().is_self_updating()
 }
 
-/// Maps the config's channel onto the server's two channels. `nightly` is not a
-/// server channel any more; a config that still carries it is served the stable
-/// channel rather than failing the request.
+/// Maps the config's channel onto the server's two; `nightly` is no longer a
+/// server channel and is served the stable one.
 pub(crate) fn channel(configured: &config::UpdateChannel) -> Channel {
     match configured {
         config::UpdateChannel::Beta => Channel::Beta,
@@ -41,10 +34,8 @@ pub(crate) fn channel(configured: &config::UpdateChannel) -> Channel {
     }
 }
 
-/// The version the previous session applied, when this build is that version.
-///
-/// This is the first process that can verify the swap took effect, so a record
-/// naming another version is dropped rather than reported.
+/// The version the previous session applied, when this build is that version; a
+/// record naming another version is dropped.
 pub(crate) fn applied_version() -> Option<String> {
     match update::take_applied() {
         Ok(Some(applied)) if applied.matches_current() => Some(applied.version),

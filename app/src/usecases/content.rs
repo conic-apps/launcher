@@ -2,13 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! UI-neutral data for the content browser.
-//!
-//! The cards a search or a local scan builds, the search bookkeeping (its cache
-//! and request token) and the open list's query are all plain data. They live
-//! here, not in the Slint adapter, so the same cache and paging logic can back a
-//! second frontend. Turning a [`PendingCard`] into the Slint `ContentCard` is
-//! the adapter's job and stays in `ui/overlays/content`.
+//! UI-neutral data for the content browser: the cards a search or a local scan
+//! builds, the search bookkeeping and the open list's query. Turning a card into
+//! a Slint `ContentCard` is the adapter's job and stays in
+//! `ui/overlays/content`.
 
 use std::collections::{HashMap, HashSet};
 
@@ -104,20 +101,9 @@ impl Platform {
     }
 }
 
-/// A card as the background work builds it.
-///
-/// A Slint model is not `Send`, so a `ContentCard` — whose `tags` are a
-/// `ModelRc` — cannot be moved into an `upgrade_in_event_loop` closure. The
-/// built cards therefore travel as plain data and become `ContentCard`s inside
-/// the closure, on the UI thread. An icon travels as a [`PendingImage`] — a
-/// plain RGBA buffer — because Slint's `Image` itself is not `Send` either.
-///
-/// [`PendingCard::icon`] is therefore almost always `None` and
-/// [`PendingCard::icon_url`] carries where the icon will come from instead. The
-/// cards go to the model first and their icons are filled in as the bytes arrive
-/// (see `content::icon::load_icons`): a page of remote results is all `https:`
-/// URLs, and fetching them before the first card is drawn is what leaves a list
-/// looking dead for as long as the slowest of them takes.
+/// A card as the background work builds it: plain data, and an icon as a
+/// [`PendingImage`], so it can cross into an `upgrade_in_event_loop` closure that
+/// a Slint `ContentCard` cannot.
 #[derive(Clone, Default)]
 pub(crate) struct PendingCard {
     pub(crate) id: String,
@@ -131,9 +117,9 @@ pub(crate) struct PendingCard {
     /// to decode, or an image this same background pass produced.
     pub(crate) icon: Option<PendingImage>,
     /// Where the icon comes from, when it has not been decoded yet: a local
-    /// `data:` URL or a remote `https:` one. It doubles as the card's loading
-    /// state — a card with no icon at all shows the unknown-server texture right
-    /// away, while this one shows a spinner until the fetch lands or fails.
+    /// `data:` URL or a remote `https:` one. Also the card's loading state: with
+    /// no icon at all the card shows the unknown-server texture, while this one
+    /// shows a spinner until the fetch lands or fails.
     pub(crate) icon_url: Option<String>,
     /// "" | "favorite" | "file"
     pub(crate) action_kind: &'static str,
@@ -145,13 +131,9 @@ pub(crate) struct PendingCard {
     pub(crate) spawn: Option<(i32, i32)>,
 }
 
-/// An image on its way to the UI thread.
-///
-/// Slint's `Image` is not `Send`, so a decoded image cannot cross into an
-/// `upgrade_in_event_loop` closure. The *decode* — the expensive half, and the
-/// one that would stall the window — happens on the background thread, and what
-/// crosses is its result: a plain buffer. Building the `Image` from it on the
-/// UI thread is a copy.
+/// An image on its way to the UI thread: a plain buffer, because Slint's `Image`
+/// is not `Send`. The decode happens on the background thread; building the
+/// `Image` from the buffer on the UI thread is a copy.
 #[derive(Clone)]
 pub(crate) struct PendingImage {
     /// The URL or path it came from, which is also its cache key.
@@ -207,24 +189,19 @@ pub(crate) struct BuiltCard {
     pub(crate) target: CardTarget,
 }
 
-/// One remote list's search bookkeeping.
-///
-/// There is one of each per list, and a list that is destroyed and re-created
-/// by a source switch keeps the cache it built.
+/// One remote list's search bookkeeping. A source switch destroys and re-creates
+/// the list, which keeps this.
 #[derive(Default)]
 pub(crate) struct ListSearch {
     /// The request key → what that exact request returned: the cards and the
     /// total hit count the page count comes from. A page that has been seen is
-    /// drawn straight away, without the spinner a fresh request shows.
+    /// drawn without the spinner.
     pub(crate) cache: HashMap<String, (Vec<BuiltCard>, usize)>,
     /// The newest request's number. An answer that belongs to an older request
-    /// is dropped rather than drawn over a newer one — which is what rapid
-    /// paging needs, since the answers do not come back in order.
+    /// is dropped rather than drawn over a newer one.
     pub(crate) token: u64,
     /// The instance runtime this list last seeded its filters from, as
-    /// `"<loader>|<minecraft>"`. A list seeds once per instance and not again,
-    /// so switching away and back gives a list with no filters on it while the
-    /// cache above survives.
+    /// `"<loader>|<minecraft>"`. A list seeds once per instance.
     pub(crate) initialized_for: Option<String>,
 }
 
@@ -244,11 +221,10 @@ pub(crate) fn favorite_key(platform: &str, kind: &str, id: &str) -> String {
     format!("{platform}:{kind}:{id}")
 }
 
-/// The content browser's session state: what list is open, its query, the
-/// search cache and page numbers, the favourites and the open detail.
-///
-/// Plain data, so a second frontend can own the same state and run the same
-/// logic. The Slint models and the measured layout live in the adapter.
+/// The content browser's session state: what list is open, its query, the search
+/// cache and page numbers, the favourites and the open detail. Plain data, so a
+/// second frontend can own the same state; the Slint models and the measured
+/// layout live in the adapter.
 pub(crate) struct ContentSession {
     /// The game view's current instance. Re-read whenever a panel opens.
     pub(crate) instance_id: String,
@@ -259,23 +235,19 @@ pub(crate) struct ContentSession {
     pub(crate) platform: Platform,
     /// "" | "local" | "modrinth" | "curseforge"
     pub(crate) source: String,
-    /// Bumped whenever the source changes, so the instance-runtime lookup a
-    /// switch starts cannot apply after a newer switch (or another open) has
-    /// replaced it.
+    /// Bumped whenever the source changes, so an instance-runtime lookup cannot
+    /// apply after a newer switch has replaced it.
     pub(crate) source_generation: u64,
     pub(crate) form: SearchForm,
     /// The Minecraft release list, newest first. Empty until it arrives.
     pub(crate) version_options: Vec<String>,
-    /// `<kind>:<source>` → that list's `(current page, total pages)`.
-    ///
-    /// Every list has its own pair, and a source switch destroys and re-creates
-    /// one of them, so one list's page numbers are never shown against another's
-    /// results.
+    /// `<kind>:<source>` → that list's `(current page, total pages)`; every list
+    /// has its own pair.
     pub(crate) pages: HashMap<String, (usize, usize)>,
     /// `<kind>:<source>` → that list's own search cache and request token.
     pub(crate) lists: HashMap<String, ListSearch>,
-    /// Translated project descriptions, keyed `<platform>:<id>`. Only filled
-    /// for a Chinese locale, and only for the ids that have been on screen.
+    /// Translated project descriptions, keyed `<platform>:<id>`; only for a
+    /// Chinese locale, and only for the ids that have been on screen.
     pub(crate) translations: HashMap<String, String>,
     pub(crate) detail: Option<OpenDetail>,
     /// Bumped on every open, so a slow detail response cannot overwrite a newer

@@ -9,15 +9,12 @@ import { ScrollInput, ScrollSource } from "../../globals/scroll.slint";
 import { WorldMapState, WorldSource } from "../../globals/worldmap.slint";
 
 // The live world map of a save. Slint has no canvas, so it is a `for` over
-// `WorldMapState.tiles`, one `Image` per tile placed by the transform:
-// `scale` pixels per block, and `offset-x`/`offset-y` the screen position of
-// block (0, 0).
+// `WorldMapState.tiles`, one `Image` per tile placed by the transform: `scale`
+// pixels per block, and `offset-x`/`offset-y` the screen position of block (0, 0).
 //
-// A drag pans; the wheel zooms smoothly towards a target, keeping the block under
-// the cursor pinned. A tile fades in the first time it is rendered, not when it
-// returns from the cache. The caches live in Rust; this only draws what it is
-// handed. A pinch zooms while two-finger scroll pans, and the map swallows the
-// wheel so the saves list behind does not scroll.
+// A drag pans and the wheel zooms towards a target, keeping the block under the
+// cursor pinned. A tile fades in the first time it is rendered, not when it returns
+// from the cache. The caches live in Rust; this only draws what it is handed.
 
 export component WorldMap inherits Rectangle {
     /// The save's folder name — the world's own identifier in the saves list.

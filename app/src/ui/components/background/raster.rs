@@ -5,10 +5,6 @@
 //! A z-buffered software rasteriser for the window background, matching the GPU
 //! path's two draw calls: premultiplied quad fills that write depth, then
 //! screen-space outline quads.
-//!
-//! Depth is stored as `1 / dz` so it interpolates linearly across a planar quad,
-//! and triangles are rasterised as per-row spans so a thin, steep quad costs its
-//! length rather than its bounding box.
 
 use slint::{Rgba8Pixel, SharedPixelBuffer};
 

@@ -7,11 +7,9 @@
 //! `LaunchState`, gated by a [`Token`] so a cancelled or superseded run cannot
 //! draw.
 //!
-//! A launch is not a task: it has its own screen and its own cancel button, so a
-//! card in the queue would be a second, worse copy of the same thing. It waits
-//! instead — the page says so — and then takes the lane
-//! (`TaskCenter::reserve_exclusive`) rather than joining it, which is what keeps
-//! an install from starting under a launching instance.
+//! A launch is not a task: it has its own screen and cancel button, so it waits
+//! for the centre to go idle and then takes the lane
+//! (`TaskCenter::reserve_exclusive`) rather than joining the queue.
 //!
 //! Cancelling is not only dropping the flow: once the crate has spawned the game,
 //! the process outlives the task, so [`LaunchController::cancel`] stops the
@@ -48,13 +46,9 @@ thread_local! {
     /// event-loop closure writes it through here (and persists it).
     static SHARED_CONFIG: RefCell<Option<Rc<RefCell<Config>>>> = const { RefCell::new(None) };
 
-    /// The one controller, for use on the UI thread.
-    ///
-    /// It lives in a thread-local rather than in a value `setup` owns because an
-    /// `upgrade_in_event_loop` closure has to be `Send`, and the `Rc<RefCell<…>>`
-    /// cannot cross into one. Slint's callbacks and the event-loop closures both
-    /// run on the UI thread, so both reach it through [`launch_controller`]; the
-    /// async task carries only owned values and a `Weak<App>`.
+    /// The one controller, for use on the UI thread. It lives in a thread-local
+    /// because an `upgrade_in_event_loop` closure has to be `Send`, and the
+    /// controller cannot cross into one.
     static CONTROLLER: RefCell<Option<Rc<RefCell<LaunchController>>>> =
         const { RefCell::new(None) };
 }
@@ -154,12 +148,10 @@ impl LaunchController {
         busy
     }
 
-    /// Stops the session this launch started, when the game is already up.
-    ///
-    /// Aborting the task does not end the process: the crate registers it as
-    /// soon as it is spawned, and the flow is only waiting for its first startup
-    /// marker. The pids recorded at request time are skipped, so a game that was
-    /// already running before this request is left alone.
+    /// Stops the session this launch started, when the game is already up: aborting
+    /// the task does not end the process, which the crate registered as soon as it
+    /// spawned it. The pids recorded at request time are skipped, so an older game
+    /// of the same instance is left alone.
     fn stop_session(&mut self) {
         let Some(id) = self.instance_id.take() else {
             return;

@@ -5,18 +5,9 @@
 //! A disk cache for the images and other binary resources the UI fetches over
 //! HTTP: project icons, galleries, README images.
 //!
-//! One file per URL, named after the URL's SHA-512. The file is a `u32`, that
-//! many bytes of JSON metadata, then the body exactly as it came off the wire:
-//!
-//! ```text
-//! ┌───────────────┬────────────────────┬────────────────────────────┐
-//! │ u32 LE n      │ meta JSON (n bytes)│ body (the rest of the file)│
-//! └───────────────┴────────────────────┴────────────────────────────┘
-//! ```
-//!
 //! `Cache-Control` is obeyed where given; otherwise an `ETag` or `Last-Modified`
 //! drives a conditional request. Only `http`/`https` URLs outside the user's own
-//! network are fetched — see `is_reachable`.
+//! network are fetched.
 
 use std::{
     net::{IpAddr, Ipv4Addr, Ipv6Addr},
@@ -34,8 +25,8 @@ use url::Url;
 
 use crate::HTTP_CLIENT;
 
-/// The shared client has no timeout of its own; without this a silent host
-/// would hold a card's icon open indefinitely.
+/// The shared client has no timeout of its own; without this a silent host would
+/// hold a card's icon open indefinitely.
 const TIMEOUT: Duration = Duration::from_secs(15);
 
 /// Bodies larger than this are served but not stored.
@@ -68,8 +59,7 @@ pub async fn fetch(url: &str) -> Option<Vec<u8>> {
     get(url, false).await
 }
 
-/// [`fetch`], ignoring the cache and asking the server. Used to recover from an
-/// entry that is on disk but will not decode.
+/// [`fetch`], ignoring the cache and asking the server.
 pub async fn force_fetch(url: &str) -> Option<Vec<u8>> {
     get(url, true).await
 }
@@ -237,9 +227,8 @@ fn header_of(
         .map(str::to_string)
 }
 
-/// The `max-age` of a `Cache-Control` header, ignoring every other directive.
-/// `no-store` arrives as no `max-age`, so the entry is revalidated rather than
-/// served without asking.
+/// The `max-age` of a `Cache-Control` header; every other directive is ignored,
+/// so `no-store` arrives as no `max-age` and the entry is revalidated.
 fn max_age_of(headers: &reqwest::header::HeaderMap) -> Option<u64> {
     headers
         .get(CACHE_CONTROL)?
@@ -326,9 +315,8 @@ async fn write_entry(path: &Path, entry: &Entry) -> std::io::Result<()> {
     Ok(())
 }
 
-/// The directory size this process believes it has. Counted in memory because a
-/// `stat` per entry per fetch is too expensive; drift only matters until the
-/// next prune re-measures it.
+/// The directory size this process believes it has, counted in memory; drift
+/// only matters until the next prune re-measures it.
 struct Usage {
     bytes: Option<u64>,
 }
@@ -417,11 +405,9 @@ fn note_written(size: u64) {
     }
 }
 
-/// Whether the launcher may send this URL. These URLs come from mod
-/// descriptions, so a private address would let a publisher reach the user's
-/// machine. Every address a name resolves to is checked. A rebind between this
-/// lookup and the connection is accepted: closing it would need the resolver
-/// and client to share an answer, which is more than this is worth.
+/// Whether the launcher may send this URL. A private address would let a
+/// publisher reach the user's machine, so every address a name resolves to is
+/// checked.
 async fn is_reachable(url: &str) -> bool {
     let Ok(parsed) = Url::parse(url) else {
         debug!("Refusing {url}: not a URL");

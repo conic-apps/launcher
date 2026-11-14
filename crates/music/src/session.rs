@@ -2,10 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The saved track and playback position.
-//!
-//! The two fields `{ path, current_time }` go to a JSON file next to
-//! `config.toml` in the shared data directory.
+//! The saved track and playback position, `{ path, current_time }` in a JSON file
+//! next to `config.toml` in the shared data directory.
 
 use std::path::PathBuf;
 

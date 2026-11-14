@@ -2,22 +2,16 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Single-instance guard on macOS, over a Unix domain socket.
+//! Single-instance guard on macOS, over a Unix domain socket: the primary binds it
+//! and a later launch connects, writes its command line and quits. The socket name
+//! is qualified with the uid so a socket belonging to another user cannot be taken
+//! for ours.
 //!
-//! There is no session bus on macOS, and no way to pass a payload through one
-//! anyway, so the primary binds a socket and a later launch connects to it,
-//! writes its command line and quits. The socket name is qualified with the
-//! uid so a socket belonging to another user in a shared temp directory cannot
-//! be taken for ours.
-//!
-//! The socket is the lock: a launch that can connect to it is a later launch,
-//! and one that cannot has to bind it. A socket file left behind by a process
-//! that was killed is not a problem, because nothing is listening on it and the
-//! connection is refused — the same "nobody is there" answer a missing file
-//! gives — so the binding path takes it over. Any other answer to the connection
-//! (a full listen backlog, a permission problem) means an instance may well be
-//! there after all, so the socket is left alone and the launch runs alongside it
-//! rather than taking a live one over.
+//! The socket is the lock: a launch that can connect is a later launch, and one
+//! that cannot has to bind it. A socket file left behind by a killed process is
+//! refused rather than confusing, so the binding path takes it over; any other
+//! connection failure (a full backlog, permissions) means an instance may be there
+//! and is left alone.
 
 use std::{
     io::{self, Read, Write},

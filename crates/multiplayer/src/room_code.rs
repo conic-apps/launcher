@@ -2,12 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The room-code format check.
-//!
-//! The UI needs this before a session exists, so it duplicates the library's
-//! `conic_nexus_room_code_is_valid`: a `U/XXXX-XXXX-XXXX-XXXX` shape over the
-//! 34-character alphabet with a modulo-7 checksum over the little-endian digit
-//! value of the four groups.
+//! The room-code format check, needed before a session exists: a
+//! `U/XXXX-XXXX-XXXX-XXXX` shape over the 34-character alphabet with a modulo-7
+//! checksum.
 
 /// The alphabet's value for a code character. `0`–`9`, `A`–`H`, `J`–`N` and
 /// `P`–`Z` skip `I` and `O`.

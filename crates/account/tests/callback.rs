@@ -2,11 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The listener over a real socket: a real bind, a real `connect`, a real
-//! request line and a real response. The framing in `http` and the page in
-//! `page` are unit-tested against strings; this is the part only a socket can
-//! answer — that the port the redirect carries is the port the code comes back
-//! to, and that anything else on the loopback cannot end the login.
+//! Over a real socket: a real bind, a real connect, a real request line and a real
+//! response. The framing and the page are unit-tested against strings; this is the
+//! part only a socket can answer — that the port the redirect carries is the port
+//! the code comes back to, and that nothing else on the loopback can end the login.
 
 use std::time::Duration;
 

@@ -2,17 +2,11 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The launch use case: the checks, the account refresh and the launch.
+//! The launch use case: the checks, the account refresh and the launch itself.
+//! An uninstalled instance is refused here rather than installed — installing is
+//! the `GameInstall` task's job.
 //!
-//! Installing is not part of it: an instance is installed by the `GameInstall`
-//! task (`app/src/ui/views/game/install.rs`), and a launch only starts once that
-//! task has left the exclusive lane. A caller that reaches here with an
-//! uninstalled instance gets a refusal rather than an install racing whatever
-//! else is touching the game files.
-//!
-//! UI-neutral. It reports through a [`LaunchSink`] of [`LaunchUpdate`]s; the
-//! frontend turns each into screen state. Nothing here knows Slint, the
-//! `LaunchState` global or which dialog a refusal shows.
+//! UI-neutral: it reports through a [`LaunchSink`] of [`LaunchUpdate`]s.
 
 use std::sync::Arc;
 

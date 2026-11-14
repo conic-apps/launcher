@@ -2,13 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The launch flow's output port: [`update_sink`] is what the app hands
-//! [`crate::usecases::launch::run`], turning each [`LaunchUpdate`] into
-//! `LaunchState` writes and one-off dialogs, gated by the run's [`Token`].
-//!
-//! Every terminal report also settles the controller on the event loop, which
-//! hands the exclusive lane back: the launch does not schedule itself through the
-//! task centre, so it has to release the reservation it took.
+//! The launch flow's output port: [`update_sink`] turns each [`LaunchUpdate`] into
+//! `LaunchState` writes and one-off dialogs, gated by the run's [`Token`]. A
+//! terminal report settles the controller and hands the exclusive lane back.
 
 use std::sync::{
     Arc,
@@ -83,14 +79,10 @@ pub(crate) fn update_sink(weak: Weak<App>, token: Token) -> Sink<LaunchUpdate> {
     })
 }
 
-/// Hands the exclusive lane back, on the event loop.
-///
-/// The controller is a thread-local and the sink runs on a worker thread, so this
-/// cannot be called from the sink itself: doing that panicked, which dropped the
-/// terminal report (the launch page stayed up for good) and leaked the
-/// reservation (every later install queued behind it forever). Ungated on
-/// purpose — the lane must come back even when the token is stale, or a launch
-/// the player abandoned would hold it.
+/// Hands the exclusive lane back, on the event loop. The controller is a
+/// thread-local and the sink runs on a worker thread, so this cannot be called from
+/// the sink itself. Ungated on purpose — the lane must come back even when the token
+/// is stale, or a launch the player abandoned would hold it.
 fn settle_on_event_loop(weak: &Weak<App>) {
     report(weak, |_| launch_controller().borrow_mut().settle());
 }

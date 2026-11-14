@@ -6,13 +6,9 @@
 
 use super::*;
 
-/// Lays the cards out and returns the grid's height.
-///
-/// The cards are positioned by hand — Slint's `GridLayout` does not wrap and a
-/// wrapping `FlexboxLayout` is measured at its own preferred width — and doing
-/// it here also means a resize rewrites the model with `set_row_data` and the
-/// same elements move, keeping their hover and their decoded icons, where a
-/// rebuilt model would re-create every one of them.
+/// Lays the cards out and returns the grid's height. The cards are positioned by
+/// hand — Slint's `GridLayout` does not wrap — and a resize rewrites the model with
+/// `set_row_data`, so the elements keep their hover and their decoded icons.
 pub(crate) fn layout(cards: &mut [ContentCard], grid_width: i32, card_height: i32) -> i32 {
     let content = (grid_width - 2 * GRID_PAD_X).max(0);
     let columns = (((content + GRID_GAP) / (GRID_MIN_CARD + GRID_GAP)).max(1)) as usize;
@@ -50,13 +46,9 @@ pub(crate) fn grid_card_height(grid: Grid) -> i32 {
 
 /// Replaces a grid's cards, laying them out for the width the panel has.
 ///
-/// Runs on the UI thread — the cards become Slint structs here, because a model
-/// cannot be made anywhere else.
-///
-/// The icons are not waited for: whatever a card's icon is still being fetched
-/// from goes out with a spinner, and [`load_icons`] fills the rows in as the
-/// bytes land. A url an earlier list already decoded is left out — [`finish_card`]
-/// picks it up from `ICONS`, so re-showing a list costs nothing.
+/// Runs on the UI thread, because the cards become Slint structs here. Icons are
+/// not waited for: each is filled in as its bytes land, and a URL an earlier list
+/// already decoded costs nothing.
 pub(crate) fn set_cards(ui: &App, grid: Grid, pending: Vec<PendingCard>) {
     // A card that already carries a decoded buffer has nothing to fetch, and
     // neither has one whose url an earlier list decoded — `finish_card` picks

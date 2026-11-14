@@ -7,23 +7,16 @@ import { AvatarMask } from "../../globals/avatar.slint";
 
 // Player head avatar.
 //
-// The head image comes from Rust (`app/src/ui/components/account_avatar.rs`),
-// which crops the 8x8 face out of the profile's skin, stretches the 8x8 hat
-// layer over it and leaves it square, falling back to one of the bundled default
-// skins. `skin` carries that square image; the placeholder disc with the
-// per-account-type ring is drawn while it is empty.
+// `skin` carries the square head image Rust cut out of the profile's skin, or the
+// bundled default; the placeholder disc with the per-account-type ring is drawn
+// while it is empty.
 //
-// The corners are cut in the pixels, not by a `clip`. A clipped box with a
-// `border-radius` is clipped *rectangularly* by Slint's software renderer
-// (`i-slint-renderer-software`'s `combine_clip` ignores the radius), and the
-// winit backend silently falls back to that renderer when femtovg's OpenGL
-// context cannot be created — a VM, an RDP session, a disabled or outdated GPU
-// driver — with no log. Slint's `Rectangle` takes no `background-image` and
-// `Image` takes no `border-radius`, so `AvatarMask.rounded` masks the square
-// in Rust instead, and `corner-radius` is what it rounds to: `10000px` (the
-// default) is the inscribed circle every pill avatar uses, `0px` leaves the head
-// square. The head is inset 4px anyway, which means a box clip could only ever
-// have hidden overflow it cannot fix.
+// The corners are cut in the pixels, not by a `clip`: a clipped box with a
+// `border-radius` is clipped rectangularly by Slint's software renderer, which the
+// winit backend falls back to when the OpenGL context cannot be created. Slint's
+// `Rectangle` takes no `background-image` and `Image` takes no `border-radius`, so
+// `AvatarMask.rounded` masks the square in Rust. `corner-radius` is what it rounds
+// to: `10000px` (the default) is the inscribed circle, `0px` leaves the head square.
 export component AccountAvatar inherits Rectangle {
     in property <length> size: 56px;
     in property <image> skin;

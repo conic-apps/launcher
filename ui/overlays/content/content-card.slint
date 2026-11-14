@@ -18,11 +18,11 @@ import { GameState, GameTime } from "../../globals/game.slint";
 // overlapping boxes (image, info, action column) and the hover state reaches into
 // them.
 //
-// The action column is declared before the image and info: Slint has no negative
-// `z`, and siblings paint in declaration order. Rounded clips are a no-op on the
-// software renderer, so the image's left corners can come out square.
+// The action column is declared before the image and info: siblings paint in
+// declaration order. Rounded clips are a no-op on the software renderer, so the
+// image's left corners can come out square.
 //
-// ActionButton draws only: the card owns the pointer and passes it its hover and
+// `ActionButton` draws only: the card owns the pointer and passes it its hover and
 // press state, because a `TouchArea` here would steal the card's hover.
 component ActionButton inherits Rectangle {
     in property <string> kind: "heart";

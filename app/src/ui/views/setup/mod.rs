@@ -115,13 +115,10 @@ fn pick_storage(ui: &App, which: &str) {
     }
 }
 
-/// Commits the storage choice and marks the wizard done.
-///
-/// This is where the location change is applied, and it is why the storage step
-/// can sit right after the language step: the in-memory config (which already
-/// holds the chosen language) is written into the new launcher directory, and
-/// the data the rest of the wizard wrote — accounts most of all — is moved
-/// there beside it. Only then does the process restart, so no step is lost.
+/// Commits the storage choice and marks the wizard done. The in-memory config is
+/// written into the new launcher directory and the data the rest of the wizard
+/// wrote — accounts most of all — is moved there beside it, before the process
+/// restarts, so no step is lost.
 fn finish(ui: &App, shared: &Rc<RefCell<config::Config>>) {
     let settings = ui.global::<AppConfig>();
     let mut overrides = collect_overrides(&settings);
@@ -207,12 +204,9 @@ fn skip(ui: &App, shared: &Rc<RefCell<config::Config>>) {
 }
 
 /// Raises the "return to setup" notice when the user leaves the wizard before
-/// completing it.
-///
-/// `finish` marks the config done before it navigates, so a completed wizard
-/// takes the early return. The close button calls `skip`, which marks the
-/// wizard done but calls [`notify`] itself because the user still left without
-/// finishing the steps.
+/// completing it. A completed wizard takes the early return, since `finish` marks
+/// the config done before it navigates; the close button's `skip` calls [`notify`]
+/// itself.
 pub(crate) fn notify_if_abandoned(ui: &App, shared: &Rc<RefCell<config::Config>>) {
     if shared.borrow().setup_completed {
         return;
@@ -315,12 +309,10 @@ fn copy_recursively(from: &Path, to: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
-/// Fetches the manifest, then writes the instance.
-///
-/// The buttons are disabled while this runs and after it has failed, so it is
-/// never reached twice for one channel. The flags are checked anyway rather than
-/// assumed, since a second run would race the first one's write into the same
-/// instance folder.
+/// Fetches the manifest, then writes the instance. The buttons are disabled while
+/// this runs and after it has failed, so it is never reached twice for one channel;
+/// the flags are checked anyway, since a second run would race the first one's write
+/// into the same instance folder.
 fn create_latest(weak: &Weak<App>, channel: Channel) {
     let Some(ui) = weak.upgrade() else { return };
     let state = ui.global::<SetupWizardState>();

@@ -36,13 +36,10 @@ pub(crate) fn show_instance(ui: &App, instance: &Instance) {
 }
 
 thread_local! {
-    /// The instance the overlay is editing.
-    ///
-    /// `open` reads it off disk, on the runtime, and the callbacks that follow
-    /// need its *stored* config synchronously — to diff an edit against what is
-    /// on disk before the debounced write replaces it. That is the one instance
-    /// the overlay covers, so it cannot change underneath: the game view behind
-    /// it does not take a selection while an overlay is up.
+    /// The instance the overlay is editing. `open` reads it off disk on the
+    /// runtime, and the callbacks need its *stored* config synchronously, to diff
+    /// an edit against what is on disk. It cannot change underneath: the game view
+    /// behind the overlay does not take a selection while it is up.
     static EDITING: RefCell<Option<Instance>> = const { RefCell::new(None) };
 }
 

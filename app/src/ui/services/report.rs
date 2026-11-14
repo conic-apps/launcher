@@ -2,11 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Delivering a background result onto the Slint event loop.
-//!
-//! Slint is not thread-safe and a strong handle cannot cross a thread, so every
-//! result arrives through `Weak::upgrade_in_event_loop`; a [`Token`] lets a
-//! superseded request be dropped before it draws over a newer one.
+//! Delivering a background result onto the Slint event loop: every result arrives
+//! through `Weak::upgrade_in_event_loop`, and a [`Token`] lets a superseded
+//! request be dropped before it draws over a newer one.
 
 use slint::Weak;
 

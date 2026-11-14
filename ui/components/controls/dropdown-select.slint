@@ -9,19 +9,14 @@ import { FocusManager } from "../../globals/focus.slint";
 
 // Dropdown select, used for the language picker.
 //
-// The list itself is rendered by `DropdownOverlay` at the application root, so
-// it can float above the settings scroll area. This component:
-//   * fills the `Dropdown` global with its data and anchor on open;
-//   * flips its chevron over 200ms `ease-in-out`, including the opacity dip at
-//     the halfway point. Slint has no 3D rotation, so a vertical scale through
-//     zero (100% -> -100%) reproduces the flip, with opacity following the
-//     angle;
-//   * applies the choice reported back through `Dropdown.chosen` /
-//     `choose-serial`.
+// The list itself is rendered by `DropdownOverlay` at the application root, so it
+// floats above the settings scroll area; this component fills the `Dropdown`
+// global with its data and anchor on open and applies the choice reported back
+// through `Dropdown.chosen`.
 //
-// Slint has no `Array.indexOf` (the built-in is experimental), so the current
-// label is passed in via `selected-label`. An empty value (`""`, i.e. "follow
-// system") shows the placeholder.
+// Slint has no `Array.indexOf`, so the current label is passed in via
+// `selected-label`; an empty value (`""`, i.e. "follow system") shows the
+// placeholder.
 export component DropdownSelect inherits Rectangle {
     in property <[DropdownOption]> options;
     in property <string> selected-label: "";

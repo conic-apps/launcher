@@ -2,12 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Single-instance guard for a platform that has none.
-//!
-//! `platform` refuses to report a platform outside Windows, Linux and macOS,
-//! so this backend is never reached. It keeps the app startable anyway:
-//! there is no lock to take, so every launch claims the role and none of them
-//! is reported to another.
+//! Single-instance guard for a platform that has none: `platform` refuses to
+//! report any other platform, so this backend is never reached. There is no lock to
+//! take, so every launch claims the role and none is reported to another.
 
 use std::sync::mpsc::Sender;
 

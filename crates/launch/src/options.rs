@@ -167,9 +167,8 @@ fn is_32_bit_java(arch: JavaArch) -> bool {
     matches!(arch, JavaArch::X86 | JavaArch::Arm)
 }
 
-/// Counts the number of mod files in the instance's `mods` directory.
-///
-/// This is a rough estimate based on the file count only, no archive parsing.
+/// Counts the mod files in the instance's `mods` directory; a rough estimate,
+/// with no archive parsing.
 fn count_instance_mods(instance: &Instance) -> usize {
     let mods_folder = LOCATIONS
         .instances
@@ -193,9 +192,8 @@ fn count_instance_mods(instance: &Instance) -> usize {
 }
 
 /// Calculates the maximum heap (`-Xmx`) and young generation (`-Xmn`) memory in
-/// MB, following PCL's auto-allocation algorithm.
-///
-/// A 32-bit JVM cannot address much, so its heap is capped at 1 GiB.
+/// MB, following PCL's auto-allocation algorithm. A 32-bit JVM cannot address
+/// much, so its heap is capped at 1 GiB.
 fn auto_allocate_memory(
     available_bytes: u64,
     has_mod_loader: bool,

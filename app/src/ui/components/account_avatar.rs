@@ -3,10 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The player-head image `AccountAvatar` draws, plus the bundled default skins.
-//!
-//! The head is cropped from the skin texture and rounded in pixels: Slint's
-//! software renderer clips a rounded box rectangularly, and a rounded fill cannot
-//! mask an image, so the alpha is the only mask it honours.
+//! The head is cropped from the skin texture and rounded in pixels.
 
 use account::Account;
 use base64::{Engine, engine::general_purpose};

@@ -5,16 +5,13 @@
 //! The game view's install producer: the one place an instance id becomes a
 //! `GameInstall` task.
 //!
-//! The task centre decides when the work runs — a second instance's install
-//! waits in the exclusive lane — and owns the card and the cancel policy. What
-//! stays here is the work itself: run the installer, mirror its progress into the
-//! strip beside the button, and re-read the listing when it ends so `.install.lock`
-//! turns the button from “Download” into “Launch”.
+//! The task centre decides when the work runs and owns the card and the cancel
+//! policy; here is the work itself — run the installer, mirror its progress into
+//! the strip beside the button, and re-read the listing when it ends so
+//! `.install.lock` turns the button from “Download” into “Launch”.
 //!
 //! [`project`] is the button's whole state, and it reads two registries: the task
-//! centre's install and the launch crate's running sessions. They are separate
-//! because a game outlives the flow that launched it — the centre has forgotten
-//! the launch by the time the player can stop the game.
+//! centre's install and the launch crate's running sessions.
 
 use std::sync::Arc;
 
@@ -98,12 +95,9 @@ pub(crate) fn task_of(instance_id: &str) -> (&'static str, i32) {
     (kind, task.id)
 }
 
-/// Re-derives the launch button's state from the registry.
-///
-/// Called after every task and session event and on every apply of the game
-/// view, so the button follows an install that was cancelled, finished or queued
-/// elsewhere in the app, and a game that started or ended — the UI owns no copy
-/// of either registry.
+/// Re-derives the launch button's state from the registries, after every task and
+/// session event and on every apply of the game view — the UI owns no copy of
+/// either registry.
 pub(crate) fn project(ui: &App) {
     let state = ui.global::<GameState>();
     let id = state.get_current_id().to_string();

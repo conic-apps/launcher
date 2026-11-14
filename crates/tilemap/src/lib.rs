@@ -2,12 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The world-map tile port.
-//!
-//! A save's region files and a seed-rendered map are different domains, so
-//! [`TileSource`] is the port they share and the app picks an implementation for
-//! the [`WorldId`] it is showing. Everything crossing it is plain data, so a
-//! rendered tile can cross a thread.
+//! The world-map tile port. [`TileSource`] is what a save's region files and a
+//! seed-rendered map would share, and the app picks an implementation for the
+//! [`WorldId`] it is showing. Everything crossing it is plain data, so a rendered
+//! tile can cross a thread.
 
 /// The same value keys a cache, so a different world means every tile is
 /// re-rendered.

@@ -136,18 +136,12 @@ mod tests {
         assert_eq!(query["scope"], "XboxLive.signin%20offline_access");
     }
 
-    /// The whole of the browser flow's front end, on Slint's own testing
-    /// backend: no window, no event loop, no display. What it covers is the one
-    /// piece nothing else can reach — the `changed` handler in
-    /// `AccountAddMicrosoft.slint` that asks for the listener when the screen
-    /// appears and gives it up when it goes. If that handler did not fire the
-    /// feature would do nothing at all, silently, and every other test here
-    /// would still pass.
-    ///
-    /// The platform can only be installed once per process, so this test does
-    /// its one thing and the rest of them stay free of the UI. (`cargo test`
-    /// runs them in threads of one binary; the binding is in a thread-local
-    /// anyway, so which thread asks first does not matter.)
+    /// The whole of the browser flow's front end, on Slint's own testing backend:
+    /// no window, no event loop, no display. It covers the one piece nothing else
+    /// can reach — the `changed` handler in `AccountAddMicrosoft.slint` that binds
+    /// the listener when the screen appears and gives it up when it goes. The
+    /// platform can only be installed once per process, so this test does its one
+    /// thing and the rest stay free of the UI.
     #[test]
     fn the_browser_screen_brings_its_listener_up_and_lets_it_go() {
         i_slint_backend_testing::init_no_event_loop();
@@ -181,17 +175,13 @@ mod tests {
         assert!(!query["redirect_uri"].ends_with("%3A0%2Fcallback"), "{url}");
         assert!(!url.contains("conic-launcher"), "{url}");
 
-        // And the socket that URL names is really serving, in the app's own
-        // theme: `/` is the page a browser reaches without the OAuth
-        // parameters, and it is the one that proves `callback_palette` and
-        // `callback_messages` — the two `Theme`/`@tr` reads — reached the
-        // template. (The listener is served from a worker, so this is a plain
-        // blocking read; the `wait` it is in is on the runtime and does not
-        // need the event loop that `init_no_event_loop` turns off.)
+        // And the socket that URL names is really serving, in the app's own theme:
+        // `/` is the page a browser reaches without the OAuth parameters, which is
+        // what proves `callback_palette` and `callback_messages` reached it. The
+        // `redirect_uri` is decoded rather than picked apart, so that also checks the
+        // encoding is reversible.
         //
-        // The `redirect_uri` is percent-encoded, so it is decoded rather than
-        // picked apart — which is also the one check that the encoding is
-        // reversible, which is what the token request depends on.
+        // The listener is served from a worker, so this is a plain blocking read.
         let redirect_uri = query["redirect_uri"]
             .replace("%3A", ":")
             .replace("%2F", "/");

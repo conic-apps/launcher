@@ -3,10 +3,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! Filesystem scanning for installed Java runtimes. Candidates come from
-//! environment variables, platform-specific locations, Minecraft's bundled
-//! runtimes and launcher-managed roots; each is validated by its `release` file
-//! and a `java -XshowSettings:properties -version` probe, then deduplicated by
-//! canonical path.
+//! environment variables, platform-specific locations, Minecraft's bundled runtimes
+//! and launcher-managed roots; each is validated by its `release` file and a
+//! `java -XshowSettings:properties -version` probe.
 
 use std::{
     collections::HashMap,

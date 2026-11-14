@@ -2,12 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The update server protocol: the endpoint, the JSON payload it answers with,
-//! and the version comparison that decides whether it is worth acting on.
+//! The update server protocol: the endpoint and the JSON payload it answers with.
 //!
-//! The server is a dynamic endpoint (see `conic-apps/conic-updater-server`):
-//! `GET {base}/v1/{channel}/{target}/{arch}/{current}?kind={kind}` answers
-//! `204` when there is nothing new and `200` with a JSON payload otherwise.
+//! `GET {base}/v1/{channel}/{target}/{arch}/{current}?kind={kind}` answers `204`
+//! when there is nothing new and `200` with a JSON payload otherwise.
 
 use semver::Version;
 use serde::Deserialize;

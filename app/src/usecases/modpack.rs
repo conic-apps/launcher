@@ -2,9 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The app-side modpack install.
-//!
-//! The import itself lives in the `modpack` crate; this runs it with the
+//! The app-side modpack install: runs the `modpack` crate's import with the
 //! launcher's config and adapts its two progress vocabularies into the task
 //! centre's one.
 

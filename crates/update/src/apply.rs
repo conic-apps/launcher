@@ -2,11 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Applying a staged bundle.
-//!
-//! This runs once, on the way out of the process: every branch replaces the
-//! running copy in place (or hands it to the platform's installer) so the next
-//! launch starts the new version, never interrupting the user with an install.
+//! Applying a staged bundle, once, on the way out of the process: every branch
+//! replaces the running copy in place (or hands it to the platform's installer) so
+//! the next launch starts the new version.
 
 // `Path`/`PathBuf` and `extract_tar_gz` are only reached from the Linux and
 // macOS branches below; on Windows the same work is handed to a script, so the

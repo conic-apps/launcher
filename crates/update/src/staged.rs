@@ -2,13 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Downloading a bundle to the staging directory and remembering it for the
-//! next launch.
-//!
-//! The download is verified as it streams: the signature is checked chunk by
-//! chunk, so an 80 MiB AppImage is never held in memory, and the whole file is
-//! discarded if it fails. A verified bundle is recorded in `pending.json`,
-//! which is what the exit-time swap and the next launch read.
+//! Downloading a bundle to the staging directory and remembering it for the next
+//! launch: the signature is verified as the download streams, so a large bundle is
+//! never held in memory, and a verified bundle is recorded in `pending.json`.
 
 use std::path::{Path, PathBuf};
 

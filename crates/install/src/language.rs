@@ -4,12 +4,10 @@
 
 //! Configures the in-game language by writing `lang` into `options.txt`.
 //!
-//! [`configure_game_language`] writes it during install only when the game has
-//! no options file; [`force_game_language`] is the modpack path, where an
-//! override's `options.txt` must keep its other options but lose `lang`.
-//!
-//! The era decides region-code casing (releases by version, snapshots by
-//! release date), and the language must exist in the client jar.
+//! [`configure_game_language`] writes it during install only when the game has no
+//! options file; [`force_game_language`] is the modpack path, where an override's
+//! `options.txt` keeps its other options but loses `lang`. The language must exist
+//! in the client jar.
 
 use std::path::Path;
 

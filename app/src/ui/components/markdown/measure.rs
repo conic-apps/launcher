@@ -3,9 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! Text measurement through the same engine, font collection and fallbacks the
-//! view draws with, or measured and drawn widths drift apart.
-//!
-//! A run is shaped on its own with no wrapping; the caller owns the breaks.
+//! view draws with. A run is shaped on its own with no wrapping; the caller owns
+//! the breaks.
 
 use std::borrow::Cow;
 

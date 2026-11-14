@@ -2,12 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The multiplayer session commands.
-//!
-//! The session state machine, the library download and the event port all live
-//! in the `multiplayer` crate; the poll thread reports through the crate's
-//! `EventSink`. This module is the UI-neutral seam a frontend drives the session
-//! through, so opening, creating, joining and leaving a room do not touch Slint.
+//! The UI-neutral seam a frontend drives a multiplayer session through: opening,
+//! creating, joining and leaving a room. The session state machine, the library
+//! download and the event port live in the `multiplayer` crate.
 
 use multiplayer::NexusService;
 

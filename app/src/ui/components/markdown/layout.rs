@@ -5,9 +5,6 @@
 //! Block tree → positioned display list. Slint's `Text` cannot report where a
 //! line breaks, mix styles on one baseline or draw decorations, so the geometry
 //! is computed here and the view only places runs.
-//!
-//! Runs are measured with the same engine the view draws with, and line breaks
-//! approximate a browser's rather than implementing all of UAX #14.
 
 use crate::ui::components::markdown::doc::{Align, Block, Cell, Inline};
 use crate::ui::components::markdown::measure::{Measurer, SpanMetrics, SpanStyle};

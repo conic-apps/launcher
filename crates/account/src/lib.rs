@@ -3,13 +3,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The account model and the flows that create and refresh accounts:
-//! Microsoft (OAuth → Xbox Live → XSTS → Minecraft services), offline
-//! profiles, and Yggdrasil (authlib-injector) servers.
-//!
-//! The browser flow cannot use a fixed redirect URI because its loopback listener
-//! (`authcode`) binds an OS-chosen port, so [`microsoft::redeem_access_token`]
-//! takes the URI to repeat; the refresh request sends none (RFC 6749 §6). The
-//! serialized [`Account`] lives as `current_account` in `config.toml`.
+//! Microsoft (OAuth → Xbox Live → XSTS → Minecraft services), offline profiles,
+//! and Yggdrasil (authlib-injector) servers. The serialized [`Account`] lives as
+//! `current_account` in `config.toml`.
 
 use std::path::Path;
 

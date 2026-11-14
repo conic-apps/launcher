@@ -2,13 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Per-instance file fingerprints for one content folder.
-//!
-//! Hashing an archive means reading it whole, so this index records each file's
-//! stat beside its SHA-512 and reuses the checksum while the stat still matches.
-//! An inode lets a renamed file keep its checksum. The file is per instance and
-//! kind; the checksums themselves are content-addressed in
-//! `cache/remote/identity.json`.
+//! Per-instance file fingerprints for one content folder: each file's stat beside
+//! its SHA-512, so a checksum is reused while the stat still matches and a renamed
+//! file keeps it. The file is per instance and kind; the checksums themselves are
+//! content-addressed in `cache/remote/identity.json`.
 
 use std::{
     collections::HashMap,

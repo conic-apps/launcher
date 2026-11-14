@@ -4,14 +4,10 @@
 
 //! Whether a Minecraft release or snapshot was published since the last check.
 //!
-//! The two reminder switches are off by default. The first check after one is
-//! turned on records the current latest version without a notice: enabling a
-//! reminder should not immediately announce a version that may be months old.
-//! Turning a switch off forgets its recorded version, so switching it back on
-//! starts from the then-current version again.
-//!
-//! The recorded pair lives beside `config.toml` rather than in it: it is a
-//! record of what was shown, not a setting the user edits.
+//! The first check after a reminder is switched on records the current latest
+//! without a notice, and switching it off forgets that record. The recorded pair
+//! lives beside `config.toml` rather than in it: it remembers what was shown, not
+//! a setting the user edits.
 
 use std::path::PathBuf;
 
@@ -48,12 +44,8 @@ impl ReminderState {
     }
 
     /// Records the latest versions and returns the ones that are newer than
-    /// what was recorded.
-    ///
-    /// The first sight of a version is never a release: there is nothing to
-    /// compare it against, and a fresh state file would otherwise announce the
-    /// current latest. When both switches are on and both latest versions match
-    /// — a release is also the latest snapshot — one notice is enough.
+    /// what was recorded. The first sight of a version is never a notice; when
+    /// both switches are on and both latest versions match, one notice suffices.
     fn observe(
         &mut self,
         release_enabled: bool,
@@ -90,10 +82,8 @@ impl ReminderState {
 }
 
 /// Compares Mojang's latest versions with the last ones shown to the user and
-/// returns the versions worth a notice.
-///
-/// A failed fetch leaves the recorded state alone, so the check can be retried
-/// on the next start instead of losing the version that was not announced.
+/// returns the versions worth a notice. A failed fetch leaves the recorded state
+/// alone, so it can be retried on the next start.
 pub(crate) async fn check(release_enabled: bool, snapshot_enabled: bool) -> Vec<String> {
     let mut state = load();
     if state.clear_disabled(release_enabled, snapshot_enabled) {

@@ -28,12 +28,9 @@ pub(crate) fn refresh_yggdrasil_submit(state: &AccountAddState) {
     state.set_yggdrasil_can_submit(ready);
 }
 
-/// Picks a default account, reloads the account list and dismisses the dialog
-/// after every successful add.
-///
-/// The default is picked through a `GameState` callback rather than here: the
-/// config lives on the UI thread, and `upgrade_in_event_loop`'s closure has to
-/// be `Send`, so a worker cannot carry it.
+/// Picks a default account, reloads the account list and dismisses the dialog after
+/// every successful add. The default is picked through a `GameState` callback: the
+/// config lives on the UI thread, and a worker's closure has to be `Send`.
 pub(crate) fn finish_add(ui: &App) {
     ui.global::<GameState>().invoke_select_first_account();
     ui.global::<GameState>().invoke_refresh();
@@ -89,19 +86,11 @@ pub(crate) fn start_microsoft_login(weak: Weak<App>, request: LoginRequest, devi
     });
 }
 
-/// Binds the loopback listener the browser flow's code comes back on, and
-/// starts waiting for it.
-///
-/// Called by the screen as the browser flow comes on (see
-/// `AccountAddMicrosoft.slint`), and a no-op when a listener is already bound —
-/// the screen asks on every show, and the URL it is showing has to be one that
-/// is being served for as long as it is showing. The port is the OS's, so
-/// there is no fixed one to fall back to, and a bind failure is the one case
-/// that leaves the screen with nothing to offer: the log line says so, and the
-/// "Log in" button opens an empty URL, which does nothing.
-///
-/// Binding is two `bind` calls and needs no runtime, so this runs on the UI
-/// thread; the waiting half is a task.
+/// Binds the loopback listener the browser flow's code comes back on, and starts
+/// waiting for it. A no-op when a listener is already bound: the screen asks on
+/// every show, and the URL it shows has to be served for as long as it is shown.
+/// The port is the OS's, so a bind failure is the one case that leaves the screen
+/// with nothing to offer.
 pub(crate) fn prepare_auth_code_flow(ui: &App) {
     if MICROSOFT.with(|flow| flow.borrow().callback.is_some()) {
         return;
@@ -171,22 +160,10 @@ pub(crate) fn auth_code_flow_finished(
             },
             false,
         ),
-        // A refusal and a timeout both go back to the browser screen rather than
-        // to the error one, and neither says anything in the dialog. Two
-        // reasons, and they are the reason this flow has a page at all:
-        //
-        //   * the error screen has no buttons, so "Log in" is not reachable
-        //     from there, and a message that says to press it would be a
-        //     message about a button that is not on the screen;
-        //   * the browser has just shown a page — themed, translated, and
-        //     carrying Microsoft's own `error_description` for a refusal —
-        //     that says what happened and what to do. The dialog saying it a
-        //     second time, worse, is the thing worth avoiding.
-        //
-        // Returning to the browser screen is also what the device-code flow
-        // does for the same kind of answer (`DeviceCodeExpired` asks for a new
-        // code without a word), and the screen's own handler binds a fresh
-        // listener for it, so "Log in" is one click away.
+        // A refusal and a timeout both go back to the browser screen, which says what
+        // happened and what to do: the error screen has no buttons, so "Log in" would
+        // not be reachable from it. The screen's handler binds a fresh listener, so
+        // "Log in" is one click away.
         BrowserRedirectOutcome::Declined { reason } => {
             log::info!("the browser refused the sign-in: {reason}");
             ui.global::<AccountAddState>()
@@ -235,14 +212,9 @@ pub(crate) fn callback_messages(ui: &App) -> authcode::Messages {
     }
 }
 
-/// A `slint::Color` as the page's own colour, alpha and all.
-///
-/// The alpha is kept rather than composited: the app's text tokens are
-/// `default-text-color.transparentize(0.1)`, and handing the browser the same
-/// 10% over the same card colour lands on the same pixel the window does. It
-/// is read as `f32` rather than `u8` for the same reason — a `transparentize`
-/// is a float until something rounds it, and rounding it here would make the
-/// page's text a shade off the window's.
+/// A `slint::Color` as the page's own colour, alpha and all: the page's text has to
+/// land on the same pixel the window does, so the alpha stays `f32` rather than
+/// being rounded on the way.
 pub(crate) fn rgba(color: slint::Color) -> authcode::Rgba {
     let color = color.to_argb_f32();
     authcode::Rgba::new(
@@ -254,17 +226,9 @@ pub(crate) fn rgba(color: slint::Color) -> authcode::Rgba {
 }
 
 /// The authorize URL of the browser flow, pointed at the loopback listener and
-/// carrying its `state`.
-///
-/// The endpoint, the client id, `response_mode`, `prompt` and the scope are
-/// fixed; the `redirect_uri` and the `state` are the two that vary. That is why
-/// this cannot be a constant: the port is the OS's, and the `state` is per
-/// login.
-///
-/// `redirect_uri` is percent-encoded because a whole URL is going into a query
-/// value; it has to come back out of the query byte for byte, which is why the
-/// same encoded form is what `account::microsoft::redeem_access_token` is
-/// given.
+/// carrying its `state`. The endpoint, client id, `response_mode`, `prompt` and
+/// scope are fixed; the port and the `state` are per login, which is why this
+/// cannot be a constant.
 pub(crate) fn authorize_url(redirect_uri: &str, state: &str) -> String {
     format!(
         "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize\
@@ -280,13 +244,10 @@ pub(crate) fn authorize_url(redirect_uri: &str, state: &str) -> String {
     )
 }
 
-/// Percent-encodes a string for a query value: every byte outside the
-/// unreserved set (`A-Z a-z 0-9 - _ . ~`) becomes a `%XX` escape.
-///
-/// The authorize URL is hand-built rather than handed to `reqwest`'s serializer
-/// because the dialog shows it to the user: it has to be the exact string the
-/// browser is sent to, and a query written by a serializer is not the string
-/// anyone reads.
+/// Percent-encodes a string for a query value: every byte outside the unreserved
+/// set (`A-Z a-z 0-9 - _ . ~`) becomes a `%XX` escape. The URL is hand-built
+/// because the dialog shows it: it has to be the exact string the browser is sent
+/// to.
 pub(crate) fn urlencoding(value: &str) -> String {
     let mut encoded = String::with_capacity(value.len());
     for byte in value.bytes() {

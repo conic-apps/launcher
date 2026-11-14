@@ -2,13 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The CurseForge pack format.
-//!
-//! A pack is a `.zip` or extracted directory with a `manifest.json` and an
-//! `overrides/` tree. The manifest names the Minecraft version, the loader and
-//! `projectID`/`fileID` pairs; this module turns those pairs into downloads
-//! through the `curseforge` client and hands the overrides to the common
-//! extractor.
+//! The CurseForge pack format: a `.zip` or extracted directory with a
+//! `manifest.json` and an `overrides/` tree. This module turns the manifest's
+//! `projectID`/`fileID` pairs into downloads through the `curseforge` client and
+//! hands the overrides to the common extractor.
 
 use std::collections::{HashMap, HashSet};
 use std::io::Read;

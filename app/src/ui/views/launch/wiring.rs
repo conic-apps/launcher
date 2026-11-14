@@ -6,9 +6,8 @@
 //!
 //! [`request`] is the entry point every surface uses — the game view's launch
 //! button, the notice behind a finished task, the command palette. The page opens
-//! at once; the flow starts when the task centre goes idle, and until then the
-//! page says it is waiting. Entering the page first is what gives the wait
-//! somewhere to be shown and a cancel button that does not need a task card.
+//! at once and the flow starts when the task centre goes idle, so the wait has
+//! somewhere to be shown and a cancel button.
 
 use super::*;
 
@@ -40,11 +39,9 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
 }
 
 /// The launch page was left: the waiting request or the running flow ends with it,
-/// and a process the flow had already spawned is stopped with it.
-///
-/// Called from `main`'s single `Navigation.page-changed` handler. Without it a
-/// launch that was left behind keeps its request pending, which then blocks every
-/// later launch and starts this one out from under the game view.
+/// and a process the flow had already spawned is stopped with it. Called from
+/// `main`'s single `Navigation.page-changed` handler; without it a launch left
+/// behind keeps its request pending and blocks every later one.
 pub(crate) fn page_left(ui: &App, page: &str) {
     if page == "launch" {
         return;

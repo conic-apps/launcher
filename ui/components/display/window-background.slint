@@ -4,20 +4,15 @@
 
 import { Background } from "../../globals/background.slint";
 
-// The window's background, with Rust rendering the sky and world images.
+// The window's background: the window colour, the hyperbola sky (30%), the 3D world
+// (30%) and the user's custom backgrounds, then the dim overlay.
 //
-//   window colour → hyperbola sky (30%) → 3D world (30%) → custom background
-//   → dim overlay
+// A custom background change cross-fades the two slots from one clock in Rust, so
+// both are always moving and the picture never jumps; this component only
+// composites.
 //
-// Over the world come the user's custom backgrounds, up to two of them. A
-// change cross-fades the two: the outgoing layer's opacity falls while the
-// incoming one's rises, from one clock in Rust, so both are always moving and
-// the picture never jumps. Rust writes those two opacities; this component only
-// composites them.
-//
-// The whole stack sits in a wrapper scaled by 1.08 that follows the pointer. The
-// images are rendered 1.08x the window to match, so the scale lands them on
-// device pixels rather than stretching them.
+// The whole stack sits in a wrapper scaled by 1.08 that follows the pointer, and the
+// images are rendered 1.08x the window so the scale lands them on device pixels.
 export component WindowBackground inherits Rectangle {
     // The alphas are the global's, read straight through: Rust eases them and
     // the view draws whatever it last wrote.
@@ -26,14 +21,9 @@ export component WindowBackground inherits Rectangle {
     private property <length> parallax-x: Background.parallax-x;
     private property <length> parallax-y: Background.parallax-y;
 
-    // The frame pump: while the camera advances, something in the window has to
-    // depend on `animation-tick()`, which Slint re-evaluates on every frame —
-    // and a window with an animation in flight is one Slint keeps painting.
-    // Without it the world only advanced when something else in the UI happened
-    // to animate (`Window::request_redraw` alone was not enough: it left the
-    // world frozen on a machine whose compositor only repaints for animations,
-    // and the camera then jumped when the user finally scrolled the list).
-    // The item is zero-sized, so nothing on screen depends on the value.
+    // The frame pump: a window with an animation in flight is one Slint keeps
+    // painting, so something has to depend on `animation-tick()` while the camera
+    // advances. The item is zero-sized, so nothing on screen depends on the value.
     Rectangle {
         x: Background.camera-moving ? (animation-tick() / 1s) * 1px : 0px;
         width: 0;

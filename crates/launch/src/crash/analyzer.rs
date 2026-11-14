@@ -2,16 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Recognising why a game crashed.
-//!
-//! A port of HMCL's `CrashReportAnalyzer` (GPL-3.0): each rule is a regex over
-//! the game's output, and the first match becomes a [`Reason`] carrying the
-//! captured groups. The crash report is found from the game's own
-//! `#@!@# Game crashed! Crash report saved to:` line rather than by modified
-//! time, which can surface a report from an earlier run.
-//!
-//! Two Java-only constructs are spelled out for Rust's `regex`: `\R` becomes
-//! `\r?\n`, and named groups use the same `(?<name>…)` syntax.
+//! Recognising why a game crashed: each rule is a regex over the game's output,
+//! and the first match becomes a [`Reason`] carrying the captured groups. The
+//! rule table is ported from HMCL's `CrashReportAnalyzer`.
 
 use std::{
     collections::BTreeSet,
@@ -39,8 +32,7 @@ struct Rule {
     groups: &'static [&'static str],
 }
 
-/// The whole table, compiled once, on the first crash. A pattern that fails to
-/// compile is dropped with a warning rather than taking the launcher down.
+/// The rule table, compiled once on the first crash.
 static RULES: LazyLock<Vec<Rule>> = LazyLock::new(|| {
     RULES_SOURCE
         .iter()
@@ -83,11 +75,8 @@ pub fn analyze(log: &str) -> Vec<Reason> {
     reasons
 }
 
-/// The game's own crash-report location line, with the file's contents.
-///
-/// The line is `#@!@# Game crashed! Crash report saved to: #@!@# <path>`, so the
-/// report is read exactly where the game wrote it, even under a custom game
-/// directory.
+/// The game's own crash-report location line, with the file's contents, so the
+/// report is read where the game wrote it even under a custom game directory.
 pub fn find_crash_report(log: &str) -> Option<(PathBuf, String)> {
     static LOCATION: LazyLock<Regex> = LazyLock::new(|| {
         Regex::new(r"#@!@# Game crashed! Crash report saved to: #@!@# (?<location>.*)")
@@ -112,9 +101,6 @@ pub fn extract_crash_report(log: &str) -> Option<String> {
 }
 
 /// Suspicious keywords, inferred from a crash report's stack trace.
-///
-/// Each `at package.Class.method(…)` line contributes its package segments,
-/// minus the ones every crash shares (Java, Minecraft, the loaders).
 pub fn find_keywords(crash_report: &str) -> Vec<String> {
     static STACK: LazyLock<Regex> = LazyLock::new(|| {
         Regex::new(r"Description: (.*?)[\n\r]+(?<stacktrace>[\w\W\n\r]+)A detailed walkthrough of the error")
@@ -295,10 +281,8 @@ const PACKAGE_KEYWORD_BLACK_LIST: &[&str] = &[
     "mixin",
 ];
 
-/// The rule table, ported from HMCL's `CrashReportAnalyzer.Rule`.
-///
-/// Each entry is `(name, pattern, captured-group-names)`. `\R` in the original
-/// is `\r?\n` here.
+/// The rule table, ported from HMCL's `CrashReportAnalyzer.Rule`: `(name, pattern,
+/// captured-group-names)`.
 #[rustfmt::skip]
 static RULES_SOURCE: &[(&str, &str, &[&str])] = &[
     ("OPENJ9", r"(Open J9 is not supported|OpenJ9 is incompatible|\.J9VMInternals\.)", &[]),

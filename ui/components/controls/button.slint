@@ -7,14 +7,11 @@ import { FocusManager } from "../../globals/focus.slint";
 
 // Small button. Used for "Remove image", the dialog buttons, …
 //
-// The button fills whatever row it is placed in, but shrinks to its content in
-// an auto-sized row. Slint has no such two-way sizing, so the *preferred* width
-// is the label plus the 16px horizontal padding — and it is a preference rather
-// than a `width`, so a `HorizontalLayout` can still grow the button with
-// `horizontal-stretch: 1`. That share comes out of the space the labels leave
-// over, so two buttons with different labels end up different widths; a row that
-// needs them equal, like the multiplayer download screen's, pins `button-width`
-// to half of its own width instead.
+// The button fills whatever row it is placed in, but shrinks to its content in an
+// auto-sized row: the *preferred* width is the label plus the 16px horizontal
+// padding, so a `HorizontalLayout` can still grow it with `horizontal-stretch: 1`.
+// A row that needs two buttons equal, like the multiplayer download screen's, pins
+// `button-width` to half of its own width instead.
 export component Button inherits Rectangle {
     in property <string> text: "";
     in property <color> text-color: Theme.default-text-color.transparentize(0.1);

@@ -26,12 +26,8 @@ pub(crate) use login_task::{login_with_auth_code, login_with_device_code};
 pub use microsoft_auth_step::redeem_access_token;
 
 /// Decodes one Microsoft endpoint's answer, naming the endpoint when it refuses.
-///
-/// The status is checked before the body is parsed: a `401` is perfectly good
-/// JSON, so parsing first would surface as [`Error::MicrosoftResponseMissingKey`]
-/// rather than an authentication refusal. The body is kept because the endpoints
-/// explain themselves in it; it is truncated first, since a proxy error page can
-/// be arbitrarily long.
+/// The status is checked before the body is parsed, since a `401` is perfectly good
+/// JSON; the body is truncated before it is reported.
 pub(super) async fn decode(response: reqwest::Response, endpoint: &str) -> Result<Value> {
     let status = response.status();
     if !status.is_success() {

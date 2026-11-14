@@ -74,13 +74,10 @@ pub(crate) fn version_offset(state: &ContentController) -> f32 {
         .sum()
 }
 
-/// The key one list's page state is filed under: each kind and source pair is a
-/// list of its own, with its own page numbers.
-///
-/// The key is the *source* (`"local" | "modrinth" | "curseforge"`), not the
-/// platform: the local lists have no platform of their own, and keying them on
-/// whichever one the last remote list happened to set made the local view read
-/// that list's page count — the local mods list drew modrinth's 158 pages.
+/// The key one list's page state is filed under. It is the *source*
+/// (`"local" | "modrinth" | "curseforge"`), not the platform: the local lists have
+/// no platform of their own, and keying them on the last remote one's made the
+/// local mods list read that list's page count.
 pub(crate) fn list_key(kind: RemoteKind, source: &str) -> String {
     format!("{}:{}", kind.key(), source)
 }

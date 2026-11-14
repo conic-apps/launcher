@@ -21,15 +21,10 @@ component PaletteSwatch inherits Rectangle {
     width: 90px;
     height: 60px;
 
-    // Disabled swatches dim every *descendant*, and that is written per element
-    // rather than on the component root on purpose. An element carrying
-    // `opacity` below 1 is composited through a layer bounded by its own box, so
-    // an opacity on this root clipped the label off altogether: the label sits
-    // ten pixels *below* this 60px box, and with follow-system on — the only
-    // state in which anything here is disabled — the palette showed four
-    // unlabelled tiles. Nothing that dims has a child escaping its box: the
-    // outline draws nothing, the image fills the box it dims, and the label
-    // draws inside its own.
+    // Disabled swatches dim every *descendant*, written per element rather than on
+    // the root: an element with `opacity` below 1 is composited through a layer
+    // bounded by its own box, and the label sits ten pixels below this 60px box, so
+    // a root opacity clipped it off. Nothing that dims has a child escaping its box.
     private property <float> dim: root.swatch-disabled ? 0.6 : 1.0;
 
     if root.selected: Rectangle {

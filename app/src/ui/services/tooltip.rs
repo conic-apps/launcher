@@ -2,12 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The generic tooltip's pointer position (`ui/globals/tooltip.slint`).
-//!
-//! Slint has no global cursor accessor, and a `TouchArea` only knows the pointer
-//! while it receives events, so winit's `CursorMoved` fan-out is tracked for the
-//! whole session; it runs on the event loop's thread and writes `TooltipState`
-//! directly.
+//! The generic tooltip's pointer position (`ui/globals/tooltip.slint`). Slint has
+//! no global cursor accessor, so winit's `CursorMoved` fan-out is tracked for the
+//! whole session.
 
 use slint::ComponentHandle;
 

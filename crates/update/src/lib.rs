@@ -2,13 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The launcher's self-updater.
-//!
-//! The protocol is served by `conic-apps/conic-updater-server`: a dynamic endpoint
-//! answering `204`/JSON (see [`manifest`]), a minisign signature over every bundle
-//! (see [`staged`]), and a per-platform apply step that runs as the process exits
-//! (see [`apply`]). When to check and whether the user opted in are the caller's
-//! concern; this crate only exposes the mechanism.
+//! The launcher's self-updater: the server protocol (see [`manifest`]), a minisign
+//! signature over every bundle (see [`staged`]), and a per-platform apply step that
+//! runs as the process exits (see [`apply`]). When to check and whether the user
+//! opted in are the caller's concern.
 
 pub mod applied;
 pub mod apply;

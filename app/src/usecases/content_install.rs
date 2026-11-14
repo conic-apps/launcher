@@ -2,11 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Resolving and downloading one project into an instance.
-//!
-//! UI-neutral: the caller owns the task card, the spawned future and the
-//! post-install refresh. This module only chooses the best file, downloads it
-//! and records the installed version.
+//! Resolving and downloading one project into an instance. UI-neutral: the caller
+//! owns the task card, the spawned future and the post-install refresh.
 
 use std::path::Path;
 
@@ -81,9 +78,8 @@ pub(crate) async fn install(
 
     task.update(TaskStage::Finalizing, TaskProgress::Indeterminate);
 
-    // The download knows the exact version it chose. Recording it now means the
-    // detail panel can name it before the next folder scan, and an offline
-    // launch can still tell which version is installed.
+    // The download knows the exact version it chose. Recording it now lets the
+    // detail panel name it before the next folder scan.
     if let Some(kind) = detail.kind.content_kind() {
         let scope = content::remote::ContentScope::new(instance_id, kind);
         content::remote::record_installed(
@@ -96,10 +92,9 @@ pub(crate) async fn install(
         .await;
     }
 
-    // The new file is on disk but nothing has read it yet. Whoever asked for the
-    // install invalidates the cache's entry for this kind — which both this
-    // panel and the summary's count are drawn from — so the one re-read that
-    // follows is the first thing to open the jar.
+    // The new file is on disk but nothing has read it yet. The caller
+    // invalidates this kind's cache entry, so the re-read that follows is the
+    // first thing to open the jar.
     Ok(())
 }
 

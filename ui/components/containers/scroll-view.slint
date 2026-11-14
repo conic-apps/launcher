@@ -9,16 +9,10 @@ import { ScrollInput, ScrollSource } from "../../globals/scroll.slint";
 
 // Vertical scroll container with a slim custom scrollbar.
 //
-// The offset eases towards the wheel target over a frame-time-scaled lerp. This
-// is not a `Flickable`, which would layer its own fixed-duration animation on top
-// and clamp a programmatic scroll when the content changes height.
-//
-// Wheel events are captured by the `TouchArea` wrapping the content; controls
-// inside never handle scroll events, so the wheel bubbles up. Touchpads apply
-// their deltas — and macOS momentum — as they arrive, never eased: easing them
-// would drop the inherited momentum's velocity on release.
-//
-// There is no drag-panning: the wheel is the only scroll input.
+// Not a `Flickable`: that would layer its own fixed-duration animation on top and
+// clamp a programmatic scroll when the content changes height. The offset eases
+// towards the wheel target instead, and touchpads apply their deltas — and macOS
+// momentum — as they arrive, never eased.
 //
 // `content-y` is in the `Flickable` sign (0 at top, negative scrolled down);
 // `scroll-y` is its positive twin.

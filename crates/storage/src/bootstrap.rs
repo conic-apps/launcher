@@ -2,14 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The bootstrap file that records the user's location choices.
-//!
-//! It lives at [`bootstrap_path`] — a fixed platform anchor — rather than in the
-//! launcher location, because the launcher location is what it chooses: reading
-//! it has to work before the config directory is known.
-//!
-//! A location left out keeps its default (the `root`-derived one), so the file
-//! stays empty until the user changes something.
+//! The bootstrap file that records the user's location choices, at a fixed platform
+//! anchor rather than in the launcher location, because the launcher location is
+//! what it chooses. A location left out keeps its default, so the file stays empty
+//! until the user changes something.
 
 use std::{fs, io, path::PathBuf};
 
@@ -40,12 +36,9 @@ pub fn bootstrap_path() -> PathBuf {
 }
 
 /// Reads the bootstrap file, falling back to no overrides when it is missing or
-/// unreadable.
-///
-/// A missing file is ordinary and silent. A file that exists but cannot be read
-/// or parsed is `warn!`ed with its path, because falling back moves every root
-/// back to the platform default — which reads as an empty library and accounts
-/// the user cannot account for having signed out of.
+/// unreadable. A missing file is ordinary and silent; one that exists but cannot be
+/// read or parsed is warned about with its path, because falling back moves every
+/// root to the platform default.
 pub fn load_overrides() -> LocationOverrides {
     let path = bootstrap_path();
     let text = match fs::read_to_string(&path) {

@@ -4,21 +4,16 @@
 
 import { Theme } from "../../theme.slint";
 
-// Spinning arc: a 48-unit circle with a round cap and a gap, rotated
-// continuously.
+// Spinning arc: a 48-unit circle with a round cap and a gap, rotated continuously.
 //
-// The dash is split as `100 - (gap + strokeWidth)` — the `strokeWidth` is part
-// of the gap because a round cap that straddles the start of the dash paints
-// half its width on each side of it, so a dash shortened by only `gap` would
-// close the ring. Normalising the circumference to 100 is what makes that
-// arithmetic in the same units as the dash.
+// The dash is `100 - (gap + strokeWidth)`: a round cap straddles the dash's start
+// and paints half its width on each side, so a dash shortened by only `gap` would
+// close the ring. Normalising the circumference to 100 keeps that arithmetic in the
+// same units as the dash.
 //
-// Slint has no dash arrays, so the arc is drawn as a real one instead: an
-// `ArcTo` between the same two ends the dash would have had, with its sweep
-// computed from the same two numbers. That is what the `MoveTo`/`ArcTo` pair
-// below is for — a `Path` also takes its geometry as a command *string*, and
-// that route would mean formatting the end point as text, which Slint can only
-// do with the locale's decimal separator in it.
+// Slint has no dash arrays, so the arc is a real `ArcTo` between the ends the dash
+// would have had: a `Path` takes geometry as a command string, and formatting the
+// end point as text would use the locale's decimal separator.
 export component Loading inherits Rectangle {
     in property <length> size: 32px;
     // Stroke width in the SVG's 48-unit view box.
@@ -62,8 +57,8 @@ export component Loading inherits Rectangle {
             radius-y: 20;
             x: 24 + 20 * sin(root.arc-sweep);
             y: 24 - 20 * cos(root.arc-sweep);
-            // Past a half turn the two arcs between the same pair of points are
-            // no longer told apart by the sweep flag alone.
+            // Past a half turn the two arcs between the same pair of points need
+            // the large-arc flag to be told apart.
             large-arc: root.arc-sweep > 180deg;
             sweep: true;
         }

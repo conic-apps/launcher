@@ -2,18 +2,11 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Platform metadata lookup shared by every content kind.
-//!
-//! `modrinth.json` and `curseforge.json` cache each platform's file lookup by
-//! SHA-512; `identity.json` maps a checksum to the project and file ids it is
-//! known by, never expires, and only changes on a successful lookup. Online
-//! fields win and local data fills the gaps; an embedded (jar-in-jar) mod keeps
-//! its own data. A file known on both platforms is looked up on Modrinth first,
-//! then CurseForge; otherwise both are queried concurrently and the first
-//! response is the frontend result.
-//!
-//! Every cache write is a read-merge-write behind `CACHE_WRITE_LOCK`; the lock is
-//! taken once and never nested, and only disk I/O and serde run under it.
+//! Platform metadata lookup shared by every content kind: `modrinth.json` and
+//! `curseforge.json` cache each platform's file lookup by SHA-512, and
+//! `identity.json` maps a checksum to the project and file ids it is known by.
+//! Online fields win and local data fills the gaps; a file known on both
+//! platforms is looked up on Modrinth first, then CurseForge.
 
 use std::{
     collections::HashMap,
@@ -211,13 +204,9 @@ async fn save_identity_cache(cache: &IdentityCache) {
 }
 
 /// Merge the per-platform lookup outcomes into the identity cache and write it
-/// back. Only successes are applied; a failed or empty lookup leaves the entry
-/// unchanged.
-///
-/// The merge is field-wise rather than entry-wise because two concurrent parses
-/// can discover the same file on different platforms, which is why it does not
-/// go through `merge_and_save` like the other caches: there the entry *is* the
-/// value, and here only some of its fields are.
+/// back; only successes are applied. The merge is field-wise rather than
+/// entry-wise, because two concurrent parses can discover the same file on
+/// different platforms.
 async fn merge_and_save_identity(modrinth: IdentityUpdates, curseforge: IdentityUpdates) {
     let has_update =
         modrinth.values().any(Option::is_some) || curseforge.values().any(Option::is_some);

@@ -113,13 +113,9 @@ export global GameTime {
 
 /// The install strip's sentence, kept in Slint so it follows a language change.
 ///
-/// These are the sentences the launch screen used to show while it installed; the
-/// install starts from the game view now, so they live beside the button. The
-/// parts are pre-formatted by Rust where Slint cannot format them (byte counts).
-///
-/// Two of the stages are shared with the launch screen's own file check, whose
-/// wording is the same, so they keep the `LaunchView` context and one catalogue
-/// entry serves both.
+/// The parts are pre-formatted by Rust where Slint cannot format them (byte counts).
+/// Two of the stages are shared with the launch screen's own file check, so they keep
+/// the `LaunchView` context and one catalogue entry serves both.
 export global GameInstallText {
     public pure function description(kind: string, name: string, current: string, total: string, message: string) -> string {
         if kind == "prepare-download" {

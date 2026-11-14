@@ -111,14 +111,10 @@ pub(crate) fn apply(ui: &App) {
     start_clock(ui, needed);
 }
 
-/// Starts (or stops) the 60Hz clock that pushes the player into the global.
-///
-/// The tick has to reach the UI thread — everything it touches is Slint's — so it
-/// is handed over with `crate::ui::services::report::report`, which also wakes the event loop.
-/// That is what makes it independent of whether anything is being painted: a Slint
-/// `Timer` would stop the moment the window went quiet, which is exactly when the
-/// progress bar has to keep moving. The task stops itself once nothing needs it
-/// any more, and `start_clock` starts another one when something does.
+/// Starts (or stops) the 60Hz clock that pushes the player into the global. The
+/// tick reaches the UI thread through `services::report`, which also wakes the
+/// event loop — a Slint `Timer` would stop the moment the window went quiet, which
+/// is exactly when the progress bar has to keep moving.
 pub(crate) fn start_clock(ui: &App, needed: bool) {
     let mut start = None;
     with_controller(|controller| {

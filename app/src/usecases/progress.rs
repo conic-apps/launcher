@@ -2,11 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The one place domain progress becomes a task stage.
-//!
-//! A download reports bytes and a phase; an install reports the same bytes under
-//! a named step. Both vocabularies are flattened here so the task centre, the
-//! launch page and the modpack import do not each grow their own mapping.
+//! The one place domain progress becomes a task stage: `DownloadSnapshot` and
+//! `InstallProgress` both flatten to `TaskProgress`/`TaskStage` here, so no
+//! surface grows its own mapping.
 
 use download::progress::{DownloadPhase, DownloadSnapshot};
 use install::{InstallProgress, ModLoaderProgress};

@@ -3,10 +3,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The cross-surface notification centre, whose models live here so a producer
-//! can keep reporting after the user navigates away. A Slint model carries only
-//! plain data, so actions sit in an `id -> action` table beside it; everything
-//! except the [`NoticeSink`] runs on the event-loop thread, and the sink
-//! marshals from any thread.
+//! can keep reporting after the user navigates away. Actions sit in an
+//! `id -> action` table beside the Slint model; only the [`NoticeSink`] leaves
+//! the event-loop thread.
 
 use std::{
     cell::{Cell, RefCell},
@@ -79,12 +78,9 @@ impl NotificationController {
         }
     }
 
-    /// Takes the card's action without removing the card.
-    ///
-    /// The caller runs it first and removes the card afterwards, so the click
-    /// keeps the card visible while the action is working. Taking the action
-    /// separately also makes a re-entrant click a no-op instead of running it
-    /// twice.
+    /// Takes the card's action without removing the card: the caller runs it and
+    /// removes the card afterwards, so the card stays visible while the action
+    /// works, and a re-entrant click is a no-op.
     fn take_action(&self, id: i32) -> Option<PendingAction> {
         let actionable = self
             .notifications

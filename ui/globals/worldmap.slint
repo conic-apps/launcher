@@ -4,17 +4,13 @@
 
 // The world map's state.
 //
-// The *view transform* (scale, offset, the zoom animation, the pointer and the
-// gestures) is the component's own state, because that is what its bindings
-// read, while the *tiles* are a model here, filled in by
-// `app/src/ui/overlays/content/world_map/`.
+// The *view transform* (scale, offset, the gestures) is the component's own state,
+// because that is what its bindings read, while the *tiles* are a model here, filled
+// in by `app/src/ui/overlays/content/world_map/`.
 //
-// There is one tile cache — in Rust, keyed by tile, holding the finished
-// `Image` — and this model is a *view* of it: the tiles in the visible range,
-// and nothing else. A Slint `Image` is a reference-counted handle, cloning one
-// is free, there is no encoded form to keep a second copy of, and the renderer
-// drops its own GPU copy under memory pressure on its own, so neither an
-// encoded-bytes cache nor a separate decoded-bitmap cache is needed.
+// There is one tile cache, in Rust, and this model is a *view* of it: the tiles in
+// the visible range, and nothing else. A Slint `Image` is a reference-counted handle,
+// so cloning one is free and no second copy is needed.
 
 /// One rendered tile of the world, as `render_map` produced it.
 export struct WorldTile {

@@ -322,17 +322,10 @@ pub async fn download_concurrent(
 /// Drops the tasks whose file is already on disk with a matching checksum and
 /// returns what is left to download.
 ///
-/// Hashing every already-downloaded file is blocking disk and CPU work over
-/// hundreds of files, so the pass runs on the blocking pool instead of inline: a
-/// runtime worker cannot be parked for its whole duration, and it is the very
-/// thread that has to drive the downloads which follow. `rayon` still walks the
-/// files in parallel inside that task, because the pool hands us one thread and
-/// hashing is exactly the work that wants one per core.
-///
-/// A blocking task that has started cannot be cancelled, so aborting the
-/// download's `JoinHandle` during this phase detaches the pass rather than
-/// stopping it. That is harmless — it only reads files and bumps a counter — but
-/// a cancelled download can keep a core busy until the pass ends.
+/// The hashing runs on the blocking pool: it is disk and CPU work over hundreds of
+/// files, and it is the very thread that drives the downloads which follows it. A
+/// blocking task that has started cannot be cancelled, so aborting the download
+/// during this phase detaches the pass rather than stopping it.
 pub async fn filter_existing_and_verified_files(
     downloads: Vec<DownloadTask>,
     progress: &DownloadState,
@@ -439,17 +432,9 @@ fn speed_counter_loop(input: Arc<AtomicU64>, output: Arc<AtomicU64>, finished: A
     }
 }
 
-/// Records what the server answered before the body is consumed.
-///
-/// `error_for_status` collapses every non-2xx into one message and drops the two
-/// that mean something specific to a downloader: a 429 carries a `Retry-After` the
-/// caller should honour, and a 404 from a mirror is worth distinguishing from a
-/// 500 on the same host. Neither survives into `reqwest::Error`, and this crate's
-/// retry loop rotates mirrors on any failure — so without the status there is no
-/// way to tell a bad mirror from a bad URL.
-///
-/// Success is `debug`, not `warn`: a release log should not carry one line per
-/// successful fetch, and the retry loop's own `Download succeeded` covers it.
+/// Records what the server answered before the body is consumed. `error_for_status`
+/// collapses every non-2xx into one message and drops the two that matter to a
+/// downloader: a 429's `Retry-After` and a 404 from a mirror.
 fn log_response(url: &str, response: &reqwest::Response) {
     let status = response.status();
     if status.is_success() {

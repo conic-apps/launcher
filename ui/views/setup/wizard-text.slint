@@ -4,19 +4,16 @@
 
 import { Theme } from "../../theme.slint";
 
-// The two paragraphs every wizard screen opens with: a lavender 22px title with
-// an 8px bottom margin and a 13px, 1.5-line-height message.
+// The two paragraphs every wizard screen opens with: a lavender 22px title and a
+// 13px, 1.5-line-height message.
 //
-// `WizardMessage` inherits `Text` rather than wrapping one, so a screen can put
-// it straight into its own column: Slint measures a word-wrapping `Text` for
-// the width it is going to be given only while the chain from the layout that
-// owns that width is short enough to resolve (see the Yggdrasil paragraph in
-// `AccountAddYggdrasil`), and the wizard's `ScrollView` measures its content
-// height, so a message one layout level too deep would come out one line per
-// wrapped line short and take the bottom of the screen with it.
+// `WizardMessage` inherits `Text` rather than wrapping one, so a screen can put it
+// straight into its own column: Slint measures a word-wrapping `Text` correctly only
+// while the chain from the layout that owns the width is short enough, and the
+// wizard's `ScrollView` measures its content height.
 //
-// `WizardTitle` does add a level, which is safe: all six titles are single
-// lines in every catalog.
+// `WizardTitle` adds a level, which is safe: every title is a single line in every
+// catalogue.
 export component WizardTitle inherits VerticalLayout {
     in property <string> title;
 
@@ -52,10 +49,9 @@ export component WizardMessage inherits Text {
 
 // The warning paragraph: the same text inside a yellow hairline box.
 //
-// The padding is one pixel larger on every side than the text alone would need:
-// a Slint border is drawn *inside* the box and does not inset the children.
-// That is also why this is a `Rectangle` around a layout rather than a laid-out
-// box — only a graphical element carries a border and a fill.
+// The padding is one pixel larger on every side than the text needs: a Slint border
+// is drawn *inside* the box and does not inset the children. Only a graphical
+// element carries a border and a fill, which is why this is a `Rectangle`.
 export component WizardWarning inherits Rectangle {
     in property <string> message;
 

@@ -2,12 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The player: the audio graph (decoded track → resampler → gain → output) and
-//! the transport that drives it. Three threads, because the audio callback may
-//! not block: the callback copies from the ring buffer and scales, the worker
-//! decodes, resamples and seeks, and the UI thread only records intent. The
-//! resampler is required because a 44.1 kHz track on a 48 kHz device would
-//! otherwise play 9% fast.
+//! The player: the audio graph (decoded track → resampler → gain → output) and the
+//! transport that drives it. The audio callback may not block, so decoding,
+//! resampling and seeking happen elsewhere and the resampler matches the device's
+//! rate.
 
 use std::cell::RefCell;
 use std::collections::VecDeque;
@@ -630,8 +628,8 @@ impl Player {
     /// A saved track missing from the folder falls back to the first one,
     /// paused.
     pub fn restore_session(&self, enabled: bool, resume_on_startup: bool) {
-        // A missing music folder is ordinary and reads as an empty playlist; a
-        // folder that is there and unreadable is not, and used to be the same.
+        // A missing music folder is ordinary and reads as an empty playlist; one
+        // that exists and cannot be read is not, and is logged.
         let tracks = Arc::new(crate::list_music_files().unwrap_or_else(|error| {
             log::warn!(
                 "the music folder at {} could not be listed: {error}",
@@ -888,13 +886,9 @@ fn feed(
             return Fed::Interrupted(command);
         }
 
-        // A seek the UI asked for while this track was playing.
-        //
-        // The request is taken out into a local first, so the guard is released
-        // before `service_seek` runs: that takes the same lock again, and the
-        // mutex is not reentrant. Written as one `if let` over the locked
-        // expression the guard would live through the body and deadlock the
-        // worker on the first scrub of the session.
+        // A seek the UI asked for while this track was playing. The request is taken
+        // out into a local first, so the guard is released before `service_seek` takes
+        // the same lock again — a non-reentrant mutex would deadlock the worker.
         let request = lock(&graph.state).seek.take();
         if let Some((generation, seconds)) = request {
             service_seek(graph, track, resampler, generation, seconds);
@@ -1348,11 +1342,10 @@ mod tests {
 
     #[test]
     fn taking_the_session_releases_the_lock_before_the_next_take() {
-        // Read the state under the graph's lock, then take the same lock again
-        // straight afterwards. A `std::sync::Mutex` is not reentrant, so a guard
-        // that outlives its statement does not panic — it waits, forever, on a
-        // thread holding it. This hangs the test rather than failing it, which is
-        // the whole reason the reading and the writing are separate functions.
+        // Read the state under the graph's lock, then take the same lock again. A
+        // `std::sync::Mutex` is not reentrant, so a guard that outlives its statement
+        // waits forever on a thread holding it — hence the reading and the writing
+        // being separate functions.
         let (graph, path) = graph_with_a_track();
 
         let first = take_session(&graph).expect("a selected track has a position");
@@ -1409,13 +1402,10 @@ mod tests {
 
     #[test]
     fn the_analyser_is_fed_what_is_played_not_what_is_queued() {
-        // The worker fills the ring, and the ring holds up to `RING_SECONDS` of
-        // audio the device has not played yet. Taking the analyser's input from
-        // there made the spectrum describe the leading edge of the queue: the
-        // bars came out as a smooth ramp rather than a spectrum, and they
-        // arrived in the worker's refill steps — a burst every time the ring
-        // dropped to half, which is the visualiser appearing to update about
-        // once a second. Only the callback knows what is actually playing.
+        // The worker fills the ring, and the ring holds up to `RING_SECONDS` of audio
+        // the device has not played yet: an analyser input taken from there describes
+        // the leading edge of the queue, in the worker's refill steps. Only the
+        // callback knows what is actually playing.
         let graph = new_graph(48_000.0, 2);
         {
             let mut state = lock(&graph.state);

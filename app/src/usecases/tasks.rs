@@ -4,21 +4,12 @@
 
 //! The task centre: the application's scheduler of long-running work.
 //!
-//! This is a use case, not a UI concern. It owns the ids, the ordering, the
-//! cancellation policy and the completion notices; the Slint frontend only
-//! projects its events into `TaskState`. Producers keep reporting through their
-//! own `Sink`, and the app-side use case adapts those reports to a [`TaskHandle`].
-//!
-//! A task is removed when it ends. The centre never keeps finished work: a
-//! completed task becomes a notification, which is the existing record of
-//! something that has already happened.
-//!
-//! `submit` hands the centre both the description and the work. Nothing runs
-//! until the centre admits it: a task waits while its lane is full
-//! ([`TaskKind::lane`]), which is what keeps one game install from racing
-//! another. A launch is not scheduled here at all — [`TaskCenter::reserve_exclusive`]
-//! lets it wait for the centre to go idle and then hold the exclusive lane, so
-//! it has a screen and a cancel button rather than a card in the queue.
+//! It owns the ids, the ordering, the cancellation policy and the completion
+//! notices; a task is removed when it ends, because a finished task becomes a
+//! notification. `submit` hands over the description and the work, and nothing
+//! runs until the centre admits it — a task waits while its lane is full. A
+//! launch is not scheduled here: [`TaskCenter::reserve_exclusive`] lets it wait
+//! for the centre to go idle and then hold the exclusive lane itself.
 
 use std::{
     collections::{HashMap, VecDeque},
@@ -37,18 +28,12 @@ use shared::{
 /// How long a task may run before stopping it asks the user first.
 pub(crate) const CANCEL_CONFIRM_AFTER: Duration = Duration::from_secs(10);
 
-/// Builds the click action a completed task's notice should carry.
-///
-/// The UI layer supplies this because navigation is a frontend concern; the
-/// task centre only knows the task's target.
+/// Builds the click action a completed task's notice carries; the UI layer
+/// supplies it, because navigation is a frontend concern.
 pub(crate) type TaskNoticeAction = Arc<dyn Fn(&TaskTarget) -> Option<NoticeAction> + Send + Sync>;
 
-/// What a producer hands over for the scheduler to start later.
-///
-/// Called once, when the task is admitted; the handle it receives is the same
-/// one the producer would otherwise have taken from `begin`. `FnOnce` because
-/// some work owns its inputs outright — a resolved modpack plan is consumed by
-/// the install that runs it.
+/// What a producer hands over for the scheduler to start later, called once on
+/// admission with the handle it would otherwise have taken from `begin`.
 pub(crate) type TaskWork = Box<dyn FnOnce(TaskHandle) + Send + Sync + 'static>;
 
 /// What the frontend should do with a cancel request.
@@ -94,9 +79,8 @@ pub(crate) struct TaskCenter {
 
 /// A producer's handle to one task.
 ///
-/// Cloneable and `Send`: a use case can keep one in each branch of its work.
-/// Finishing is idempotent, and an event for an id that is no longer active is
-/// ignored, which is what makes a late report after cancellation harmless.
+/// Cloneable and `Send`; finishing is idempotent, and an event for an id that is
+/// no longer active is ignored, so a late report after cancellation is harmless.
 #[derive(Clone)]
 pub(crate) struct TaskHandle {
     id: TaskId,
@@ -346,11 +330,8 @@ impl TaskCenter {
         self.remove(id, outcome);
     }
 
-    /// Admits every queued task that may start, in submission order.
-    ///
-    /// The work is called with no lock held: a producer's closure spawns its
-    /// task and immediately attaches its cancel hook, which takes the lock
-    /// again.
+    /// Admits every queued task that may start, in submission order; the work is
+    /// called with no lock held.
     fn drain(self: &Arc<Self>) {
         loop {
             let Some((id, snapshot, work)) = self.admit_next() else {
@@ -364,10 +345,9 @@ impl TaskCenter {
         }
     }
 
-    /// Moves the first runnable queued task to `Running`.
-    ///
-    /// The queue is scanned rather than read from the front: a task waiting for
-    /// the exclusive lane must not hold up a parallel download queued behind it.
+    /// Moves the first runnable queued task to `Running`, scanning the queue
+    /// rather than reading the front so a task waiting for the exclusive lane
+    /// does not hold up a download queued behind it.
     fn admit_next(&self) -> Option<(TaskId, TaskSnapshot, TaskWork)> {
         let mut inner = self.lock();
         let index = {

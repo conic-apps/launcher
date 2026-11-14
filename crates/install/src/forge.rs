@@ -287,15 +287,10 @@ async fn try_conicmc_bootstrapper(
     result
 }
 
-/// Streams the installer's stdout and stderr, reporting every line but the
-/// `true` handshake, then waits for the process to exit.
-///
-/// Driven by the async [`Command`] because the install can run for minutes; a
-/// blocking `read_line` would park a runtime worker for the whole install.
-///
-/// Both streams are drained concurrently: draining one to EOF first blocks once
-/// the other pipe fills, and a failing installer usually explains itself on
-/// stderr.
+/// Streams the installer's stdout and stderr, reporting every line but the `true`
+/// handshake, then waits for the process to exit. Driven by the async [`Command`]
+/// because the install can run for minutes, and both streams are drained
+/// concurrently: draining one to EOF first blocks once the other pipe fills.
 async fn wait_child(mut child: Child, reporter: &ModLoaderReporter) -> Result<()> {
     let stdout = child.stdout.take().ok_or(Error::ForgeInstallerFailed)?;
     let stderr = child.stderr.take();

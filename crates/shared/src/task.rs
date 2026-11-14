@@ -2,13 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! UI-neutral vocabulary for the task centre: long-running, cancellable work
-//! such as a content download or a game install.
-//!
-//! The centre schedules that work; this module carries the words it schedules
-//! with. A launch is deliberately *not* one of them: it is a screen with its own
-//! cancel button, so it waits for the centre to go idle and reserves the
-//! exclusive lane instead of joining the queue.
+//! UI-neutral vocabulary for the task centre: long-running, cancellable work such
+//! as a content download or a game install. A launch is deliberately *not* one of
+//! them: it is a screen with its own cancel button, so it waits for the centre to
+//! go idle and reserves the exclusive lane instead of joining the queue.
 
 use crate::Sink;
 

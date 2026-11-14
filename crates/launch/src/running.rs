@@ -2,18 +2,13 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The registry of launched Minecraft sessions: each is recorded, reaped when
-//! its watcher sees EOF, and exposed for termination plus a [`SessionEvent`]
-//! stream through [`subscribe`]. An instance may have several live processes, so
-//! each id maps to a list and a per-launch token identifies which entry a watcher
-//! must drop (a pid can be reused).
+//! The registry of launched Minecraft sessions: each is recorded, reaped when its
+//! watcher sees EOF, and exposed for termination plus a [`SessionEvent`] stream
+//! through [`subscribe`]. One instance may have several live processes.
 //!
-//! The tracked pid is not the game on every platform: the Unix launch script
-//! `exec`s java, so the pid is the game itself, while on Windows the pid is the
-//! `cmd.exe` running the launch `.bat` and the game is its child — see
-//! `kill_tree`. Ending only the tracked process there would not merely leave the
-//! game running: the child holds the output pipes, so the watcher would never see
-//! EOF and the session would stay in the registry for good.
+//! The tracked pid is not the game on every platform: Unix `exec`s java, so the pid
+//! is the game, while on Windows it is the `cmd.exe` running the launch `.bat` and
+//! the game is its child — see `kill_tree`.
 
 use std::{
     collections::{HashMap, VecDeque},
@@ -34,8 +29,7 @@ use instance::Instance;
 
 use crate::crash::{CrashReport, LaunchInfo};
 
-/// Every session currently running, keyed by instance id. An instance can have
-/// more than one live process, so each key holds a list.
+/// Every session currently running, keyed by instance id; each key holds a list.
 static RUNNING: LazyLock<Mutex<HashMap<String, Vec<Session>>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
@@ -106,20 +100,15 @@ pub struct RunningInstance {
     pub pid: u32,
 }
 
-/// Installs the app's subscriber and returns what is running right now.
-///
-/// The snapshot is what lets the app seed its view without a race: everything
-/// live at subscription time is in the list, and every later change is a
-/// [`SessionEvent`]. A session that slips between the install and the snapshot
-/// can only make the app set the same entry twice, which is harmless.
+/// Installs the app's subscriber and returns what is running right now, so a view
+/// can seed itself without a race.
 pub fn subscribe(sink: SessionSink) -> Vec<RunningInstance> {
     *SUBSCRIBER.lock().unwrap_or_else(PoisonError::into_inner) = Some(sink);
     running_instances()
 }
 
-/// A snapshot of every running session, ordered by name and then process id.
-///
-/// An instance launched twice appears twice, once per process.
+/// A snapshot of every running session, ordered by name and then process id. An
+/// instance launched twice appears twice.
 pub fn running_instances() -> Vec<RunningInstance> {
     let mut running: Vec<RunningInstance> = registry()
         .values()
@@ -145,13 +134,9 @@ pub fn is_running(id: &str) -> bool {
         .is_some_and(|sessions| !sessions.is_empty())
 }
 
-/// Asks the session with process id `pid` to stop.
-///
-/// Returns whether it was found. The stop takes the session's whole process tree
-/// with it (see `signal`), because the game is not always the tracked process.
-/// The watcher observes the exit, reaps the process and removes its entry, so the
-/// session disappears from [`running_instances`] on its own once the processes
-/// are really gone.
+/// Asks the session with process id `pid` to stop, process tree included. Returns
+/// whether it was found; the session leaves [`running_instances`] on its own once
+/// the processes are gone.
 pub fn terminate(pid: u32) -> bool {
     let found = registry()
         .values()
@@ -174,12 +159,8 @@ pub fn terminate(pid: u32) -> bool {
     }
 }
 
-/// Asks every process of instance `id` to stop, however many it launched.
-///
-/// Returns whether any session was found. Each stop takes a whole process tree
-/// with it (see `signal`), and each watcher observes its exit, reaps its process
-/// and removes its entry, so the sessions disappear from [`running_instances`] on
-/// their own once the processes are really gone.
+/// Asks every process of instance `id` to stop, however many it launched. Returns
+/// whether any session was found.
 pub fn terminate_all(id: &str) -> bool {
     let sessions: Vec<(u32, Arc<Mutex<Child>>, Arc<AtomicBool>)> = match registry().get(id) {
         Some(sessions) => sessions
@@ -205,15 +186,8 @@ pub fn terminate_all(id: &str) -> bool {
 }
 
 /// Stops one session, including the processes under it where the platform needs
-/// that (see `kill_tree`).
-///
-/// A stop that finds nothing to stop is not an error: a process that exited
-/// between the lookup and this call is the common case, and the watcher clears the
-/// entry either way. That is decided here, from the process itself, rather than
-/// read out of a failed kill — a `Child` whose exit was already collected refuses
-/// to be killed, which would report a miss that never happened. The lock covers
-/// only that read, never the platform call, so the watcher keeps polling the exit
-/// in the meantime.
+/// that (see `kill_tree`). A stop that finds nothing to stop is not an error: a
+/// process that exited between the lookup and this call is the common case.
 fn signal(pid: u32, process: &Arc<Mutex<Child>>, what: &str) {
     let polled = process
         .lock()
@@ -244,19 +218,12 @@ fn signal(pid: u32, process: &Arc<Mutex<Child>>, what: &str) {
     }
 }
 
-/// Kills `pid` and every process it started, and reports whether that left
-/// nothing for the caller to do.
+/// Kills `pid` and every process it started.
 ///
-/// The launch `.bat` makes the game a child of the tracked `cmd.exe`, and a
-/// single-process kill orphans children, so the game would survive a stop and go
-/// on holding the output pipes — the reason a session stopped that way never
-/// leaves the registry. `taskkill /T` walks the parent chain from `pid` instead;
-/// a job object per session would be the alternative and is not worth a handle to
-/// keep alive for the one case this covers.
-///
-/// Known gap: if `cmd.exe` is gone before the stop, the chain it led is gone with
-/// it and nothing is left to walk. Wrapper processes that detach themselves
-/// (`start`) are outside the chain for the same reason.
+/// `taskkill /T` walks the parent chain from `pid`; a job object per session would
+/// be the alternative and is not worth a handle to keep alive. Known gap: a
+/// `cmd.exe` that is already gone leaves no chain to walk, and a wrapper that
+/// detaches itself (`start`) is outside it.
 #[cfg(target_os = "windows")]
 fn kill_tree(pid: u32, what: &str) -> bool {
     use std::{os::windows::process::CommandExt, process::Stdio};
@@ -290,17 +257,13 @@ fn kill_tree(pid: u32, what: &str) -> bool {
 }
 
 /// Unix has nothing between the launcher and the game to kill: the launch script
-/// `exec`s java, so the tracked pid is the game and signalling it is the whole
-/// stop.
+/// `exec`s java, so the tracked pid is the game and signalling it is the whole stop.
 #[cfg(not(target_os = "windows"))]
 fn kill_tree(_pid: u32, _what: &str) -> bool {
     false
 }
 
 /// Terminates every session and waits for its watcher, for shutdown.
-///
-/// Killing before joining avoids waiting on a process that is still running;
-/// polling for the exit in `wait` keeps the lock free, so the kill can land.
 pub fn shutdown() {
     let sessions: Vec<Session> = registry()
         .drain()
@@ -327,19 +290,10 @@ pub fn shutdown() {
 
 /// Registers a freshly spawned process and starts watching its output.
 ///
-/// `process` is the spawned child; its stdout and stderr pipes are taken here,
-/// so the process must have been spawned with both piped. `on_line` sees every
-/// trimmed stdout line while the game runs. This module only decides *when* the
-/// process is gone and *how* it went; what the lines mean stays in the launch
-/// pipeline.
-///
-/// It is `pub(crate)`: only the launch pipeline spawns processes to track.
-/// The launched process's own exit, for a launch that is still waiting for its
-/// first startup marker.
-///
-/// The session watcher reports the exit only after both output pipes reach EOF;
-/// this asks the process itself. The status it collects stays cached in the
-/// `Child`, so the watcher's own wait still reads it.
+/// `process` must have been spawned with both pipes piped: they are taken here,
+/// and `on_line` sees every trimmed stdout line. What the lines mean stays in the
+/// launch pipeline; this module only decides when the process is gone and how it
+/// went.
 pub struct ExitWatch {
     process: Arc<Mutex<Child>>,
 }
@@ -431,15 +385,10 @@ pub(crate) fn register(
     }
 }
 
-/// Reads the process's output to the end, reaps it, classifies the exit,
-/// collects any crash and forgets the session.
-///
-/// stdout and stderr are pumped in separate threads: reading them in sequence
-/// can deadlock when the game fills one pipe while we block on the other, which
-/// a mod that logs heavily to stderr does easily (this is what HMCL's
-/// `StreamPump` pair and `ExitWaiter` do). Both threads end at EOF, once the
-/// `exec`ed java behind the script has closed its streams, and only then is the
-/// exit reaped so the captured console is complete.
+/// Reads the process's output to the end, reaps it, classifies the exit, collects
+/// any crash and forgets the session. stdout and stderr are pumped in separate
+/// threads: reading them in sequence can deadlock when the game fills one pipe
+/// while we block on the other.
 fn watch(
     id: String,
     token: u64,
@@ -521,12 +470,8 @@ fn watch(
 }
 
 /// Reads `reader` a line at a time, keeping each in `console` and handing it to
-/// `on_line`.
-///
-/// Lines are split on `\n` and decoded lossily, so a stray byte a mod wrote to
-/// the console cannot stop the capture. The console buffer is bounded by
-/// [`CONSOLE_LINE_LIMIT`] so a runaway logger cannot grow it without limit; a
-/// crash's evidence is near the end, so dropping the oldest lines is safe.
+/// `on_line`. Decoding is lossy, so a stray byte a mod wrote cannot stop the
+/// capture.
 fn pump(reader: impl Read, console: &Arc<Mutex<VecDeque<String>>>, mut on_line: impl FnMut(&str)) {
     let mut reader = BufReader::new(reader);
     let mut buffer = Vec::new();

@@ -2,24 +2,18 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! A monotonic guard for one logical run or request.
-//!
-//! This is a use-case concern, not a Slint one: a run is superseded when a newer
-//! one starts, and a result that lands afterwards must be dropped. The frontend
-//! checks the [`Token`] on the event loop; the use case only issues and
-//! invalidates it, so nothing here mentions Slint.
+//! A monotonic guard for one logical run or request: the use case issues a
+//! [`Token`] and invalidates it, the frontend checks it on the event loop before
+//! applying the result.
 
 use std::sync::{
     Arc,
     atomic::{AtomicU64, Ordering},
 };
 
-/// One logical request's claim on the interface.
-///
-/// A token is issued by a [`Gate`] and checked before its result is applied.
-/// When the gate issues a newer token — or is invalidated — every older token
-/// stops being current, so a slow answer that comes back after a newer request
-/// cannot overwrite it.
+/// One logical request's claim on the interface, checked before its result is
+/// applied: a newer token, or an invalidated gate, makes every older token stop
+/// being current.
 #[derive(Clone)]
 pub(crate) struct Token {
     generation: Arc<AtomicU64>,

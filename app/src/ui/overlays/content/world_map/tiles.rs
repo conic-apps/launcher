@@ -119,16 +119,10 @@ pub(crate) fn request_tiles(ui: &App, x0: i32, x1: i32, z0: i32, z1: i32) {
     }
 }
 
-/// Lets go of cached tiles once the cache is over its cap, oldest first.
-///
-/// The order is the point. Evicting arbitrary off-screen keys evicts the tiles
-/// behind the user — exactly the ones off screen — so a pan back re-renders
-/// them, and the cache looks like it does not work.
-///
-/// [`MapState::touched`] is a counter rather than a clock so the answer does not
-/// depend on two tiles having been visible for different lengths of time — it is
-/// "which range was asked for last", which is what decides what the user is
-/// looking at now and what they are about to pan back to.
+/// Lets go of cached tiles once the cache is over its cap, oldest-touched first.
+/// Evicting arbitrary off-screen keys would evict the tiles behind the user, so a
+/// pan back would re-render them. `touched` is a counter rather than a clock, because
+/// what matters is which range was asked for last.
 pub(crate) fn prune_cache(map: &mut MapState) {
     if map.cache.len() <= MAX_CACHED_TILES {
         return;

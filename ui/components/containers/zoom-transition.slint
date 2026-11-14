@@ -5,19 +5,15 @@
 // The zoom-in / zoom-out transition, used by the screens that swap inside the
 // create-instance dialog and by the multiplayer manager.
 //
-// Each direction has its two halves:
-//
-//   zoom-in   leave  scale 1 → 0.9,  80ms  `cubic-bezier(0.65, 0, 1, 0.42)`
-//             enter  scale 1.03 → 1, 250ms `cubic-bezier(0, 0.65, 0.26, 1)`
-//   zoom-out  leave  scale 1 → 1.03, 80ms
-//             enter  scale 0.9 → 1,  250ms
+//   zoom-in   leave  scale 1 → 0.9,  80ms;  enter scale 1.03 → 1, 250ms
+//   zoom-out  leave  scale 1 → 1.03, 80ms;  enter scale 0.9 → 1,  250ms
 //
 // Both halves fade to / from opacity 0 over the same time. `phase` picks which
 // half an element is in, so a screen plays it by passing the phase down.
 //
-// The element is a VerticalLayout so a screen built on it is sized by its
-// content: the dialog's scroll area can then follow the mounted screen without
-// anyone measuring it.
+// The element is a `VerticalLayout` so a screen built on it is sized by its
+// content, and the dialog's scroll area follows the mounted screen without
+// measuring it.
 export component ZoomTransition inherits VerticalLayout {
     /// "enter" (waiting at the start of the enter half), "shown" (at rest) or
     /// "leave" (playing the leave half).

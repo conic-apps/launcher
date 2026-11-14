@@ -11,15 +11,12 @@ import { Progress } from "../components/controls/progress.slint";
 // The launch screen: avatar, instance name and version, progress panel, account
 // summary and a cancel button, in a centred column.
 //
-// The entrance is two beats. From the game screen the avatar flies in from its
-// footer slot, shrinking; from anywhere else it grows in at the centre. After a
-// 0.17s hold the hero rises into the column's avatar slot while the other blocks
-// rise or sink and fade in.
+// The entrance is two beats: from the game screen the avatar flies in from its footer
+// slot, from anywhere else it grows in at the centre; after a 0.17s hold the hero
+// rises into the column's avatar slot while the other blocks fade in.
 //
-// Layouts own their children's `x`/`y`, so every animated element sits in a slot
-// that keeps its layout box and carries the offset on a wrapper inside. The
-// avatar is a single hero pinned to the page (outside the column) because it has
-// to travel from the footer; it lands using the empty slot's `absolute-position`.
+// Layouts own their children's `x`/`y`, so every animated element sits in a slot that
+// keeps its layout box and carries the offset on a wrapper inside.
 export component LaunchView inherits Rectangle {
     width: 100%;
     height: 100%;

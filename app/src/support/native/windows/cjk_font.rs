@@ -2,32 +2,17 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Names a real CJK family for the Han script, so Chinese text does not depend
-//! on the OS picking a sensible fallback.
+//! Names a real CJK family for the Han script, so Chinese text does not depend on
+//! the OS picking a sensible fallback — on Windows that fallback is a Japanese
+//! font with gaps for some of the characters the `zh_CN` catalog uses.
 //!
-//! `ui/theme.slint` embeds only "Comfortaa Nunito" — Comfortaa's Latin with the
-//! Nunito digits merged in — and Slint's built-in fallback chain behind
-//! `default-font-family` is `[SansSerif, SystemUi]`. fontique maps those two
-//! generic families to hard-coded names, and on Windows they are *Arial* and
-//! *Segoe UI* — neither of which has a single Han glyph. Chinese therefore
-//! reaches the OS-level script fallback, where fontique asks DirectWrite for a
-//! font covering one sample character and uses the answer for the whole script.
-//!
-//! On Windows that answer is *Yu Gothic UI*, a **Japanese** font, and it has no
-//! glyph for some of the CJK characters the `zh_CN` catalog uses
-//! (动, 戏, 图, 环, 级, 组, 统 …), so those render blank — typically in the middle
-//! of otherwise fine text, which is why it reads as "some characters are
-//! missing". macOS (CoreText) and Linux (fontconfig) answer with a
-//! script-appropriate CJK font and were never affected.
-//!
-//! Registering the families we want for `Hani`/`Hant` makes the choice explicit
-//! instead of leaving it to the OS. Replaces rather than appends to the OS
-//! answer, so a single sentence never mixes two different Han fonts.
+//! Replaces rather than appends to the OS answer, so a sentence never mixes two
+//! Han fonts.
 
 use slint::fontique_011::fontique::{Collection, FallbackKey, FamilyId, Script};
 
-/// Simplified Chinese families, best first. The first one installed wins;
-/// the tail keeps the result sane on a Windows install without YaHei.
+/// Simplified Chinese families, best first; the first installed one wins. The
+/// tail keeps the result sane on a Windows install without YaHei.
 const SIMPLIFIED: &[&str] = &[
     "Microsoft YaHei UI",
     "Microsoft YaHei",
@@ -59,10 +44,9 @@ pub(crate) fn apply(locale: &str) {
     let mut collection = slint::fontique_011::shared_collection();
 
     // zh_TW is the only bundled locale that wants Traditional glyph forms.
-    // Everything else — including `en_US` and the language picker, which
-    // hardcodes 简体中文/繁體中文 regardless of the UI language — is served
-    // by the Simplified list, because a missing glyph is a far worse failure
-    // than a shared ideograph drawn in its mainland form.
+    // Everything else — including the language picker, which hardcodes
+    // 简体中文/繁體中文 — is served by the Simplified list: a missing glyph is a far
+    // worse failure than a shared ideograph drawn in its mainland form.
     let hani = if locale == "zh_TW" {
         TRADITIONAL
     } else {
@@ -76,9 +60,8 @@ pub(crate) fn apply(locale: &str) {
 }
 
 fn set_fallback(collection: &mut Collection, script: Script, names: &[&str]) {
-    // The *resolved* families, not the requested names: an absent family is dropped
-    // here, so logging `names` would claim a font was set when possibly none was —
-    // the realistic case on a stripped Windows image, where most are missing.
+    // The *resolved* families, not the requested names: a missing family is
+    // dropped, so logging `names` could claim a font that is not there.
     let resolved: Vec<FamilyId> = names
         .iter()
         .filter_map(|name| {

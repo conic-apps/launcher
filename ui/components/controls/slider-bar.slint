@@ -7,17 +7,13 @@ import { FocusManager } from "../../globals/focus.slint";
 import { ScrollInput } from "../../globals/scroll.slint";
 import { TooltipArea } from "./tooltip-area.slint";
 
-// Range slider: a 3.5px track, lavender fill and a 12px thumb that scales on
-// hover and while dragging. The value shows in the generic pointer tooltip.
+// Range slider: a 3.5px track, lavender fill and a 12px thumb that scales on hover
+// and while dragging. The value shows in the generic pointer tooltip.
 //
-// A press jumps the value to the pointer and moves follow while held. Moves are
-// read from `TouchArea.moved` because Slint reports a move with
-// `PointerEventButton.other`, never the held button, so a `button == left` test
-// would only match the press. The drawn position slides to the snapped step.
-//
-// `moved` fires while the touch area holds the grab, which is not enough to say
-// whose drag it is: `dragging` is set only by a press that landed on the
-// control, so a press elsewhere cannot drive this slider.
+// A press jumps the value to the pointer and moves follow while held. Moves are read
+// from `TouchArea.moved`, which fires for any move the area grabbed: `dragging` is
+// set only by a press that landed on the control, so a press elsewhere cannot drive
+// this slider.
 //
 // `slider-enabled` dims the slider and disables its `TouchArea`.
 export component SliderBar inherits Rectangle {

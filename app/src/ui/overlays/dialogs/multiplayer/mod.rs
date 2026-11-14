@@ -3,11 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The multiplayer dialog: drives [`multiplayer`] and pushes the session into
-//! the `MultiplayerState` global.
-//!
-//! The poll thread reports through a sink that marshals each notice onto the
-//! Slint event loop. A `Rc<Controller>` cannot cross into a task, so the
-//! event-loop half reaches it through the `CONTROLLER` thread-local.
+//! the `MultiplayerState` global. Its poll thread reports through a sink that
+//! marshals each notice onto the Slint event loop.
 
 use std::{
     cell::{Cell, RefCell},

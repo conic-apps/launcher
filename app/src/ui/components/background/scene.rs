@@ -5,9 +5,6 @@
 //! The 3D background world: terrain, trees and face culling. It emits the face
 //! list plus the GPU vertex and index buffers, rebuilt when the camera crosses a
 //! block or the aspect changes.
-//!
-//! The ring height cache is load-bearing: it maps z's 128 apart to the same slot,
-//! so the row the camera is about to reach is invalidated on every rebuild.
 
 use std::collections::HashSet;
 

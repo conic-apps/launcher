@@ -2,15 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Single-instance guard on Linux, over the session bus.
-//!
-//! The primary instance owns the well-known name
-//! `app.conicmc.launcher.slint.SingleInstance` and serves
-//! `/app/conicmc/launcher/slint/SingleInstance`; a later launch finds the name
-//! taken, calls the primary's `ExecuteCallback` with its own command line and
-//! quits. The bus is the only mechanism that carries a later launch's
-//! arguments: it is the one thing both processes can agree on without a shared
-//! file.
+//! Single-instance guard on Linux, over the session bus. The primary instance owns
+//! the well-known name `app.conicmc.launcher.slint.SingleInstance` and serves its
+//! object path; a later launch finds the name taken, calls the primary's
+//! `ExecuteCallback` with its own command line and quits.
 
 use std::sync::mpsc::Sender;
 

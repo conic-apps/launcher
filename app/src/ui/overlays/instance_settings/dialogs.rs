@@ -51,18 +51,10 @@ pub(crate) fn inherit_launch_config(launcher: &LaunchConfig) -> InstanceLaunchCo
 /// card's left.
 const BACKGROUND_LEFT_FADE: f32 = 0.5;
 
-/// A picture's pixels, decoded and with its left edge faded out, and its size.
-///
-/// The pixels rather than an [`Image`] because the instance list decodes on the
-/// runtime and can only build the `Image` on the event loop, where the model it
-/// feeds lives; the settings overlay decodes on the thread it is opened from and
-/// builds it there ([`load_background`]).
-///
-/// The left edge is faded to transparent **in the pixels**: Slint has no masks,
-/// and the flat gradient overlay the cards used to draw could only *replace* the
-/// picture with a solid colour. That reads as a stray colour band where the card
-/// is translucent over the game background (the list cards), so the picture has
-/// to dissolve into the card itself instead.
+/// A picture's pixels, decoded and with its left edge faded out, and its size. The
+/// pixels rather than an [`Image`], because the two callers decode on different
+/// threads. The left edge is faded in the pixels: Slint has no masks, and a
+/// gradient overlay could only replace the picture with a solid colour.
 pub(crate) fn decode_background(path: &std::path::Path) -> Option<(u32, u32, Vec<u8>)> {
     let bytes = std::fs::read(path).ok()?;
     let mut rgba = image::load_from_memory(&bytes).ok()?.to_rgba8();
@@ -78,15 +70,10 @@ pub(crate) fn decode_background(path: &std::path::Path) -> Option<(u32, u32, Vec
     Some((width, height, rgba.into_raw()))
 }
 
-/// The instance's background picture, or an empty image when it has none.
-///
-/// Slint reads a runtime path only through Rust, so the file is decoded here
-/// with the app's own `image` dependency — the same `image::load_from_memory`
-/// the window background and the content overlays use, which sniffs the format
-/// from the bytes rather than the file name (the instance's copy is extensionless:
-/// `add_background_image` writes it to a plain `background`).
-///
-/// An image that could not be decoded reports a zero width.
+/// The instance's background picture, or an empty image when it has none. Slint
+/// reads a runtime path only through Rust, so the file is decoded here with the
+/// app's own `image` dependency, which sniffs the format from the bytes (the copy
+/// is extensionless). An image that cannot be decoded reports a zero width.
 pub(crate) fn load_background(instance: &Instance) -> Image {
     if !instance.has_background {
         return Image::default();

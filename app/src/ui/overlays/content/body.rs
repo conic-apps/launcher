@@ -9,12 +9,9 @@ use futures::StreamExt;
 use super::*;
 
 thread_local! {
-    /// The Markdown engine behind the detail panel's body.
-    ///
-    /// A `thread_local` for the same reason `CONTROLLER` is one: a
-    /// `fontique::Collection` is not `Send`, and the engine holds one. It is also
-    /// worth keeping between panels, because the collection is a font cache and
-    /// throwing it away per panel would re-read every font file on every open.
+    /// The Markdown engine behind the detail panel's body. A `thread_local` like
+    /// `CONTROLLER`, because a `fontique::Collection` is not `Send`; kept between
+    /// panels because the collection is a font cache.
     static BODY: RefCell<Option<BodyRenderer>> = const { RefCell::new(None) };
 }
 
@@ -23,13 +20,10 @@ thread_local! {
 /// grids'.
 const BODY_IMAGE_CONCURRENCY: usize = 8;
 
-/// How many images one document is allowed to have fetched.
-///
-/// The images are written by whoever published the mod, and a CurseForge
-/// description in particular is arbitrary HTML — which is also how tracking
-/// pixels arrive. A cap means such a document costs a fixed number of requests
-/// rather than however many it cares to name. Every README in normal use has
-/// well under this.
+/// How many images one document is allowed to have fetched. The images come from
+/// whoever published the mod — a CurseForge description is arbitrary HTML,
+/// tracking pixels included — so a cap keeps a document to a fixed number of
+/// requests.
 const BODY_IMAGE_LIMIT: usize = 32;
 
 pub(crate) struct BodyRenderer {
@@ -38,16 +32,10 @@ pub(crate) struct BodyRenderer {
     /// width — which a `changed width` binding produces while nothing has moved —
     /// does not re-measure the document.
     width: f32,
-    /// The runs, kept rather than rebuilt per layout for the reason the grids
-    /// keep theirs (`set_cards`): a document is re-laid out on every pixel of a
-    /// window drag, and replacing the model would destroy and re-create every
-    /// item element each time.
-    ///
-    /// A `VecModel` per run rather than one for the document, because a run is
-    /// what a view stacks and what a `<details>` moves: the items have to be
-    /// nested inside it or the view cannot put them back where they belong. The
-    /// count is the number of `<details>` in the document plus one, so these are
-    /// few.
+    /// The runs, kept rather than rebuilt on every layout: a document is re-laid
+    /// out on every pixel of a window drag, and replacing the model would re-create
+    /// every item element. One `VecModel` per run, because a run is what a view
+    /// stacks and what a `<details>` moves.
     chunks: Rc<VecModel<MdChunk>>,
     run_items: Vec<Rc<VecModel<MdItem>>>,
     run_images: Vec<Rc<VecModel<MarkdownImage>>>,
@@ -55,13 +43,9 @@ pub(crate) struct BodyRenderer {
     /// same reason: a layout replaces it wholesale, and a toggle writes the one
     /// row that changed.
     section_open: Rc<VecModel<bool>>,
-    /// Which sections the reader has opened, by section id.
-    ///
-    /// Kept here rather than left to the view because a width change re-lays the
-    /// document out, and that rebuilds the sections: state the view held in a
-    /// property would be gone the first time the window moved a pixel, and a
-    /// `<details>` that collapsed itself on a window drag is worse than one that
-    /// cannot collapse at all.
+    /// Which sections the reader has opened, by section id. Kept here rather than
+    /// left to the view because a width change re-lays the document out and
+    /// rebuilds the sections.
     open_sections: Vec<(u32, bool)>,
     /// Whether the models have been handed to the global yet. They are created
     /// with the engine and outlive a `clear`, so a panel that is reopened finds
@@ -70,13 +54,9 @@ pub(crate) struct BodyRenderer {
 }
 
 impl BodyRenderer {
-    /// An engine for a test: the platform's fonts rather than Slint's.
-    ///
-    /// `shared_collection()` initialises the window backend, which has to happen
-    /// once and on the main thread, so a test that built one would fail for a
-    /// reason that has nothing to do with the body. These tests are about the
-    /// sequencing, and the family does not change whether a document is still in
-    /// the engine when the width arrives.
+    /// An engine for a test: the platform's fonts rather than Slint's, because
+    /// `shared_collection()` initialises the window backend, which these tests do
+    /// not need.
     #[cfg(test)]
     fn for_test() -> Self {
         let mut renderer = crate::ui::components::markdown::Renderer::with_collection(
@@ -98,14 +78,9 @@ impl BodyRenderer {
         }
     }
 
-    /// A new engine, with the body's Markdown style.
-    ///
-    /// The collection is Slint's own, and that is not a convenience: the engine
-    /// measures with it and the panel draws with it, so two collections would be
-    /// two sets of advances and every line break would be wrong. The families are
-    /// named because the same has to be true of the family — the engine shapes
-    /// with `Comfortaa Nunito` and the view draws with `Theme.font-family`, which
-    /// is that face.
+    /// A new engine, with the body's Markdown style, on Slint's own font
+    /// collection: the engine measures with it and the panel draws with it, so two
+    /// collections would be two sets of advances and every line break wrong.
     fn new() -> Self {
         let mut renderer = crate::ui::components::markdown::Renderer::with_collection(
             slint::fontique_011::shared_collection(),
@@ -135,13 +110,9 @@ thread_local! {
     static MONO_FAMILY: RefCell<String> = const { RefCell::new(String::new()) };
 }
 
-/// The monospace family code is drawn in: the embedded Fira Code.
-///
-/// Slint's `font-family` is not CSS: it takes a family *name*, and `monospace`
-/// means nothing to it, so a view given `"monospace"` falls back to the window's
-/// default face. Naming the embedded family directly keeps the engine and the
-/// view in the same face. If it is not registered, a short platform preference
-/// list is tried and fontique's generic monospace is the fallback.
+/// The monospace family code is drawn in: the embedded Fira Code. Slint's
+/// `font-family` takes a family *name* — `monospace` means nothing to it — so
+/// naming the embedded family keeps the engine and the view in the same face.
 pub(crate) fn monospace_family() -> String {
     use slint::fontique_011::fontique::GenericFamily;
     let mut collection = slint::fontique_011::shared_collection();
@@ -191,12 +162,8 @@ pub(crate) fn body_mono_family() -> String {
     MONO_FAMILY.with(|family| family.borrow().clone())
 }
 
-/// The body face, which has to be the one `Theme.font-family` names.
-///
-/// It is a constant (`theme.slint`) rather than a global Rust can read, and a
-/// second place to change it is a second place to get wrong: a body laid out
-/// with one face and drawn with another has every line the wrong length. A
-/// `Theme` token that moved would have to move here too.
+/// The body face, which has to be the one `Theme.font-family` names: a body laid
+/// out with one face and drawn with another has every line the wrong length.
 pub(crate) fn theme_font_family() -> &'static str {
     "Comfortaa Nunito"
 }
@@ -218,13 +185,9 @@ pub(crate) fn set_detail_body(ui: &App, body: &str, is_html: bool) {
     }
 }
 
-/// Opens or closes a `<details>`, by the id the engine gave it.
-///
-/// The id rather than an index, because the view is the one holding the array and
-/// an index would only be meaningful to whoever last laid the document out. The
-/// flip is applied to the bound model and *then* remembered: the model is what the
-/// next layout would rebuild from, and a section that reopened by itself after a
-/// window drag would be a worse bug than a lost toggle.
+/// Opens or closes a `<details>`, by the id the engine gave it, since the view is
+/// the one holding the array. The flip is applied to the bound model and *then*
+/// remembered, so a rebuild finds the section in the state it was left in.
 pub(crate) fn toggle_detail_section(_ui: &App, id: u32) {
     // The state lives in the bound model, so there is nothing to write through the
     // UI here: `section_open` is what the view reads, and it is updated below.
@@ -259,12 +222,8 @@ pub(crate) fn set_body_source(body: &str, is_html: bool) -> bool {
     set_body_source_with(body, is_html, BodyRenderer::new)
 }
 
-/// [`set_body_source`], with the engine's constructor handed in.
-///
-/// A constructor rather than a collection, because the collection itself is a
-/// `fontique` type the app does not depend on directly, and because a test has
-/// to be able to build an engine without the window backend — which
-/// `shared_collection()` initialises, once, on the main thread.
+/// [`set_body_source`], with the engine's constructor handed in, so a test can
+/// build an engine without the window backend.
 pub(crate) fn set_body_source_with(
     body: &str,
     is_html: bool,
@@ -319,12 +278,8 @@ pub(crate) fn layout_detail_body(ui: &App, width: f32) {
     }
 }
 
-/// What the engine says the panel should draw, with the UI left out of it.
-///
-/// The split is what makes the sequencing testable: whether a document set
-/// before the panel has been measured survives until the width arrives is a
-/// question about the engine and nothing else, and a function that took an `App`
-/// could only be answered by opening a window.
+/// What the engine says the panel should draw, with the UI left out of it, so the
+/// sequencing can be tested without opening a window.
 pub(crate) struct BodyLayout {
     chunks: Vec<BodyRun>,
     /// Which runs the reader has opened, index-aligned with `chunks`. A run nobody
@@ -348,12 +303,9 @@ pub(crate) struct BodyRun {
     images: Vec<MarkdownImage>,
 }
 
-/// Lays the engine's document out for the width it has, if it has one.
-///
-/// `None` until the view has reported a width. It is not the same as an empty
-/// layout: an empty document is a real answer at a real width, and a document
-/// nobody has measured yet has to be kept, because the width arrives a moment
-/// later and by then it still has to be there.
+/// Lays the engine's document out for the width it has, if it has one. `None` until
+/// the view has reported a width, which is not the same as an empty layout: a
+/// document nobody has measured yet has to be kept for when the width arrives.
 pub(crate) fn body_layout() -> Option<BodyLayout> {
     BODY.with(|slot| {
         let mut slot = slot.borrow_mut();
@@ -584,12 +536,9 @@ pub(crate) fn push_detail_body_rows(
     state.set_detail_body_height(height);
 }
 
-/// Empties the two models and nothing else.
-///
-/// The document stays, and that is the whole point of it being a function of its
-/// own: an unmeasured document has nothing to draw *yet*, and the width that lets
-/// it be drawn is a moment away. Anything that empties the engine has to say so
-/// itself, in [`forget_body_document`], so the two cannot be mistaken.
+/// Empties the two models and nothing else. The document stays, because an
+/// unmeasured document has nothing to draw yet; anything that empties the engine
+/// says so itself, in [`forget_body_document`].
 pub(crate) fn clear_body_models() {
     BODY.with(|slot| {
         if let Some(body) = slot.borrow_mut().as_mut() {
@@ -608,14 +557,10 @@ pub(crate) fn clear_detail_body_model(ui: &App) {
     clear_body_models();
 }
 
-/// Empties the body *and* the engine's document, for a panel that is about to
-/// load another one. The display list belongs to the document that was in the
-/// box, so it goes with it.
-///
-/// The *width* stays. It belongs to the view, not to the document, and the view
-/// does not go away between panels — so clearing it would mean waiting for a
-/// `changed width` that never comes, because a panel reopened at the same width
-/// reports the same width, and the new body would never be laid out.
+/// Empties the body *and* the engine's document, for a panel that is about to load
+/// another one. The *width* stays: it belongs to the view, and a panel reopened at
+/// the same width reports the same width, so clearing it would leave the new body
+/// never laid out.
 pub(crate) fn clear_detail_body(ui: &App) {
     clear_detail_body_model(ui);
     forget_body_document();
@@ -635,18 +580,9 @@ pub(crate) fn forget_body_document() {
 }
 
 /// Fetches whatever the body is still missing, dropping each image in as it
-/// arrives.
-///
-/// An image changes a document's height, because the engine reserves a box from
-/// the bitmap's own size — so a body whose images arrive late is re-laid out.
-/// That is done per image rather than per batch, because a README is written by
-/// whoever published the mod and its images come from wherever they please: a
-/// batch would hold the document's height still for as long as the slowest of
-/// them.
-///
-/// The fetches are the same `fetch_icon` path the project icons take, including
-/// the shared cache, so a logo and a README that show the same image download it
-/// once and decode it once.
+/// arrives. An image changes a document's height, so the body is re-laid out per
+/// image rather than per batch: a batch would hold the height still for as long as
+/// the slowest of them.
 pub(crate) fn fetch_body_images(ui: &App) {
     let wanted = BODY.with(|slot| {
         let slot = slot.borrow();
@@ -810,11 +746,9 @@ mod tests {
 
     #[test]
     fn a_body_set_before_the_panel_is_measured_survives_until_the_width_arrives() {
-        // The bug this is here for. Sending a document with no width through the
-        // "empty the body" path would empty the engine too -- so the width would
-        // arrive a moment later, by which point the engine would hold an empty
-        // string and lay *that* out. The panel would draw nothing, for a body
-        // that had arrived perfectly intact.
+        // A document with no width must not go through the "empty the body" path:
+        // that empties the engine too, and when the width arrives a moment later the
+        // engine lays out an empty string.
         reset_body();
 
         assert!(!set_source("# A heading\n\nA paragraph.\n"));

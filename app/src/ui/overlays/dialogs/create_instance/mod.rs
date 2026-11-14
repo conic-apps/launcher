@@ -3,11 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The create-instance dialog: drives `install` from the dialog's state and its
-//! two screens.
-//!
-//! Network and disk work runs on the tokio runtime and reports back through
-//! `crate::ui::services::report::report`; only the background picker's image
-//! decode stays on the UI thread, which Slint requires.
+//! two screens. Network and disk work runs on the tokio runtime; only the
+//! background picker's image decode stays on the UI thread, which Slint requires.
 
 use std::{cell::RefCell, path::Path, rc::Rc};
 
@@ -310,13 +307,9 @@ fn filter_neoforge_version_list(mcversion: &str, versions: &[String]) -> Vec<Str
         .collect()
 }
 
-/// The Minecraft version a Neoforge version targets.
-///
-/// A version is dot-separated numeric groups plus an optional `-suffix`. A
-/// four-group version's first three groups are the Minecraft version, with a
-/// trailing `0` dropped (`26.3.0.39-beta` yields `26.3`); a three-group version
-/// omits the Minecraft version's leading `1`, which is restored here
-/// (`20.2.57-beta` yields `1.20.2`).
+/// The Minecraft version a Neoforge version targets: a four-group version's first
+/// three groups, with a trailing `0` dropped; a three-group version omits the
+/// Minecraft version's leading `1`.
 fn neoforge_minecraft_version(version: &str) -> Option<String> {
     // `^(\d+)\.(\d+)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9_]+))?$`
     if let Some(groups) = neoforge_groups(version, 4) {

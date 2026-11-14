@@ -32,13 +32,9 @@ mod wiring;
 pub(crate) use wiring::*;
 
 thread_local! {
-    /// The one controller, for use on the UI thread.
-    ///
-    /// It lives in a thread-local rather than in a value `setup` owns because an
-    /// `upgrade_in_event_loop` closure has to be `Send`, and the `Rc<RefCell<…>>`
-    /// a Slint model is cannot cross into one. Slint's callbacks and the
-    /// event-loop closures both run on the UI thread, so both reach it through
-    /// [`controller`]; the async tasks carry only owned values and a `Weak<App>`.
+    /// The one controller, for use on the UI thread. It lives in a thread-local
+    /// because an `upgrade_in_event_loop` closure has to be `Send`, and the
+    /// `Rc<RefCell<…>>` behind a Slint model cannot cross into one.
     static CONTROLLER: RefCell<Option<Rc<RefCell<GameController>>>> =
         const { RefCell::new(None) };
 }
@@ -64,13 +60,10 @@ pub(crate) struct CachedBackground {
     image: Image,
 }
 
-/// The instance backgrounds the list draws, and the decodes still running for
-/// the ones it cannot draw yet.
-///
-/// A decode is not a list change: an instance background is tens of megabytes
-/// and takes hundreds of milliseconds, while `apply` runs on the event loop and
-/// on every keystroke in the search field. So the row is built without the
-/// picture and the picture is dropped into it when it lands.
+/// The instance backgrounds the list draws, and the decodes still running for the
+/// ones it cannot draw yet. A decode is not a list change: `apply` runs on every
+/// keystroke, so the row is built without the picture and the picture dropped into
+/// it when it lands.
 #[derive(Default)]
 pub(crate) struct BackgroundCache {
     images: HashMap<String, CachedBackground>,

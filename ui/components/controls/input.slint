@@ -8,18 +8,14 @@ import { FocusManager } from "../../globals/focus.slint";
 
 // Text / number input.
 //
-// 30px tall, with the controller radius (6px on the dark flavors, 4px on
-// Latte) and the controller background. Focus turns the outline lavender and the
-// background to the controller's focus token (surface-2 on the dark flavors,
-// surface-0 on Latte). The field commits on `edited` and lets
-// the Rust side debounce disk writes, which behaves the same to the user as
-// committing on blur.
+// 30px tall, with the controller radius (6px on the dark flavors, 4px on Latte)
+// and background. The field commits on `edited` and lets the Rust side debounce
+// disk writes, which behaves to the user as committing on blur.
 //
 // `number-only` fields draw up/down step buttons stacked in one column.
 //
-// `error` is the invalid state: it drops the field's own border for a red one.
-// The error border outranks the focus outline, so a focused invalid field stays
-// red — hence the check ahead of the focus test below rather than after it.
+// `error` drops the field's own border for a red one, which outranks the focus
+// outline — hence the check ahead of the focus test below.
 export component Input inherits Rectangle {
     in property <string> placeholder: "";
     in property <length> input-width: 400px;

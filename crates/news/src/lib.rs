@@ -4,10 +4,8 @@
 
 //! The launcher-content client: Mojang's news feed and the Java Edition
 //! changelogs, both unauthenticated static JSON from `launchercontent.mojang.com`.
-//!
-//! The API neither localizes (the text is always English) nor pages (each
-//! document is a fixed list). Sorting newest-first lives here because it is a
-//! property of the feed rather than of a view.
+//! Sorting newest-first lives here because it is a property of the feed rather
+//! than of a view.
 
 pub mod error;
 

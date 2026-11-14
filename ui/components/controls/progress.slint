@@ -4,22 +4,14 @@
 
 import { Theme } from "../../theme.slint";
 
-// Linear progress bar: a 1px track with a 3px bar over it, clipped to the 2px
-// box.
+// Linear progress bar: a 1px track with a 3px bar over it, clipped to the 2px box.
 //
 //   * `loading` shows the indeterminate bar sweeping left↔right;
 //   * otherwise the bar's width is `value / max` and eases over 300ms.
 //
-// The sweep is a sawtooth: a 1.25s phase per sweep with an instant reset,
-// computed from `animation-tick()` because Slint has no keyframe timelines, and
-// eased with a smoothstep standing in for a cubic-bezier (a 3px bar, so the
-// difference is not visible).
-//
-// The travel accounts for the bar's own centring: the 50%-wide bar is centred
-// first, and its offset is measured from there, so the bar moves over
-// `0.25W + [-0.85W, +0.85W]` = `[-0.6W, +1.1W]`. That clears the track at both
-// ends; `[-0.85W, +0.85W]` would leave a 15% tail visible on the right when the
-// animation restarts.
+// The sweep is a sawtooth driven by `animation-tick()`, since Slint has no keyframe
+// timelines. Its travel starts from the 50%-wide bar's centring, so it clears the
+// track at both ends.
 export component Progress inherits Rectangle {
     in property <bool> loading: false;
     in property <float> value: 0;

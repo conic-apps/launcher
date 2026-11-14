@@ -4,15 +4,13 @@
 
 // The account view overlay's state.
 //
-// The overlay shows one account at a time — the launcher's current account when
-// it opens, and whichever account its switcher picks after that. Rust owns the
-// account files and the statistics, so every property below is written by
-// `app/src/ui/overlays/account_view/mod.rs`; the view only reads them and calls the
-// callbacks back.
+// The overlay shows one account at a time, and Rust owns the account files and the
+// statistics: every property below is written by
+// `app/src/ui/overlays/account_view/mod.rs`, and the view only reads them and calls
+// the callbacks back.
 //
-// The switcher's rows are `GameState.accounts` rather than a second copy here:
-// the footer's dropdown already renders that model, and the two must not be able
-// to drift.
+// The switcher's rows are `GameState.accounts` rather than a second copy here, so
+// the two cannot drift.
 
 /// One day of the contribution graph.
 ///

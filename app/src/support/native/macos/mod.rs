@@ -2,13 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! macOS window-shell integration.
-//!
-//! The Chrome-style window (a native titled window with a transparent,
-//! title-less titlebar, created by the winit hook in [`install_backend`]), the
-//! traffic lights kept in step with the custom title bar ([`traffic_lights`]),
-//! the Dock icon ([`dock_icon`]), and AppKit's terminate requests
-//! ([`terminate`]).
+//! macOS window-shell integration: the Chrome-style window created by the winit
+//! hook in [`install_backend`], the traffic lights kept in step with the custom
+//! title bar ([`traffic_lights`]), the Dock icon ([`dock_icon`]), and AppKit's
+//! terminate requests ([`terminate`]).
 
 mod dock_icon;
 mod terminate;
@@ -18,9 +15,7 @@ use crate::slint_backend::App;
 
 /// Installs the winit window-attributes hook and the traffic-light metrics.
 ///
-/// Must run before any winit window exists: the frame-view class is chosen
-/// during `NSWindow` initialisation, so a window created earlier would keep
-/// AppKit's own frame view and never see the metrics.
+/// Must run before any winit window exists.
 pub(crate) fn install_backend() {
     use slint::platform::set_platform;
     use winit::platform::macos::WindowAttributesExtMacOS;

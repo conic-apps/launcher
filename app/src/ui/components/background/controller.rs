@@ -3,11 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! Drives the window background: source resolution, the cross-fade between
-//! images, the camera clock and the parallax.
-//!
-//! A change starts a cross-fade unless one is already on screen; rendering runs
-//! on its own thread with one frame in flight at a time, so a slow frame paces
-//! the loop instead of stalling the UI.
+//! images, the camera clock and the parallax. Rendering runs on its own thread.
 
 use std::{
     cell::RefCell,
@@ -1089,13 +1085,9 @@ fn tick_on_the_runtime(ui: &App, ticking: Arc<AtomicBool>) {
 
 type Decoded = (SystemTime, SharedPixelBuffer<Rgba8Pixel>, Alpha);
 
-/// Decodes a background image on a worker thread. The bytes carry the format
-/// because the files have no extension, and this is where the image is also
-/// scaled down and checked for transparency.
-///
-/// `thumbnail_exact` is called through the concrete `DynamicImage` method on
-/// purpose: the generic `imageops` functions would instantiate their per-pixel
-/// loop in this unoptimised crate instead of in `image`.
+/// Decodes a background image on a worker thread: scaled down, checked for
+/// transparency, and with the format taken from the bytes since the files have no
+/// extension.
 fn decode(path: &PathBuf) -> Result<Decoded, String> {
     let started = Instant::now();
     let mtime = std::fs::metadata(path)

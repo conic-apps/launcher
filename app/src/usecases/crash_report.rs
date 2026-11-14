@@ -2,13 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The combined crash report written from the crash dialog.
-//!
-//! This is UI-neutral: the dialog hands over the strings it collected and gets
-//! back a file path. The report puts the diagnosis first, then the evidence a
-//! helper actually needs — the game's own report, the game console and
-//! `latest.log`, and the launcher log tail. Keeping the composition here means
-//! the dialog adapter only maps Slint state to plain data and opens the result.
+//! The combined crash report written from the crash dialog: the diagnosis first,
+//! then the evidence a helper needs — the game's own report, the console and
+//! `latest.log`, and the launcher log tail.
 
 use std::{
     path::{Path, PathBuf},
@@ -111,9 +107,8 @@ fn text(source: &Source, directory: &Path) -> String {
     report
 }
 
-/// The game's own report, read fresh so a file that is still there is not
-/// limited to the 16 KiB `details` copy. The collected details are the fallback
-/// when the game wrote no file or it has since gone.
+/// The game's own report, read fresh; the collected `details` copy is the
+/// fallback when the game wrote no file.
 fn game_report(source: &Source) -> String {
     if !source.report_path.is_empty()
         && let Ok(contents) = std::fs::read_to_string(&source.report_path)
@@ -123,8 +118,8 @@ fn game_report(source: &Source) -> String {
     source.details.clone()
 }
 
-/// The in-memory run is the primary source; the file is only a fallback for a
-/// logger that never formatted a record (the tests).
+/// The in-memory log, with the file as a fallback for a logger that never
+/// formatted a record (the tests).
 fn launcher_log(directory: &Path) -> String {
     let recent = crate::support::logs::recent(LAUNCHER_LOG_TAIL_LINES);
     if !recent.is_empty() {

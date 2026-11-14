@@ -334,8 +334,7 @@ export component SettingItem inherits Rectangle {
                     //
                     // A tick rather than `changed`: `absolute-position` is a native
                     // call with no registered dependency, so `changed` never fires
-                    // when the list scrolls. The writes are no-ops when the anchor
-                    // has not moved.
+                    // when the list scrolls.
                     follow-timer := Timer {
                         interval: 8ms;
                         running: root.owns-description-anchor

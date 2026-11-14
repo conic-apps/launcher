@@ -2,13 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The install progress drawn beside the launch button.
-//!
-//! This is the mapping the launch screen used to own: the install crate reports
-//! a stage and, for a download, the byte counts it has and wants. Every stage the
-//! old progress panel described is still described here — it is the instance's
-//! install that the player now starts from the game view, so the button is where
-//! it is reported.
+//! The install progress drawn beside the launch button: an install crate stage and,
+//! for a download, the byte counts it has and wants.
 
 use crate::slint_backend::GameState;
 use crate::support::formatting::bytes;

@@ -2,13 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Keeps the native AppKit traffic lights aligned with the custom title bar.
-//!
-//! AppKit owns the buttons' geometry and discards direct frame writes on every
-//! layout pass, so this answers the metrics AppKit asks for instead: `NSWindow`'s
-//! `+frameViewClassForStyleMask:` is swizzled to hand out a `ConicThemeFrame`
-//! subclass whose `-_titlebarHeight`, `-_minXTitlebarWidgetInset` and
-//! `-_shouldCenterTrafficLights` place the buttons. The pitch stays AppKit's.
+//! Keeps the native AppKit traffic lights aligned with the custom title bar by
+//! answering the metrics AppKit asks for, instead of fighting its layout with
+//! frame writes.
 //!
 //! Fullscreen hides the buttons; [`watch_fullscreen`] reports that to the UI.
 //! [`install_titlebar_guard`] removes AppKit's double-click zoom so the custom
@@ -80,7 +76,7 @@ static SUPER_SET_STYLE_MASK_IMP: AtomicPtr<c_void> = AtomicPtr::new(ptr::null_mu
 static STYLE_MASK_KEY: u8 = 0;
 
 /// Installs the traffic-light mechanism. Must run before the first `NSWindow`
-/// exists: the frame-view class is chosen during `NSWindow` initialisation.
+/// exists.
 pub fn install() {
     install_titlebar_guard();
     if std::env::var_os("CONIC_FORCE_TRAFFIC_LIGHT_FALLBACK").is_some() {
@@ -235,9 +231,6 @@ fn install_theme_frame_class() -> bool {
 
 /// Registers `implementation` for `selector` on `cls`; `types` is the Objective-C
 /// type encoding and must match the function signature.
-///
-/// The `i8` round-trip covers both arm64 (`bool`) and x86_64 (`i8`) spellings of
-/// Objective-C's `BOOL`.
 fn add_method(
     cls: *mut ffi::objc_class,
     selector: &CStr,
@@ -423,8 +416,7 @@ fn imp_to_ptr(imp: ffi::IMP) -> *mut c_void {
     }
 }
 
-/// Arms the one-shot check that decides whether the metric route works. The
-/// structural check runs once; the geometric one waits for AppKit to settle.
+/// Arms the one-shot check that decides whether the metric route works.
 fn arm_self_check() {
     let started = Rc::new(Cell::new(None::<Instant>));
     let settled = Rc::new(Cell::new(false));
@@ -500,8 +492,8 @@ fn settle_failed(window: Id) {
     install_fallback();
 }
 
-/// Debug level, and only on the path that is about to give up: when a future
-/// macOS makes this mechanism fall through, this is what says which part moved.
+/// Logs the window's titlebar chain at debug level, when the metric route is
+/// about to give up.
 unsafe fn log_window_state(window: Id) {
     let theme_frame = unsafe { theme_frame(window) };
     let factory: *const AnyClass =
@@ -613,11 +605,9 @@ unsafe fn close_button_position(window: Id) -> Option<Position> {
     })
 }
 
-/// A view's frame in the window's base coordinate system.
-///
-/// Converted *on the superview*, because a view's `frame` is expressed in its
-/// superview's coordinates — asking the view itself to convert its own frame
-/// counts the offset twice.
+/// A view's frame in the window's coordinates, converted on the superview: a
+/// frame is expressed in its superview's coordinates, so converting through the
+/// view itself counts the offset twice.
 unsafe fn position_in_window(view: Id) -> Option<CGRect> {
     unsafe {
         let superview: Id = msg_send![view, superview];
@@ -633,8 +623,7 @@ unsafe fn position_in_window(view: Id) -> Option<CGRect> {
     }
 }
 
-/// The close/miniaturize/zoom left edges, for the verification log. The pitch
-/// between them is AppKit's; printing it makes a change to it visible.
+/// The close/miniaturize/zoom left edges, for the verification log.
 unsafe fn button_left_edges(window: Id) -> String {
     let mut edges = Vec::with_capacity(3);
     for index in 0..3usize {
@@ -647,13 +636,9 @@ unsafe fn button_left_edges(window: Id) -> String {
     edges.join(", ")
 }
 
-/// Whether the window's frame view is `ConicThemeFrame` — i.e. whether AppKit
-/// consulted our `+frameViewClassForStyleMask:` override.
-///
-/// The superclass chain is walked rather than comparing class pointers: anything
-/// observing the view's frame makes KVO hand out a dynamic subclass
-/// (`NSKVONotifying_ConicThemeFrame`) that still inherits our overrides. AppKit
-/// itself does exactly that, to relayout the titlebar container.
+/// Whether the window's frame view is `ConicThemeFrame`. The superclass chain is
+/// walked, not the class pointer: KVO hands out a dynamic subclass
+/// (`NSKVONotifying_ConicThemeFrame`) that still inherits the overrides.
 unsafe fn uses_conic_theme_frame(window: Id) -> bool {
     let frame_view = unsafe { theme_frame(window) };
     if frame_view.is_null() {
@@ -678,11 +663,9 @@ unsafe fn inherits_from(mut class: *const ffi::objc_class, target: *const ffi::o
     false
 }
 
-// Everything below is only used when the metric route is unavailable. It is the
-// frame-writing approach, with two safeguards taken from Electron's
-// `WindowButtonsProxy`: the geometry is derived from AppKit instead of
-// hardcoded, and the container is never hidden — hiding it lets AppKit re-lay
-// the titlebar out from under us.
+// The frame-writing fallback, used when the metric route is unavailable. The
+// geometry is derived from AppKit rather than hardcoded, and the container is
+// never hidden — hiding it lets AppKit re-lay the titlebar out from under us.
 
 /// AppKit's own button geometry, read before anything is moved.
 struct Metrics {
@@ -824,10 +807,8 @@ unsafe fn apply_metrics(window: Id, metrics: &Metrics) {
 }
 
 /// Registers `block` for every notification in `names` on the default center.
-///
-/// Neither the observer tokens nor the block are kept: the center copies the
-/// block, and a block observer stays registered until it is explicitly removed,
-/// which never happens here — these live for as long as the process does.
+/// The tokens and the block are leaked: these observers live as long as the
+/// process does.
 fn observe(names: &[&NSString], block: &block2::Block<dyn Fn(NonNull<NSNotification>)>) {
     unsafe {
         let center = NSNotificationCenter::defaultCenter();

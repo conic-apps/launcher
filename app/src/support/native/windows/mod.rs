@@ -20,10 +20,8 @@ use crate::slint_backend::App;
 /// Installs the winit window-attributes hook that makes the window frameless.
 ///
 /// Must run before any winit window exists: the client area has to cover the
-/// whole window from creation, because Slint only applies `no-frame` once the
-/// window exists — and winit would size the first, still-decorated window for a
-/// caption that is about to disappear, leaving the app a frame's width and
-/// height too big.
+/// whole window from creation, or the first window is sized for a caption that
+/// is about to disappear.
 pub(crate) fn install_backend() {
     use slint::platform::set_platform;
 

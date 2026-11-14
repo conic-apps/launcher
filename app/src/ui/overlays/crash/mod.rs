@@ -230,12 +230,9 @@ fn log_line_kind(line: &str) -> &'static str {
     "plain"
 }
 
-/// Writes one report with everything a helper needs and opens it.
-///
-/// The game may have written its own crash report; opening that file alone
-/// throws away the console output and the launcher log that say what led to it.
-/// So this always writes the combined report instead, embedding the game's file
-/// (or the collected details when it wrote none) beside both logs.
+/// Writes one report with everything a helper needs and opens it: the game's own
+/// crash report (or the collected details when it wrote none), both logs and the
+/// diagnosis. Opening the game's file alone would throw away what led to it.
 fn open_report(ui: &App) {
     let state = ui.global::<CrashState>();
     let source = crash_report::Source {

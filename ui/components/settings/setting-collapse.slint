@@ -6,20 +6,13 @@ import { Theme } from "../../theme.slint";
 import { SettingItem } from "setting-item.slint";
 import { AppIcon } from "../display/app-icon.slint";
 
-// Collapsible settings group.
-//
-// Height and opacity animate over 200ms with `cubic-bezier(0.215, 0.61, 0.355,
-// 1)`, and the chevron flips over 200ms `ease-in-out`. Slint's `animate` is
-// interruptible, so re-toggling mid-flight behaves well.
-//
-// `border-radius` corners are applied per side: when closed the header is fully
-// rounded; when open only its top corners are, and the content keeps the bottom
-// corners.
+// Collapsible settings group: height and opacity animate over 200ms, and the
+// chevron flips. Slint's `animate` is interruptible, so re-toggling mid-flight
+// behaves well. When closed the header is fully rounded; when open only its top
+// corners are, and the content keeps the bottom ones.
 //
 // As in `SettingGroup`, the corners are the rows' and nothing is clipped to a
-// radius — a rounded `clip` is what Slint's software renderer drops. The header
-// is the first row, and the last one while it is closed, and the content's last
-// row says so itself.
+// radius — a rounded `clip` is what Slint's software renderer drops.
 export component SettingCollapse inherits VerticalLayout {
     in property <string> title;
     in property <string> description: "";
@@ -77,15 +70,13 @@ export component SettingCollapse inherits VerticalLayout {
     }
 
     // `@children` cannot live in a conditional, so the content is always
-    // instantiated. A clipped wrapper collapses to zero height when closed;
-    // its height reads the natural height of a separate inner element so the
-    // binding does not reference itself (which Slint rejects as a loop). It
-    // stays visible while the height animates back to zero so the collapse is
-    // animated instead of snapping shut.
+    // instantiated and a clipped wrapper collapses to zero height. Its height reads
+    // a separate inner element's preferred height, so the binding does not
+    // reference itself.
     //
-    // The clip is that animation's, and is a plain rectangle: the bottom corners
-    // are the last row's (`group-last`), which a caller whose content is a
-    // dynamic `@children` slot has to pass on — see `settings-jvm.slint`.
+    // The clip is a plain rectangle: the bottom corners are the last row's
+    // (`group-last`), which a caller with a dynamic slot has to pass on — see
+    // `settings-jvm.slint`.
     content-wrapper := Rectangle {
         width: 100%;
         height: root.opened ? content.preferred-height : 0px;

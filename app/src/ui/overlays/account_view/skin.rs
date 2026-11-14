@@ -2,11 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The skin-model and cape images the account view draws.
-//!
-//! Both are composed here because Slint cannot crop or sample an image itself.
-//! The model is the front view of the 64x64 skin, base layers first and overlays
-//! blended on top; the cape is the 10x17 face of a 64x32 texture, scaled to fit.
+//! The skin-model and cape images the account view draws, composed here because
+//! Slint cannot crop or sample an image itself: the model is the front view of
+//! the 64x64 skin with overlays blended on top, the cape is the 10x17 face of a
+//! 64x32 texture.
 
 use image::RgbaImage;
 use slint::{Image, SharedPixelBuffer};
@@ -14,12 +13,9 @@ use slint::{Image, SharedPixelBuffer};
 /// Pixels per skin pixel in the rendered model; the model is 16x32 skin pixels.
 const UNIT: u32 = 4;
 
-/// Whether `skin` is a slim (3px-arm) model.
-///
-/// A skin does not carry that flag in its pixels except by the width of the arm
-/// region: the fourth arm column of a classic skin is opaque, and a slim skin
-/// leaves it transparent. `variant`/`model` metadata is used first where the
-/// account carries it; this is the fallback for a texture with none.
+/// Whether `skin` is a slim (3px-arm) model: a classic skin's fourth arm column is
+/// opaque, a slim skin's is transparent. Account metadata wins where it exists;
+/// this is the fallback for a texture with none.
 pub fn detect_slim(skin: &RgbaImage) -> bool {
     let scale = skin.width() as f32 / 64.0;
     let sample = |x: f32, y: f32| -> u8 {

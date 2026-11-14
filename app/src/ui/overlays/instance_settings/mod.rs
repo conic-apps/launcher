@@ -21,10 +21,6 @@ mod form;
 pub(crate) use dialogs::*;
 pub(crate) use form::*;
 
-/// How long an edit waits before it reaches `instance.toml`.
-///
-/// A Slint write is a synchronous call on the UI thread, so there is no window
-/// for a second edit to slip into and nothing to lock; what is left is the cost
-/// of one `toml` write per keystroke, which the 400 ms the settings screen
-/// already uses absorbs.
+/// How long an edit waits before it reaches `instance.toml`: what is left after
+/// the UI thread's synchronous write is the cost of one `toml` write per keystroke.
 pub(crate) const SAVE_DEBOUNCE: Duration = Duration::from_millis(400);

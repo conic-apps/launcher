@@ -72,12 +72,9 @@ pub(crate) fn clear_rows() {
     SAVES.with(|saves| *saves.borrow_mut() = None);
 }
 
-/// The first five icons of each of the instance's four lists.
-///
-/// Called whenever a list is parsed and whenever the selection moves. Every
-/// source it needs is in the shared cache, so this reads no files of its own
-/// except a save's icon, which is a file in the world folder rather than a field
-/// of anything the parse returns.
+/// The first five icons of each of the instance's four lists, called whenever a
+/// list is parsed and whenever the selection moves. Every source is in the shared
+/// cache except a save's icon, which is a file in the world folder.
 pub(crate) fn refresh_preview_icons(ui: &App, instance: &str) {
     if ui.global::<GameState>().get_current_id() != instance {
         return;
@@ -178,12 +175,9 @@ fn saves(ui: &App, instance: &str) {
     });
 }
 
-/// Draws one row from its keys, asking for whatever the memo cannot answer.
-///
-/// The selection is re-checked here, not just at the entry: the saves' pass is
-/// async, so its row is drawn a read later and by then the selection may have
-/// moved. Redrawing the row with the previous instance's worlds would leave it
-/// showing the wrong saves until the next instance came back.
+/// Draws one row from its keys, asking the memo for what it cannot answer. The
+/// selection is re-checked here, not just at the entry: the saves' pass is async,
+/// so the row is drawn a read later and the selection may have moved by then.
 fn row(ui: &App, instance: &str, kind: Kind, keys: Vec<String>, memo: Memo) {
     if ui.global::<GameState>().get_current_id() != instance {
         return;
@@ -251,12 +245,9 @@ fn fetch(ui: &App, instance: &str, kind: Kind, missing: Vec<(usize, String)>, me
     });
 }
 
-/// Fills one circle, if that circle still wants that icon.
-///
-/// Runs on the UI thread, so the model may be written here. Every guard is the
-/// same question — is what came back still on screen? — asked of the three
-/// things that can have moved: the selection, the row's own key list, and the
-/// number of circles in the model.
+/// Fills one circle, if that circle still wants that icon. Runs on the UI thread,
+/// so the model may be written here; the guards ask whether what came back is still
+/// on screen — the selection, the row's keys and the number of circles.
 fn arrive(
     ui: &App,
     instance: &str,

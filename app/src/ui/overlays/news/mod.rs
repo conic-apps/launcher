@@ -216,12 +216,9 @@ struct BuiltCard {
     id: String,
 }
 
-/// Rebuilds the flow from the session's current filter.
-///
-/// Everything is stacked here — the cards' heights and their `y`, and the range
-/// of them a viewport touches — because the flow culls: an off-screen card is
-/// neither drawn nor fetched. The heights come from the panel's width and the
-/// image ratios; the range comes from the scroll position the panel reported.
+/// Rebuilds the flow from the session's current filter: the cards' heights and
+/// `y`, and the range a viewport touches, because the flow culls — an off-screen
+/// card is neither drawn nor fetched.
 pub(crate) fn rebuild(ui: &App) {
     let mut built = build_cards();
     let heights: Vec<f32> = built.iter().map(|item| item.card.height).collect();
@@ -612,11 +609,8 @@ pub(crate) fn list_scrolled(ui: &App, offset: f32, viewport: f32) {
 }
 
 /// Draws the cards inside `range` and hides the ones that left it, fetching the
-/// images of the cards that just came into view.
-///
-/// Only the difference from the last pass is touched: a scroll moves the window
-/// by a few cards, and rewriting all 415 rows of a changelog on every frame of
-/// the glide would be work for nothing.
+/// images of the cards that came into view. Only the difference from the last pass
+/// is touched: a scroll moves the window by a few cards.
 fn update_visibility(ui: &App, range: std::ops::Range<usize>) {
     let ctrl = controller();
     let mut ctrl = ctrl.borrow_mut();

@@ -2,14 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Native (platform-specific) window-shell integration.
-//!
-//! Everything the app has to do differently per OS lives behind this module:
-//! the winit window-attributes hook (which has to run before any window exists),
-//! the macOS traffic lights and Dock icon, the Windows caption buttons, and the
-//! font fallbacks the OS gets wrong. `main` wires the same calls on every
-//! platform and is otherwise platform-neutral, and the per-OS modules are only
-//! compiled where they apply.
+//! Native (platform-specific) window-shell integration: the winit
+//! window-attributes hook, the per-OS window chrome, and the font fallbacks the
+//! OS gets wrong. `main` wires the same calls everywhere; each per-OS module is
+//! only compiled where it applies.
 
 mod fonts;
 #[cfg(target_os = "macos")]
@@ -23,8 +19,7 @@ use crate::slint_backend::App;
 ///
 /// Must run before any window exists — i.e. before `App::new` — so the window is
 /// created with the frame the platform wants. A no-op where the platform needs
-/// no hook. See each per-OS module for what the hook does and why it cannot
-/// wait.
+/// no hook.
 pub(crate) fn install_backend() {
     #[cfg(target_os = "macos")]
     macos::install_backend();
@@ -40,15 +35,10 @@ pub(crate) fn install_backend() {
     log::debug!(target: "shell", "backend hook: none is needed on this platform");
 }
 
-/// Registers the platform's terminate handling.
-///
-/// On macOS `⌘Q`, the menu's Quit and a system logout terminate the process
-/// through AppKit, not through a window close. The platform's own Quit is
-/// intercepted where AppKit asks (`applicationShouldTerminate:`) and replayed
-/// as `request_close`, so it confirms first exactly like `⌘W`; `run_exit_work`
-/// stays the fallback for the terminates that really do end the process.
-/// Elsewhere there is no such path the app has to cover — the window close is
-/// the only exit — so this does nothing.
+/// Registers the platform's terminate handling, so an OS-level quit (`⌘Q`, the
+/// application menu's Quit, a system logout) takes the window's close path and
+/// confirms first. Only macOS has such a path; elsewhere closing the window is
+/// the only exit.
 pub(crate) fn install_terminate_handler(
     request_close: impl Fn() + 'static,
     run_exit_work: impl Fn() + 'static,
@@ -77,8 +67,8 @@ pub(crate) fn install(ui: &App) {
     ui.on_set_caption_dark(|_| {});
 }
 
-/// Applies the symbol fallback and, on Windows, the Han one, which the OS
-/// answers with a Japanese font (see `windows/cjk_font.rs`).
+/// Applies the symbol fallback and, on Windows, the Han one (see
+/// `windows::cjk_font`).
 pub(crate) fn apply_font_fallbacks(locale: &str) {
     #[cfg(target_os = "windows")]
     windows::apply_cjk_fallbacks(locale);

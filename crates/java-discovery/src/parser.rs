@@ -2,10 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Parsing of Java runtime metadata from two complementary sources: the
-//! `release` properties file shipped with every JDK/JRE home (cheap to read)
-//! and `java -XshowSettings:properties -version` (authoritative for the actual
-//! executable). Both normalize into a [`JavaInfoRaw`] that the scanner merges.
+//! Parsing of Java runtime metadata from two sources: the `release` properties file
+//! shipped with every JDK/JRE home, and `java -XshowSettings:properties -version`
+//! (authoritative for the actual executable). Both normalize into a [`JavaInfoRaw`]
+//! that the scanner merges.
 
 use std::path::PathBuf;
 

@@ -2,12 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The `Serialize` derive and the `serde_with::DisplayFromStr` shims keep the
-//! shape the frontend sees (`{"kind": …, "message": …}`, with `{"kind": …}`
-//! alone for the unit variants) stable.
-//!
-//! `WorldMap` wraps the renderer's error; the renderer runs on the app's own
-//! runtime and hands back raw RGBA rather than a PNG (see `worldmap.rs`).
+//! The errors the frontend sees as `{"kind": …, "message": …}`. `WorldMap` wraps
+//! the renderer's error; the renderer hands back raw RGBA rather than a PNG (see
+//! `worldmap.rs`).
 
 use std::result;
 

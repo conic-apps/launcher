@@ -2,14 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The news browser's session.
-//!
-//! UI-neutral, like every other use case: it holds the two feeds the
-//! `news` crate fetched and the filter over them (the feed kind, a year, a
-//! month and a search string), and it answers "which entries match" and "which
-//! years can be picked". Nothing here mentions Slint, the `ui/` modules or how a
-//! card is drawn; the `ui/overlays/news` adapter owns the models and the
-//! geometry and drives this.
+//! The news browser's session: the two feeds the `news` crate fetched and the
+//! filter over them (feed kind, year, month, search string). The
+//! `ui/overlays/news` adapter owns the models and the geometry and drives this.
 
 use news::{ChangelogEntry, NewsItem};
 
@@ -61,10 +56,8 @@ impl NewsSession {
         self.kind
     }
 
-    /// Switching feeds clears the year, because the two feeds do not share
-    /// their year lists (the news feed reaches back to 2025, the changelog to
-    /// 2018) — a year left over from the other list would filter everything
-    /// out the moment the switch happened.
+    /// Switching feeds clears the year: the two feeds do not share their year
+    /// lists, so a leftover year would filter everything out.
     pub(crate) fn set_kind(&mut self, kind: NewsKind) {
         if self.kind == kind {
             return;
@@ -153,9 +146,8 @@ impl NewsSession {
             .filter(|entry| self.passes(entry.year, entry.month, &entry.title, &entry.short_text))
     }
 
-    /// The years the active feed actually has, newest first. The chips are built
-    /// from this rather than from a fixed range, so a year never yields an
-    /// empty list.
+    /// The years the active feed actually has, newest first — never a year that
+    /// yields an empty list.
     pub(crate) fn years(&self) -> Vec<u16> {
         let years: Vec<u16> = match self.kind {
             NewsKind::News => self.news.iter().map(|item| item.year).collect(),
@@ -176,8 +168,7 @@ impl NewsSession {
         self.changelogs.iter().find(|entry| entry.id == id)
     }
 
-    /// Whether a dated entry passes the three filters. Kept apart from the two
-    /// iterators so the news and changelog rules cannot drift apart.
+    /// Whether a dated entry passes the three filters.
     fn passes(&self, year: u16, month: u8, title: &str, body: &str) -> bool {
         if let Some(wanted) = self.year
             && year != wanted

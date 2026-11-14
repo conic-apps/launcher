@@ -346,15 +346,10 @@ pub async fn install_mod_loader(
     Ok(())
 }
 
-/// Applies the launcher UI language to an instance's `options.txt`.
-///
-/// Only applies when the "change game language on first launch" setting is
-/// enabled. A failure to write the file is logged and does not abort the
-/// installation.
-///
-/// `force` replaces an existing `lang` line instead of leaving the file alone;
-/// the modpack installer uses it after the pack's overrides, which may carry
-/// their own `options.txt`.
+/// Applies the launcher UI language to an instance's `options.txt`, when the
+/// "change game language on first launch" setting is enabled. A failed write is
+/// logged and does not abort the installation; `force` replaces an existing `lang`
+/// line, which the modpack installer needs after the pack's overrides.
 pub async fn configure_instance_language(config: &Config, instance: &Instance, force: bool) {
     if !config.accessibility.change_game_language {
         return;

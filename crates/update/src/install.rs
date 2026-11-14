@@ -3,12 +3,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! How this copy of the launcher was installed, and therefore whether it may
-//! update itself and which bundle the server should hand back.
-//!
-//! Guessing from `$APPIMAGE` or the executable's path is not enough, so each
-//! packaging format ships an `update-policy` marker naming its form; the
-//! environment override and per-OS fallback cover only a build run straight out
-//! of `target/` or an installer that wrote no marker.
+//! update itself and which bundle the server should hand back. Each packaging
+//! format ships an `update-policy` marker naming its form; the environment override
+//! and per-OS fallback cover a build run straight out of `target/` or an installer
+//! that wrote no marker.
 
 use std::path::PathBuf;
 

@@ -3,11 +3,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The instance's local content, parsed once and read by everything that shows
-//! it, so the summary's counts and the overlay's list cannot disagree.
-//!
-//! A stale entry is still served while it is replaced, and only the current
-//! instance is written to the globals: a parse that outlives the selection fills
-//! the cache but must not draw itself under another instance.
+//! it, so the summary's counts and the overlay's list cannot disagree. A stale
+//! entry is served while it is replaced, and only the current instance is written
+//! to the globals.
 
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -164,12 +162,9 @@ pub(crate) fn screenshots(instance: &str) -> Option<Arc<Vec<PathBuf>>> {
     })
 }
 
-/// Starts a parse of one kind.
-///
-/// `deduped` is [`ensure`]'s case: it runs on every game view apply, so a
-/// search keystroke must not start a second parse over the same folder.
-/// [`refresh`] passes `false`, because it follows a write and wants a parse that
-/// started after it.
+/// Starts a parse of one kind. `deduped` is [`ensure`]'s case — it runs on every
+/// game view apply, so a search keystroke must not start a second parse over the
+/// same folder; [`refresh`] passes `false`, because it follows a write.
 fn start(ui: &App, instance: &str, kind: Kind, deduped: bool) {
     let key = (instance.to_string(), kind);
     // A fresh entry answers on its own, and so does one already being parsed.
@@ -194,11 +189,9 @@ fn start(ui: &App, instance: &str, kind: Kind, deduped: bool) {
         crate::ui::services::report::report(&weak, move |ui| {
             if land(&instance, kind, seq) {
                 file_parsed(&instance, parsed);
-                // The summary's counts are the cache's own lengths, so they go
-                // up now that there is something to count; the icons follow on
-                // their own. The panel that is open, if it is this kind's, is
-                // drawn from the same list and so is redrawn here rather than
-                // being left showing the count it had a moment ago.
+                // The summary's counts are the cache's own lengths, so they go up
+                // now that there is something to count; the icons follow on their own.
+                // The open panel of this kind is redrawn from the same list.
                 counts(&ui, Some(&instance));
                 preview::refresh_preview_icons(&ui, &instance);
                 repanel(&ui, &instance, kind);
@@ -332,11 +325,8 @@ async fn parse(instance: &str, kind: Kind) -> Parsed {
                 }
             })
             .await
-            // Two failures used to collapse into one `unwrap_or_default`: the task
-            // was aborted or panicked, and the read itself failed. The saves row
-            // then showed zero with nothing to explain it. The two carry
-            // different error types, so they are logged separately rather than
-            // chained.
+            // The aborted-or-panicked task and the failed read carry different error
+            // types, so they are logged separately rather than chained.
             .map(|result| {
                 result.unwrap_or_else(|error| {
                     log::warn!("The saves of {instance} could not be read: {error}");
@@ -374,17 +364,10 @@ async fn parse(instance: &str, kind: Kind) -> Parsed {
     }
 }
 
-/// The summary's four counts, taken from the cache.
-///
-/// A count is `len()` and nothing else. That is the whole point of the store:
-/// the number on the summary *is* the length of the list the panel draws, so
-/// there is no second implementation of "what counts as a mod" to disagree.
-///
-/// `None` is the summary with no instance behind it, which is four zeros; an
-/// instance that is not the current one is left alone, because a parse that
-/// outlived the selection still fills the cache — it is keyed by instance and
-/// will be right if that instance is opened again — but must not draw itself
-/// under another instance's name.
+/// The summary's four counts, taken from the cache: a count is `len()` of the list
+/// the panel draws, so there is no second notion of "what counts as a mod" to
+/// disagree. `None` is the summary with no instance behind it; an instance that is
+/// not the current one is left alone.
 pub(crate) fn counts(ui: &App, instance: Option<&str>) {
     let state = ui.global::<GameState>();
     let instance = match instance {
@@ -413,15 +396,9 @@ pub(crate) fn counts(ui: &App, instance: Option<&str>) {
     state.set_content_loading_screenshots(parsing(instance, Kind::Screenshots));
 }
 
-/// Whether one kind of `instance` is being parsed right now.
-///
-/// One bool each, and that is the whole reason it is asked per kind rather than
-/// once for all four: they settle at very different times. A screenshot folder
-/// is a `read_dir` and its row is done in a frame; a mods folder is a SHA-512
-/// over every jar plus whatever Modrinth and CurseForge have to add, which on a
-/// large pack is seconds. One flag for all four made three rows wait on the
-/// slowest, showing a row's preview icons and then its count, because the count
-/// was still behind a spinner that had nothing to do with them.
+/// Whether one kind of `instance` is being parsed right now. One flag each,
+/// because the four settle at very different times: a screenshot folder is a
+/// `read_dir`, a mods folder is a SHA-512 over every jar plus two platform lookups.
 fn parsing(instance: &str, kind: Kind) -> bool {
     INFLIGHT.with(|inflight| {
         inflight

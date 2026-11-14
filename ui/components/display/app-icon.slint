@@ -7,16 +7,13 @@ import { Icons } from "../../icons.slint";
 
 // Icon renderer.
 //
-// Icons are SVG path data at their own view box. The caller passes an explicit
-// `icon-color` (default: body text at 90% opacity).
+// Icons are SVG path data at their own view box, and the caller passes an explicit
+// `icon-color` (default: body text at 90% opacity). `build.rs` splits every shape
+// into the pass its own paint calls for, so one colour has to serve both — except
+// where a shape is not painted at all, which is what `no-fill` is.
 //
-// `build.rs` splits every icon's geometry into the pass each shape's own paint
-// calls for, so `icon-color` has to stay one colour for both — except where a
-// shape is not painted at all, which is what `no-fill` is.
-//
-// Stroke width is expressed in the icon's view box units and converted to
-// element pixels the same way the title bar does it: an 18px glyph on a 512
-// view box with stroke-width 32 becomes 18 * 32 / 512 = 1.125px.
+// Stroke width is in the icon's view box units, converted to element pixels: an
+// 18px glyph on a 512 view box with stroke-width 32 becomes 1.125px.
 export component AppIcon inherits Rectangle {
     in property <string> name;
     in property <length> size: 20px;

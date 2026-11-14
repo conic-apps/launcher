@@ -2,10 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The changelog detail's HTML body and its layout.
-//!
-//! A changelog has no `<details>` and no images, so image items are skipped
-//! rather than reserved as empty boxes.
+//! The changelog detail's HTML body and its layout. A changelog has no
+//! `<details>` and no images, so image items are skipped rather than reserved as
+//! empty boxes.
 
 use std::cell::RefCell;
 use std::rc::Rc;

@@ -593,13 +593,8 @@ impl Instance {
     }
 }
 
-/// Total play time of an instance in seconds, parsed from its game logs.
-///
-/// An unreadable or corrupt log contributes zero, which quietly under-reports an
-/// instance's playtime. The count of such archives is summed and reported once
-/// rather than per file — this runs on a rayon pool, so per-file logging would
-/// interleave from several threads at once for what is usually one truncated
-/// file.
+/// Total play time of an instance in seconds, parsed from its game logs. An
+/// unreadable or corrupt log contributes zero, so the total under-reports.
 pub fn calculate_playtime(instance_id: &str) -> Result<u64> {
     let instance_root = LOCATIONS.instances.get_instance_root(instance_id);
     let logs_root = instance_root.join("logs");

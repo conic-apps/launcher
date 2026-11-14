@@ -12,13 +12,9 @@ use super::*;
 /// looking like an attack, where one at a time made a page of twenty look dead.
 pub(crate) const ICON_FETCH_CONCURRENCY: usize = 16;
 
-/// How many decoded images one of these maps holds.
-///
-/// An entry is a decoded bitmap at the source's own resolution — a Modrinth icon
-/// is 128×128, so 64 kB of RGBA plus whatever the driver keeps alongside it.
-/// A browsing session that pages through thousands of projects would otherwise
-/// grow this without bound; five hundred is well past what a person scrolls
-/// past in one sitting and around 25 MB at that per-icon size.
+/// How many decoded images one of these maps holds. An entry is a decoded bitmap
+/// at the source's own resolution, so a session that pages through thousands of
+/// projects would otherwise grow this without bound.
 const DECODED_IMAGE_LIMIT: usize = 500;
 
 /// One icon on its way to the cards: where it comes from, and every
@@ -26,19 +22,10 @@ const DECODED_IMAGE_LIMIT: usize = 500;
 /// default icon on several rows, and one download serves all of them.
 pub(crate) type PendingIcon = (String, Vec<(usize, String)>);
 
-/// Fetches the icons a freshly delivered grid is still missing and drops each one
-/// in as it arrives.
-///
-/// Called by [`set_cards`] right after the cards go to the model, so a grid is on
-/// screen before a single icon has been fetched. Every fetch is reported on its
-/// own rather than in one batch at the end, because the last icon of a slow page
-/// would otherwise hold back the sixty that are already there.
-///
-/// A card whose row has since been replaced is skipped: the row's `id` is
-/// checked against the ones recorded here, which covers an instance switch,
-/// another list landing in the same model, and the same list reloaded. It is more
-/// precise than a generation counter for this — a card's id *is* its identity,
-/// so a match means the row still wants this icon.
+/// Fetches the icons a freshly delivered grid is still missing, dropping each one
+/// in as it arrives, so a grid is on screen before a single icon has been fetched.
+/// A card whose row has since been replaced is skipped, so a stale answer never
+/// lands on another row.
 pub(crate) fn load_icons(ui: &App, grid: Grid, icons: Vec<PendingIcon>) {
     if icons.is_empty() {
         return;
@@ -94,17 +81,9 @@ fn set_card_icon(ui: &App, grid: Grid, rows: &[(usize, String)], image: Option<P
     }
 }
 
-/// Which decoded-image memo a source lives in.
-///
-/// A mod's, a resource pack's and a save's icon is a `data:` url or an `https:`
-/// one and is remembered in `ICONS`; a screenshot is a file of its own and is
-/// remembered in `SCREENSHOTS`, under its path. The cards already treat the two
-/// separately; the game view's preview rows draw both, so it names the difference
-/// once instead of branching at every call site.
-///
-/// The three steps are the three moments a caller has them: [`Memo::get`] on the
-/// UI thread when it already has a key, [`Memo::fetch`] on the runtime for what
-/// it does not, and [`Memo::put`] back on the UI thread to build the `Image`.
+/// Which decoded-image memo a source lives in: a mod's, a resource pack's and a
+/// save's icon is a URL keyed in `ICONS`, a screenshot is a file path keyed in
+/// `SCREENSHOTS`.
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum Memo {
     Icons,
@@ -119,12 +98,9 @@ impl Memo {
         }
     }
 
-    /// Fetches and decodes what is at `key`, off the UI thread.
-    ///
-    /// Blocking, which is what `crate::support::runtime::block_on` is for and the
-    /// same call [`load_icons`] makes. A screenshot is read from the instance's
-    /// own directory rather than fetched, so it does not go through the http
-    /// cache — that is what would reject a path outright.
+    /// Fetches and decodes what is at `key`, off the UI thread. Blocking, on the
+    /// same call [`load_icons`] makes; a screenshot is read from the instance's own
+    /// directory rather than through the HTTP cache.
     pub(crate) fn fetch(self, key: &str) -> Option<PendingImage> {
         match self {
             Memo::Icons => fetch_icon(key),
@@ -169,18 +145,11 @@ pub(crate) fn fetch_icon(url: &str) -> Option<PendingImage> {
     decode_icon(url, bytes)
 }
 
-/// The icon's bytes, and nothing else.
-///
-/// Split out of [`fetch_icon`] so a caller that wants the icons of a whole page
-/// at once can *await* the network and leave only the decode to a blocking
-/// thread. Downloading twenty of them one after another on one thread is what
-/// makes a list of remote results look dead while its images arrive.
-///
-/// A `data:` URL is decoded here rather than by [`shared::http_cache`]: it is a
-/// payload the caller already holds, not something fetched, and only the caller
-/// knows which base64 padding to expect. Everything else goes through the cache,
-/// which is where the disk copy, the request timeout, the status check and the
-/// refusal to fetch a host on the user's own network all come from.
+/// The icon's bytes, and nothing else: a caller that wants a whole page of icons at
+/// once can *await* the network and leave only the decode to a blocking thread. A
+/// `data:` URL is decoded here; everything else goes through
+/// [`shared::http_cache`], which brings the disk copy, the timeout and the refusal
+/// to fetch the user's own network.
 pub(crate) async fn fetch_icon_bytes(url: &str) -> Option<Vec<u8>> {
     if url.is_empty() {
         return None;
@@ -218,12 +187,9 @@ pub(crate) fn resolve_icon(image: PendingImage) -> Option<Image> {
     resolve_image(image, &ICONS)
 }
 
-/// The card icon a save, mod, resource pack or pack falls back to:
-/// `ui/assets/images/unknown-server.webp`. A card whose icon is missing or
-/// failed to decode would otherwise come out as an empty box.
-///
-/// Decoded on first use and kept: it is the same 120x120 bitmap every time, and
-/// a card is rebuilt on every relayout.
+/// The card icon a save, mod, resource pack or pack falls back to
+/// (`ui/assets/images/unknown-server.webp`), rather than an empty box. Decoded on
+/// first use and kept.
 pub(crate) fn unknown_icon() -> Option<Image> {
     if let Some(image) = UNKNOWN_ICON.with(|cached| cached.borrow().clone()) {
         return Some(image);
@@ -281,11 +247,9 @@ pub(crate) fn resolve_image(
     cache.with(|cache| {
         let mut cache = cache.borrow_mut();
         if cache.len() >= DECODED_IMAGE_LIMIT {
-            // A flush rather than a selective eviction: a `HashMap` has no order
-            // to evict from the back of, and guessing wrong would blank an icon
-            // that is on screen. The disk cache is what makes throwing them away
-            // cheap — the next card built for one reads a local file instead of
-            // asking a CDN — so this costs a re-decode, not a round-trip.
+            // A flush rather than a selective eviction: a `HashMap` has no order to
+            // evict from the back of, and guessing wrong would blank an icon that is
+            // on screen. The disk cache makes it a re-decode, not a round-trip.
             cache.clear();
         }
         cache.insert(image.key, built.clone());

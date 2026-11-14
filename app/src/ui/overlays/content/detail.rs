@@ -6,13 +6,9 @@
 
 use super::*;
 
-/// Opens a project's detail panel from outside the content overlays — the
-/// command palette's "open" on a Modrinth or CurseForge search result.
-///
-/// A card click and a palette result take the same `open_detail` path, so the
-/// only thing to set up first is the kind and the platform. Both are the mods'
-/// whatever the project actually is: a palette search is sent without facets,
-/// so a resource pack opened this way opens the *mod* panel.
+/// Opens a project's detail panel from outside the content overlays — the command
+/// palette's "open" on a search result. Both paths enter as a mod project: a
+/// palette search is sent without facets.
 pub(crate) fn open_project_detail(ui: &App, platform: &str, id: &str) {
     let platform = if platform == "curseforge" {
         Platform::CurseForge

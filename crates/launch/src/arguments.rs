@@ -272,8 +272,7 @@ pub async fn generate_command_arguments(
 }
 
 /// Builds the classpath: common libraries (unzipping natives as it goes), the
-/// extra paths, then the version jar — or the root jar at the end of the
-/// inheritance chain.
+/// extra paths, then the version jar.
 fn resolve_classpath(
     version: &ResolvedVersion,
     minecraft: &MinecraftLocation,
@@ -287,9 +286,8 @@ fn resolve_classpath(
                 let path = minecraft.get_library_by_path(&native_library.path);
                 let native_folder = minecraft.get_natives_root(&version.id);
                 info!("Unzip native library {path:#?} to {native_folder:#?}");
-                // Each failure is warned because the game then dies with an
-                // `UnsatisfiedLinkError` far from here, and the `info!` above
-                // fires before the work.
+                // Each failure is warned: the game would otherwise die with an
+                // `UnsatisfiedLinkError` far from here.
                 match std::fs::File::open(&path) {
                     Ok(file) => match ZipArchive::new(file) {
                         Ok(mut zip_archive) => {

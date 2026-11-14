@@ -4,9 +4,7 @@
 
 //! Provides the smooth-scroll components (`ui/globals/scroll.slint`) with a
 //! monotonic clock and a wheel/trackpad/momentum classification that Slint's
-//! `PointerScrollEvent` cannot carry. On macOS an `NSEvent` observer records the
-//! classification before Slint dispatches the event in flight; everywhere else
-//! the source is `wheel`.
+//! `PointerScrollEvent` cannot carry.
 
 use std::cell::Cell;
 use std::sync::OnceLock;

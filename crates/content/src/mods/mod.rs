@@ -87,14 +87,10 @@ pub struct ResolvedMod {
     pub depends: ResolvedDepends,
     pub authors: Vec<ResolvedAuthorInfo>,
     pub license: Option<Vec<String>>,
-    /// The mod icon encoded as a `data:image/png;base64,` data URL, or the icon
-    /// URL returned by an online lookup.
-    ///
-    /// Never serialized. A data URL is a third larger than the PNG it encodes,
-    /// and the online lookup replaces it for nearly every mod that either
-    /// platform knows — persisting it made `local.json` mostly icon. The bytes
-    /// live in a file of their own keyed by the jar's checksum instead; see
-    /// `crate::remote::mods`.
+    /// The mod icon encoded as a `data:image/png;base64,` data URL, or the icon URL
+    /// an online lookup returned. Never serialized: a data URL is a third larger
+    /// than the PNG it encodes, so the bytes live in a file keyed by the jar's
+    /// checksum instead (see `crate::remote::mods`).
     #[serde(skip_serializing, default)]
     pub icon: Option<String>,
     pub loader: ModLoader,

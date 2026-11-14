@@ -7,18 +7,14 @@ import { AppIcon } from "../display/app-icon.slint";
 import { FocusManager } from "../../globals/focus.slint";
 import { TooltipArea } from "../controls/tooltip-area.slint";
 
-// A titled group of settings.
+// A titled group of settings: a full-width layout whose items are inset by the
+// settings body.
 //
-// It is a full-width layout whose items are inset by the settings body.
-//
-// The corners are the rows', not the wrapper's, and the two obvious ways of
-// doing it are both wrong. Clipping the wrapper rounds the rows, but cuts off
-// the value tooltip a control in the first row draws above itself. Rounding
-// every row and painting the card behind them leaves a notch at each row's
-// corners and at every 1px seam, which only the card's colour hides — and a
-// hovered row is a lighter colour, so its four corners show the base one
-// through. `SettingItem`'s `group-first` / `group-last` round only the two rows
-// that end the group, and nothing else rounds anything.
+// The corners are the rows', not the wrapper's: clipping the wrapper would cut off
+// the value tooltip a control in the first row draws above itself, and rounding
+// every row leaves a notch at each row's corners and at every 1px seam.
+// `SettingItem`'s `group-first` / `group-last` round only the two rows that end the
+// group.
 export component SettingGroup inherits VerticalLayout {
     in property <string> title: "";
     in property <bool> resetable: false;

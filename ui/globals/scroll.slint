@@ -4,23 +4,13 @@
 
 // What the Lenis-style scroll containers need from the platform.
 //
-// `components/containers/scroll-view.slint` and `views/game/instances-list.slint` both ease
-// their offset towards the wheel target (`lerp`, the way Lenis does), and both
-// have to know one thing Slint's `PointerScrollEvent` does not carry: where the
-// event came from, because the two kinds of event mean different things.
+// A wheel notch is a *distance*, so it accumulates into a target the offset eases
+// after; a trackpad's deltas *are* a motion, so easing them would make the content
+// trail the hand — and easing macOS's momentum would stall it at the moment of
+// release.
 //
-// A wheel notch is a *distance* — the wheel does not move anything, it reports
-// how far the page should go — so it accumulates into a target the offset then
-// eases after. A trackpad's deltas *are* a motion, and one the gesture is still
-// making: the fingers, and then the momentum macOS derives from the velocity
-// they were moving at when they left. Easing those would make the content trail
-// the hand, and easing the momentum would stall the content at the moment of
-// release (the offset has no distance left to cover, so there is nothing for an
-// easing to start from) — see `components/containers/scroll-view.slint`.
-//
-// Slint hands over the delta and the modifiers only, so both answers come from
-// the platform (`app/src/ui/services/scroll.rs`, which watches the AppKit scroll
-// events).
+// Slint hands over the delta and the modifiers only, so both answers come from the
+// platform (`app/src/ui/services/scroll.rs`).
 
 export enum ScrollSource {
     /// A classic wheel — or a platform the classifier cannot tell apart, which

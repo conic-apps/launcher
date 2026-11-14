@@ -3,10 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The multiplayer download screen's presenter: a [`DownloadSnapshot`] → a
-//! [`DownloadView`].
-//!
-//! The testable half of the pair: the phase/loading/byte-text decision is a
-//! pure function of the snapshot, so it is unit-tested without a window.
+//! [`DownloadView`], unit-tested without a window.
 
 use download::progress::{DownloadPhase, DownloadSnapshot};
 

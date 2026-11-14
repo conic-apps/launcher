@@ -64,12 +64,9 @@ pub(crate) fn total_height(heights: &[f32], gap: f32, top: f32, bottom: f32) -> 
     top + cards + gap * (heights.len() - 1) as f32 + bottom
 }
 
-/// The cards a viewport touches, as an index range. `offset` is the distance
-/// from the flow's top to the top of the viewport and `viewport` its height; a
-/// margin widens the window so a card is fetched before it is scrolled to.
-///
-/// Returns an empty range when nothing is visible — which is not the same as
-/// the whole list.
+/// The cards a viewport touches, as an index range: `offset` is the distance from
+/// the flow's top to the viewport's, and the margin fetches a card before it is
+/// scrolled to. An empty range means nothing is visible, not the whole list.
 pub(crate) fn visible_range(
     positions: &[f32],
     heights: &[f32],

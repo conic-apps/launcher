@@ -1,7 +1,18 @@
 # Conic Launcher — Agent Guide
 
+First of all, read ARCHITECTURE.md to get an overview of the project and follow it.
+
 The app is native Slint + Rust. Before updating any `.slint` files, read the Slint documentation
 first.
+
+## Contributions
+
+Anything contribution-facing — an issue, a pull request, or a reply to a maintainer — must follow
+[AI_POLICY.md](./AI_POLICY.md). That policy forbids AI-written prose to maintainers, so do not write
+issue or pull request bodies, comments, or replies on the user's behalf: say the policy rejects it
+and stop there, leaving the user to write it in their own words. The facts you may hand over are the
+technical ones they would otherwise have to dig out — the files and lines involved, the observed
+behaviour, the reproduction steps — never a draft of the text.
 
 ## Quick start
 
@@ -11,9 +22,7 @@ cargo run --release         # release build
 cargo build --release       # what the packages ship
 ```
 
-First of all, read ARCHITECTURE.md to get an overview of the project.
-
-## Verification
+## Verification (Matching `check-rust.yml`)
 
 ```bash
 cargo fmt --all -- --check
@@ -23,13 +32,6 @@ cargo clippy --all-targets --release -- -D warnings   # warnings fail CI
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --document-private-items
 cargo test
 ```
-
-Matching `check-rust.yml`, which runs `fmt` on Linux; `check` + `clippy`
-(`--all-targets --release -- -D warnings`) and `doc`
-(`RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --document-private-items`) on Linux, macOS **and**
-Windows; plus a "test" job that is
-`cargo test --workspace --exclude conic-ui --verbose --all-targets`, and a `slint-format` job that
-checks `.slint` files with `slint-lsp format` on Linux.
 
 ## Rust conventions
 
@@ -42,40 +44,41 @@ checks `.slint` files with `slint-lsp format` on Linux.
   deps (winit, zbus, objc2, windows) are declared in the crate that needs them.
 - Release profile: `panic = "abort"`, `lto`, `codegen-units = 1`, `opt-level = "z"`, `strip`. A
   release build is slow on purpose.
-- `slint` is pulled with `default-features = true`, which brings the femtovg (OpenGL) and software
-  renderers.
 - File header convention: `// Conic Launcher` / copyright /
   `// SPDX-License-Identifier: GPL-3.0-only`.
 
 ## Comments
 
-- A comment carries _why_, never _what_: the intent, the constraint, the rejected alternative, the
-  consequence worth warning about. If you cannot say it without restating the code, the code is what
-  needs fixing — a clearer name or a smaller function beats a comment every time, and the best
-  comment is the one you found a way not to write.
+- A comment carries _why_, never _what_: the important intent, the constraint, the rejected
+  alternative, the consequence worth warning about, but do not use a childish or over-explaining
+  tone. If you cannot say it without restating the code, the code is what needs fixing — a clearer
+  name or a smaller function beats a comment every time, and the best comment is the one you found a
+  way not to write.
+- Documenttation comments should only include the usage of the function, module or crate. Don't
+  state implement details.
 - An inaccurate or misleading comment is worse than none: it is read as truth and outlives the code
   it described. When a comment and its code disagree, the code is right — fix or delete the comment.
 - Keep a comment next to the code it describes, about that code, and make the link to it obvious. Do
   not reach across the system from a local comment, and do not restate the obvious.
-- Put the long rationale in the module's `//!` doc; keep an inline `//` to a line or two. Never
-  narrate change history (the commit and the PR own that), leave commented-out code, sign a comment,
-  or comment an item only because it exists.
+- Retain only the information necessary for development. Never narrate change history (the commit
+  and the PR own that), leave commented-out code, sign a comment, or comment an item only because it
+  exists.
 - Document a public crate API; do not give every private helper a header — a short function with a
-  good name says more. A `// TODO` may mark known work, but it is not an excuse to leave code broken.
+  good name says more. A `// TODO` may mark known work, but it is not an excuse to leave code
+  broken.
 - The file header (copyright / SPDX) is the one comment that is not about the code.
-
 
 ## UI conventions
 
 - Slint: properties and bindings, `callback` for events, `@tr()` for translated strings,
   `@image-url` for assets.
-- **Never** add `cursor: pointer`; this is a desktop app.
+- **Never** add `cursor: pointer`.
 - Rust touches a Slint component only from the event loop. From another thread, go through
   `upgrade_in_event_loop` — a `Weak` crosses threads, a strong handle cannot.
 - Keep the winit backend hook (`app/src/support/native/`, reached through `native::install_backend`)
   as the only place window attributes are set. It has to run before any winit window exists, which
   is why `main` calls it before `App::new`.
-- Translations go through `@tr()`; never hardcode user-visible text. Add the string to all 12
+- Translations go through `@tr()`; never hardcode user-visible text. Add the string to all
   catalogues via `tools/update-i18n.py`.
 
 ## License

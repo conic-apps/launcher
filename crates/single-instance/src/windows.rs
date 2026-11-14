@@ -2,22 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Single-instance guard on Windows, over a named mutex and a hidden window.
-//!
-//! A mutex named after [`crate::APP_ID`] is what tells the two launches apart:
-//! taking it succeeds for the first process and reports `ERROR_ALREADY_EXISTS`
-//! for every one after it, and the system drops the name when the last handle
-//! to it closes, which is what makes a crashed primary recoverable. The primary
-//! also creates a message window under a class name derived from the same id,
-//! because a mutex cannot carry a payload: a later launch finds that window with
-//! `FindWindowW` and hands it its command line with `WM_COPYDATA`.
-//!
-//! The window is never shown and never activated (`WS_EX_NOACTIVATE`,
-//! `WS_EX_TOOLWINDOW`, `WS_EX_LAYERED`, `WS_EX_TRANSPARENT`, and no
-//! `WS_VISIBLE`), so it is invisible, stays out of the taskbar and cannot take
-//! the focus; it exists to be found and to receive the message. `WM_COPYDATA`
-//! does not need a visible window, and it is the only message the window
-//! procedure acts on.
+//! Single-instance guard on Windows, over a named mutex and a hidden window: the
+//! mutex named after [`crate::APP_ID`] tells the primary from every later launch,
+//! and the window, which is never shown or activated, is what the later launch
+//! finds with `FindWindowW` and hands its command line with `WM_COPYDATA`.
 
 use std::{
     ffi::OsStr,

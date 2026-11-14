@@ -2,11 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The byte framing of a report, for the backends that push one through a
-//! channel of their own — a socket stream, a `WM_COPYDATA` payload.
-//!
-//! The D-Bus backend hands the two fields to the bus as method arguments and
-//! needs none of this, so on Linux the whole module is unused.
+//! The byte framing of a report, for the backends that push one through a channel
+//! of their own — a socket stream, a `WM_COPYDATA` payload. The D-Bus backend hands
+//! the two fields to the bus as method arguments, so on Linux the module is unused.
 #![cfg_attr(target_os = "linux", allow(dead_code))]
 
 use crate::Launch;

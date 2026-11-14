@@ -3,11 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The launch screen's presenter: the launch crate's progress → a [`LaunchView`]
-//! → `LaunchState`. The mapping is pure and unit-tested without a window;
-//! [`apply_view`] is the only Slint-touching line.
-//!
-//! Install progress is not shown here any more: it belongs to the game view's
-//! button (`app/src/ui/views/game/install_progress.rs`).
+//! → `LaunchState`. The mapping is pure and unit-tested without a window.
 
 use crate::slint_backend::LaunchState;
 use crate::support::formatting::bytes;

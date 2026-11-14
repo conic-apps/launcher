@@ -2,12 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The 3D world, drawn on the GPU through Slint's rendering notifier, which
-//! hands over the current OpenGL context and a borrowed texture for Slint to
-//! composite.
+//! The 3D world, drawn on the GPU through Slint's rendering notifier.
 //!
 //! The callback runs inside Slint's render pass, so every GL binding it touches
-//! is saved and restored before returning.
+//! must be saved and restored before returning.
 
 use std::cell::{Cell, RefCell};
 use std::num::NonZeroU32;

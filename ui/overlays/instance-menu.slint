@@ -59,20 +59,16 @@ component MenuRow inherits Rectangle {
 // The instance list's right-click menu: the right-clicked instance's actions,
 // opened where the card was right-clicked.
 //
-// Mounted at the app root, not inside the list: the list's viewport clips its
-// rows, and the menu has to be able to open over the summary and the scrollbar.
-// A `ContextMenuArea` would give a native menu and the keyboard menu key, but a
-// native menu cannot carry the launch button's state colour on the first item,
-// nor the red the delete item is drawn in.
+// Mounted at the app root, because the list's viewport clips its rows and the menu
+// has to open over the summary and the scrollbar. A `ContextMenuArea` would give a
+// native menu, which cannot carry the launch button's state colour nor the red the
+// delete item is drawn in.
 //
-// Every item acts on `InstanceMenu.target` — the card that was right-clicked —
-// so opening the menu never changes the selection. Only "Instance settings"
-// switches to it first, because the settings overlay edits the current instance.
+// Every item acts on `InstanceMenu.target`, so opening the menu never changes the
+// selection. Only "Instance settings" switches to it first.
 //
-// The labels resolve under the context of the surface they are the same action
-// in — the launch button and its action-icon hints (`InstanceSummary`), and the
-// instance settings rows (`InstanceSettings`) — so one catalogue entry serves
-// both and a wording change cannot make them disagree.
+// The labels resolve under the context of the surface they are the same action in,
+// so one catalogue entry serves both.
 export component InstanceMenuOverlay inherits Rectangle {
     width: 100%;
     height: 100%;

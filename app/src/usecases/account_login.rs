@@ -2,13 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Application rules for adding an account.
-//!
-//! The interactive Microsoft flow — which of the dialog's four screens is
-//! mounted, when the loopback listener is bound — is the adapter's job and stays
-//! in `ui/overlays/dialogs/account_add`. What lives here are the rules that do
-//! not change when the screen does: whether a form may be submitted, and whether
-//! two Yggdrasil servers are the same one. They are UI-neutral and unit-tested.
+//! Application rules for adding an account: whether a form may be submitted, and
+//! whether two Yggdrasil servers are the same one. UI-neutral and unit-tested;
+//! the interactive Microsoft flow stays in `ui/overlays/dialogs/account_add`.
 
 use url::Url;
 

@@ -2,10 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Turning an abnormal Minecraft exit into something a screen can show. The
-//! evidence is best-effort — captured console, any `crash-reports/*.txt`, and the
-//! tail of `logs/latest.log` — but a report is always returned. Reasons stay raw
-//! (rule name plus capture groups) for the screen to translate.
+//! Turning an abnormal Minecraft exit into something a screen can show: the
+//! captured console, any `crash-reports/*.txt`, and the tail of
+//! `logs/latest.log`. A report is always returned; the reasons stay raw (rule
+//! name plus capture groups) for the screen to translate.
 
 pub mod analyzer;
 
@@ -26,7 +26,7 @@ use storage::LOCATIONS;
 const DETAILS_LIMIT: usize = 16 * 1024;
 
 /// How many trailing lines of the captured console and of `logs/latest.log`
-/// the opened report keeps. Both are there for a helper to read, not for the
+/// the opened report keeps; both are there for a helper to read, not for the
 /// dialog.
 const REPORT_LOG_LINES: usize = 500;
 
@@ -34,10 +34,9 @@ const REPORT_LOG_LINES: usize = 500;
 /// crash report.
 const LOG_TAIL_LINES: usize = 100;
 
-/// How the game's process ended, mirroring HMCL's `ExitWaiter.ExitType`.
-///
-/// The distinction matters: an `APPLICATION_ERROR` may have written a report and
-/// a fix, while a `JVM_ERROR` usually means the arguments or the Java install.
+/// How the game's process ended, mirroring HMCL's `ExitWaiter.ExitType`. An
+/// `APPLICATION_ERROR` may have written a report and a fix; a `JVM_ERROR`
+/// usually means the arguments or the Java install.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ExitType {
     /// The JVM refused to start (bad heap size, unsupported option, 32-bit).
@@ -82,12 +81,9 @@ const APPLICATION_ERROR_MARKERS: &[&str] = &[
     "An exception was thrown, the game will display an error screen and halt.",
 ];
 
-/// Classifies how a process ended, the way HMCL's `ExitWaiter` does.
-///
-/// `exit_code` is the platform code (`None` on a Unix signal death), `signal`
-/// the terminating signal when there was one, and `stopped` whether we asked the
-/// process to stop. The console `log` is scanned for the crash markers so that a
-/// game which prints a crash report and then exits `0` is still an error.
+/// Classifies how a process ended. The console `log` is scanned for the crash
+/// markers, so a game that prints a crash report and then exits `0` is still an
+/// error. `stopped` says whether we asked for the exit.
 pub fn classify_exit(
     exit_code: Option<i32>,
     signal: Option<i32>,
@@ -122,10 +118,8 @@ pub struct LaunchInfo {
     pub java_version: String,
 }
 
-/// A crash, reduced to what a screen can render.
-///
-/// Every field is a plain `String` (or an `Option` thereof) so the report
-/// crosses a thread and reaches Slint, which cannot format anything itself.
+/// A crash, reduced to what a screen can render: plain data that crosses a thread
+/// and reaches Slint.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CrashReport {
     pub instance_id: String,
@@ -163,10 +157,9 @@ pub struct CrashReport {
 
 /// Collects the crash information left behind by `instance`'s last run.
 ///
-/// `console_log` is everything the process printed (stdout and stderr), which
-/// the running-instance watcher captured. It is the primary evidence: it holds
-/// the game's crash-report location line and the exception text even when no
-/// report file was written.
+/// `console_log` is everything the process printed, which the running-instance
+/// watcher captured; it holds the crash-report location line and the exception
+/// text even when no report file was written.
 pub fn analyze(
     instance: &Instance,
     exit_type: ExitType,
@@ -291,12 +284,8 @@ fn fallback_summary(exit_type: ExitType, exit_code: Option<i32>) -> String {
     }
 }
 
-/// The newest `crash-reports/*.txt`, with its contents.
-///
-/// Only a fallback, for when the console named no report (a very old game, or
-/// output we failed to capture). Newest by modified time rather than by name:
-/// the game's own names are timestamped, but a copied or restored report would
-/// sort wrong.
+/// The newest `crash-reports/*.txt`, with its contents; only a fallback for when
+/// the console named no report.
 fn newest_crash_report(root: &Path) -> Option<(PathBuf, String)> {
     let entries = std::fs::read_dir(root.join("crash-reports")).ok()?;
     let mut newest: Option<(std::time::SystemTime, PathBuf)> = None;
@@ -340,9 +329,6 @@ fn description(contents: &str) -> Option<String> {
 }
 
 /// The last [`LOG_TAIL_LINES`] lines of `<root>/logs/latest.log`, oldest first.
-///
-/// Kept for tests and callers that have no captured console; [`analyze`] reads
-/// the whole log instead so the analyzer can scan it.
 #[allow(dead_code)]
 pub(crate) fn log_tail(root: &Path) -> Vec<String> {
     let Ok(file) = File::open(root.join("logs").join("latest.log")) else {
