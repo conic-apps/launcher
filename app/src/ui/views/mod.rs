@@ -6,5 +6,4 @@
 
 pub(crate) mod game;
 pub(crate) mod launch;
-pub(crate) mod settings;
 pub(crate) mod setup;

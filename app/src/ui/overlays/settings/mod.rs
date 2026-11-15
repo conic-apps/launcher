@@ -2,8 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The settings "script": wires the `AppConfig` global callbacks (the settings
-//! screens) to the config crate and the OS integrations.
+//! Wires the `AppConfig` global callbacks — the settings drawer's sections and
+//! the setup wizard's copies of them — to the config crate and the OS
+//! integrations.
 
 use std::{cell::RefCell, path::PathBuf, rc::Rc, time::Duration};
 

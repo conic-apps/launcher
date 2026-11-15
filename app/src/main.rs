@@ -81,9 +81,9 @@ fn main() {
     // Before any account is drawn.
     ui::components::account_avatar::setup(&ui);
 
-    ui::views::settings::wire(&ui, Rc::clone(&shared), Rc::clone(&save_timer));
     ui::views::game::setup(&ui, Rc::clone(&shared));
     ui::overlays::account_view::setup(&ui, Rc::clone(&shared));
+    ui::overlays::settings::wire(&ui, Rc::clone(&shared), Rc::clone(&save_timer));
     ui::overlays::instance_settings::setup(&ui, Rc::clone(&shared));
     ui::overlays::content::setup(&ui);
     ui::views::launch::setup(&ui, Rc::clone(&shared));

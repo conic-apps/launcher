@@ -104,16 +104,15 @@ where a file goes:
     `title-bar-action-button`, `search-bar`). A component gets a same-named folder only when it has
     private children, and keeps them there rather than in `components/`.
 - **`views/`** — the top-level pages: one `*-view.slint` each (`game-view`, `launch-view`,
-  `setup-view`, `todo-placeholder`) with a same-named folder for its parts (`game/`, `setup/`);
-  `views/settings/` holds the section bodies (`settings-general`, `settings-jvm`, …) that the
-  settings drawer and the setup wizard compose.
+  `setup-view`, `todo-placeholder`) with a same-named folder for its parts (`game/`, `setup/`).
 - **`overlays/`** — everything drawn above a page. The app-root layers (`dialog-root`,
   `dropdown-overlay`, `instance-menu`, `description-tooltip`, `command-palette`, `music-player`,
   `settings-overlay`, `instance-settings`) sit here; a dialog _flow_ gets a folder
   (`dialogs/account-add/`, `dialogs/create-instance/`, `dialogs/multiplayer/`) with
-  `dialogs/dialog.slint` as the shared modal shell, the content browser is `content/`, and the news
+  `dialogs/dialog.slint` as the shared modal shell, the content browser is `content/`, the news
   browser — a list flow over the Mojang news feed and the Java changelogs, with an in-panel
-  changelog reader — is `news/`.
+  changelog reader — is `news/`, and the settings drawer's section bodies (`settings-general`,
+  `settings-jvm`, …) are `settings/`.
 - **`globals/`** — one singleton per domain (`Navigation`, `AppConfig`, `ContentState`,
   `PageMotion`, `SettingsShell`, `NotificationState`, `TaskState`, …). Slint components are only
   reachable from Rust through a global, and a global is also how cross-screen state is shared
@@ -124,7 +123,9 @@ where a file goes:
 
 Settings is one drawer, `overlays/settings-overlay.slint`, over the game view; there is no settings
 page and no page/nav/content component split. The section list, the scroll-spy, the scrolling body
-and the section imports all live in that file. The drawer is declared before the other app-root
+and the section imports all live in that file, while the bodies it imports live in `settings/` — the
+setup wizard composes two of them (`settings-game`, `settings-jvm`) instead of duplicating them.
+The drawer is declared before the other app-root
 panels, which is why news, music and notifications cover it, while the settings controls' dropdowns
 (the `z: 1000` layer) stay above it.
 
