@@ -16,8 +16,8 @@ pub type TaskId = i32;
 pub enum TaskKind {
     /// A mod, resource pack or shader pack being written into an instance.
     ContentDownload,
-    /// A resolved modpack's instance being created and filled.
-    ModpackInstall,
+    /// An import's instance being created and filled.
+    InstanceImport,
     /// The Minecraft, Java or loader install of an instance, including a repair.
     GameInstall,
     /// The Conic Nexus dynamic library.
@@ -49,7 +49,7 @@ impl TaskKind {
     pub fn key(self) -> &'static str {
         match self {
             Self::ContentDownload => "content-download",
-            Self::ModpackInstall => "modpack-install",
+            Self::InstanceImport => "instance-import",
             Self::GameInstall => "game-install",
             Self::LibraryDownload => "library-download",
         }
@@ -59,7 +59,7 @@ impl TaskKind {
         match self {
             // Everything that rewrites an instance's game files: a second one
             // would fight the first over the same paths.
-            Self::GameInstall | Self::ModpackInstall => TaskLane::Exclusive,
+            Self::GameInstall | Self::InstanceImport => TaskLane::Exclusive,
             Self::ContentDownload | Self::LibraryDownload => TaskLane::Parallel,
         }
     }
@@ -74,6 +74,8 @@ pub enum TaskStage {
     InstallingJava,
     InstallingLoader,
     Extracting,
+    /// Another launcher's instance being copied in, which is not an extraction.
+    Copying,
     Finalizing,
 }
 
@@ -87,6 +89,7 @@ impl TaskStage {
             Self::InstallingJava => "installing-java",
             Self::InstallingLoader => "installing-loader",
             Self::Extracting => "extracting",
+            Self::Copying => "copying",
             Self::Finalizing => "finalizing",
         }
     }
@@ -208,14 +211,14 @@ mod tests {
     #[test]
     fn kinds_have_stable_frontend_keys() {
         assert_eq!(TaskKind::ContentDownload.key(), "content-download");
-        assert_eq!(TaskKind::ModpackInstall.key(), "modpack-install");
+        assert_eq!(TaskKind::InstanceImport.key(), "instance-import");
         assert_eq!(TaskKind::GameInstall.key(), "game-install");
         assert_eq!(TaskKind::LibraryDownload.key(), "library-download");
     }
 
     #[test]
     fn only_the_install_kinds_take_the_exclusive_lane() {
-        for kind in [TaskKind::GameInstall, TaskKind::ModpackInstall] {
+        for kind in [TaskKind::GameInstall, TaskKind::InstanceImport] {
             assert_eq!(kind.lane(), TaskLane::Exclusive, "{kind:?}");
             assert_eq!(kind.lane().capacity(), 1, "{kind:?}");
         }

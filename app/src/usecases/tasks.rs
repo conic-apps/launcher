@@ -97,7 +97,7 @@ impl TaskHandle {
         self.center.update(self.id, stage, progress);
     }
 
-    /// Replaces the card's click target, e.g. once a modpack's instance exists.
+    /// Replaces the card's click target, e.g. once an import's instance exists.
     pub(crate) fn retarget(&self, target: TaskTarget) {
         self.center.retarget(self.id, target);
     }
@@ -894,7 +894,7 @@ mod tests {
         let found = center.active_on(TaskKind::GameInstall, "a");
         assert_eq!(found.expect("an install for a").spec.subject, "a");
         assert!(center.active_on(TaskKind::GameInstall, "b").is_none());
-        assert!(center.active_on(TaskKind::ModpackInstall, "a").is_none());
+        assert!(center.active_on(TaskKind::InstanceImport, "a").is_none());
     }
 
     #[test]

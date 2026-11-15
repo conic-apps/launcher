@@ -233,38 +233,44 @@ surface, `*Root` is an overlay layer host. There is **no `base-` family** — th
 the base. Imports are relative paths, so moving a file means updating every importer; `cargo check`
 compiles the `.slint` tree and is what catches a missed one.
 
-## Modpack import
+## Instance import
 
-A dropped pack becomes an instance through `crates/modpack`, which recognises five formats and
-hides all of them behind one `Plan`:
+`crates/instance-import` turns something dropped on the window into a new instance: a modpack
+archive in one of five pack formats, or another launcher's instance folder. The frontend only has to
+word it — `Import::kind()` says which of the two it is.
 
-- `format/source.rs` resolves the pack root — a zip or an already extracted folder, with the marker
-  at the root or one folder down — so a format never guesses where its own manifest is. The same
-  source lists the entries, reads one, and hands back the tree to copy.
-- `format/<format>.rs` reads only its own manifest and returns the common `Inspection`: name,
-  Minecraft version, loader, the pack's own launch settings, and a format-specific half. `resolve`
-  turns that into the download list and the override trees.
-- `install.rs` installs Minecraft and the loader, downloads the files, then copies the overrides,
-  without knowing the format.
+- `source.rs` resolves where a pack's files are — a zip or an already extracted folder, with the pack
+  root at the top or one folder down — and every reader goes through it.
+- `pack/` holds the five formats and `launcher/` the instance layouts; each returns the common
+  `Metadata` plus its own half, which `resolve` turns into downloads and file trees.
+- `import.rs` creates the instance and fills it in one call: the game install, the downloads, then the
+  trees. The new id is reported through `Progress::InstanceCreated` before the install starts, so the
+  task card can point at it and the instance list can select it; no caller sequences "create" before
+  "install". `crates/install` keeps its own meaning — it installs Minecraft, Java and the loader into
+  an instance that already exists.
+- `files.rs` writes the trees and reports the bytes it copies, so an instance import shows a live bar
+  instead of a spinner.
 
-| Format        | Marker                                                        | Files                                                                                                                         | Overrides                                                                    |
-| ------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| CurseForge    | `manifest.json`                                               | `projectID`/`fileID` pairs, resolved through the `curseforge` client                                                          | `overrides/`                                                                 |
-| Modrinth      | `modrinth.index.json`                                         | the index's own URLs and hashes; a SHA-1 lookup only for an entry whose `downloads` is empty                                  | `overrides/`, then `client-overrides/`                                       |
-| Prism/MultiMC | `mmc-pack.json`, `instance.cfg`                               | none — the pack carries everything                                                                                            | `.minecraft/`                                                                |
-| MCBBS         | `mcbbs.packmeta`, or a `manifest.json` with an `addons` array | `addon` entries the archive does not carry come from the pack's `fileApi`; `curse` entries go through the CurseForge resolver | `overrides/`                                                                 |
-| HMCL          | `modpack.json`                                                | none                                                                                                                          | `minecraft/`, minus `pack.json` and the content the launcher installs itself |
+| Source                    | Marker                                                        | Files                                                                                                                         | Copied                                                                                        |
+| ------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| CurseForge                | `manifest.json`                                               | `projectID`/`fileID` pairs, resolved through the `curseforge` client                                                          | `overrides/`                                                                                  |
+| Modrinth                  | `modrinth.index.json`                                         | the index's own URLs and hashes; a SHA-1 lookup only for an entry whose `downloads` is empty                                  | `overrides/`, then `client-overrides/`                                                        |
+| Prism/MultiMC             | `mmc-pack.json`, `instance.cfg`                               | none — the pack carries everything                                                                                            | `.minecraft/`, minus `logs/` and `crash-reports/`                                             |
+| MCBBS                     | `mcbbs.packmeta`, or a `manifest.json` with an `addons` array | `addon` entries the archive does not carry come from the pack's `fileApi`; `curse` entries go through the CurseForge resolver | `overrides/`                                                                                  |
+| HMCL                      | `modpack.json`                                                | none                                                                                                                          | `minecraft/`, minus `pack.json` and the content the launcher installs itself                  |
+| Version-isolated instance | `<folder>/<folder>.json`                                      | none                                                                                                                          | the folder, minus `versions/`, `libraries/`, `assets/`, the logs and the launcher's own files |
 
-`manifest.json` is shared, and a pack converted from another launcher can keep a stale one: the
-`addons` array is what makes a manifest MCBBS rather than CurseForge, and `mmc-pack.json` and
-`modrinth.index.json` are checked before it.
+A Prism/MultiMC pack is an exported instance, and a live instance folder has the same layout, so both
+are the same reader and both are an `Instance` import. `manifest.json` is shared, and a pack converted
+from another launcher can keep a stale one: the `addons` array is what makes a manifest MCBBS rather
+than CurseForge, and `mmc-pack.json` and `modrinth.index.json` are checked before it.
 
-A format may also carry instance launch settings — Prism/MultiMC's `instance.cfg` (`JvmArgs`,
+A source may also carry instance launch settings — Prism/MultiMC's `instance.cfg` (`JvmArgs`,
 `MaxMemAlloc`, the auto-join server, the window size) and MCBBS's `launchInfo`. `Plan::launch` holds
-them, and `create_instance` writes them as instance-specific settings; a pack that asks for nothing
-leaves the instance on the global configuration, and a pack that names a heap turns the automatic
-allocation off so its choice survives. Prism/MultiMC's `patches/` and `jarmods/` patch the game jar
-itself; they are skipped with a log line rather than half-applied.
+them, and the import writes them as instance-specific settings; a source that asks for nothing leaves
+the instance on the global configuration, and one that names a heap turns the automatic allocation
+off so its choice survives. Prism/MultiMC's `patches/` and `jarmods/` patch the game jar itself; they
+are skipped with a log line rather than half-applied.
 
 ## Platform plumbing worth knowing
 
@@ -298,7 +304,7 @@ itself; they are skipped with a log line rather than half-applied.
 | `java-discovery`  | Java discovery/parsing                                                                                              |
 | `launch`          | Game launch with progress reporting                                                                                 |
 | `modrinth`        | Modrinth API client                                                                                                 |
-| `modpack`         | Modpack import (CurseForge, Modrinth, Prism/MultiMC, MCBBS, HMCL): manifests, overrides, instance and install       |
+| `instance-import` | Importing an instance from a modpack archive or another launcher: sources, file resolution, copy and install        |
 | `multiplayer`     | Conic Nexus cross-LAN multiplayer                                                                                   |
 | `music`           | Local music files + playback                                                                                        |
 | `news`            | Mojang launcher-content client: the news feed and the Java changelogs                                               |

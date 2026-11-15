@@ -2,29 +2,55 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The pack-format layer: [`inspect`] detects the format from the dropped path
-//! and asks it to read the pack; [`resolve`] dispatches the same way. The
-//! installer only sees the common [`Plan`].
+//! The modpack half of the crate: [`detect`] names the format of a dropped
+//! pack and each module reads only its own manifest, handing back a [`Pack`]
+//! that resolves into the common file list and trees.
 
-mod curseforge;
-mod hmcl;
-mod mcbbs;
-mod modrinth;
-mod multimc;
-mod source;
+pub(crate) mod curseforge;
+pub(crate) mod hmcl;
+pub(crate) mod mcbbs;
+pub(crate) mod modrinth;
+pub(crate) mod multimc;
 
 use std::path::{Component, Path, PathBuf};
 
 use serde_json::Value;
 
 use crate::error::{Error, Result};
-use crate::overrides::Overrides;
-use crate::{Inspection, Plan, ResolvedFile, UnavailableFile};
-pub(crate) use source::Source;
+use crate::source::Source;
+use crate::{ImportKind, Metadata, Resolved};
 
-/// The format-specific half of an [`Inspection`].
+/// The name a source falls back to when it names itself nothing: the dropped
+/// path's own stem.
+pub(crate) fn fallback_name(path: &Path) -> String {
+    path.file_stem()
+        .or_else(|| path.file_name())
+        .map(|name| name.to_string_lossy().trim().to_string())
+        .filter(|name| !name.is_empty())
+        .unwrap_or_else(|| "Modpack".to_string())
+}
+
+/// A pack-supplied relative path, or `None` when it could leave the instance
+/// root.
+pub(crate) fn relative_path(raw: &str) -> Option<PathBuf> {
+    let raw = raw.trim();
+    if raw.is_empty() {
+        return None;
+    }
+    let path = Path::new(raw);
+    let mut normal = 0;
+    for component in path.components() {
+        match component {
+            Component::Normal(_) => normal += 1,
+            _ => return None,
+        }
+    }
+    (normal > 0).then(|| path.to_path_buf())
+}
+
+/// The format-specific half of an [`Import`](crate::Import).
 #[derive(Clone)]
-pub(crate) enum FormatInspection {
+pub(crate) enum Pack {
     CurseForge(curseforge::Inspection),
     Modrinth(modrinth::Inspection),
     MultiMc(multimc::Inspection),
@@ -32,12 +58,16 @@ pub(crate) enum FormatInspection {
     Hmcl(hmcl::Inspection),
 }
 
-/// What a format resolves a pack into; the common [`Plan`] adds the pack
-/// identity around it.
-pub(crate) struct ResolvedPack {
-    pub(crate) files: Vec<ResolvedFile>,
-    pub(crate) unavailable: Vec<UnavailableFile>,
-    pub(crate) overrides: Vec<Overrides>,
+impl Pack {
+    /// What the frontend words the import as.
+    pub(crate) fn kind(&self) -> ImportKind {
+        match self {
+            // A Prism/MultiMC pack is an exported instance, and the same reader
+            // takes a live instance folder, so both are an instance import.
+            Self::MultiMc(_) => ImportKind::Instance,
+            _ => ImportKind::Modpack,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -58,7 +88,7 @@ const HMCL_MANIFEST: &str = "modpack.json";
 
 /// Every file name that identifies a pack. A dropped pack must expose one of
 /// them at its root.
-const MARKERS: &[&str] = &[
+pub(crate) const MARKERS: &[&str] = &[
     MCBBS_META,
     MMC_MANIFEST,
     MMC_CONFIG,
@@ -67,61 +97,29 @@ const MARKERS: &[&str] = &[
     HMCL_MANIFEST,
 ];
 
-pub(crate) fn inspect(path: &Path) -> Result<Inspection> {
-    let source = Source::open(path, MARKERS)?;
-    match detect(&source)? {
-        Format::CurseForge => curseforge::inspect(path, &source),
-        Format::Modrinth => modrinth::inspect(path, &source),
-        Format::MultiMc => multimc::inspect(path, &source),
-        Format::Mcbbs => mcbbs::inspect(path, &source),
-        Format::Hmcl => hmcl::inspect(path, &source),
+pub(crate) fn inspect(path: &Path, source: &Source) -> Result<(Metadata, Pack)> {
+    match detect(source)? {
+        Format::CurseForge => curseforge::inspect(path, source)
+            .map(|(metadata, inspection)| (metadata, Pack::CurseForge(inspection))),
+        Format::Modrinth => modrinth::inspect(path, source)
+            .map(|(metadata, inspection)| (metadata, Pack::Modrinth(inspection))),
+        Format::MultiMc => multimc::inspect(path, source)
+            .map(|(metadata, inspection)| (metadata, Pack::MultiMc(inspection))),
+        Format::Mcbbs => mcbbs::inspect(path, source)
+            .map(|(metadata, inspection)| (metadata, Pack::Mcbbs(inspection))),
+        Format::Hmcl => hmcl::inspect(path, source)
+            .map(|(metadata, inspection)| (metadata, Pack::Hmcl(inspection))),
     }
 }
 
-pub(crate) async fn resolve(inspection: Inspection) -> Result<Plan> {
-    let Inspection {
-        name,
-        minecraft,
-        loader_type,
-        loader_version,
-        launch,
-        format,
-    } = inspection;
-    let resolved = match format {
-        FormatInspection::CurseForge(inspection) => curseforge::resolve(inspection).await?,
-        FormatInspection::Modrinth(inspection) => modrinth::resolve(inspection).await?,
-        FormatInspection::MultiMc(inspection) => multimc::resolve(inspection)?,
-        FormatInspection::Mcbbs(inspection) => mcbbs::resolve(inspection).await?,
-        FormatInspection::Hmcl(inspection) => hmcl::resolve(inspection)?,
-    };
-    Ok(Plan {
-        name,
-        minecraft,
-        loader_type,
-        loader_version,
-        launch,
-        unavailable: resolved.unavailable,
-        files: resolved.files,
-        overrides: resolved.overrides,
-    })
-}
-
-/// A pack-supplied relative path, or `None` when it could leave the instance
-/// root.
-pub(crate) fn relative_path(raw: &str) -> Option<PathBuf> {
-    let raw = raw.trim();
-    if raw.is_empty() {
-        return None;
+pub(crate) async fn resolve(pack: Pack) -> Result<Resolved> {
+    match pack {
+        Pack::CurseForge(inspection) => curseforge::resolve(inspection).await,
+        Pack::Modrinth(inspection) => modrinth::resolve(inspection).await,
+        Pack::MultiMc(inspection) => multimc::resolve(inspection),
+        Pack::Mcbbs(inspection) => mcbbs::resolve(inspection).await,
+        Pack::Hmcl(inspection) => hmcl::resolve(inspection),
     }
-    let path = Path::new(raw);
-    let mut normal = 0;
-    for component in path.components() {
-        match component {
-            Component::Normal(_) => normal += 1,
-            _ => return None,
-        }
-    }
-    (normal > 0).then(|| path.to_path_buf())
 }
 
 /// The order is the one a pack that carries more than one manifest is read in:
@@ -149,12 +147,10 @@ fn detect(source: &Source) -> Result<Format> {
     if source.has_file(HMCL_MANIFEST)? {
         return Ok(Format::Hmcl);
     }
-    // `Source::open` only succeeds on a marker, so this is unreachable unless
-    // a directory changed between the two reads.
-    Err(Error::Manifest(format!(
-        "{} does not contain a modpack manifest",
-        source.describe()
-    )))
+    // `Source::try_open` only succeeds on a marker.
+    Err(Error::Manifest(
+        "the pack has no manifest this launcher recognises".to_string(),
+    ))
 }
 
 /// A malformed `manifest.json` is left to the CurseForge reader, which reports
@@ -172,7 +168,7 @@ mod tests {
 
     fn pack_file(name: &str, contents: &str) -> std::path::PathBuf {
         let directory =
-            std::env::temp_dir().join(format!("conic-format-test-{}", uuid::Uuid::new_v4()));
+            std::env::temp_dir().join(format!("conic-pack-test-{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&directory).expect("a temporary directory");
         std::fs::write(directory.join(name), contents).expect("a manifest");
         directory
@@ -181,7 +177,9 @@ mod tests {
     #[test]
     fn detects_a_curseforge_directory() {
         let directory = pack_file(CURSEFORGE_MANIFEST, "{}");
-        let source = Source::open(&directory, MARKERS).expect("a pack");
+        let source = Source::try_open(&directory, MARKERS)
+            .expect("an opened path")
+            .expect("a pack");
         assert!(matches!(detect(&source), Ok(Format::CurseForge)));
         std::fs::remove_dir_all(&directory).ok();
     }
@@ -189,7 +187,9 @@ mod tests {
     #[test]
     fn reads_an_mcbbs_manifest_that_reuses_the_curseforge_name() {
         let directory = pack_file(CURSEFORGE_MANIFEST, r#"{"addons": [], "files": []}"#);
-        let source = Source::open(&directory, MARKERS).expect("a pack");
+        let source = Source::try_open(&directory, MARKERS)
+            .expect("an opened path")
+            .expect("a pack");
         assert!(matches!(detect(&source), Ok(Format::Mcbbs)));
         std::fs::remove_dir_all(&directory).ok();
     }
@@ -198,17 +198,23 @@ mod tests {
     fn prefers_the_multimc_manifest_over_a_nested_curseforge_one() {
         let directory = pack_file(MMC_MANIFEST, r#"{"components": []}"#);
         std::fs::write(directory.join(CURSEFORGE_MANIFEST), "{}").expect("a nested manifest");
-        let source = Source::open(&directory, MARKERS).expect("a pack");
+        let source = Source::try_open(&directory, MARKERS)
+            .expect("an opened path")
+            .expect("a pack");
         assert!(matches!(detect(&source), Ok(Format::MultiMc)));
         std::fs::remove_dir_all(&directory).ok();
     }
 
     #[test]
-    fn rejects_a_folder_that_holds_no_manifest() {
-        let directory =
-            std::env::temp_dir().join(format!("conic-format-test-{}", uuid::Uuid::new_v4()));
-        std::fs::create_dir_all(&directory).expect("a temporary directory");
-        assert!(Source::open(&directory, MARKERS).is_err());
+    fn a_prism_instance_is_an_instance_import() {
+        let directory = pack_file(MMC_CONFIG, "name=Pack\nInstanceType=OneSix\n");
+        std::fs::write(
+            directory.join(MMC_MANIFEST),
+            r#"{"components": [{"uid": "net.minecraft", "version": "1.20.1"}]}"#,
+        )
+        .expect("a manifest");
+        let import = crate::inspect(&directory).expect("an inspection");
+        assert_eq!(import.kind(), ImportKind::Instance);
         std::fs::remove_dir_all(&directory).ok();
     }
 
@@ -218,7 +224,7 @@ mod tests {
         use std::io::Write as _;
 
         let archive =
-            std::env::temp_dir().join(format!("conic-format-test-{}.zip", uuid::Uuid::new_v4()));
+            std::env::temp_dir().join(format!("conic-pack-test-{}.zip", uuid::Uuid::new_v4()));
         let file = std::fs::File::create(&archive).expect("a zip file");
         let mut zip = zip::ZipWriter::new(file);
         let options = zip::write::SimpleFileOptions::default();
@@ -231,7 +237,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn resolves_a_modrinth_archive_and_extracts_both_override_trees() {
+    async fn resolves_a_modrinth_archive_and_writes_both_override_trees() {
         let archive = pack_archive(&[
             (
                 "pack/modrinth.index.json",
@@ -253,14 +259,15 @@ mod tests {
         ]);
         let inspection = crate::inspect(&archive).expect("an inspection");
         assert_eq!(inspection.name, "Archived pack");
+        assert_eq!(inspection.kind(), ImportKind::Modpack);
         let plan = crate::resolve(inspection).await.expect("a plan");
         assert!(plan.unavailable.is_empty());
         assert_eq!(plan.files.len(), 1);
         let root =
-            std::env::temp_dir().join(format!("conic-format-extract-{}", uuid::Uuid::new_v4()));
-        crate::overrides::extract_all(&plan.overrides, &root)
+            std::env::temp_dir().join(format!("conic-pack-extract-{}", uuid::Uuid::new_v4()));
+        crate::files::write_all(plan.trees, root.clone(), std::sync::Arc::new(|_| {}))
             .await
-            .expect("the overrides");
+            .expect("the trees");
         assert!(root.join("config/a.toml").is_file());
         assert!(root.join("config/b.toml").is_file());
         std::fs::remove_file(&archive).ok();
@@ -285,19 +292,22 @@ mod tests {
                 "name=Prism Pack\nInstanceType=OneSix\n",
             ),
             ("My Pack/.minecraft/mods/a.jar", "jar"),
+            ("My Pack/.minecraft/logs/latest.log", "noise"),
             ("My Pack/patches/local.patch", "{}"),
         ]);
         let inspection = crate::inspect(&archive).expect("an inspection");
         assert_eq!(inspection.name, "Prism Pack");
         assert_eq!(inspection.minecraft, "1.20.1");
+        assert_eq!(inspection.kind(), ImportKind::Instance);
         let plan = crate::resolve(inspection).await.expect("a plan");
         assert!(plan.files.is_empty());
         let root =
-            std::env::temp_dir().join(format!("conic-format-extract-{}", uuid::Uuid::new_v4()));
-        crate::overrides::extract_all(&plan.overrides, &root)
+            std::env::temp_dir().join(format!("conic-pack-extract-{}", uuid::Uuid::new_v4()));
+        crate::files::write_all(plan.trees, root.clone(), std::sync::Arc::new(|_| {}))
             .await
-            .expect("the overrides");
+            .expect("the trees");
         assert!(root.join("mods/a.jar").is_file());
+        assert!(!root.join("logs/latest.log").exists());
         assert!(!root.join("mmc-pack.json").exists());
         assert!(!root.join("instance.cfg").exists());
         std::fs::remove_file(&archive).ok();
@@ -323,7 +333,7 @@ mod tests {
         ]);
         let inspection = crate::inspect(&archive).expect("an inspection");
         assert_eq!(inspection.minecraft, "1.12.2");
-        let FormatInspection::Mcbbs(inspection) = &inspection.format else {
+        let crate::Recognized::Pack(Pack::Mcbbs(inspection)) = &inspection.source else {
             panic!("an MCBBS pack");
         };
         assert_eq!(inspection.addon_files.len(), 1);
@@ -334,12 +344,12 @@ mod tests {
     #[test]
     fn keeps_only_paths_inside_the_instance() {
         assert_eq!(
-            relative_path("mods/a.jar"),
-            Some(PathBuf::from("mods/a.jar"))
+            crate::pack::relative_path("mods/a.jar"),
+            Some(std::path::PathBuf::from("mods/a.jar"))
         );
-        assert_eq!(relative_path("../mods/a.jar"), None);
-        assert_eq!(relative_path("/mods/a.jar"), None);
-        assert_eq!(relative_path("mods/../../a.jar"), None);
-        assert_eq!(relative_path(""), None);
+        assert_eq!(crate::pack::relative_path("../mods/a.jar"), None);
+        assert_eq!(crate::pack::relative_path("/mods/a.jar"), None);
+        assert_eq!(crate::pack::relative_path("mods/../../a.jar"), None);
+        assert_eq!(crate::pack::relative_path(""), None);
     }
 }

@@ -19,11 +19,11 @@ use serde_json::Value;
 
 use instance::ModLoaderType;
 
-use super::Source;
 use crate::error::{Error, Result};
-use crate::launch::PackLaunch;
-use crate::overrides::Overrides;
-use crate::{ResolvedFile, UnavailableFile};
+use crate::files::FileTree;
+use crate::launch::LaunchSettings;
+use crate::source::Source;
+use crate::{Metadata, ResolvedFile, UnavailableFile};
 
 const MANIFEST: &str = "manifest.json";
 
@@ -32,7 +32,7 @@ const MANIFEST: &str = "manifest.json";
 #[derive(Clone)]
 pub(crate) struct Inspection {
     files: Vec<ManifestFile>,
-    pub(super) overrides: Vec<Overrides>,
+    trees: Vec<FileTree>,
 }
 
 #[derive(Deserialize)]
@@ -90,36 +90,38 @@ fn default_true() -> bool {
     true
 }
 
-/// Reads a CurseForge manifest into the common inspection.
-pub(super) fn inspect(path: &Path, source: &Source) -> Result<crate::Inspection> {
-    let (manifest, overrides) = read_manifest(source)?;
+/// Reads a CurseForge manifest into the common metadata and its own half.
+pub(super) fn inspect(path: &Path, source: &Source) -> Result<(Metadata, Inspection)> {
+    let (manifest, trees) = read_manifest(source)?;
     let (loader_type, loader_version) = parse_loader(&manifest)?;
     let name = manifest.name.trim();
     let name = if name.is_empty() {
-        fallback_name(path)
+        super::fallback_name(path)
     } else {
         name.to_string()
     };
     log::info!(
-        "modpack '{name}': CurseForge, Minecraft {}, {} manifest files",
+        "import '{name}': CurseForge, Minecraft {}, {} manifest files",
         manifest.minecraft.version,
         manifest.files.len()
     );
-    Ok(crate::Inspection {
-        name,
-        minecraft: manifest.minecraft.version,
-        loader_type,
-        loader_version,
-        launch: PackLaunch::default(),
-        format: super::FormatInspection::CurseForge(Inspection {
+    Ok((
+        Metadata {
+            name,
+            minecraft: manifest.minecraft.version,
+            loader_type,
+            loader_version,
+            launch: LaunchSettings::default(),
+        },
+        Inspection {
             files: manifest.files,
-            overrides,
-        }),
-    })
+            trees,
+        },
+    ))
 }
 
 /// Resolves the CurseForge file pairs into the common plan.
-pub(super) async fn resolve(inspection: Inspection) -> Result<super::ResolvedPack> {
+pub(super) async fn resolve(inspection: Inspection) -> Result<crate::Resolved> {
     let pairs: Vec<CursePair> = inspection
         .files
         .iter()
@@ -131,23 +133,23 @@ pub(super) async fn resolve(inspection: Inspection) -> Result<super::ResolvedPac
         })
         .collect();
     let (files, unavailable) = resolve_pairs(&pairs).await?;
-    Ok(super::ResolvedPack {
+    Ok(crate::Resolved {
         files,
         unavailable,
-        overrides: inspection.overrides,
+        trees: inspection.trees,
     })
 }
 
 /// Reads the manifest and the overrides tree it names.
-fn read_manifest(source: &Source) -> Result<(Manifest, Vec<Overrides>)> {
+fn read_manifest(source: &Source) -> Result<(Manifest, Vec<FileTree>)> {
     let bytes = source.read(MANIFEST)?;
     let manifest = parse_manifest(&bytes)?;
-    let overrides = if manifest.overrides.trim().is_empty() {
+    let trees = if manifest.overrides.trim().is_empty() {
         Vec::new()
     } else {
-        vec![source.overrides(&manifest.overrides)]
+        vec![source.tree(&manifest.overrides)]
     };
-    Ok((manifest, overrides))
+    Ok((manifest, trees))
 }
 
 fn parse_manifest(bytes: &[u8]) -> Result<Manifest> {
@@ -411,14 +413,6 @@ fn valid_file_name(raw: &str) -> Option<String> {
         return None;
     }
     Some(name.to_string())
-}
-
-fn fallback_name(path: &Path) -> String {
-    path.file_stem()
-        .or_else(|| path.file_name())
-        .map(|name| name.to_string_lossy().trim().to_string())
-        .filter(|name| !name.is_empty())
-        .unwrap_or_else(|| "Modpack".to_string())
 }
 
 #[cfg(test)]

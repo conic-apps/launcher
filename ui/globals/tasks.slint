@@ -7,7 +7,7 @@
 /// to go.
 export struct TaskItem {
     id: int,
-    /// "content-download" | "modpack-install" | "game-install" | "library-download"
+    /// "content-download" | "instance-import" | "game-install" | "library-download"
     kind: string,
     /// Project / pack / version name. Data, never a sentence.
     subject: string,
@@ -61,8 +61,8 @@ export global TaskText {
         if item.kind == "content-download" {
             return @tr("TaskText" => "Downloading {}", item.subject);
         }
-        if item.kind == "modpack-install" {
-            return @tr("TaskText" => "Installing modpack {}", item.subject);
+        if item.kind == "instance-import" {
+            return @tr("TaskText" => "Importing {}", item.subject);
         }
         if item.kind == "game-install" {
             return @tr("TaskText" => "Installing {}", item.subject);
@@ -94,6 +94,9 @@ export global TaskText {
         }
         if key == "extracting" {
             return @tr("TaskText" => "Extracting files");
+        }
+        if key == "copying" {
+            return @tr("TaskText" => "Copying files");
         }
         if key == "finalizing" {
             return @tr("TaskText" => "Finishing");

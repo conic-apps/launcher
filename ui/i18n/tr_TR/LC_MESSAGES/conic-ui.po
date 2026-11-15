@@ -3244,47 +3244,47 @@ msgid "Click here to return to first-run setup"
 msgstr "İlk kuruluma dönmek için buraya tıklayın"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Some modpack files cannot be downloaded automatically"
 msgstr "Bazı mod paketi dosyaları otomatik olarak indirilemiyor"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Cancel"
 msgstr "İptal"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Install this modpack?"
 msgstr "Bu mod paketi kurulsun mu?"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Instance name"
 msgstr "Örnek adı"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Checking files"
 msgstr "Dosyalar kontrol ediliyor"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Install"
 msgstr "Kur"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Install anyway"
 msgstr "Yine de kur"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Could not check the modpack files"
 msgstr "Mod paketi dosyaları kontrol edilemedi"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Retry"
 msgstr "Yeniden dene"
 
@@ -3680,11 +3680,6 @@ msgstr "{} indiriliyor"
 
 #: ui
 msgctxt "TaskText"
-msgid "Installing modpack {}"
-msgstr "{} mod paketi kuruluyor"
-
-#: ui
-msgctxt "TaskText"
 msgid "Installing {}"
 msgstr "{} kuruluyor"
 
@@ -3899,11 +3894,36 @@ msgid "Stop game"
 msgstr "Oyunu durdur"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "The pack lists files the launcher could not resolve. Continue without them, or cancel and download them manually."
 msgstr "Mod paketi, başlatıcının çözümleyemediği dosyalar içeriyor. Bunlar olmadan devam edin veya iptal edip elle indirin."
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "The modpack's file list could not be fetched. Check your connection, then retry."
 msgstr "Mod paketinin dosya listesi alınamadı. Bağlantınızı kontrol edip yeniden deneyin."
+
+#: ui
+msgctxt "InstanceImport"
+msgid "Import this instance?"
+msgstr "Bu örnek içe aktarılsın mı?"
+
+#: ui
+msgctxt "InstanceImport"
+msgid "Import"
+msgstr "İçe aktar"
+
+#: ui
+msgctxt "InstanceImport"
+msgid "Import anyway"
+msgstr "Yine de içe aktar"
+
+#: ui
+msgctxt "TaskText"
+msgid "Importing {}"
+msgstr "{} içe aktarılıyor"
+
+#: ui
+msgctxt "TaskText"
+msgid "Copying files"
+msgstr "Dosyalar kopyalanıyor"

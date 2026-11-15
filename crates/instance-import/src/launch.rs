@@ -2,20 +2,20 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The launch settings a pack asks for in its own configuration, and how they
+//! The launch settings a source asks for in its own configuration, and how they
 //! reach a new instance.
 //!
 //! The formats disagree on the shape but not on the intent: Prism/MultiMC
 //! writes them into `instance.cfg`, MCBBS into `launchInfo`. A pack that asks
 //! for nothing leaves the instance on the launcher's global settings, which is
-//! why an empty [`PackLaunch`] is not applied at all.
+//! why an empty [`LaunchSettings`] is not applied at all.
 
 use config::launch::Server;
 use instance::InstanceLaunchConfig;
 
 /// The launch settings a pack's configuration carries.
 #[derive(Clone, Default)]
-pub(crate) struct PackLaunch {
+pub(crate) struct LaunchSettings {
     max_memory: Option<usize>,
     extra_jvm_args: Option<String>,
     extra_mc_args: Option<String>,
@@ -24,7 +24,7 @@ pub(crate) struct PackLaunch {
     height: Option<usize>,
 }
 
-impl PackLaunch {
+impl LaunchSettings {
     pub(crate) fn is_empty(&self) -> bool {
         self.max_memory.is_none()
             && self.extra_jvm_args.is_none()
@@ -110,13 +110,13 @@ mod tests {
 
     #[test]
     fn an_empty_pack_leaves_the_instance_on_the_global_settings() {
-        let launch = PackLaunch::default();
+        let launch = LaunchSettings::default();
         assert!(launch.is_empty());
     }
 
     #[test]
     fn splits_a_server_address_into_host_and_port() {
-        let mut launch = PackLaunch::default();
+        let mut launch = LaunchSettings::default();
         launch.set_server("mc.example.com:25566");
         let server = launch.server.clone().expect("a server");
         assert_eq!(server.ip, "mc.example.com");
@@ -130,7 +130,7 @@ mod tests {
 
     #[test]
     fn a_heap_disables_the_automatic_allocation() {
-        let mut launch = PackLaunch::default();
+        let mut launch = LaunchSettings::default();
         launch.set_max_memory(6144);
         let mut config = InstanceLaunchConfig::default();
         launch.apply(&mut config);
@@ -141,7 +141,7 @@ mod tests {
 
     #[test]
     fn empty_argument_lists_are_not_recorded() {
-        let mut launch = PackLaunch::default();
+        let mut launch = LaunchSettings::default();
         launch.set_extra_jvm_args(vec![" ".to_string(), String::new()]);
         assert!(launch.extra_jvm_args.is_none());
     }

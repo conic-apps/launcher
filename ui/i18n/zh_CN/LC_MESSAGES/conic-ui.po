@@ -3244,47 +3244,47 @@ msgid "Click here to return to first-run setup"
 msgstr "点击这里回到首次启动设置"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Some modpack files cannot be downloaded automatically"
 msgstr "部分整合包文件无法自动下载"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Cancel"
 msgstr "取消"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Install this modpack?"
 msgstr "要安装这个整合包吗？"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Instance name"
 msgstr "实例名称"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Checking files"
 msgstr "正在检查文件"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Install"
 msgstr "安装"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Install anyway"
 msgstr "仍然安装"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Could not check the modpack files"
 msgstr "无法检查整合包文件"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Retry"
 msgstr "重试"
 
@@ -3680,11 +3680,6 @@ msgstr "正在下载 {}"
 
 #: ui
 msgctxt "TaskText"
-msgid "Installing modpack {}"
-msgstr "正在安装整合包 {}"
-
-#: ui
-msgctxt "TaskText"
 msgid "Installing {}"
 msgstr "正在安装 {}"
 
@@ -3899,11 +3894,36 @@ msgid "Stop game"
 msgstr "停止游戏"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "The pack lists files the launcher could not resolve. Continue without them, or cancel and download them manually."
 msgstr "整合包列出了启动器无法解析的文件。你可以不带这些文件继续，或取消后手动下载。"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "The modpack's file list could not be fetched. Check your connection, then retry."
 msgstr "无法获取整合包的文件列表。请检查网络连接后重试。"
+
+#: ui
+msgctxt "InstanceImport"
+msgid "Import this instance?"
+msgstr "要导入这个实例吗？"
+
+#: ui
+msgctxt "InstanceImport"
+msgid "Import"
+msgstr "导入"
+
+#: ui
+msgctxt "InstanceImport"
+msgid "Import anyway"
+msgstr "仍然导入"
+
+#: ui
+msgctxt "TaskText"
+msgid "Importing {}"
+msgstr "正在导入 {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Copying files"
+msgstr "正在复制文件"

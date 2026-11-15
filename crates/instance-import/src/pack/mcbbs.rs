@@ -18,11 +18,13 @@ use serde::Deserialize;
 use instance::ModLoaderType;
 
 use super::curseforge::{self, CursePair};
-use super::{FormatInspection, ResolvedPack, Source, relative_path};
+use super::relative_path;
 use crate::error::{Error, Result};
-use crate::launch::PackLaunch;
-use crate::overrides::Overrides;
-use crate::{ResolvedFile, UnavailableFile};
+use crate::files::FileTree;
+use crate::launch::LaunchSettings;
+use crate::loader::strip_minecraft_prefix;
+use crate::source::Source;
+use crate::{Metadata, ResolvedFile, UnavailableFile};
 
 const META: &str = "mcbbs.packmeta";
 const MANIFEST: &str = "manifest.json";
@@ -32,7 +34,7 @@ const OVERRIDES: &str = "overrides";
 /// `overrides/` tree has been accounted for.
 #[derive(Clone)]
 pub(crate) struct Inspection {
-    overrides: Vec<Overrides>,
+    trees: Vec<FileTree>,
     file_api: Option<String>,
     /// `addon` entries the pack does not ship itself.
     pub(super) addon_files: Vec<AddonFile>,
@@ -120,8 +122,8 @@ fn default_true() -> bool {
     true
 }
 
-/// Reads an MCBBS manifest into the common inspection.
-pub(super) fn inspect(path: &Path, source: &Source) -> Result<crate::Inspection> {
+/// Reads an MCBBS manifest into the common metadata and its own half.
+pub(super) fn inspect(path: &Path, source: &Source) -> Result<(Metadata, Inspection)> {
     let names = source.names()?;
     // `mcbbs.packmeta` is the format's own name; an older pack keeps it in
     // `manifest.json`, which is why detection reads the `addons` array there.
@@ -134,17 +136,17 @@ pub(super) fn inspect(path: &Path, source: &Source) -> Result<crate::Inspection>
     let (minecraft, loader_type, loader_version) = read_addons(&pack.addons)?;
     let name = pack.name.trim();
     let name = if name.is_empty() {
-        fallback_name(path)
+        super::fallback_name(path)
     } else {
         name.to_string()
     };
     log::info!(
-        "modpack '{name}': MCBBS {}, Minecraft {minecraft}, {} manifest files",
+        "import '{name}': MCBBS {}, Minecraft {minecraft}, {} manifest files",
         pack.version,
         pack.files.len()
     );
-    let overrides = if source.has_tree(OVERRIDES)? {
-        vec![source.overrides(OVERRIDES)]
+    let trees = if source.has_tree(OVERRIDES)? {
+        vec![source.tree(OVERRIDES)]
     } else {
         Vec::new()
     };
@@ -188,23 +190,25 @@ pub(super) fn inspect(path: &Path, source: &Source) -> Result<crate::Inspection>
         .file_api
         .map(|api| api.trim().trim_end_matches('/').to_string())
         .filter(|api| !api.is_empty());
-    Ok(crate::Inspection {
-        name,
-        minecraft,
-        loader_type,
-        loader_version,
-        launch: read_launch(&pack.launch_info),
-        format: FormatInspection::Mcbbs(Inspection {
-            overrides,
+    Ok((
+        Metadata {
+            name,
+            minecraft,
+            loader_type,
+            loader_version,
+            launch: read_launch(&pack.launch_info),
+        },
+        Inspection {
+            trees,
             file_api,
             addon_files,
             curse_files,
-        }),
-    })
+        },
+    ))
 }
 
 /// Resolves an MCBBS pack's file list into the common plan.
-pub(super) async fn resolve(inspection: Inspection) -> Result<ResolvedPack> {
+pub(super) async fn resolve(inspection: Inspection) -> Result<crate::Resolved> {
     let mut files = Vec::new();
     let mut unavailable = Vec::new();
     for addon in &inspection.addon_files {
@@ -244,10 +248,10 @@ pub(super) async fn resolve(inspection: Inspection) -> Result<ResolvedPack> {
     files.extend(curse_files);
     unavailable.extend(curse_unavailable);
 
-    Ok(ResolvedPack {
+    Ok(crate::Resolved {
         files,
         unavailable,
-        overrides: inspection.overrides,
+        trees: inspection.trees,
     })
 }
 
@@ -291,14 +295,8 @@ fn read_addons(addons: &[Addon]) -> Result<(String, Option<ModLoaderType>, Optio
     Ok((minecraft, loader_type, loader_version))
 }
 
-/// Forge ids carry the Minecraft version in front (`1.20.1-47.2.0`).
-fn strip_minecraft_prefix(version: &str, minecraft: &str) -> String {
-    let prefix = format!("{minecraft}-");
-    version.strip_prefix(&prefix).unwrap_or(version).to_string()
-}
-
-fn read_launch(info: &LaunchInfo) -> PackLaunch {
-    let mut launch = PackLaunch::default();
+fn read_launch(info: &LaunchInfo) -> LaunchSettings {
+    let mut launch = LaunchSettings::default();
     let mut jvm_arguments = Vec::new();
     if info.min_memory > 0 {
         // The launcher has no minimum-heap setting of its own, so the pack's
@@ -317,14 +315,6 @@ fn parse_manifest(bytes: &[u8]) -> Result<Pack> {
     let text = text.strip_prefix('\u{feff}').unwrap_or(text);
     serde_json::from_str(text)
         .map_err(|error| Error::Manifest(format!("invalid MCBBS manifest: {error}")))
-}
-
-fn fallback_name(path: &Path) -> String {
-    path.file_stem()
-        .or_else(|| path.file_name())
-        .map(|name| name.to_string_lossy().trim().to_string())
-        .filter(|name| !name.is_empty())
-        .unwrap_or_else(|| "Modpack".to_string())
 }
 
 #[cfg(test)]
@@ -396,14 +386,15 @@ mod tests {
         let inspection = crate::inspect(&directory).expect("an inspection");
         assert_eq!(inspection.name, "MCBBS Pack");
         assert_eq!(inspection.minecraft, "1.20.1");
-        let FormatInspection::Mcbbs(inspection) = &inspection.format else {
+        let crate::Recognized::Pack(crate::pack::Pack::Mcbbs(inspection)) = &inspection.source
+        else {
             panic!("an MCBBS pack");
         };
         // The archive carries `local.jar`; only `remote.jar` is left to fetch.
         assert_eq!(inspection.addon_files.len(), 1);
         assert_eq!(inspection.addon_files[0].path, "mods/remote.jar");
         assert_eq!(inspection.curse_files.len(), 1);
-        assert_eq!(inspection.overrides.len(), 1);
+        assert_eq!(inspection.trees.len(), 1);
         std::fs::remove_dir_all(&directory).ok();
     }
 }

@@ -17,10 +17,12 @@ use serde::Deserialize;
 
 use instance::ModLoaderType;
 
-use super::{FormatInspection, ResolvedPack, Source};
+use crate::Metadata;
 use crate::error::{Error, Result};
-use crate::launch::PackLaunch;
-use crate::overrides::Overrides;
+use crate::files::FileTree;
+use crate::launch::LaunchSettings;
+use crate::loader::strip_minecraft_prefix;
+use crate::source::Source;
 
 const MANIFEST: &str = "mmc-pack.json";
 const CONFIG: &str = "instance.cfg";
@@ -34,10 +36,10 @@ const FABRIC: &str = "net.fabricmc.fabric-loader";
 const QUILT: &str = "org.quiltmc.quilt-loader";
 
 /// The Prism/MultiMC half of an inspection: everything here is already in the
-/// pack, so only the overrides tree is left for the install.
+/// pack, so only the game directory is left for the import.
 #[derive(Clone)]
 pub(crate) struct Inspection {
-    overrides: Vec<Overrides>,
+    trees: Vec<FileTree>,
 }
 
 #[derive(Deserialize)]
@@ -58,8 +60,8 @@ struct Component {
     important: bool,
 }
 
-/// Reads a Prism/MultiMC instance into the common inspection.
-pub(super) fn inspect(path: &Path, source: &Source) -> Result<crate::Inspection> {
+/// Reads a Prism/MultiMC instance into the common metadata and its own half.
+pub(super) fn inspect(path: &Path, source: &Source) -> Result<(Metadata, Inspection)> {
     let names = source.names()?;
     if !names.iter().any(|name| name == MANIFEST) {
         return Err(Error::Manifest(
@@ -83,13 +85,18 @@ pub(super) fn inspect(path: &Path, source: &Source) -> Result<crate::Inspection>
         .map(|name| name.trim())
         .filter(|name| !name.is_empty())
         .map(str::to_string)
-        .unwrap_or_else(|| fallback_name(path));
+        .unwrap_or_else(|| super::fallback_name(path));
     log::info!(
-        "modpack '{name}': Prism/MultiMC, Minecraft {minecraft}, {} components",
+        "import '{name}': Prism/MultiMC, Minecraft {minecraft}, {} components",
         manifest.components.len()
     );
-    let overrides = if source.has_tree(GAME_DIRECTORY)? {
-        vec![source.overrides(GAME_DIRECTORY)]
+    // A live instance carries its logs and crashes; they are not game files.
+    let trees = if source.has_tree(GAME_DIRECTORY)? {
+        vec![
+            source
+                .tree(GAME_DIRECTORY)
+                .skipping(&["logs", "crash-reports"]),
+        ]
     } else {
         Vec::new()
     };
@@ -104,22 +111,24 @@ pub(super) fn inspect(path: &Path, source: &Source) -> Result<crate::Inspection>
             );
         }
     }
-    Ok(crate::Inspection {
-        name,
-        minecraft,
-        loader_type,
-        loader_version,
-        launch: read_launch(&config),
-        format: FormatInspection::MultiMc(Inspection { overrides }),
-    })
+    Ok((
+        Metadata {
+            name,
+            minecraft,
+            loader_type,
+            loader_version,
+            launch: read_launch(&config),
+        },
+        Inspection { trees },
+    ))
 }
 
 /// Resolves a Prism/MultiMC instance into the common plan; it downloads nothing.
-pub(super) fn resolve(inspection: Inspection) -> Result<ResolvedPack> {
-    Ok(ResolvedPack {
+pub(super) fn resolve(inspection: Inspection) -> Result<crate::Resolved> {
+    Ok(crate::Resolved {
         files: Vec::new(),
         unavailable: Vec::new(),
-        overrides: inspection.overrides,
+        trees: inspection.trees,
     })
 }
 
@@ -189,17 +198,12 @@ fn read_components(manifest: &Manifest) -> Result<(String, Option<ModLoaderType>
     Ok((minecraft, loader_type, loader_version))
 }
 
-fn strip_minecraft_prefix(version: &str, minecraft: &str) -> String {
-    let prefix = format!("{minecraft}-");
-    version.strip_prefix(&prefix).unwrap_or(version).to_string()
-}
-
 /// The settings `instance.cfg` asks a launcher to apply to this instance.
 ///
 /// `JavaPath` is deliberately ignored: it is the author's own installation, and
 /// pointing a launch at it would break on every machine but theirs.
-fn read_launch(config: &HashMap<String, String>) -> PackLaunch {
-    let mut launch = PackLaunch::default();
+fn read_launch(config: &HashMap<String, String>) -> LaunchSettings {
+    let mut launch = LaunchSettings::default();
     let mut jvm_arguments = Vec::new();
     if flag(config, "OverrideJavaArgs")
         && let Some(arguments) = config.get("JvmArgs")
@@ -303,14 +307,6 @@ fn parse_manifest(bytes: &[u8]) -> Result<Manifest> {
     let text = text.strip_prefix('\u{feff}').unwrap_or(text);
     serde_json::from_str(text)
         .map_err(|error| Error::Manifest(format!("invalid mmc-pack.json: {error}")))
-}
-
-fn fallback_name(path: &Path) -> String {
-    path.file_stem()
-        .or_else(|| path.file_name())
-        .map(|name| name.to_string_lossy().trim().to_string())
-        .filter(|name| !name.is_empty())
-        .unwrap_or_else(|| "Modpack".to_string())
 }
 
 #[cfg(test)]
@@ -443,10 +439,11 @@ mod tests {
         assert_eq!(inspection.minecraft, "1.20.1");
         assert!(matches!(inspection.loader_type, Some(ModLoaderType::Quilt)));
         assert_eq!(inspection.loader_version.as_deref(), Some("0.26.0"));
-        let FormatInspection::MultiMc(inspection) = &inspection.format else {
+        let crate::Recognized::Pack(crate::pack::Pack::MultiMc(inspection)) = &inspection.source
+        else {
             panic!("a Prism/MultiMC pack");
         };
-        assert_eq!(inspection.overrides.len(), 1);
+        assert_eq!(inspection.trees.len(), 1);
         std::fs::remove_dir_all(&directory).ok();
     }
 }

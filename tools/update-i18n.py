@@ -62,6 +62,10 @@ LANGUAGES = [
 # `ContentModsCurseforge`/`ContentModsModrinth`/… were folded into one
 # `ContentCardGrid` with a `panels.slint` per panel, so the empty state each
 # remote list draws now resolves under its own panel's name.
+# The import dialog now takes another launcher's instances as well as packs, so
+# its sentences are looked up under `InstanceImport` rather than `ModpackImport`.
+CONTEXT_RENAME = {"ModpackImport": "InstanceImport"}
+
 RECONTEXT = {
     ("RemoteListView", "Try adjusting keywords or filters and search again"): [
         "ContentModsPanel",
@@ -142,6 +146,8 @@ DROP = {
         "ModpackImport",
         "The pack author disabled third-party downloads for these files. Continue without them, or cancel and download them manually.",
     ),
+    # The task centre's import card no longer says "Installing modpack".
+    ("TaskText", "Installing modpack {}"),
     # The launch button's dropdown is gone: its one entry moved into the instance
     # settings as a repair that only installs.
     ("InstanceSummary", "Repair game and launch"),
@@ -1731,7 +1737,7 @@ SAVE_TAGS = {
             "pl_PL": "Conic Launcher został zaktualizowany do wersji {}. Kliknij tutaj, aby zobaczyć informacje o wydaniu",
         },
     },
-    "ModpackImport": {
+    "InstanceImport": {
         "Some modpack files cannot be downloaded automatically": {
             "zh_CN": "部分整合包文件无法自动下载",
             "zh_TW": "部分整合包檔案無法自動下載",
@@ -1770,6 +1776,45 @@ SAVE_TAGS = {
             "ru_RU": "Отмена",
             "tr_TR": "İptal",
             "pl_PL": "Anuluj",
+        },
+        "Import this instance?": {
+            "zh_CN": "要导入这个实例吗？",
+            "zh_TW": "要匯入這個實例嗎？",
+            "ja_JP": "このインスタンスをインポートしますか？",
+            "ko_KR": "이 인스턴스를 가져올까요?",
+            "de_DE": "Diese Instanz importieren?",
+            "fr_FR": "Importer cette instance ?",
+            "es_ES": "¿Importar esta instancia?",
+            "pt_BR": "Importar esta instância?",
+            "ru_RU": "Импортировать этот экземпляр?",
+            "tr_TR": "Bu örnek içe aktarılsın mı?",
+            "pl_PL": "Zaimportować tę instancję?",
+        },
+        "Import": {
+            "zh_CN": "导入",
+            "zh_TW": "匯入",
+            "ja_JP": "インポート",
+            "ko_KR": "가져오기",
+            "de_DE": "Importieren",
+            "fr_FR": "Importer",
+            "es_ES": "Importar",
+            "pt_BR": "Importar",
+            "ru_RU": "Импортировать",
+            "tr_TR": "İçe aktar",
+            "pl_PL": "Importuj",
+        },
+        "Import anyway": {
+            "zh_CN": "仍然导入",
+            "zh_TW": "仍然匯入",
+            "ja_JP": "それでもインポート",
+            "ko_KR": "그래도 가져오기",
+            "de_DE": "Trotzdem importieren",
+            "fr_FR": "Importer quand même",
+            "es_ES": "Importar de todos modos",
+            "pt_BR": "Importar mesmo assim",
+            "ru_RU": "Всё равно импортировать",
+            "tr_TR": "Yine de içe aktar",
+            "pl_PL": "Zaimportuj mimo to",
         },
         "Install this modpack?": {
             "zh_CN": "要安装这个整合包吗？",
@@ -1897,6 +1942,8 @@ for line in CRASH_TEXT_TSV.read_text(encoding="utf-8").splitlines():
 SAVE_TAGS["CrashText"] = CRASH_TEXT
 
 # The task centre's cards and its stop confirmation.
+# This update *replaces* the `TaskText` key of `SAVE_TAGS` above, so a new
+# TaskText sentence belongs in the table below, not in the earlier one.
 SAVE_TAGS.update({
     "TaskText": {
         "Downloading {}": {
@@ -1911,19 +1958,6 @@ SAVE_TAGS.update({
             "ru_RU": "Загрузка {}",
             "tr_TR": "{} indiriliyor",
             "pl_PL": "Pobieranie {}",
-        },
-        "Installing modpack {}": {
-            "zh_CN": "正在安装整合包 {}",
-            "zh_TW": "正在安裝整合包 {}",
-            "ja_JP": "MODパック {} をインストール中",
-            "ko_KR": "모드팩 {} 설치 중",
-            "de_DE": "Modpack {} wird installiert",
-            "fr_FR": "Installation du modpack {}",
-            "es_ES": "Instalando el modpack {}",
-            "pt_BR": "Instalando o modpack {}",
-            "ru_RU": "Установка модпака {}",
-            "tr_TR": "{} mod paketi kuruluyor",
-            "pl_PL": "Instalowanie modpacka {}",
         },
         "Installing {}": {
             "zh_CN": "正在安装 {}",
@@ -2425,6 +2459,32 @@ SAVE_TAGS.update({
             "tr_TR": "Diğer görevlerin bitmesi bekleniyor",
             "pl_PL": "Oczekiwanie na zakończenie innych zadań",
         },
+        "Importing {}": {
+            "zh_CN": "正在导入 {}",
+            "zh_TW": "正在匯入 {}",
+            "ja_JP": "{} をインポート中",
+            "ko_KR": "{} 가져오는 중",
+            "de_DE": "{} wird importiert",
+            "fr_FR": "Importation de {}",
+            "es_ES": "Importando {}",
+            "pt_BR": "Importando {}",
+            "ru_RU": "Импорт {}",
+            "tr_TR": "{} içe aktarılıyor",
+            "pl_PL": "Importowanie {}",
+        },
+        "Copying files": {
+            "zh_CN": "正在复制文件",
+            "zh_TW": "正在複製檔案",
+            "ja_JP": "ファイルをコピー中",
+            "ko_KR": "파일 복사 중",
+            "de_DE": "Dateien werden kopiert",
+            "fr_FR": "Copie des fichiers",
+            "es_ES": "Copiando archivos",
+            "pt_BR": "Copiando arquivos",
+            "ru_RU": "Копирование файлов",
+            "tr_TR": "Dosyalar kopyalanıyor",
+            "pl_PL": "Kopiowanie plików",
+        },
     },
     # The warning before the launch button's Stop kills a live game.
     "ConfirmStopGame": {
@@ -2582,6 +2642,9 @@ def main() -> int:
         result: list[tuple[str | None, str, str]] = []
         for ctx, msgid, msgstr in entries:
             if (ctx, msgid) in DROP:
+                continue
+            if ctx in CONTEXT_RENAME:
+                result.append((CONTEXT_RENAME[ctx], msgid, msgstr))
                 continue
             if (ctx, msgid) in RECONTEXT:
                 for target in RECONTEXT[(ctx, msgid)]:

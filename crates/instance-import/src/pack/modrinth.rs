@@ -16,11 +16,13 @@ use serde::Deserialize;
 
 use instance::ModLoaderType;
 
-use super::{FormatInspection, ResolvedPack, Source, relative_path};
+use super::relative_path;
 use crate::error::{Error, Result};
-use crate::launch::PackLaunch;
-use crate::overrides::Overrides;
-use crate::{ResolvedFile, UnavailableFile};
+use crate::files::FileTree;
+use crate::launch::LaunchSettings;
+use crate::loader::strip_minecraft_prefix;
+use crate::source::Source;
+use crate::{Metadata, ResolvedFile, UnavailableFile};
 
 const MANIFEST: &str = "modrinth.index.json";
 
@@ -31,7 +33,7 @@ const OVERRIDES: &[&str] = &["overrides", "client-overrides"];
 #[derive(Clone)]
 pub(crate) struct Inspection {
     files: Vec<ManifestFile>,
-    overrides: Vec<Overrides>,
+    trees: Vec<FileTree>,
 }
 
 #[derive(Deserialize)]
@@ -60,8 +62,8 @@ struct ManifestFile {
     file_size: Option<u64>,
 }
 
-/// Reads a Modrinth index into the common inspection.
-pub(super) fn inspect(path: &Path, source: &Source) -> Result<crate::Inspection> {
+/// Reads a Modrinth index into the common metadata and its own half.
+pub(super) fn inspect(path: &Path, source: &Source) -> Result<(Metadata, Inspection)> {
     let bytes = source.read(MANIFEST)?;
     let manifest = parse_manifest(&bytes)?;
     let minecraft = manifest
@@ -76,39 +78,41 @@ pub(super) fn inspect(path: &Path, source: &Source) -> Result<crate::Inspection>
     let (loader_type, loader_version) = parse_loader(&manifest.dependencies)?;
     let name = manifest.name.trim();
     let name = if name.is_empty() {
-        fallback_name(path)
+        super::fallback_name(path)
     } else {
         name.to_string()
     };
     log::info!(
-        "modpack '{name}': Modrinth {}, Minecraft {minecraft}, {} index files",
+        "import '{name}': Modrinth {}, Minecraft {minecraft}, {} index files",
         manifest.version_id,
         manifest.files.len()
     );
-    let mut overrides = Vec::new();
+    let mut trees = Vec::new();
     for prefix in OVERRIDES {
         if source.has_tree(prefix)? {
-            overrides.push(source.overrides(prefix));
+            trees.push(source.tree(prefix));
         }
     }
-    Ok(crate::Inspection {
-        name,
-        minecraft,
-        loader_type,
-        loader_version,
-        launch: PackLaunch::default(),
-        format: FormatInspection::Modrinth(Inspection {
+    Ok((
+        Metadata {
+            name,
+            minecraft,
+            loader_type,
+            loader_version,
+            launch: LaunchSettings::default(),
+        },
+        Inspection {
             files: manifest.files,
-            overrides,
-        }),
-    })
+            trees,
+        },
+    ))
 }
 
 /// Resolves the index's file entries into the common plan.
 ///
 /// The one network case is an entry without a URL: its SHA-1 is looked up on
 /// Modrinth, which is how a pack that lost its `downloads` is still installable.
-pub(super) async fn resolve(inspection: Inspection) -> Result<ResolvedPack> {
+pub(super) async fn resolve(inspection: Inspection) -> Result<crate::Resolved> {
     let mut files = Vec::new();
     let mut unavailable = Vec::new();
     let mut paths = HashSet::new();
@@ -160,10 +164,10 @@ pub(super) async fn resolve(inspection: Inspection) -> Result<ResolvedPack> {
         }
     }
 
-    Ok(ResolvedPack {
+    Ok(crate::Resolved {
         files,
         unavailable,
-        overrides: inspection.overrides,
+        trees: inspection.trees,
     })
 }
 
@@ -281,12 +285,6 @@ fn parse_loader(
     Ok((loader, version))
 }
 
-/// Forge ids carry the Minecraft version in front (`1.20.1-47.2.0`).
-fn strip_minecraft_prefix(version: &str, minecraft: &str) -> String {
-    let prefix = format!("{minecraft}-");
-    version.strip_prefix(&prefix).unwrap_or(version).to_string()
-}
-
 fn parse_manifest(bytes: &[u8]) -> Result<Manifest> {
     let text = std::str::from_utf8(bytes)
         .map_err(|error| Error::Manifest(format!("modrinth.index.json is not UTF-8: {error}")))?;
@@ -297,14 +295,6 @@ fn parse_manifest(bytes: &[u8]) -> Result<Manifest> {
 
 fn file_name(path: &str) -> String {
     path.rsplit('/').next().unwrap_or(path).to_string()
-}
-
-fn fallback_name(path: &Path) -> String {
-    path.file_stem()
-        .or_else(|| path.file_name())
-        .map(|name| name.to_string_lossy().trim().to_string())
-        .filter(|name| !name.is_empty())
-        .unwrap_or_else(|| "Modpack".to_string())
 }
 
 #[cfg(test)]
@@ -381,10 +371,11 @@ mod tests {
         assert_eq!(inspection.name, "Test pack");
         assert_eq!(inspection.minecraft, "1.20.1");
         assert_eq!(inspection.loader_version.as_deref(), Some("0.26.0"));
-        let FormatInspection::Modrinth(inspection) = &inspection.format else {
+        let crate::Recognized::Pack(crate::pack::Pack::Modrinth(inspection)) = &inspection.source
+        else {
             panic!("a Modrinth pack");
         };
-        assert_eq!(inspection.overrides.len(), 2);
+        assert_eq!(inspection.trees.len(), 2);
         std::fs::remove_dir_all(&directory).ok();
     }
 }

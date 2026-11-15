@@ -91,16 +91,19 @@ export global Dialogs {
     in-out property <string> stop-game-id: "";
 }
 
-// A dropped modpack — CurseForge, Modrinth, Prism/MultiMC, MCBBS or HMCL —
-// before it is installed. The file list resolves in the background, so the user
-// can name the instance while metadata is fetched.
-export global ModpackImportState {
+// A dropped pack or another launcher's instance, before it is imported. The
+// file list resolves in the background, so the user can name the instance while
+// metadata is fetched.
+export global InstanceImportState {
     in-out property <bool> visible: false;
     in-out property <bool> checking: false;
     /// The lookup failed; the dialog shows the error and a Retry button.
     in-out property <bool> failed: false;
     in-out property <string> error-message: "";
-    in-out property <string> pack-name: "";
+    in-out property <string> source-name: "";
+    /// The source is another launcher's instance rather than a modpack, so the
+    /// dialog says "import" where it would say "install".
+    in-out property <bool> importing-instance: false;
     in-out property <string> minecraft-version: "";
     in-out property <bool> has-loader: false;
     in-out property <string> loader-type: "";
@@ -114,23 +117,26 @@ export global ModpackImportState {
     callback confirm();
     callback retry();
 
-    out property <string> install-title: @tr("ModpackImport" => "Install this modpack?");
-    out property <string> instance-name-label: @tr("ModpackImport" => "Instance name");
-    out property <string> checking-text: @tr("ModpackImport" => "Checking files");
-    out property <string> install-text: @tr("ModpackImport" => "Install");
-    out property <string> install-anyway-text: @tr("ModpackImport" => "Install anyway");
-    out property <string> error-title: @tr("ModpackImport" => "Could not check the modpack files");
+    out property <string> install-title: @tr("InstanceImport" => "Install this modpack?");
+    out property <string> import-title: @tr("InstanceImport" => "Import this instance?");
+    out property <string> instance-name-label: @tr("InstanceImport" => "Instance name");
+    out property <string> checking-text: @tr("InstanceImport" => "Checking files");
+    out property <string> install-text: @tr("InstanceImport" => "Install");
+    out property <string> install-anyway-text: @tr("InstanceImport" => "Install anyway");
+    out property <string> import-text: @tr("InstanceImport" => "Import");
+    out property <string> import-anyway-text: @tr("InstanceImport" => "Import anyway");
+    out property <string> error-title: @tr("InstanceImport" => "Could not check the modpack files");
     out property <string> error-detail: @tr(
-        "ModpackImport" => "The modpack's file list could not be fetched. Check your connection, then retry."
+        "InstanceImport" => "The modpack's file list could not be fetched. Check your connection, then retry."
     );
-    out property <string> retry-text: @tr("ModpackImport" => "Retry");
+    out property <string> retry-text: @tr("InstanceImport" => "Retry");
     out property <string> warning-title: @tr(
-        "ModpackImport" => "Some modpack files cannot be downloaded automatically"
+        "InstanceImport" => "Some modpack files cannot be downloaded automatically"
     );
     out property <string> warning-detail: @tr(
-        "ModpackImport" => "The pack lists files the launcher could not resolve. Continue without them, or cancel and download them manually."
+        "InstanceImport" => "The pack lists files the launcher could not resolve. Continue without them, or cancel and download them manually."
     );
-    out property <string> cancel-text: @tr("ModpackImport" => "Cancel");
+    out property <string> cancel-text: @tr("InstanceImport" => "Cancel");
 }
 
 // The "delete instance" dialog. Rust fills these from the instance that was

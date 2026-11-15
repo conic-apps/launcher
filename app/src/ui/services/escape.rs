@@ -11,7 +11,7 @@ use slint::ComponentHandle;
 use crate::slint_backend::{
     AccountAddState, AccountViewState, App, CommandPaletteState, ContentState, CrashState,
     DeleteAccountState, DeleteInstanceState, DeleteSaveState, Dialogs, Dropdown, FocusManager,
-    InstanceMenu, InstanceSettingsState, ModpackImportState, MultiplayerState, MusicState,
+    InstanceImportState, InstanceMenu, InstanceSettingsState, MultiplayerState, MusicState,
     Navigation, NewsState, NotificationState, SettingsShell, TaskState,
 };
 
@@ -29,7 +29,7 @@ pub(crate) fn setup(ui: &App) {
 fn close(ui: &App) {
     // Surfaces with a close path of their own. These clear models and cancel
     // work, so they are used instead of writing their visibility flags.
-    ui.global::<ModpackImportState>().invoke_cancel();
+    ui.global::<InstanceImportState>().invoke_cancel();
     ui.global::<AccountAddState>().invoke_close();
     ui.global::<NewsState>().invoke_close();
     ui.global::<ContentState>().invoke_close();

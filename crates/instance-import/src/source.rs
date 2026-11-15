@@ -14,7 +14,7 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use crate::error::{Error, Result};
-use crate::overrides::Overrides;
+use crate::files::FileTree;
 
 /// A pack opened at its root.
 pub(crate) enum Source {
@@ -30,8 +30,9 @@ pub(crate) enum Source {
 }
 
 impl Source {
-    /// Opens `path` at the folder that holds one of `markers`.
-    pub(crate) fn open(path: &Path, markers: &[&str]) -> Result<Self> {
+    /// Opens `path` at the folder that holds one of `markers`, or `None` when
+    /// it holds none of them.
+    pub(crate) fn try_open(path: &Path, markers: &[&str]) -> Result<Option<Self>> {
         if path.is_dir() {
             open_directory(path, markers)
         } else {
@@ -123,21 +124,13 @@ impl Source {
         }
     }
 
-    /// The pack root, for error messages.
-    pub(crate) fn describe(&self) -> String {
-        match self {
-            Self::Directory { base } => base.display().to_string(),
-            Self::Archive { path, base } => format!("{} ({base})", path.display()),
-        }
-    }
-
     /// The `prefix` tree of the pack, ready to copy over the instance root.
-    pub(crate) fn overrides(&self, prefix: &str) -> Overrides {
+    pub(crate) fn tree(&self, prefix: &str) -> FileTree {
         let prefix = prefix.trim_matches('/');
         match self {
-            Self::Directory { base } => Overrides::directory(base.clone(), prefix.to_string()),
+            Self::Directory { base } => FileTree::directory(base.clone(), prefix.to_string()),
             Self::Archive { path, base } => {
-                Overrides::archive(path.clone(), format!("{base}{prefix}/"))
+                FileTree::archive(path.clone(), format!("{base}{prefix}/"))
             }
         }
     }
@@ -149,11 +142,11 @@ fn has_marker(directory: &Path, markers: &[&str]) -> bool {
         .any(|marker| directory.join(marker).is_file())
 }
 
-fn open_directory(path: &Path, markers: &[&str]) -> Result<Source> {
+fn open_directory(path: &Path, markers: &[&str]) -> Result<Option<Source>> {
     if has_marker(path, markers) {
-        return Ok(Source::Directory {
+        return Ok(Some(Source::Directory {
             base: path.to_path_buf(),
-        });
+        }));
     }
     let mut found = Vec::new();
     let entries = std::fs::read_dir(path).map_err(|source| Error::Read {
@@ -171,10 +164,10 @@ fn open_directory(path: &Path, markers: &[&str]) -> Result<Source> {
         }
     }
     match found.len() {
-        0 => Err(not_a_pack(path)),
-        1 => Ok(Source::Directory {
+        0 => Ok(None),
+        1 => Ok(Some(Source::Directory {
             base: found.remove(0),
-        }),
+        })),
         _ => Err(Error::Manifest(format!(
             "{} contains more than one modpack; drop the pack folder itself",
             path.display()
@@ -182,7 +175,7 @@ fn open_directory(path: &Path, markers: &[&str]) -> Result<Source> {
     }
 }
 
-fn open_archive(path: &Path, markers: &[&str]) -> Result<Source> {
+fn open_archive(path: &Path, markers: &[&str]) -> Result<Option<Source>> {
     let names = archive_names(path)?;
     // The marker folder, not the file: one format can put several markers in
     // the same folder (`mmc-pack.json` and `instance.cfg`), and that is one
@@ -204,7 +197,7 @@ fn open_archive(path: &Path, markers: &[&str]) -> Result<Source> {
     bases.sort();
     bases.dedup();
     let Some((depth, base)) = bases.first() else {
-        return Err(not_a_pack(path));
+        return Ok(None);
     };
     if bases
         .iter()
@@ -217,10 +210,10 @@ fn open_archive(path: &Path, markers: &[&str]) -> Result<Source> {
             path.display()
         )));
     }
-    Ok(Source::Archive {
+    Ok(Some(Source::Archive {
         path: path.to_path_buf(),
         base: base.clone(),
-    })
+    }))
 }
 
 fn archive_names(path: &Path) -> Result<Vec<String>> {
@@ -267,14 +260,6 @@ fn walk(base: &Path, relative: &str, names: &mut Vec<String>) -> Result<()> {
     Ok(())
 }
 
-fn not_a_pack(path: &Path) -> Error {
-    Error::Manifest(format!(
-        "{} is not a modpack: it holds none of the CurseForge, Modrinth, Prism/MultiMC, \
-         MCBBS or HMCL manifests",
-        path.display()
-    ))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -288,7 +273,9 @@ mod tests {
         std::fs::create_dir_all(directory.join("My Pack/mods")).expect("a temporary directory");
         std::fs::write(directory.join("My Pack/manifest.json"), "{}").expect("a manifest");
         std::fs::write(directory.join("My Pack/mods/a.jar"), "jar").expect("a mod");
-        let source = Source::open(&directory, MARKERS).expect("the pack root");
+        let source = Source::try_open(&directory, MARKERS)
+            .expect("an opened path")
+            .expect("the pack root");
         let Source::Directory { base } = &source else {
             panic!("a directory pack");
         };
@@ -314,7 +301,9 @@ mod tests {
             zip.write_all(b"{}").expect("a manifest");
             zip.finish().expect("a finished zip");
         }
-        let source = Source::open(&archive, MARKERS).expect("the pack root");
+        let source = Source::try_open(&archive, MARKERS)
+            .expect("an opened path")
+            .expect("the pack root");
         assert!(matches!(&source, Source::Archive { base, .. } if base == "pack/"));
         assert_eq!(source.read("manifest.json").expect("the manifest"), b"{}");
         assert_eq!(
@@ -325,11 +314,15 @@ mod tests {
     }
 
     #[test]
-    fn rejects_a_dropped_folder_without_a_manifest() {
+    fn a_folder_without_a_manifest_is_not_a_source() {
         let directory =
             std::env::temp_dir().join(format!("conic-source-test-{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&directory).expect("a temporary directory");
-        assert!(Source::open(&directory, MARKERS).is_err());
+        assert!(
+            Source::try_open(&directory, MARKERS)
+                .expect("an opened path")
+                .is_none()
+        );
         std::fs::remove_dir_all(&directory).ok();
     }
 }

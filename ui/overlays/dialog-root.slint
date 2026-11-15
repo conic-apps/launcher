@@ -15,7 +15,7 @@ import { ConfirmQuitApp } from "dialogs/confirm-quit-app.slint";
 import { ConfirmCancelTask } from "dialogs/confirm-cancel-task.slint";
 import { ConfirmStopGame } from "dialogs/confirm-stop-game.slint";
 import { RestartRequired } from "dialogs/restart-required.slint";
-import { ModpackImportDialog } from "dialogs/modpack-import.slint";
+import { InstanceImportDialog } from "dialogs/instance-import.slint";
 
 // The dialog overlay layer. Each dialog hides until its flag is set and draws its
 // own scrim, so a closed dialog lets everything through.
@@ -58,5 +58,5 @@ export component DialogRoot inherits Rectangle {
     }
 
     // A dropped pack can arrive at any time, so it is the topmost layer.
-    ModpackImportDialog { }
+    InstanceImportDialog { }
 }

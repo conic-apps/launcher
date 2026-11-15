@@ -2,8 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Turning a resolved pack into an instance and installing it. Progress is
-//! reported through a [`shared::Sink`] of [`Progress`].
+//! Creating the instance and filling it. Progress is reported through a
+//! [`shared::Sink`] of [`Progress`].
 
 use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
@@ -16,23 +16,113 @@ use storage::LOCATIONS;
 
 use crate::Plan;
 use crate::error::{Error, Result};
-use crate::overrides::extract_all;
 
-/// What an install reports.
+/// What an import reports.
 pub enum Progress {
-    /// Minecraft, Java and the loader, as the `install` crate reports them.
-    Install(install_crate::InstallProgress),
+    /// The instance exists; the import goes on filling it.
+    InstanceCreated(String),
+    /// Minecraft, Java and the loader of the new instance, as the `install`
+    /// crate reports them.
+    Game(install_crate::InstallProgress),
     Download(DownloadSnapshot),
+    /// Copying a source tree into the instance, in bytes.
+    Copy {
+        done: u64,
+        total: u64,
+    },
     Extracting,
 }
 
-/// Creates the instance for a resolved pack.
+/// Creates the instance for `plan` and fills it.
 ///
-/// The instance is written before the install starts so the frontend can show
-/// its name and runtime while the download runs. A cancelled install therefore
-/// leaves an uninstalled instance behind, exactly like cancelling a first launch
-/// does.
-pub async fn create_instance(plan: &Plan, name: &str) -> Result<String> {
+/// The instance is written before the game install starts so the frontend can
+/// show its name and runtime while the download runs, and so the caller learns
+/// the id through [`Progress::InstanceCreated`] right then. A cancelled import
+/// therefore leaves an uninstalled instance behind, exactly like cancelling a
+/// first launch does.
+pub async fn import(
+    plan: Plan,
+    name: &str,
+    config: Config,
+    sink: shared::Sink<Progress>,
+) -> Result<()> {
+    for file in &plan.unavailable {
+        log::info!("skipping import file {}: {}", file.file_name, file.reason);
+    }
+    let id = create_instance(&plan, name).await?;
+    sink(Progress::InstanceCreated(id.clone()));
+    let Some(instance) = instance::get_instance_by_id(&id).await else {
+        return Err(Error::MissingInstance);
+    };
+    // Once `install::install` finishes it writes `.install.lock`. Anything that
+    // fails or is cancelled after that must take the lock back, or the launch
+    // page would skip the repair pass on a half-filled instance.
+    let mut lock = InstallLockGuard {
+        id: id.clone(),
+        armed: true,
+    };
+
+    let download_config = config.download.clone();
+    let install_out = sink.clone();
+    let install_sink: install_crate::InstallSink =
+        Arc::new(move |progress| install_out(Progress::Game(progress)));
+    let language_config = config.clone();
+    let language_instance = instance.clone();
+    install_crate::install(config, instance, install_sink).await?;
+
+    let instance_root = LOCATIONS.instances.get_instance_root(&id);
+    let downloads: Vec<download::DownloadTask> = plan
+        .files
+        .iter()
+        .map(|file| {
+            Ok(download::DownloadTask {
+                url: file.url.clone(),
+                file: target_path(&instance_root, &file.path)?,
+                size_bytes: file.size_bytes,
+                checksum: file.checksum.clone(),
+                // The downloader classifies the source from the URL; an import
+                // format must not pick the task type.
+                task_type: download::DownloadTaskType::Unknown,
+            })
+        })
+        .collect::<Result<Vec<_>>>()?;
+    if !downloads.is_empty() {
+        log::info!("downloading {} import files", downloads.len());
+        let state = DownloadState::default();
+        let download_out = sink.clone();
+        download::progress::watch(
+            &state,
+            move |snapshot| download_out(Progress::Download(snapshot)),
+            download::download_concurrent(downloads, &state, download_config),
+        )
+        .await?;
+    }
+
+    if !plan.trees.is_empty() {
+        if plan.trees.iter().any(|tree| tree.is_archive()) {
+            sink(Progress::Extracting);
+        }
+        let copy_out = sink.clone();
+        let on_copy: crate::files::CopySink = Arc::new(move |snapshot| {
+            copy_out(Progress::Copy {
+                done: snapshot.done,
+                total: snapshot.total,
+            })
+        });
+        crate::files::write_all(plan.trees, instance_root.clone(), on_copy).await?;
+    }
+
+    // The copied files may carry their own `options.txt`, which wins over the
+    // install-time language write; applying it again here keeps the launcher's
+    // language without dropping the source's other options.
+    install_crate::configure_instance_language(&language_config, &language_instance, true).await;
+
+    lock.disarm();
+    Ok(())
+}
+
+/// Creates the instance for a resolved plan.
+async fn create_instance(plan: &Plan, name: &str) -> Result<String> {
     let name = name.trim();
     let name = if name.is_empty() {
         plan.name.as_str()
@@ -66,82 +156,10 @@ pub async fn create_instance(plan: &Plan, name: &str) -> Result<String> {
     Ok(id)
 }
 
-pub async fn install(
-    id: String,
-    plan: Plan,
-    config: Config,
-    sink: shared::Sink<Progress>,
-) -> Result<()> {
-    let Some(instance) = instance::get_instance_by_id(&id).await else {
-        return Err(Error::MissingInstance);
-    };
-    for file in &plan.unavailable {
-        log::info!("skipping modpack file {}: {}", file.file_name, file.reason);
-    }
-    log::info!(
-        "installing Minecraft {} for instance '{id}'",
-        instance.config.runtime.minecraft
-    );
-    // Once `install::install` finishes it writes `.install.lock`. Anything that
-    // fails or is cancelled after that must take the lock back, or the launch
-    // page would skip the repair pass on a half-filled instance.
-    let mut lock = InstallLockGuard {
-        id: id.clone(),
-        armed: true,
-    };
-
-    let download_config = config.download.clone();
-    let install_out = sink.clone();
-    let install_sink: install_crate::InstallSink =
-        Arc::new(move |progress| install_out(Progress::Install(progress)));
-    let language_config = config.clone();
-    let language_instance = instance.clone();
-    install_crate::install(config, instance, install_sink).await?;
-
-    let instance_root = LOCATIONS.instances.get_instance_root(&id);
-    let downloads: Vec<download::DownloadTask> = plan
-        .files
-        .iter()
-        .map(|file| {
-            Ok(download::DownloadTask {
-                url: file.url.clone(),
-                file: target_path(&instance_root, &file.path)?,
-                size_bytes: file.size_bytes,
-                checksum: file.checksum.clone(),
-                // The downloader classifies the source from the URL; a
-                // modpack format must not pick the task type.
-                task_type: download::DownloadTaskType::Unknown,
-            })
-        })
-        .collect::<Result<Vec<_>>>()?;
-    if !downloads.is_empty() {
-        log::info!("downloading {} modpack files", downloads.len());
-        let state = DownloadState::default();
-        let download_out = sink.clone();
-        download::progress::watch(
-            &state,
-            move |snapshot| download_out(Progress::Download(snapshot)),
-            download::download_concurrent(downloads, &state, download_config),
-        )
-        .await?;
-    }
-
-    sink(Progress::Extracting);
-    extract_all(&plan.overrides, &instance_root).await?;
-
-    // The overrides may carry their own `options.txt`, which wins over the
-    // install-time language write; applying it again here keeps the launcher's
-    // language without dropping the pack's other options.
-    install_crate::configure_instance_language(&language_config, &language_instance, true).await;
-
-    lock.disarm();
-    Ok(())
-}
-
-/// Resolves a pack-relative path under the instance root.
+/// Resolves a source-relative path under the instance root.
 ///
-/// A format supplies the path, so it is untrusted: only normal components are
-/// allowed, or a malicious pack could write outside the instance.
+/// An import supplies the path, so it is untrusted: only normal components are
+/// allowed, or a malicious source could write outside the instance.
 fn target_path(instance_root: &Path, relative: &Path) -> Result<PathBuf> {
     let mut target = instance_root.to_path_buf();
     let mut has_component = false;
@@ -160,7 +178,7 @@ fn target_path(instance_root: &Path, relative: &Path) -> Result<PathBuf> {
     Ok(target)
 }
 
-/// Removes `.install.lock` when an install is dropped before it finishes.
+/// Removes `.install.lock` when an import is dropped before it finishes.
 struct InstallLockGuard {
     id: String,
     armed: bool,
@@ -190,7 +208,7 @@ mod tests {
     use std::path::Path;
 
     #[test]
-    fn a_pack_relative_path_stays_under_the_instance_root() {
+    fn a_source_relative_path_stays_under_the_instance_root() {
         let root = Path::new("instances/test");
         assert_eq!(
             target_path(root, Path::new("mods/a.jar")).unwrap(),
