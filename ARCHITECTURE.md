@@ -100,8 +100,8 @@ where a file goes:
     `WindowBackground`.
   - `settings/` — `SettingItem`, `SettingGroup`, `SettingCollapse`, `SettingReveal`.
   - `markdown/` — the `.slint` half of `app/src/ui/components/markdown/`.
-  - `title-bar.slint` plus a `title-bar/` folder of its private children (`navigation-button`,
-    `title-bar-action-button`, `search-bar`). A component gets a same-named folder only when it has
+  - `title-bar.slint` plus a `title-bar/` folder of its private children
+    (`title-bar-action-button`, `search-bar`). A component gets a same-named folder only when it has
     private children, and keeps them there rather than in `components/`.
 - **`views/`** — the top-level pages: one `*-view.slint` each (`game-view`, `launch-view`,
   `setup-view`, `todo-placeholder`) with a same-named folder for its parts (`game/`, `setup/`).
@@ -135,8 +135,8 @@ scales with the window as a clamped three fifths (520–680px), leaving at least
 That keeps the body usable at the 840px minimum window without stretching the settings into a
 full-screen sheet on a large display. `globals/settings-shell.slint` owns only the open flag and the
 page mirror: the title bar's gear toggles it, opening it from another page first navigates home, and
-any later navigation away from the game closes it. The home button drops its selected state while
-the drawer is open.
+any later navigation away from the game closes it. The title bar shows no current page: its icons
+are plain buttons, and only an open overlay fills its tile.
 
 The drawer's two parts animate independently: each starts with its right edge on the window's left
 edge and at zero opacity, and settles at its own target (the sidebar at 0, the content after it).
