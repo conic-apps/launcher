@@ -3239,57 +3239,47 @@ msgid "Click here to return to first-run setup"
 msgstr "ここをクリックして初回セットアップに戻る"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Some modpack files cannot be downloaded automatically"
 msgstr "一部のMODパックファイルを自動ダウンロードできません"
 
 #: ui
-msgctxt "ModpackImport"
-msgid "The pack author disabled third-party downloads for these files. Continue without them, or cancel and download them manually."
-msgstr "パック作者がこれらのファイルの第三者によるダウンロードを無効にしています。これらを含めずに続行するか、キャンセルして手動でダウンロードしてください。"
-
-#: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Cancel"
 msgstr "キャンセル"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Install this modpack?"
 msgstr "このMODパックをインストールしますか？"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Instance name"
 msgstr "インスタンス名"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Checking files"
 msgstr "ファイルを確認中"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Install"
 msgstr "インストール"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Install anyway"
 msgstr "それでもインストール"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Could not check the modpack files"
 msgstr "MODパックのファイルを確認できませんでした"
 
 #: ui
-msgctxt "ModpackImport"
-msgid "The CurseForge API could not be reached. Check your connection, then retry."
-msgstr "CurseForge API に接続できませんでした。接続を確認してから再試行してください。"
-
-#: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Retry"
 msgstr "再試行"
 
@@ -3685,11 +3675,6 @@ msgstr "{} をダウンロード中"
 
 #: ui
 msgctxt "TaskText"
-msgid "Installing modpack {}"
-msgstr "MODパック {} をインストール中"
-
-#: ui
-msgctxt "TaskText"
 msgid "Installing {}"
 msgstr "{} をインストール中"
 
@@ -3902,3 +3887,38 @@ msgstr "ゲームを続ける"
 msgctxt "ConfirmStopGame"
 msgid "Stop game"
 msgstr "ゲームを停止"
+
+#: ui
+msgctxt "InstanceImport"
+msgid "The pack lists files the launcher could not resolve. Continue without them, or cancel and download them manually."
+msgstr "MODパックに、ランチャーが解決できないファイルが含まれています。これらを含めずに続行するか、キャンセルして手動でダウンロードしてください。"
+
+#: ui
+msgctxt "InstanceImport"
+msgid "The modpack's file list could not be fetched. Check your connection, then retry."
+msgstr "MODパックのファイル一覧を取得できませんでした。接続を確認してから再試行してください。"
+
+#: ui
+msgctxt "InstanceImport"
+msgid "Import this instance?"
+msgstr "このインスタンスをインポートしますか？"
+
+#: ui
+msgctxt "InstanceImport"
+msgid "Import"
+msgstr "インポート"
+
+#: ui
+msgctxt "InstanceImport"
+msgid "Import anyway"
+msgstr "それでもインポート"
+
+#: ui
+msgctxt "TaskText"
+msgid "Importing {}"
+msgstr "{} をインポート中"
+
+#: ui
+msgctxt "TaskText"
+msgid "Copying files"
+msgstr "ファイルをコピー中"

@@ -383,7 +383,7 @@ fn progress_fields(progress: &TaskProgress) -> (f32, f32, bool) {
 fn kind_icon(kind: TaskKind) -> &'static str {
     match kind {
         TaskKind::ContentDownload => "download",
-        TaskKind::ModpackInstall => "package",
+        TaskKind::InstanceImport => "package",
         TaskKind::GameInstall => "minecraft",
         TaskKind::LibraryDownload => "cloud-download",
     }

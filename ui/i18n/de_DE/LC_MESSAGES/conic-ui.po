@@ -3239,57 +3239,47 @@ msgid "Click here to return to first-run setup"
 msgstr "Klicke hier, um zur Ersteinrichtung zurückzukehren"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Some modpack files cannot be downloaded automatically"
 msgstr "Einige Modpack-Dateien können nicht automatisch heruntergeladen werden"
 
 #: ui
-msgctxt "ModpackImport"
-msgid "The pack author disabled third-party downloads for these files. Continue without them, or cancel and download them manually."
-msgstr "Der Pack-Autor hat Drittanbieter-Downloads für diese Dateien deaktiviert. Fahre ohne sie fort oder brich ab und lade sie manuell herunter."
-
-#: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Cancel"
 msgstr "Abbrechen"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Install this modpack?"
 msgstr "Dieses Modpack installieren?"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Instance name"
 msgstr "Instanzname"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Checking files"
 msgstr "Dateien werden geprüft"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Install"
 msgstr "Installieren"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Install anyway"
 msgstr "Trotzdem installieren"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Could not check the modpack files"
 msgstr "Die Modpack-Dateien konnten nicht geprüft werden"
 
 #: ui
-msgctxt "ModpackImport"
-msgid "The CurseForge API could not be reached. Check your connection, then retry."
-msgstr "Die CurseForge-API konnte nicht erreicht werden. Prüfe deine Verbindung und versuche es erneut."
-
-#: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Retry"
 msgstr "Erneut versuchen"
 
@@ -3685,11 +3675,6 @@ msgstr "{} wird heruntergeladen"
 
 #: ui
 msgctxt "TaskText"
-msgid "Installing modpack {}"
-msgstr "Modpack {} wird installiert"
-
-#: ui
-msgctxt "TaskText"
 msgid "Installing {}"
 msgstr "{} wird installiert"
 
@@ -3902,3 +3887,38 @@ msgstr "Weiterspielen"
 msgctxt "ConfirmStopGame"
 msgid "Stop game"
 msgstr "Spiel beenden"
+
+#: ui
+msgctxt "InstanceImport"
+msgid "The pack lists files the launcher could not resolve. Continue without them, or cancel and download them manually."
+msgstr "Das Modpack nennt Dateien, die der Launcher nicht auflösen konnte. Fahre ohne sie fort oder brich ab und lade sie manuell herunter."
+
+#: ui
+msgctxt "InstanceImport"
+msgid "The modpack's file list could not be fetched. Check your connection, then retry."
+msgstr "Die Dateiliste des Modpacks konnte nicht geladen werden. Prüfe deine Verbindung und versuche es erneut."
+
+#: ui
+msgctxt "InstanceImport"
+msgid "Import this instance?"
+msgstr "Diese Instanz importieren?"
+
+#: ui
+msgctxt "InstanceImport"
+msgid "Import"
+msgstr "Importieren"
+
+#: ui
+msgctxt "InstanceImport"
+msgid "Import anyway"
+msgstr "Trotzdem importieren"
+
+#: ui
+msgctxt "TaskText"
+msgid "Importing {}"
+msgstr "{} wird importiert"
+
+#: ui
+msgctxt "TaskText"
+msgid "Copying files"
+msgstr "Dateien werden kopiert"

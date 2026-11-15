@@ -107,7 +107,7 @@ fn main() {
     ui::services::update::notify_applied(notices.clone());
     ui::services::minecraft_update::setup(Rc::clone(&shared), notices.clone());
     ui::services::tasks::setup(&ui, notices.clone());
-    ui::overlays::dialogs::modpack_import::setup(&ui, Rc::clone(&shared), notices.clone());
+    ui::overlays::dialogs::instance_import::setup(&ui, Rc::clone(&shared), notices.clone());
     {
         let weak_ui = ui.as_weak();
         let shared = Rc::clone(&shared);

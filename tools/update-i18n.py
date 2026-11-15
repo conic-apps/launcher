@@ -62,6 +62,10 @@ LANGUAGES = [
 # `ContentModsCurseforge`/`ContentModsModrinth`/… were folded into one
 # `ContentCardGrid` with a `panels.slint` per panel, so the empty state each
 # remote list draws now resolves under its own panel's name.
+# The import dialog now takes another launcher's instances as well as packs, so
+# its sentences are looked up under `InstanceImport` rather than `ModpackImport`.
+CONTEXT_RENAME = {"ModpackImport": "InstanceImport"}
+
 RECONTEXT = {
     ("RemoteListView", "Try adjusting keywords or filters and search again"): [
         "ContentModsPanel",
@@ -132,6 +136,18 @@ DROP = {
         "AccountAddMicrosoft",
         " and paste it into the browser. To finish signing in on another device, ",
     ),
+    # The modpack import reads five formats now, so its two failure sentences
+    # stopped naming the CurseForge API.
+    (
+        "ModpackImport",
+        "The CurseForge API could not be reached. Check your connection, then retry.",
+    ),
+    (
+        "ModpackImport",
+        "The pack author disabled third-party downloads for these files. Continue without them, or cancel and download them manually.",
+    ),
+    # The task centre's import card no longer says "Installing modpack".
+    ("TaskText", "Installing modpack {}"),
     # The launch button's dropdown is gone: its one entry moved into the instance
     # settings as a repair that only installs.
     ("InstanceSummary", "Repair game and launch"),
@@ -1726,7 +1742,7 @@ SAVE_TAGS = {
             "pl_PL": "Conic Launcher został zaktualizowany do wersji {}. Kliknij tutaj, aby zobaczyć informacje o wydaniu",
         },
     },
-    "ModpackImport": {
+    "InstanceImport": {
         "Some modpack files cannot be downloaded automatically": {
             "zh_CN": "部分整合包文件无法自动下载",
             "zh_TW": "部分整合包檔案無法自動下載",
@@ -1740,18 +1756,18 @@ SAVE_TAGS = {
             "tr_TR": "Bazı mod paketi dosyaları otomatik olarak indirilemiyor",
             "pl_PL": "Niektórych plików modpacka nie można pobrać automatycznie",
         },
-        "The pack author disabled third-party downloads for these files. Continue without them, or cancel and download them manually.": {
-            "zh_CN": "整合包作者已禁止这些文件的第三方下载。你可以不带这些文件继续，或取消后手动下载。",
-            "zh_TW": "整合包作者已禁止這些檔案的第三方下載。你可以不帶這些檔案繼續，或取消後手動下載。",
-            "ja_JP": "パック作者がこれらのファイルの第三者によるダウンロードを無効にしています。これらを含めずに続行するか、キャンセルして手動でダウンロードしてください。",
-            "ko_KR": "팩 작성자가 이 파일들의 제3자 다운로드를 비활성화했습니다. 이 파일 없이 계속하거나 취소하고 직접 다운로드하세요.",
-            "de_DE": "Der Pack-Autor hat Drittanbieter-Downloads für diese Dateien deaktiviert. Fahre ohne sie fort oder brich ab und lade sie manuell herunter.",
-            "fr_FR": "L'auteur du pack a désactivé les téléchargements tiers pour ces fichiers. Continuez sans eux ou annulez et téléchargez-les manuellement.",
-            "es_ES": "El autor del modpack ha desactivado las descargas de terceros para estos archivos. Continúa sin ellos o cancela y descárgalos manualmente.",
-            "pt_BR": "O autor do modpack desativou downloads de terceiros para esses arquivos. Continue sem eles ou cancele e baixe-os manualmente.",
-            "ru_RU": "Автор модпака отключил сторонние загрузки для этих файлов. Продолжите без них или отмените и скачайте их вручную.",
-            "tr_TR": "Paket yazarı bu dosyalar için üçüncü taraf indirmelerini devre dışı bıraktı. Bunlar olmadan devam edin veya iptal edip elle indirin.",
-            "pl_PL": "Autor modpacka wyłączył pobieranie tych plików przez osoby trzecie. Kontynuuj bez nich lub anuluj i pobierz je ręcznie.",
+        "The pack lists files the launcher could not resolve. Continue without them, or cancel and download them manually.": {
+            "zh_CN": "整合包列出了启动器无法解析的文件。你可以不带这些文件继续，或取消后手动下载。",
+            "zh_TW": "整合包列出了啟動器無法解析的檔案。你可以不帶這些檔案繼續，或取消後手動下載。",
+            "ja_JP": "MODパックに、ランチャーが解決できないファイルが含まれています。これらを含めずに続行するか、キャンセルして手動でダウンロードしてください。",
+            "ko_KR": "모드팩에 런처가 확인할 수 없는 파일이 있습니다. 이 파일 없이 계속하거나 취소하고 직접 다운로드하세요.",
+            "de_DE": "Das Modpack nennt Dateien, die der Launcher nicht auflösen konnte. Fahre ohne sie fort oder brich ab und lade sie manuell herunter.",
+            "fr_FR": "Le modpack répertorie des fichiers que le lanceur n'a pas pu résoudre. Continuez sans eux ou annulez et téléchargez-les manuellement.",
+            "es_ES": "El modpack incluye archivos que el launcher no pudo resolver. Continúa sin ellos o cancela y descárgalos manualmente.",
+            "pt_BR": "O modpack lista arquivos que o launcher não conseguiu resolver. Continue sem eles ou cancele e baixe-os manualmente.",
+            "ru_RU": "Модпак содержит файлы, которые лаунчер не смог определить. Продолжите без них или отмените и скачайте их вручную.",
+            "tr_TR": "Mod paketi, başlatıcının çözümleyemediği dosyalar içeriyor. Bunlar olmadan devam edin veya iptal edip elle indirin.",
+            "pl_PL": "Modpack zawiera pliki, których launcher nie mógł rozpoznać. Kontynuuj bez nich lub anuluj i pobierz je ręcznie.",
         },
         "Cancel": {
             "zh_CN": "取消",
@@ -1765,6 +1781,45 @@ SAVE_TAGS = {
             "ru_RU": "Отмена",
             "tr_TR": "İptal",
             "pl_PL": "Anuluj",
+        },
+        "Import this instance?": {
+            "zh_CN": "要导入这个实例吗？",
+            "zh_TW": "要匯入這個實例嗎？",
+            "ja_JP": "このインスタンスをインポートしますか？",
+            "ko_KR": "이 인스턴스를 가져올까요?",
+            "de_DE": "Diese Instanz importieren?",
+            "fr_FR": "Importer cette instance ?",
+            "es_ES": "¿Importar esta instancia?",
+            "pt_BR": "Importar esta instância?",
+            "ru_RU": "Импортировать этот экземпляр?",
+            "tr_TR": "Bu örnek içe aktarılsın mı?",
+            "pl_PL": "Zaimportować tę instancję?",
+        },
+        "Import": {
+            "zh_CN": "导入",
+            "zh_TW": "匯入",
+            "ja_JP": "インポート",
+            "ko_KR": "가져오기",
+            "de_DE": "Importieren",
+            "fr_FR": "Importer",
+            "es_ES": "Importar",
+            "pt_BR": "Importar",
+            "ru_RU": "Импортировать",
+            "tr_TR": "İçe aktar",
+            "pl_PL": "Importuj",
+        },
+        "Import anyway": {
+            "zh_CN": "仍然导入",
+            "zh_TW": "仍然匯入",
+            "ja_JP": "それでもインポート",
+            "ko_KR": "그래도 가져오기",
+            "de_DE": "Trotzdem importieren",
+            "fr_FR": "Importer quand même",
+            "es_ES": "Importar de todos modos",
+            "pt_BR": "Importar mesmo assim",
+            "ru_RU": "Всё равно импортировать",
+            "tr_TR": "Yine de içe aktar",
+            "pl_PL": "Zaimportuj mimo to",
         },
         "Install this modpack?": {
             "zh_CN": "要安装这个整合包吗？",
@@ -1844,18 +1899,18 @@ SAVE_TAGS = {
             "tr_TR": "Mod paketi dosyaları kontrol edilemedi",
             "pl_PL": "Nie można sprawdzić plików modpacka",
         },
-        "The CurseForge API could not be reached. Check your connection, then retry.": {
-            "zh_CN": "无法连接到 CurseForge API。请检查网络连接后重试。",
-            "zh_TW": "無法連線到 CurseForge API。請檢查網路連線後重試。",
-            "ja_JP": "CurseForge API に接続できませんでした。接続を確認してから再試行してください。",
-            "ko_KR": "CurseForge API에 연결할 수 없습니다. 연결을 확인한 후 다시 시도하세요.",
-            "de_DE": "Die CurseForge-API konnte nicht erreicht werden. Prüfe deine Verbindung und versuche es erneut.",
-            "fr_FR": "Impossible d'atteindre l'API CurseForge. Vérifiez votre connexion, puis réessayez.",
-            "es_ES": "No se pudo acceder a la API de CurseForge. Comprueba tu conexión y vuelve a intentarlo.",
-            "pt_BR": "Não foi possível acessar a API do CurseForge. Verifique sua conexão e tente novamente.",
-            "ru_RU": "Не удалось подключиться к API CurseForge. Проверьте соединение и повторите попытку.",
-            "tr_TR": "CurseForge API'sine ulaşılamadı. Bağlantınızı kontrol edip yeniden deneyin.",
-            "pl_PL": "Nie można połączyć się z API CurseForge. Sprawdź połączenie i spróbuj ponownie.",
+        "The modpack's file list could not be fetched. Check your connection, then retry.": {
+            "zh_CN": "无法获取整合包的文件列表。请检查网络连接后重试。",
+            "zh_TW": "無法取得整合包的檔案清單。請檢查網路連線後重試。",
+            "ja_JP": "MODパックのファイル一覧を取得できませんでした。接続を確認してから再試行してください。",
+            "ko_KR": "모드팩 파일 목록을 가져올 수 없습니다. 연결을 확인한 후 다시 시도하세요.",
+            "de_DE": "Die Dateiliste des Modpacks konnte nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.",
+            "fr_FR": "La liste des fichiers du modpack n'a pas pu être récupérée. Vérifiez votre connexion, puis réessayez.",
+            "es_ES": "No se pudo obtener la lista de archivos del modpack. Comprueba tu conexión y vuelve a intentarlo.",
+            "pt_BR": "Não foi possível obter a lista de arquivos do modpack. Verifique sua conexão e tente novamente.",
+            "ru_RU": "Не удалось получить список файлов модпака. Проверьте соединение и повторите попытку.",
+            "tr_TR": "Mod paketinin dosya listesi alınamadı. Bağlantınızı kontrol edip yeniden deneyin.",
+            "pl_PL": "Nie udało się pobrać listy plików modpacka. Sprawdź połączenie i spróbuj ponownie.",
         },
         "Retry": {
             "zh_CN": "重试",
@@ -1892,6 +1947,8 @@ for line in CRASH_TEXT_TSV.read_text(encoding="utf-8").splitlines():
 SAVE_TAGS["CrashText"] = CRASH_TEXT
 
 # The task centre's cards and its stop confirmation.
+# This update *replaces* the `TaskText` key of `SAVE_TAGS` above, so a new
+# TaskText sentence belongs in the table below, not in the earlier one.
 SAVE_TAGS.update({
     "TaskText": {
         "Downloading {}": {
@@ -1906,19 +1963,6 @@ SAVE_TAGS.update({
             "ru_RU": "Загрузка {}",
             "tr_TR": "{} indiriliyor",
             "pl_PL": "Pobieranie {}",
-        },
-        "Installing modpack {}": {
-            "zh_CN": "正在安装整合包 {}",
-            "zh_TW": "正在安裝整合包 {}",
-            "ja_JP": "MODパック {} をインストール中",
-            "ko_KR": "모드팩 {} 설치 중",
-            "de_DE": "Modpack {} wird installiert",
-            "fr_FR": "Installation du modpack {}",
-            "es_ES": "Instalando el modpack {}",
-            "pt_BR": "Instalando o modpack {}",
-            "ru_RU": "Установка модпака {}",
-            "tr_TR": "{} mod paketi kuruluyor",
-            "pl_PL": "Instalowanie modpacka {}",
         },
         "Installing {}": {
             "zh_CN": "正在安装 {}",
@@ -2420,6 +2464,32 @@ SAVE_TAGS.update({
             "tr_TR": "Diğer görevlerin bitmesi bekleniyor",
             "pl_PL": "Oczekiwanie na zakończenie innych zadań",
         },
+        "Importing {}": {
+            "zh_CN": "正在导入 {}",
+            "zh_TW": "正在匯入 {}",
+            "ja_JP": "{} をインポート中",
+            "ko_KR": "{} 가져오는 중",
+            "de_DE": "{} wird importiert",
+            "fr_FR": "Importation de {}",
+            "es_ES": "Importando {}",
+            "pt_BR": "Importando {}",
+            "ru_RU": "Импорт {}",
+            "tr_TR": "{} içe aktarılıyor",
+            "pl_PL": "Importowanie {}",
+        },
+        "Copying files": {
+            "zh_CN": "正在复制文件",
+            "zh_TW": "正在複製檔案",
+            "ja_JP": "ファイルをコピー中",
+            "ko_KR": "파일 복사 중",
+            "de_DE": "Dateien werden kopiert",
+            "fr_FR": "Copie des fichiers",
+            "es_ES": "Copiando archivos",
+            "pt_BR": "Copiando arquivos",
+            "ru_RU": "Копирование файлов",
+            "tr_TR": "Dosyalar kopyalanıyor",
+            "pl_PL": "Kopiowanie plików",
+        },
     },
     # The warning before the launch button's Stop kills a live game.
     "ConfirmStopGame": {
@@ -2577,6 +2647,9 @@ def main() -> int:
         result: list[tuple[str | None, str, str]] = []
         for ctx, msgid, msgstr in entries:
             if (ctx, msgid) in DROP:
+                continue
+            if ctx in CONTEXT_RENAME:
+                result.append((CONTEXT_RENAME[ctx], msgid, msgstr))
                 continue
             if (ctx, msgid) in RECONTEXT:
                 for target in RECONTEXT[(ctx, msgid)]:

@@ -1097,10 +1097,10 @@ dependencies = [
  "image",
  "install",
  "instance",
+ "instance-import",
  "java-discovery",
  "launch",
  "log",
- "modpack",
  "modrinth",
  "multiplayer",
  "music",
@@ -3247,6 +3247,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "instance-import"
+version = "0.0.0"
+dependencies = [
+ "config",
+ "curseforge",
+ "download",
+ "futures",
+ "install",
+ "instance",
+ "log",
+ "modrinth",
+ "serde",
+ "serde_json",
+ "shared",
+ "storage",
+ "thiserror 2.0.21",
+ "tokio",
+ "uuid",
+ "zip",
+]
+
+[[package]]
 name = "interpolate_name"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3894,27 +3916,6 @@ dependencies = [
  "libc",
  "wasi",
  "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "modpack"
-version = "0.0.0"
-dependencies = [
- "config",
- "curseforge",
- "download",
- "futures",
- "install",
- "instance",
- "log",
- "serde",
- "serde_json",
- "shared",
- "storage",
- "thiserror 2.0.21",
- "tokio",
- "uuid",
- "zip",
 ]
 
 [[package]]

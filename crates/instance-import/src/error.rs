@@ -28,7 +28,7 @@ pub enum Error {
     Manifest(String),
     #[error("{0}")]
     Loader(String),
-    #[error("could not resolve the modpack's files: {0}")]
+    #[error("could not resolve the import's files: {0}")]
     Source(String),
     #[error("the new instance could not be read back")]
     MissingInstance,
@@ -36,10 +36,10 @@ pub enum Error {
     Instance(String),
     #[error("could not install Minecraft and the loader: {0}")]
     Install(#[from] install::Error),
-    #[error("could not download the modpack's files: {0}")]
+    #[error("could not download the import's files: {0}")]
     Download(#[from] download::Error),
     /// A resolved file would be written outside the instance root.
-    #[error("the modpack file path is not safe: {0}")]
+    #[error("the import's file path is not safe: {0}")]
     UnsafePath(String),
     #[error("could not write {path}: {source}")]
     Write {
@@ -47,7 +47,7 @@ pub enum Error {
         #[source]
         source: std::io::Error,
     },
-    #[error("could not copy the modpack overrides: {0}")]
+    #[error("could not copy the import's files: {0}")]
     Overrides(std::io::Error),
     #[error("a background task failed: {0}")]
     Task(String),

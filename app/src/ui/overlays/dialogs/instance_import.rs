@@ -2,14 +2,15 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Drag-and-drop CurseForge modpack import.
+//! Drag-and-drop import: a modpack archive (CurseForge, Modrinth, Prism/MultiMC,
+//! MCBBS, HMCL) or another launcher's instance folder. `instance_import::inspect`
+//! decides what the dropped path is.
 //!
-//! The drop opens a confirmation dialog and resolves the manifest in the
-//! background; confirming creates the instance and installs it as a task-centre
-//! card, so progress survives the dialog closing. A failed lookup keeps the dialog
-//! open so the pack name and the typed instance name are not lost. The OS drop
-//! only reaches Rust through `window::on_window_event`, so the filter is
-//! registered here.
+//! The drop opens a confirmation dialog and resolves the source in the
+//! background; confirming imports it as a task-centre card, so progress survives
+//! the dialog closing. A failed lookup keeps the dialog open so the source name
+//! and the typed instance name are not lost. The OS drop only reaches Rust
+//! through `window::on_window_event`, so the filter is registered here.
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -17,22 +18,23 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
 use shared::{
+    Sink,
     notification::{Notice, NoticeKind, NoticeSink},
     task::{TaskKind, TaskSpec, TaskTarget},
 };
 use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
 
-use crate::slint_backend::{App, GameState, ModpackImportState, Navigation};
+use crate::slint_backend::{App, GameState, InstanceImportState, Navigation};
 use crate::support::runtime;
 use crate::ui::services::report;
 
 pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: NoticeSink) {
-    // One import at a time, from the drop until its install finishes. A drop on
+    // One import at a time, from the drop until the task finishes. A drop on
     // the launch page is rejected separately: a launch or install is already
     // running there.
     let busy = Arc::new(AtomicBool::new(false));
-    let pending: Arc<Mutex<Option<modpack::Plan>>> = Arc::new(Mutex::new(None));
-    let inspection: Arc<Mutex<Option<modpack::Inspection>>> = Arc::new(Mutex::new(None));
+    let pending: Arc<Mutex<Option<instance_import::ImportPlan>>> = Arc::new(Mutex::new(None));
+    let inspection: Arc<Mutex<Option<instance_import::ImportSource>>> = Arc::new(Mutex::new(None));
     let resolving: Arc<Mutex<Option<tokio::task::JoinHandle<()>>>> = Arc::new(Mutex::new(None));
     // A resolve that finishes after its dialog was cancelled (or replaced by a
     // new drop) must not write its plan or change the new dialog's state.
@@ -45,7 +47,7 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
         let busy = Arc::clone(&busy);
         let generation = Arc::clone(&generation);
         let dialog = ui.as_weak();
-        ui.global::<ModpackImportState>().on_cancel(move || {
+        ui.global::<InstanceImportState>().on_cancel(move || {
             generation.fetch_add(1, Ordering::SeqCst);
             if let Ok(mut handle) = resolving.lock()
                 && let Some(handle) = handle.take()
@@ -60,7 +62,7 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
             }
             busy.store(false, Ordering::SeqCst);
             if let Some(ui) = dialog.upgrade() {
-                let state = ui.global::<ModpackImportState>();
+                let state = ui.global::<InstanceImportState>();
                 state.set_checking(false);
                 state.set_failed(false);
                 state.set_error_message("".into());
@@ -74,21 +76,21 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
         let inspection = Arc::clone(&inspection);
         let busy = Arc::clone(&busy);
         let weak = ui.as_weak();
-        ui.global::<ModpackImportState>().on_confirm(move || {
+        ui.global::<InstanceImportState>().on_confirm(move || {
             let Some(ui) = weak.upgrade() else { return };
             // The button is hidden while checking/failed, but a click from a
             // stale frame must not install a plan that is not there.
-            if ui.global::<ModpackImportState>().get_checking()
-                || ui.global::<ModpackImportState>().get_failed()
+            if ui.global::<InstanceImportState>().get_checking()
+                || ui.global::<InstanceImportState>().get_failed()
             {
                 return;
             }
             let name = ui
-                .global::<ModpackImportState>()
+                .global::<InstanceImportState>()
                 .get_instance_name()
                 .to_string();
             let Some(plan) = pending.lock().ok().and_then(|mut slot| slot.take()) else {
-                let state = ui.global::<ModpackImportState>();
+                let state = ui.global::<InstanceImportState>();
                 state.set_checking(false);
                 state.set_visible(false);
                 busy.store(false, Ordering::SeqCst);
@@ -97,7 +99,7 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
             if let Ok(mut slot) = inspection.lock() {
                 *slot = None;
             }
-            let state = ui.global::<ModpackImportState>();
+            let state = ui.global::<InstanceImportState>();
             state.set_checking(false);
             state.set_visible(false);
 
@@ -105,18 +107,19 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
             let busy_task = Arc::clone(&busy);
             let service = crate::ui::services::tasks::service();
             let subject = ui
-                .global::<ModpackImportState>()
-                .get_pack_name()
+                .global::<InstanceImportState>()
+                .get_source_name()
                 .to_string();
             let spec = TaskSpec {
-                kind: TaskKind::ModpackInstall,
+                kind: TaskKind::InstanceImport,
                 subject,
                 context: name.clone(),
                 target: TaskTarget::None,
             };
-            // The instance is created inside the work, so the task keeps its
-            // `None` target until `retarget` gives it one; the exclusive lane is
-            // what holds every other modpack and game install back meanwhile.
+            // The instance is created inside the import, so the task keeps its
+            // `None` target until the crate reports the new id; the exclusive
+            // lane is what holds every other import and game install back
+            // meanwhile.
             let work: crate::usecases::tasks::TaskWork = {
                 let weak = weak.clone();
                 let busy_task = Arc::clone(&busy_task);
@@ -125,48 +128,34 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
                     let completion = task.clone();
                     let id = completion.id();
                     let weak = weak.clone();
+                    let on_created: Sink<String> = {
+                        let weak = weak.clone();
+                        Arc::new(move |instance_id: String| {
+                            report::report(&weak, move |ui| {
+                                ui.global::<GameState>()
+                                    .invoke_refresh_selecting(instance_id.into());
+                            });
+                        })
+                    };
                     let handle = runtime::spawn(async move {
-                        match modpack::create_instance(&plan, &name).await {
-                            Ok(created) => {
-                                log::info!(
-                                    "modpack instance {created} created; starting the install"
-                                );
-                                completion.retarget(TaskTarget::Instance {
-                                    instance_id: created.clone(),
-                                });
-                                let created_id = created.clone();
-                                report::report(&weak, move |ui| {
-                                    ui.global::<GameState>()
-                                        .invoke_refresh_selecting(created_id.into());
-                                });
-                                let result = crate::usecases::modpack::install(
-                                    created.clone(),
-                                    plan,
-                                    config,
-                                    completion.clone(),
-                                )
-                                .await;
-                                match result {
-                                    Ok(()) => {
-                                        log::info!("modpack install into {created} finished");
-                                        completion.succeed();
-                                    }
-                                    Err(error) => {
-                                        log::error!(
-                                            "modpack install into {created} failed: {error}"
-                                        );
-                                        completion.fail(error.to_string());
-                                    }
-                                }
-                                report::report(&weak, |ui| {
-                                    ui.global::<GameState>().invoke_refresh();
-                                });
-                            }
+                        let result = crate::usecases::instance_import::import(
+                            plan,
+                            &name,
+                            config,
+                            completion.clone(),
+                            on_created,
+                        )
+                        .await;
+                        match result {
+                            Ok(()) => completion.succeed(),
                             Err(error) => {
-                                log::error!("could not create the modpack instance: {error}");
+                                log::error!("import failed: {error}");
                                 completion.fail(error.to_string());
                             }
                         }
+                        report::report(&weak, |ui| {
+                            ui.global::<GameState>().invoke_refresh();
+                        });
                         busy_task.store(false, Ordering::SeqCst);
                     });
                     crate::ui::services::tasks::service().attach_cancel(
@@ -189,10 +178,10 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
         let generation = Arc::clone(&generation);
         let busy = Arc::clone(&busy);
         let weak = ui.as_weak();
-        ui.global::<ModpackImportState>().on_retry(move || {
+        ui.global::<InstanceImportState>().on_retry(move || {
             let Some(ui) = weak.upgrade() else { return };
             let Some(inspection) = inspection_slot.lock().ok().and_then(|slot| slot.clone()) else {
-                let state = ui.global::<ModpackImportState>();
+                let state = ui.global::<InstanceImportState>();
                 state.set_checking(false);
                 state.set_failed(false);
                 state.set_visible(false);
@@ -202,7 +191,7 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
             if let Ok(mut slot) = pending.lock() {
                 *slot = None;
             }
-            let state = ui.global::<ModpackImportState>();
+            let state = ui.global::<InstanceImportState>();
             state.set_checking(true);
             state.set_failed(false);
             state.set_error_message("".into());
@@ -232,10 +221,10 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
             let winit::event::WindowEvent::DroppedFile(path) = event else {
                 return;
             };
-            log::info!("modpack: dropped {}", path.display());
+            log::info!("import: dropped {}", path.display());
             let Some(ui) = weak.upgrade() else { return };
             if ui.global::<Navigation>().get_current_page() == "launch" {
-                log::warn!("modpack: ignoring the drop while the launch page is open");
+                log::warn!("import: ignoring the drop while the launch page is open");
                 notices(
                     Notice::new(NoticeKind::TaskFailed)
                         .with_arg("another install is already running"),
@@ -243,7 +232,7 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
                 return;
             }
             if busy.swap(true, Ordering::SeqCst) {
-                log::warn!("modpack: ignoring the drop while another import is running");
+                log::warn!("import: ignoring the drop while another import is running");
                 notices(
                     Notice::new(NoticeKind::TaskFailed)
                         .with_arg("another install is already running"),
@@ -254,10 +243,10 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
             // The manifest read is a few milliseconds; showing the prompt before
             // the network call is what lets the user name the instance while
             // CurseForge is being asked for the file list.
-            let inspection = match modpack::inspect(path) {
+            let inspection = match instance_import::inspect(path) {
                 Ok(inspection) => inspection,
                 Err(error) => {
-                    log::error!("modpack import could not start: {error}");
+                    log::error!("the import could not start: {error}");
                     notices(Notice::new(NoticeKind::TaskFailed).with_arg(error.to_string()));
                     busy.store(false, Ordering::SeqCst);
                     return;
@@ -270,8 +259,12 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
                 *slot = Some(inspection.clone());
             }
 
-            let state = ui.global::<ModpackImportState>();
-            state.set_pack_name(inspection.name().into());
+            let state = ui.global::<InstanceImportState>();
+            state.set_importing_instance(matches!(
+                inspection.kind(),
+                instance_import::ImportKind::Instance
+            ));
+            state.set_source_name(inspection.name().into());
             state.set_minecraft_version(inspection.minecraft().into());
             state.set_has_loader(inspection.loader_type().is_some());
             state.set_loader_type(
@@ -303,22 +296,22 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
     }
 }
 
-/// Resolves a pack and writes the outcome into the open dialog.
+/// Resolves an import and writes the outcome into the open dialog.
 ///
 /// Success stores the plan and enables Install; failure keeps the dialog open
-/// with the error and the inspection still in `inspection_slot`, so Retry can
-/// run the same lookup again without re-reading the archive.
+/// with the error and the import still in `inspection_slot`, so Retry can run
+/// the same lookup again without re-reading the dropped path.
 fn start_resolve(
     weak: slint::Weak<App>,
-    inspection: modpack::Inspection,
-    inspection_slot: Arc<Mutex<Option<modpack::Inspection>>>,
-    pending: Arc<Mutex<Option<modpack::Plan>>>,
+    inspection: instance_import::ImportSource,
+    inspection_slot: Arc<Mutex<Option<instance_import::ImportSource>>>,
+    pending: Arc<Mutex<Option<instance_import::ImportPlan>>>,
     resolving: Arc<Mutex<Option<tokio::task::JoinHandle<()>>>>,
     generation: Arc<AtomicU64>,
 ) {
     let run = generation.fetch_add(1, Ordering::SeqCst) + 1;
     let handle = runtime::spawn(async move {
-        match modpack::resolve(inspection).await {
+        match instance_import::resolve(inspection).await {
             Ok(plan) => {
                 if generation.load(Ordering::SeqCst) != run {
                     return;
@@ -348,7 +341,7 @@ fn start_resolve(
                     *slot = None;
                 }
                 report::report(&weak, move |ui| {
-                    let state = ui.global::<ModpackImportState>();
+                    let state = ui.global::<InstanceImportState>();
                     state.set_failed(false);
                     state.set_error_message("".into());
                     state.set_files(ModelRc::from(Rc::new(VecModel::from(files))));
@@ -359,9 +352,9 @@ fn start_resolve(
                 if generation.load(Ordering::SeqCst) != run {
                     return;
                 }
-                log::error!("modpack file resolution failed: {error}");
+                log::error!("import file resolution failed: {error}");
                 report::report(&weak, move |ui| {
-                    let state = ui.global::<ModpackImportState>();
+                    let state = ui.global::<InstanceImportState>();
                     state.set_checking(false);
                     state.set_failed(true);
                     state.set_error_message(error.to_string().into());

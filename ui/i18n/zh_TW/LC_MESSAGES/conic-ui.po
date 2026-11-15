@@ -3239,57 +3239,47 @@ msgid "Click here to return to first-run setup"
 msgstr "點擊這裡回到首次啟動設定"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Some modpack files cannot be downloaded automatically"
 msgstr "部分整合包檔案無法自動下載"
 
 #: ui
-msgctxt "ModpackImport"
-msgid "The pack author disabled third-party downloads for these files. Continue without them, or cancel and download them manually."
-msgstr "整合包作者已禁止這些檔案的第三方下載。你可以不帶這些檔案繼續，或取消後手動下載。"
-
-#: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Cancel"
 msgstr "取消"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Install this modpack?"
 msgstr "要安裝這個整合包嗎？"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Instance name"
 msgstr "實例名稱"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Checking files"
 msgstr "正在檢查檔案"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Install"
 msgstr "安裝"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Install anyway"
 msgstr "仍然安裝"
 
 #: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Could not check the modpack files"
 msgstr "無法檢查整合包檔案"
 
 #: ui
-msgctxt "ModpackImport"
-msgid "The CurseForge API could not be reached. Check your connection, then retry."
-msgstr "無法連線到 CurseForge API。請檢查網路連線後重試。"
-
-#: ui
-msgctxt "ModpackImport"
+msgctxt "InstanceImport"
 msgid "Retry"
 msgstr "重試"
 
@@ -3685,11 +3675,6 @@ msgstr "正在下載 {}"
 
 #: ui
 msgctxt "TaskText"
-msgid "Installing modpack {}"
-msgstr "正在安裝整合包 {}"
-
-#: ui
-msgctxt "TaskText"
 msgid "Installing {}"
 msgstr "正在安裝 {}"
 
@@ -3902,3 +3887,38 @@ msgstr "繼續遊戲"
 msgctxt "ConfirmStopGame"
 msgid "Stop game"
 msgstr "停止遊戲"
+
+#: ui
+msgctxt "InstanceImport"
+msgid "The pack lists files the launcher could not resolve. Continue without them, or cancel and download them manually."
+msgstr "整合包列出了啟動器無法解析的檔案。你可以不帶這些檔案繼續，或取消後手動下載。"
+
+#: ui
+msgctxt "InstanceImport"
+msgid "The modpack's file list could not be fetched. Check your connection, then retry."
+msgstr "無法取得整合包的檔案清單。請檢查網路連線後重試。"
+
+#: ui
+msgctxt "InstanceImport"
+msgid "Import this instance?"
+msgstr "要匯入這個實例嗎？"
+
+#: ui
+msgctxt "InstanceImport"
+msgid "Import"
+msgstr "匯入"
+
+#: ui
+msgctxt "InstanceImport"
+msgid "Import anyway"
+msgstr "仍然匯入"
+
+#: ui
+msgctxt "TaskText"
+msgid "Importing {}"
+msgstr "正在匯入 {}"
+
+#: ui
+msgctxt "TaskText"
+msgid "Copying files"
+msgstr "正在複製檔案"
