@@ -389,7 +389,7 @@ mod tests {
         let inspection = crate::inspect(&directory).expect("an inspection");
         assert_eq!(inspection.name, "MCBBS Pack");
         assert_eq!(inspection.minecraft, "1.20.1");
-        let crate::Recognized::Pack(crate::pack::Pack::Mcbbs(inspection)) = &inspection.source
+        let crate::Recognized::Pack(crate::pack::Pack::Mcbbs(inspection)) = &inspection.recognized
         else {
             panic!("an MCBBS pack");
         };

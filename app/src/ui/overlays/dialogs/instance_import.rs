@@ -34,7 +34,7 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
     // running there.
     let busy = Arc::new(AtomicBool::new(false));
     let pending: Arc<Mutex<Option<instance_import::Plan>>> = Arc::new(Mutex::new(None));
-    let inspection: Arc<Mutex<Option<instance_import::Import>>> = Arc::new(Mutex::new(None));
+    let inspection: Arc<Mutex<Option<instance_import::ImportSource>>> = Arc::new(Mutex::new(None));
     let resolving: Arc<Mutex<Option<tokio::task::JoinHandle<()>>>> = Arc::new(Mutex::new(None));
     // A resolve that finishes after its dialog was cancelled (or replaced by a
     // new drop) must not write its plan or change the new dialog's state.
@@ -303,8 +303,8 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
 /// the same lookup again without re-reading the dropped path.
 fn start_resolve(
     weak: slint::Weak<App>,
-    inspection: instance_import::Import,
-    inspection_slot: Arc<Mutex<Option<instance_import::Import>>>,
+    inspection: instance_import::ImportSource,
+    inspection_slot: Arc<Mutex<Option<instance_import::ImportSource>>>,
     pending: Arc<Mutex<Option<instance_import::Plan>>>,
     resolving: Arc<Mutex<Option<tokio::task::JoinHandle<()>>>>,
     generation: Arc<AtomicU64>,

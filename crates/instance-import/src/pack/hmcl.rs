@@ -146,7 +146,7 @@ mod tests {
             Some(instance::ModLoaderType::Forge)
         ));
         assert_eq!(inspection.loader_version.as_deref(), Some("14.23.5.2859"));
-        let crate::Recognized::Pack(crate::pack::Pack::Hmcl(inspection)) = &inspection.source
+        let crate::Recognized::Pack(crate::pack::Pack::Hmcl(inspection)) = &inspection.recognized
         else {
             panic!("an HMCL pack");
         };

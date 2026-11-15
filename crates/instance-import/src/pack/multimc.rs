@@ -439,7 +439,8 @@ mod tests {
         assert_eq!(inspection.minecraft, "1.20.1");
         assert!(matches!(inspection.loader_type, Some(ModLoaderType::Quilt)));
         assert_eq!(inspection.loader_version.as_deref(), Some("0.26.0"));
-        let crate::Recognized::Pack(crate::pack::Pack::MultiMc(inspection)) = &inspection.source
+        let crate::Recognized::Pack(crate::pack::Pack::MultiMc(inspection)) =
+            &inspection.recognized
         else {
             panic!("a Prism/MultiMC pack");
         };

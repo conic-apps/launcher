@@ -48,7 +48,7 @@ pub(crate) fn relative_path(raw: &str) -> Option<PathBuf> {
     (normal > 0).then(|| path.to_path_buf())
 }
 
-/// The format-specific half of an [`Import`](crate::Import).
+/// The format-specific half of an [`ImportSource`](crate::ImportSource).
 #[derive(Clone)]
 pub(crate) enum Pack {
     CurseForge(curseforge::Inspection),
@@ -333,7 +333,7 @@ mod tests {
         ]);
         let inspection = crate::inspect(&archive).expect("an inspection");
         assert_eq!(inspection.minecraft, "1.12.2");
-        let crate::Recognized::Pack(Pack::Mcbbs(inspection)) = &inspection.source else {
+        let crate::Recognized::Pack(Pack::Mcbbs(inspection)) = &inspection.recognized else {
             panic!("an MCBBS pack");
         };
         assert_eq!(inspection.addon_files.len(), 1);

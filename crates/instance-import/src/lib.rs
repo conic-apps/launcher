@@ -27,9 +27,10 @@ use std::path::{Path, PathBuf};
 use instance::ModLoaderType;
 use settings::Settings;
 
-/// What a dropped path is, before its files are resolved.
+/// A dropped path, recognised: the source of an import, before its files are
+/// resolved.
 #[derive(Clone)]
-pub struct Import {
+pub struct ImportSource {
     /// The source's own name for it, which seeds the instance name.
     name: String,
     minecraft: String,
@@ -37,10 +38,10 @@ pub struct Import {
     loader_version: Option<String>,
     settings: Settings,
     kind: ImportKind,
-    source: Recognized,
+    recognized: Recognized,
 }
 
-impl Import {
+impl ImportSource {
     pub fn name(&self) -> &str {
         &self.name
     }
@@ -156,28 +157,28 @@ pub(crate) enum Recognized {
 }
 
 /// Reads what a dropped path is. No network, no instance.
-pub fn inspect(path: &Path) -> Result<Import> {
+pub fn inspect(path: &Path) -> Result<ImportSource> {
     if let Some(source) = source::Source::try_open(path, pack::MARKERS)? {
         let (metadata, pack) = pack::inspect(path, &source)?;
-        return Ok(Import {
+        return Ok(ImportSource {
             name: metadata.name,
             minecraft: metadata.minecraft,
             loader_type: metadata.loader_type,
             loader_version: metadata.loader_version,
             settings: metadata.settings,
             kind: pack.kind(),
-            source: Recognized::Pack(pack),
+            recognized: Recognized::Pack(pack),
         });
     }
     if let Some((metadata, instance)) = launcher::inspect(path)? {
-        return Ok(Import {
+        return Ok(ImportSource {
             name: metadata.name,
             minecraft: metadata.minecraft,
             loader_type: metadata.loader_type,
             loader_version: metadata.loader_version,
             settings: metadata.settings,
             kind: ImportKind::Instance,
-            source: Recognized::Instance(instance),
+            recognized: Recognized::Instance(instance),
         });
     }
     Err(Error::Manifest(format!(
@@ -188,17 +189,17 @@ pub fn inspect(path: &Path) -> Result<Import> {
 }
 
 /// Resolves the files an import needs.
-pub async fn resolve(candidate: Import) -> Result<Plan> {
-    let Import {
+pub async fn resolve(candidate: ImportSource) -> Result<Plan> {
+    let ImportSource {
         name,
         minecraft,
         loader_type,
         loader_version,
         settings,
-        source,
+        recognized,
         ..
     } = candidate;
-    let resolved = match source {
+    let resolved = match recognized {
         Recognized::Pack(pack) => pack::resolve(pack).await?,
         Recognized::Instance(instance) => instance.resolve(),
     };

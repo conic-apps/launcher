@@ -237,7 +237,7 @@ compiles the `.slint` tree and is what catches a missed one.
 
 `crates/instance-import` turns something dropped on the window into a new instance: a modpack
 archive in one of five pack formats, or another launcher's instance folder. The frontend only has to
-word it — `Import::kind()` says which of the two it is.
+word it — `ImportSource::kind()` says which of the two it is.
 
 - `source.rs` resolves where a pack's files are — a zip or an already extracted folder, with the pack
   root at the top or one folder down — and every reader goes through it.

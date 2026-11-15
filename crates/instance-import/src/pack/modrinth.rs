@@ -371,7 +371,8 @@ mod tests {
         assert_eq!(inspection.name, "Test pack");
         assert_eq!(inspection.minecraft, "1.20.1");
         assert_eq!(inspection.loader_version.as_deref(), Some("0.26.0"));
-        let crate::Recognized::Pack(crate::pack::Pack::Modrinth(inspection)) = &inspection.source
+        let crate::Recognized::Pack(crate::pack::Pack::Modrinth(inspection)) =
+            &inspection.recognized
         else {
             panic!("a Modrinth pack");
         };
