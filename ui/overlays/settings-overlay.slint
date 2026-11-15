@@ -7,18 +7,18 @@ import { FocusManager } from "../globals/focus.slint";
 import { ScrollView } from "../components/containers/scroll-view.slint";
 import { TooltipArea } from "../components/controls/tooltip-area.slint";
 import { AppIcon } from "../components/display/app-icon.slint";
-import { SettingsGeneral } from "../views/settings/settings-general.slint";
-import { SettingsGame } from "../views/settings/settings-game.slint";
-import { SettingsJvm } from "../views/settings/settings-jvm.slint";
+import { SettingsGeneral } from "settings/settings-general.slint";
+import { SettingsGame } from "settings/settings-game.slint";
+import { SettingsJvm } from "settings/settings-jvm.slint";
 import {
     SettingsAppearance,
-} from "../views/settings/settings-appearance.slint";
-import { SettingsAudio } from "../views/settings/settings-audio.slint";
-import { SettingsDownload } from "../views/settings/settings-download.slint";
+} from "settings/settings-appearance.slint";
+import { SettingsAudio } from "settings/settings-audio.slint";
+import { SettingsDownload } from "settings/settings-download.slint";
 import {
     SettingsAccessibility,
-} from "../views/settings/settings-accessibility.slint";
-import { SettingsAbout } from "../views/settings/settings-about.slint";
+} from "settings/settings-accessibility.slint";
+import { SettingsAbout } from "settings/settings-about.slint";
 
 component NavItem inherits Rectangle {
     in property <string> icon;
