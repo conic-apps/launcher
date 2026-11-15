@@ -3180,11 +3180,6 @@ msgstr "Devam ediyor"
 
 #: ui
 msgctxt "NotificationText"
-msgid "Version {} will be applied when the launcher exits"
-msgstr "{} sürümü başlatıcı kapatıldığında uygulanır"
-
-#: ui
-msgctxt "NotificationText"
 msgid "{}"
 msgstr "{}"
 

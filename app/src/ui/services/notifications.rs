@@ -263,7 +263,6 @@ fn update_count(state: &NotificationState, controller: &NotificationController) 
 
 fn kind_key(kind: NoticeKind) -> &'static str {
     match kind {
-        NoticeKind::UpdateReady => "update-ready",
         NoticeKind::UpdateApplied => "update-applied",
         NoticeKind::TaskFinished => "task-finished",
         NoticeKind::TaskFailed => "task-error",
@@ -277,7 +276,6 @@ fn kind_key(kind: NoticeKind) -> &'static str {
 
 fn kind_icon(kind: NoticeKind) -> &'static str {
     match kind {
-        NoticeKind::UpdateReady => "download",
         NoticeKind::UpdateApplied => "checkmark-outline",
         NoticeKind::TaskFinished => "checkmark-outline",
         NoticeKind::TaskFailed => "warning",
@@ -424,20 +422,20 @@ mod tests {
     fn args_reach_the_view_model_in_order() {
         let controller = NotificationController::new();
         controller.send(
-            Notice::new(NoticeKind::UpdateReady)
-                .with_arg("0.1.0")
-                .with_arg("beta"),
+            Notice::new(NoticeKind::TaskFinished)
+                .with_arg("Mods")
+                .with_arg("content-download"),
         );
 
         let item = controller.notifications.row_data(0).expect("one notice");
         assert_eq!(item.args.row_count(), 2);
         assert_eq!(
             item.args.row_data(0).map(|value| value.to_string()),
-            Some("0.1.0".to_owned())
+            Some("Mods".to_owned())
         );
         assert_eq!(
             item.args.row_data(1).map(|value| value.to_string()),
-            Some("beta".to_owned())
+            Some("content-download".to_owned())
         );
     }
 

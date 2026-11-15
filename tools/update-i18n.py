@@ -152,6 +152,11 @@ DROP = {
     ("NotificationText", "Notification"),
     ("NotificationText", "Setup skipped"),
     ("NotificationText", "You can reopen the setup wizard from Settings."),
+    # A staged update is not announced; the launch after it applied is.
+    (
+        "NotificationText",
+        "Version {} will be applied when the launcher exits",
+    ),
     # The Minecraft version reminder is a notification now, not a dialog.
     (
         "SettingsAccessibility",

@@ -11,8 +11,6 @@ use crate::Sink;
 /// known kind; `with_arg` fills its placeholders in order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NoticeKind {
-    /// `args[0]` is the version that was staged.
-    UpdateReady,
     /// `args[0]` is the version now running after an update was applied.
     UpdateApplied,
     TaskFinished,

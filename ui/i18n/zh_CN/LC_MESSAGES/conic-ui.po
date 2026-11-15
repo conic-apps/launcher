@@ -3075,11 +3075,6 @@ msgstr "进行中"
 
 #: ui
 msgctxt "NotificationText"
-msgid "Version {} will be applied when the launcher exits"
-msgstr "版本 {} 将在启动器退出时应用"
-
-#: ui
-msgctxt "NotificationText"
 msgid "{}"
 msgstr "{}"
 

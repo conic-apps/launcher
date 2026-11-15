@@ -3180,11 +3180,6 @@ msgstr "En curso"
 
 #: ui
 msgctxt "NotificationText"
-msgid "Version {} will be applied when the launcher exits"
-msgstr "La versión {} se aplicará al cerrar el launcher"
-
-#: ui
-msgctxt "NotificationText"
 msgid "{}"
 msgstr "{}"
 

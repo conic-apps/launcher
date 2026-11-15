@@ -3180,11 +3180,6 @@ msgstr "Выполняется"
 
 #: ui
 msgctxt "NotificationText"
-msgid "Version {} will be applied when the launcher exits"
-msgstr "Версия {} будет применена после выхода из лаунчера"
-
-#: ui
-msgctxt "NotificationText"
 msgid "{}"
 msgstr "{}"
 
