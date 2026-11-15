@@ -9,9 +9,16 @@ use std::path::{Path, PathBuf};
 
 use crate::error::{Error, Result};
 
-/// One tree of files to copy over the instance root.
-#[derive(Clone, Debug)]
-pub(crate) enum Overrides {
+/// One tree of pack files, and what of it is the pack's own metadata rather
+/// than a game file.
+#[derive(Clone)]
+pub(crate) struct Overrides {
+    source: Source,
+    skip: Vec<String>,
+}
+
+#[derive(Clone)]
+enum Source {
     Directory {
         base: PathBuf,
         relative: String,
@@ -23,18 +30,34 @@ pub(crate) enum Overrides {
     },
 }
 
-/// Copies every tree over `instance_root`, in order.
-pub(crate) async fn extract_all(overrides: &[Overrides], instance_root: &Path) -> Result<()> {
-    for source in overrides {
-        source.extract(instance_root).await?;
-    }
-    Ok(())
-}
-
 impl Overrides {
+    pub(crate) fn directory(base: PathBuf, relative: String) -> Self {
+        Self {
+            source: Source::Directory { base, relative },
+            skip: Vec::new(),
+        }
+    }
+
+    pub(crate) fn archive(path: PathBuf, prefix: String) -> Self {
+        Self {
+            source: Source::Archive { path, prefix },
+            skip: Vec::new(),
+        }
+    }
+
+    /// Leaves `paths` out of the copy.
+    ///
+    /// A format's own manifests sit inside the tree it hands over (HMCL keeps
+    /// its `pack.json` at the top of `minecraft/`), and they must not become
+    /// game files. Naming a folder leaves its whole subtree out.
+    pub(crate) fn skipping(mut self, paths: &[&str]) -> Self {
+        self.skip.extend(paths.iter().map(|path| path.to_string()));
+        self
+    }
+
     async fn extract(&self, instance_root: &Path) -> Result<()> {
-        match self {
-            Self::Directory { base, relative } => {
+        match &self.source {
+            Source::Directory { base, relative } => {
                 if relative.trim().is_empty() {
                     return Ok(());
                 }
@@ -44,19 +67,21 @@ impl Overrides {
                     return Ok(());
                 }
                 let to = instance_root.to_path_buf();
-                tokio::task::spawn_blocking(move || copy_recursively(&from, &to))
+                let skip = self.skip.clone();
+                tokio::task::spawn_blocking(move || copy_recursively(&from, &to, "", &skip))
                     .await
                     .map_err(|error| Error::Task(error.to_string()))?
                     .map_err(Error::Overrides)
             }
-            Self::Archive { path, prefix } => {
+            Source::Archive { path, prefix } => {
                 if prefix.is_empty() {
                     return Ok(());
                 }
                 let path = path.clone();
                 let prefix = prefix.clone();
+                let skip = self.skip.clone();
                 let to = instance_root.to_path_buf();
-                tokio::task::spawn_blocking(move || extract_archive(&path, &prefix, &to))
+                tokio::task::spawn_blocking(move || extract_archive(&path, &prefix, &to, &skip))
                     .await
                     .map_err(|error| Error::Task(error.to_string()))?
             }
@@ -64,7 +89,15 @@ impl Overrides {
     }
 }
 
-fn extract_archive(path: &Path, prefix: &str, to: &Path) -> Result<()> {
+/// Copies every tree over `instance_root`, in order.
+pub(crate) async fn extract_all(overrides: &[Overrides], instance_root: &Path) -> Result<()> {
+    for source in overrides {
+        source.extract(instance_root).await?;
+    }
+    Ok(())
+}
+
+fn extract_archive(path: &Path, prefix: &str, to: &Path, skip: &[String]) -> Result<()> {
     let file = std::fs::File::open(path).map_err(|source| Error::Read {
         path: path.display().to_string(),
         source,
@@ -93,7 +126,7 @@ fn extract_archive(path: &Path, prefix: &str, to: &Path) -> Result<()> {
         let Some(relative) = name.strip_prefix(prefix) else {
             continue;
         };
-        if relative.is_empty() {
+        if relative.is_empty() || skipped(relative, skip) {
             continue;
         }
         let destination = to.join(relative);
@@ -124,12 +157,26 @@ fn extract_archive(path: &Path, prefix: &str, to: &Path) -> Result<()> {
     Ok(())
 }
 
-fn copy_recursively(from: &Path, to: &Path) -> std::io::Result<()> {
+fn copy_recursively(
+    from: &Path,
+    to: &Path,
+    relative: &str,
+    skip: &[String],
+) -> std::io::Result<()> {
     if from.is_dir() {
         std::fs::create_dir_all(to)?;
         for entry in std::fs::read_dir(from)? {
             let entry = entry?;
-            copy_recursively(&entry.path(), &to.join(entry.file_name()))?;
+            let name = entry.file_name().to_string_lossy().to_string();
+            let child = if relative.is_empty() {
+                name.clone()
+            } else {
+                format!("{relative}/{name}")
+            };
+            if skipped(&child, skip) {
+                continue;
+            }
+            copy_recursively(&entry.path(), &to.join(&name), &child, skip)?;
         }
     } else {
         if let Some(parent) = to.parent() {
@@ -138,6 +185,15 @@ fn copy_recursively(from: &Path, to: &Path) -> std::io::Result<()> {
         std::fs::copy(from, to)?;
     }
     Ok(())
+}
+
+fn skipped(relative: &str, skip: &[String]) -> bool {
+    skip.iter().any(|skip| {
+        relative == skip
+            || relative
+                .strip_prefix(skip.as_str())
+                .is_some_and(|rest| rest.starts_with('/'))
+    })
 }
 
 #[cfg(test)]
@@ -156,10 +212,10 @@ mod tests {
         std::fs::write(source.join("overrides/config/a.toml"), "value = true\n")
             .expect("an override");
         extract_all(
-            &[Overrides::Directory {
-                base: source.clone(),
-                relative: "overrides".to_string(),
-            }],
+            &[Overrides::directory(
+                source.clone(),
+                "overrides".to_string(),
+            )],
             &destination,
         )
         .await
@@ -168,6 +224,34 @@ mod tests {
             std::fs::read_to_string(destination.join("config/a.toml")).expect("the copied file"),
             "value = true\n"
         );
+        std::fs::remove_dir_all(&source).ok();
+        std::fs::remove_dir_all(&destination).ok();
+    }
+
+    #[tokio::test]
+    async fn leaves_the_pack_metadata_out_of_the_copy() {
+        let source =
+            std::env::temp_dir().join(format!("conic-overrides-source-{}", uuid::Uuid::new_v4()));
+        let destination = std::env::temp_dir().join(format!(
+            "conic-overrides-destination-{}",
+            uuid::Uuid::new_v4()
+        ));
+        std::fs::create_dir_all(source.join("minecraft/versions/1.20.1")).expect("the pack tree");
+        std::fs::write(source.join("minecraft/pack.json"), "{}").expect("the pack manifest");
+        std::fs::write(source.join("minecraft/options.txt"), "lang:en_us\n").expect("an option");
+        std::fs::write(source.join("minecraft/versions/1.20.1/a.json"), "{}").expect("a version");
+        extract_all(
+            &[
+                Overrides::directory(source.clone(), "minecraft".to_string())
+                    .skipping(&["pack.json", "versions"]),
+            ],
+            &destination,
+        )
+        .await
+        .expect("the overrides");
+        assert!(destination.join("options.txt").is_file());
+        assert!(!destination.join("pack.json").exists());
+        assert!(!destination.join("versions").exists());
         std::fs::remove_dir_all(&source).ok();
         std::fs::remove_dir_all(&destination).ok();
     }
@@ -187,15 +271,18 @@ mod tests {
             zip.start_file("pack/overrides/config/a.toml", options)
                 .expect("the override entry");
             zip.write_all(b"value = true\n").expect("the override");
+            zip.start_file("pack/overrides/pack.json", options)
+                .expect("the metadata entry");
+            zip.write_all(b"{}").expect("the metadata");
             zip.finish().expect("a finished zip");
         }
         let destination =
             std::env::temp_dir().join(format!("conic-overrides-unpacked-{}", uuid::Uuid::new_v4()));
         extract_all(
-            &[Overrides::Archive {
-                path: archive.clone(),
-                prefix: "pack/overrides/".to_string(),
-            }],
+            &[
+                Overrides::archive(archive.clone(), "pack/overrides/".to_string())
+                    .skipping(&["pack.json"]),
+            ],
             &destination,
         )
         .await
@@ -204,6 +291,7 @@ mod tests {
             std::fs::read_to_string(destination.join("config/a.toml")).expect("the copied file"),
             "value = true\n"
         );
+        assert!(!destination.join("pack.json").exists());
         std::fs::remove_file(&archive).ok();
         std::fs::remove_dir_all(&destination).ok();
     }

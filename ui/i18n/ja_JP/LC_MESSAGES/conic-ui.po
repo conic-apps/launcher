@@ -3250,11 +3250,6 @@ msgstr "一部のMODパックファイルを自動ダウンロードできませ
 
 #: ui
 msgctxt "ModpackImport"
-msgid "The pack author disabled third-party downloads for these files. Continue without them, or cancel and download them manually."
-msgstr "パック作者がこれらのファイルの第三者によるダウンロードを無効にしています。これらを含めずに続行するか、キャンセルして手動でダウンロードしてください。"
-
-#: ui
-msgctxt "ModpackImport"
 msgid "Cancel"
 msgstr "キャンセル"
 
@@ -3287,11 +3282,6 @@ msgstr "それでもインストール"
 msgctxt "ModpackImport"
 msgid "Could not check the modpack files"
 msgstr "MODパックのファイルを確認できませんでした"
-
-#: ui
-msgctxt "ModpackImport"
-msgid "The CurseForge API could not be reached. Check your connection, then retry."
-msgstr "CurseForge API に接続できませんでした。接続を確認してから再試行してください。"
 
 #: ui
 msgctxt "ModpackImport"
@@ -3907,3 +3897,13 @@ msgstr "ゲームを続ける"
 msgctxt "ConfirmStopGame"
 msgid "Stop game"
 msgstr "ゲームを停止"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "The pack lists files the launcher could not resolve. Continue without them, or cancel and download them manually."
+msgstr "MODパックに、ランチャーが解決できないファイルが含まれています。これらを含めずに続行するか、キャンセルして手動でダウンロードしてください。"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "The modpack's file list could not be fetched. Check your connection, then retry."
+msgstr "MODパックのファイル一覧を取得できませんでした。接続を確認してから再試行してください。"

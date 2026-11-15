@@ -132,6 +132,16 @@ DROP = {
         "AccountAddMicrosoft",
         " and paste it into the browser. To finish signing in on another device, ",
     ),
+    # The modpack import reads five formats now, so its two failure sentences
+    # stopped naming the CurseForge API.
+    (
+        "ModpackImport",
+        "The CurseForge API could not be reached. Check your connection, then retry.",
+    ),
+    (
+        "ModpackImport",
+        "The pack author disabled third-party downloads for these files. Continue without them, or cancel and download them manually.",
+    ),
     # The launch button's dropdown is gone: its one entry moved into the instance
     # settings as a repair that only installs.
     ("InstanceSummary", "Repair game and launch"),
@@ -1735,18 +1745,18 @@ SAVE_TAGS = {
             "tr_TR": "Bazı mod paketi dosyaları otomatik olarak indirilemiyor",
             "pl_PL": "Niektórych plików modpacka nie można pobrać automatycznie",
         },
-        "The pack author disabled third-party downloads for these files. Continue without them, or cancel and download them manually.": {
-            "zh_CN": "整合包作者已禁止这些文件的第三方下载。你可以不带这些文件继续，或取消后手动下载。",
-            "zh_TW": "整合包作者已禁止這些檔案的第三方下載。你可以不帶這些檔案繼續，或取消後手動下載。",
-            "ja_JP": "パック作者がこれらのファイルの第三者によるダウンロードを無効にしています。これらを含めずに続行するか、キャンセルして手動でダウンロードしてください。",
-            "ko_KR": "팩 작성자가 이 파일들의 제3자 다운로드를 비활성화했습니다. 이 파일 없이 계속하거나 취소하고 직접 다운로드하세요.",
-            "de_DE": "Der Pack-Autor hat Drittanbieter-Downloads für diese Dateien deaktiviert. Fahre ohne sie fort oder brich ab und lade sie manuell herunter.",
-            "fr_FR": "L'auteur du pack a désactivé les téléchargements tiers pour ces fichiers. Continuez sans eux ou annulez et téléchargez-les manuellement.",
-            "es_ES": "El autor del modpack ha desactivado las descargas de terceros para estos archivos. Continúa sin ellos o cancela y descárgalos manualmente.",
-            "pt_BR": "O autor do modpack desativou downloads de terceiros para esses arquivos. Continue sem eles ou cancele e baixe-os manualmente.",
-            "ru_RU": "Автор модпака отключил сторонние загрузки для этих файлов. Продолжите без них или отмените и скачайте их вручную.",
-            "tr_TR": "Paket yazarı bu dosyalar için üçüncü taraf indirmelerini devre dışı bıraktı. Bunlar olmadan devam edin veya iptal edip elle indirin.",
-            "pl_PL": "Autor modpacka wyłączył pobieranie tych plików przez osoby trzecie. Kontynuuj bez nich lub anuluj i pobierz je ręcznie.",
+        "The pack lists files the launcher could not resolve. Continue without them, or cancel and download them manually.": {
+            "zh_CN": "整合包列出了启动器无法解析的文件。你可以不带这些文件继续，或取消后手动下载。",
+            "zh_TW": "整合包列出了啟動器無法解析的檔案。你可以不帶這些檔案繼續，或取消後手動下載。",
+            "ja_JP": "MODパックに、ランチャーが解決できないファイルが含まれています。これらを含めずに続行するか、キャンセルして手動でダウンロードしてください。",
+            "ko_KR": "모드팩에 런처가 확인할 수 없는 파일이 있습니다. 이 파일 없이 계속하거나 취소하고 직접 다운로드하세요.",
+            "de_DE": "Das Modpack nennt Dateien, die der Launcher nicht auflösen konnte. Fahre ohne sie fort oder brich ab und lade sie manuell herunter.",
+            "fr_FR": "Le modpack répertorie des fichiers que le lanceur n'a pas pu résoudre. Continuez sans eux ou annulez et téléchargez-les manuellement.",
+            "es_ES": "El modpack incluye archivos que el launcher no pudo resolver. Continúa sin ellos o cancela y descárgalos manualmente.",
+            "pt_BR": "O modpack lista arquivos que o launcher não conseguiu resolver. Continue sem eles ou cancele e baixe-os manualmente.",
+            "ru_RU": "Модпак содержит файлы, которые лаунчер не смог определить. Продолжите без них или отмените и скачайте их вручную.",
+            "tr_TR": "Mod paketi, başlatıcının çözümleyemediği dosyalar içeriyor. Bunlar olmadan devam edin veya iptal edip elle indirin.",
+            "pl_PL": "Modpack zawiera pliki, których launcher nie mógł rozpoznać. Kontynuuj bez nich lub anuluj i pobierz je ręcznie.",
         },
         "Cancel": {
             "zh_CN": "取消",
@@ -1839,18 +1849,18 @@ SAVE_TAGS = {
             "tr_TR": "Mod paketi dosyaları kontrol edilemedi",
             "pl_PL": "Nie można sprawdzić plików modpacka",
         },
-        "The CurseForge API could not be reached. Check your connection, then retry.": {
-            "zh_CN": "无法连接到 CurseForge API。请检查网络连接后重试。",
-            "zh_TW": "無法連線到 CurseForge API。請檢查網路連線後重試。",
-            "ja_JP": "CurseForge API に接続できませんでした。接続を確認してから再試行してください。",
-            "ko_KR": "CurseForge API에 연결할 수 없습니다. 연결을 확인한 후 다시 시도하세요.",
-            "de_DE": "Die CurseForge-API konnte nicht erreicht werden. Prüfe deine Verbindung und versuche es erneut.",
-            "fr_FR": "Impossible d'atteindre l'API CurseForge. Vérifiez votre connexion, puis réessayez.",
-            "es_ES": "No se pudo acceder a la API de CurseForge. Comprueba tu conexión y vuelve a intentarlo.",
-            "pt_BR": "Não foi possível acessar a API do CurseForge. Verifique sua conexão e tente novamente.",
-            "ru_RU": "Не удалось подключиться к API CurseForge. Проверьте соединение и повторите попытку.",
-            "tr_TR": "CurseForge API'sine ulaşılamadı. Bağlantınızı kontrol edip yeniden deneyin.",
-            "pl_PL": "Nie można połączyć się z API CurseForge. Sprawdź połączenie i spróbuj ponownie.",
+        "The modpack's file list could not be fetched. Check your connection, then retry.": {
+            "zh_CN": "无法获取整合包的文件列表。请检查网络连接后重试。",
+            "zh_TW": "無法取得整合包的檔案清單。請檢查網路連線後重試。",
+            "ja_JP": "MODパックのファイル一覧を取得できませんでした。接続を確認してから再試行してください。",
+            "ko_KR": "모드팩 파일 목록을 가져올 수 없습니다. 연결을 확인한 후 다시 시도하세요.",
+            "de_DE": "Die Dateiliste des Modpacks konnte nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.",
+            "fr_FR": "La liste des fichiers du modpack n'a pas pu être récupérée. Vérifiez votre connexion, puis réessayez.",
+            "es_ES": "No se pudo obtener la lista de archivos del modpack. Comprueba tu conexión y vuelve a intentarlo.",
+            "pt_BR": "Não foi possível obter a lista de arquivos do modpack. Verifique sua conexão e tente novamente.",
+            "ru_RU": "Не удалось получить список файлов модпака. Проверьте соединение и повторите попытку.",
+            "tr_TR": "Mod paketinin dosya listesi alınamadı. Bağlantınızı kontrol edip yeniden deneyin.",
+            "pl_PL": "Nie udało się pobrać listy plików modpacka. Sprawdź połączenie i spróbuj ponownie.",
         },
         "Retry": {
             "zh_CN": "重试",

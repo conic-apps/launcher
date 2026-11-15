@@ -3250,11 +3250,6 @@ msgstr "Niektórych plików modpacka nie można pobrać automatycznie"
 
 #: ui
 msgctxt "ModpackImport"
-msgid "The pack author disabled third-party downloads for these files. Continue without them, or cancel and download them manually."
-msgstr "Autor modpacka wyłączył pobieranie tych plików przez osoby trzecie. Kontynuuj bez nich lub anuluj i pobierz je ręcznie."
-
-#: ui
-msgctxt "ModpackImport"
 msgid "Cancel"
 msgstr "Anuluj"
 
@@ -3287,11 +3282,6 @@ msgstr "Zainstaluj mimo to"
 msgctxt "ModpackImport"
 msgid "Could not check the modpack files"
 msgstr "Nie można sprawdzić plików modpacka"
-
-#: ui
-msgctxt "ModpackImport"
-msgid "The CurseForge API could not be reached. Check your connection, then retry."
-msgstr "Nie można połączyć się z API CurseForge. Sprawdź połączenie i spróbuj ponownie."
 
 #: ui
 msgctxt "ModpackImport"
@@ -3907,3 +3897,13 @@ msgstr "Kontynuuj grę"
 msgctxt "ConfirmStopGame"
 msgid "Stop game"
 msgstr "Zatrzymaj grę"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "The pack lists files the launcher could not resolve. Continue without them, or cancel and download them manually."
+msgstr "Modpack zawiera pliki, których launcher nie mógł rozpoznać. Kontynuuj bez nich lub anuluj i pobierz je ręcznie."
+
+#: ui
+msgctxt "ModpackImport"
+msgid "The modpack's file list could not be fetched. Check your connection, then retry."
+msgstr "Nie udało się pobrać listy plików modpacka. Sprawdź połączenie i spróbuj ponownie."

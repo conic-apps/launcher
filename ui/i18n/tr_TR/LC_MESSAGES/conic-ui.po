@@ -3250,11 +3250,6 @@ msgstr "Bazı mod paketi dosyaları otomatik olarak indirilemiyor"
 
 #: ui
 msgctxt "ModpackImport"
-msgid "The pack author disabled third-party downloads for these files. Continue without them, or cancel and download them manually."
-msgstr "Paket yazarı bu dosyalar için üçüncü taraf indirmelerini devre dışı bıraktı. Bunlar olmadan devam edin veya iptal edip elle indirin."
-
-#: ui
-msgctxt "ModpackImport"
 msgid "Cancel"
 msgstr "İptal"
 
@@ -3287,11 +3282,6 @@ msgstr "Yine de kur"
 msgctxt "ModpackImport"
 msgid "Could not check the modpack files"
 msgstr "Mod paketi dosyaları kontrol edilemedi"
-
-#: ui
-msgctxt "ModpackImport"
-msgid "The CurseForge API could not be reached. Check your connection, then retry."
-msgstr "CurseForge API'sine ulaşılamadı. Bağlantınızı kontrol edip yeniden deneyin."
 
 #: ui
 msgctxt "ModpackImport"
@@ -3907,3 +3897,13 @@ msgstr "Oynamaya devam et"
 msgctxt "ConfirmStopGame"
 msgid "Stop game"
 msgstr "Oyunu durdur"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "The pack lists files the launcher could not resolve. Continue without them, or cancel and download them manually."
+msgstr "Mod paketi, başlatıcının çözümleyemediği dosyalar içeriyor. Bunlar olmadan devam edin veya iptal edip elle indirin."
+
+#: ui
+msgctxt "ModpackImport"
+msgid "The modpack's file list could not be fetched. Check your connection, then retry."
+msgstr "Mod paketinin dosya listesi alınamadı. Bağlantınızı kontrol edip yeniden deneyin."

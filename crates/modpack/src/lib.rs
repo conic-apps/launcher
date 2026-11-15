@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! CurseForge modpack import.
+//! Modpack import: CurseForge, Modrinth, Prism/MultiMC, MCBBS and HMCL.
 //!
 //! `format` inspects and resolves a dropped pack into a common [`Plan`], which
 //! `install` consumes without knowing the pack format. Progress is reported
@@ -11,6 +11,7 @@
 mod error;
 mod format;
 mod install;
+mod launch;
 mod overrides;
 
 pub use error::{Error, Result};
@@ -19,6 +20,7 @@ pub use install::{Progress, create_instance, install};
 use std::path::{Path, PathBuf};
 
 use instance::ModLoaderType;
+use launch::PackLaunch;
 
 /// What a dropped pack is, before its file list is resolved.
 #[derive(Clone)]
@@ -28,6 +30,7 @@ pub struct Inspection {
     minecraft: String,
     loader_type: Option<ModLoaderType>,
     loader_version: Option<String>,
+    launch: PackLaunch,
     format: format::FormatInspection,
 }
 
@@ -58,6 +61,7 @@ pub struct Plan {
     minecraft: String,
     loader_type: Option<ModLoaderType>,
     loader_version: Option<String>,
+    launch: PackLaunch,
     files: Vec<ResolvedFile>,
     overrides: Vec<overrides::Overrides>,
 }
@@ -102,7 +106,7 @@ pub(crate) struct ResolvedFile {
     pub(crate) path: PathBuf,
     pub(crate) url: String,
     pub(crate) size_bytes: Option<u64>,
-    pub(crate) sha1: Option<String>,
+    pub(crate) checksum: download::Checksum,
 }
 
 /// Reads the manifest of a dropped pack. No network, no instance.

@@ -43,6 +43,10 @@ pub async fn create_instance(plan: &Plan, name: &str) -> Result<String> {
     let id = instance::unique_id(name)
         .await
         .map_err(|error| Error::Instance(format!("could not choose an instance id: {error}")))?;
+    let mut launch_config = InstanceLaunchConfig::default();
+    if !plan.launch.is_empty() {
+        plan.launch.apply(&mut launch_config);
+    }
     let instance_config = InstanceConfig {
         name: name.to_string(),
         runtime: InstanceRuntime {
@@ -50,10 +54,7 @@ pub async fn create_instance(plan: &Plan, name: &str) -> Result<String> {
             mod_loader_type: plan.loader_type.clone(),
             mod_loader_version: plan.loader_version.clone(),
         },
-        launch_config: InstanceLaunchConfig {
-            enable_instance_specific_settings: false,
-            ..Default::default()
-        },
+        launch_config,
         ..Default::default()
     };
     if let Err(error) = instance::create_instance(instance_config, Some(&id)).await {
@@ -106,11 +107,7 @@ pub async fn install(
                 url: file.url.clone(),
                 file: target_path(&instance_root, &file.path)?,
                 size_bytes: file.size_bytes,
-                checksum: file
-                    .sha1
-                    .clone()
-                    .map(download::Checksum::Sha1)
-                    .unwrap_or(download::Checksum::None),
+                checksum: file.checksum.clone(),
                 // The downloader classifies the source from the URL; a
                 // modpack format must not pick the task type.
                 task_type: download::DownloadTaskType::Unknown,

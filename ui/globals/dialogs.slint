@@ -91,8 +91,9 @@ export global Dialogs {
     in-out property <string> stop-game-id: "";
 }
 
-// A dropped CurseForge pack, before it is installed. The file list resolves in
-// the background, so the user can name the instance while metadata is fetched.
+// A dropped modpack — CurseForge, Modrinth, Prism/MultiMC, MCBBS or HMCL —
+// before it is installed. The file list resolves in the background, so the user
+// can name the instance while metadata is fetched.
 export global ModpackImportState {
     in-out property <bool> visible: false;
     in-out property <bool> checking: false;
@@ -120,14 +121,14 @@ export global ModpackImportState {
     out property <string> install-anyway-text: @tr("ModpackImport" => "Install anyway");
     out property <string> error-title: @tr("ModpackImport" => "Could not check the modpack files");
     out property <string> error-detail: @tr(
-        "ModpackImport" => "The CurseForge API could not be reached. Check your connection, then retry."
+        "ModpackImport" => "The modpack's file list could not be fetched. Check your connection, then retry."
     );
     out property <string> retry-text: @tr("ModpackImport" => "Retry");
     out property <string> warning-title: @tr(
         "ModpackImport" => "Some modpack files cannot be downloaded automatically"
     );
     out property <string> warning-detail: @tr(
-        "ModpackImport" => "The pack author disabled third-party downloads for these files. Continue without them, or cancel and download them manually."
+        "ModpackImport" => "The pack lists files the launcher could not resolve. Continue without them, or cancel and download them manually."
     );
     out property <string> cancel-text: @tr("ModpackImport" => "Cancel");
 }

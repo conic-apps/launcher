@@ -3907,6 +3907,7 @@ dependencies = [
  "install",
  "instance",
  "log",
+ "modrinth",
  "serde",
  "serde_json",
  "shared",

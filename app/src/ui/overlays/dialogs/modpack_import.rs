@@ -2,7 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Drag-and-drop CurseForge modpack import.
+//! Drag-and-drop modpack import: CurseForge, Modrinth, Prism/MultiMC, MCBBS and
+//! HMCL. `modpack::inspect` decides which format the dropped path is.
 //!
 //! The drop opens a confirmation dialog and resolves the manifest in the
 //! background; confirming creates the instance and installs it as a task-centre

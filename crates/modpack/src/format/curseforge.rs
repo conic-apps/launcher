@@ -6,9 +6,11 @@
 //! `manifest.json` and an `overrides/` tree. This module turns the manifest's
 //! `projectID`/`fileID` pairs into downloads through the `curseforge` client and
 //! hands the overrides to the common extractor.
+//!
+//! [`resolve_pairs`] is also what an MCBBS pack's `curse` entries go through:
+//! both formats name a CurseForge project file, only the JSON around it differs.
 
 use std::collections::{HashMap, HashSet};
-use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use futures::StreamExt;
@@ -17,9 +19,13 @@ use serde_json::Value;
 
 use instance::ModLoaderType;
 
+use super::Source;
 use crate::error::{Error, Result};
+use crate::launch::PackLaunch;
 use crate::overrides::Overrides;
 use crate::{ResolvedFile, UnavailableFile};
+
+const MANIFEST: &str = "manifest.json";
 
 /// The CurseForge half of an inspection: the unresolved file pairs and the
 /// overrides tree the manifest names.
@@ -64,6 +70,18 @@ struct ManifestFile {
     required: bool,
 }
 
+/// One CurseForge project file a pack asks for.
+#[derive(Clone)]
+pub(super) struct CursePair {
+    pub(super) project_id: i64,
+    pub(super) file_id: i64,
+    /// Whether the pack needs the file; it only labels the file when it cannot
+    /// be resolved.
+    pub(super) required: bool,
+    /// A name and URL the pack supplied itself, used when the API has neither.
+    pub(super) fallback: Option<(String, String)>,
+}
+
 fn default_overrides() -> String {
     "overrides".to_string()
 }
@@ -73,8 +91,8 @@ fn default_true() -> bool {
 }
 
 /// Reads a CurseForge manifest into the common inspection.
-pub(super) fn inspect(path: &Path) -> Result<crate::Inspection> {
-    let (manifest, overrides) = read_manifest(path)?;
+pub(super) fn inspect(path: &Path, source: &Source) -> Result<crate::Inspection> {
+    let (manifest, overrides) = read_manifest(source)?;
     let (loader_type, loader_version) = parse_loader(&manifest)?;
     let name = manifest.name.trim();
     let name = if name.is_empty() {
@@ -83,7 +101,7 @@ pub(super) fn inspect(path: &Path) -> Result<crate::Inspection> {
         name.to_string()
     };
     log::info!(
-        "modpack '{name}': Minecraft {}, {} manifest files",
+        "modpack '{name}': CurseForge, Minecraft {}, {} manifest files",
         manifest.minecraft.version,
         manifest.files.len()
     );
@@ -92,6 +110,7 @@ pub(super) fn inspect(path: &Path) -> Result<crate::Inspection> {
         minecraft: manifest.minecraft.version,
         loader_type,
         loader_version,
+        launch: PackLaunch::default(),
         format: super::FormatInspection::CurseForge(Inspection {
             files: manifest.files,
             overrides,
@@ -101,7 +120,17 @@ pub(super) fn inspect(path: &Path) -> Result<crate::Inspection> {
 
 /// Resolves the CurseForge file pairs into the common plan.
 pub(super) async fn resolve(inspection: Inspection) -> Result<super::ResolvedPack> {
-    let (files, unavailable) = resolve_files(&inspection.files).await?;
+    let pairs: Vec<CursePair> = inspection
+        .files
+        .iter()
+        .map(|file| CursePair {
+            project_id: file.project_id,
+            file_id: file.file_id,
+            required: file.required,
+            fallback: None,
+        })
+        .collect();
+    let (files, unavailable) = resolve_pairs(&pairs).await?;
     Ok(super::ResolvedPack {
         files,
         unavailable,
@@ -109,134 +138,16 @@ pub(super) async fn resolve(inspection: Inspection) -> Result<super::ResolvedPac
     })
 }
 
-/// Reads the manifest from a dropped zip or directory.
-fn read_manifest(path: &Path) -> Result<(Manifest, Vec<Overrides>)> {
-    if path.is_dir() {
-        let base = find_manifest_dir(path)?;
-        let manifest_path = base.join("manifest.json");
-        let bytes = std::fs::read(&manifest_path).map_err(|source| Error::Read {
-            path: manifest_path.display().to_string(),
-            source,
-        })?;
-        let manifest = parse_manifest(&bytes)?;
-        let overrides = directory_overrides(&base, &manifest.overrides);
-        Ok((manifest, overrides))
-    } else {
-        let (manifest, base) = read_archive_manifest(path)?;
-        let overrides = archive_overrides(path, &base, &manifest.overrides);
-        Ok((manifest, overrides))
-    }
-}
-
-fn directory_overrides(base: &Path, overrides: &str) -> Vec<Overrides> {
-    if overrides.trim().is_empty() {
-        Vec::new()
-    } else {
-        vec![Overrides::Directory {
-            base: base.to_path_buf(),
-            relative: overrides.to_string(),
-        }]
-    }
-}
-
-fn archive_overrides(path: &Path, base: &str, overrides: &str) -> Vec<Overrides> {
-    if overrides.trim().is_empty() {
-        Vec::new()
-    } else {
-        vec![Overrides::Archive {
-            path: path.to_path_buf(),
-            prefix: format!("{base}{}/", overrides.trim_matches('/')),
-        }]
-    }
-}
-
-fn find_manifest_dir(path: &Path) -> Result<PathBuf> {
-    if path.join("manifest.json").is_file() {
-        return Ok(path.to_path_buf());
-    }
-    let mut found = Vec::new();
-    let entries = std::fs::read_dir(path).map_err(|source| Error::Read {
-        path: path.display().to_string(),
-        source,
-    })?;
-    for entry in entries {
-        let entry = entry.map_err(|source| Error::Read {
-            path: path.display().to_string(),
-            source,
-        })?;
-        let candidate = entry.path();
-        if candidate.is_dir() && candidate.join("manifest.json").is_file() {
-            found.push(candidate);
-        }
-    }
-    match found.len() {
-        0 => Err(Error::Manifest(format!(
-            "{} does not contain a CurseForge manifest.json",
-            path.display()
-        ))),
-        1 => Ok(found.remove(0)),
-        _ => Err(Error::Manifest(format!(
-            "{} contains more than one CurseForge modpack; drop the pack folder itself",
-            path.display()
-        ))),
-    }
-}
-
-fn read_archive_manifest(path: &Path) -> Result<(Manifest, String)> {
-    let file = std::fs::File::open(path).map_err(|source| Error::Read {
-        path: path.display().to_string(),
-        source,
-    })?;
-    let mut archive = zip::ZipArchive::new(file).map_err(|source| Error::Zip {
-        path: path.display().to_string(),
-        source,
-    })?;
-    let names: Vec<String> = (0..archive.len())
-        .filter_map(|index| archive.name_for_index(index).map(str::to_owned))
-        .collect();
-    let entry = choose_manifest(&names)?;
-    let mut file = archive.by_name(&entry).map_err(|source| Error::Zip {
-        path: path.display().to_string(),
-        source,
-    })?;
-    let mut bytes = Vec::new();
-    file.read_to_end(&mut bytes).map_err(|source| Error::Read {
-        path: format!("{} ({entry})", path.display()),
-        source,
-    })?;
+/// Reads the manifest and the overrides tree it names.
+fn read_manifest(source: &Source) -> Result<(Manifest, Vec<Overrides>)> {
+    let bytes = source.read(MANIFEST)?;
     let manifest = parse_manifest(&bytes)?;
-    let base = entry
-        .strip_suffix("manifest.json")
-        .unwrap_or_default()
-        .to_string();
-    Ok((manifest, base))
-}
-
-/// The archive entry holding `manifest.json`: root first, then the shallowest
-/// nested one. Two manifests at the same depth are ambiguous.
-fn choose_manifest(names: &[String]) -> Result<String> {
-    let mut candidates: Vec<(usize, &String)> = names
-        .iter()
-        .filter(|name| name.rsplit('/').next() == Some("manifest.json"))
-        .map(|name| (name.matches('/').count(), name))
-        .collect();
-    candidates.sort_by_key(|(depth, _)| *depth);
-    let Some((depth, first)) = candidates.first() else {
-        return Err(Error::Manifest(
-            "the archive does not contain a CurseForge manifest.json".to_string(),
-        ));
+    let overrides = if manifest.overrides.trim().is_empty() {
+        Vec::new()
+    } else {
+        vec![source.overrides(&manifest.overrides)]
     };
-    if candidates
-        .iter()
-        .filter(|(candidate_depth, _)| candidate_depth == depth)
-        .count()
-        > 1
-    {
-        return Err(Error::Manifest(
-            "the archive contains more than one CurseForge manifest.json".to_string(),
-        ));
-    }
-    Ok((*first).clone())
+    Ok((manifest, overrides))
 }
 
 fn parse_manifest(bytes: &[u8]) -> Result<Manifest> {
@@ -287,15 +198,15 @@ fn parse_loader(manifest: &Manifest) -> Result<(Option<ModLoaderType>, Option<St
 ///
 /// The batch endpoint is tried first; a mirror that does not implement it, or an
 /// id it did not return, falls back to the per-file endpoint.
-async fn resolve_files(
-    files: &[ManifestFile],
+pub(super) async fn resolve_pairs(
+    pairs: &[CursePair],
 ) -> Result<(Vec<ResolvedFile>, Vec<UnavailableFile>)> {
-    if files.is_empty() {
+    if pairs.is_empty() {
         return Ok((Vec::new(), Vec::new()));
     }
     let mut metadata: HashMap<i64, Value> = HashMap::new();
     let mut last_error = None;
-    for chunk in files.chunks(100) {
+    for chunk in pairs.chunks(100) {
         let ids: Vec<i64> = chunk.iter().map(|file| file.file_id).collect();
         match curseforge::get_files(&serde_json::json!({ "fileIds": ids })).await {
             Ok(value) => {
@@ -314,7 +225,7 @@ async fn resolve_files(
         }
     }
 
-    let missing: Vec<ManifestFile> = files
+    let missing: Vec<CursePair> = pairs
         .iter()
         .filter(|file| !metadata.contains_key(&file.file_id))
         .cloned()
@@ -345,13 +256,16 @@ async fn resolve_files(
             }
         }
     }
+    // A pack that supplied its own URLs can still be installed with the API
+    // down; only the entries without one are lost.
     if metadata.is_empty()
+        && pairs.iter().all(|pair| pair.fallback.is_none())
         && let Some(error) = last_error
     {
         return Err(Error::Source(error));
     }
 
-    let needs_url: Vec<(i64, i64)> = files
+    let needs_url: Vec<(i64, i64)> = pairs
         .iter()
         .filter_map(|file| {
             let api_file = metadata.get(&file.file_id)?;
@@ -388,24 +302,42 @@ async fn resolve_files(
     let mut resolved = Vec::new();
     let mut unavailable = Vec::new();
     let mut names = HashSet::new();
-    for file in files {
+    for file in pairs {
+        let reference = format!("project {} / file {}", file.project_id, file.file_id);
+        let pack_name = file
+            .fallback
+            .as_ref()
+            .and_then(|(name, _)| valid_file_name(name));
         let Some(api_file) = metadata.get(&file.file_id) else {
-            unavailable.push(UnavailableFile {
-                file_name: format!("project {} / file {}", file.project_id, file.file_id),
-                reference: format!("project {} / file {}", file.project_id, file.file_id),
-                required: file.required,
-                reason: "the file is no longer available on CurseForge".to_string(),
-            });
+            let fallback = pack_name
+                .clone()
+                .zip(file.fallback.as_ref().map(|(_, url)| url.clone()));
+            match fallback {
+                Some((name, url)) if names.insert(name.to_ascii_lowercase()) => {
+                    resolved.push(ResolvedFile {
+                        path: PathBuf::from("mods").join(&name),
+                        url,
+                        size_bytes: None,
+                        checksum: download::Checksum::None,
+                    });
+                }
+                _ => unavailable.push(UnavailableFile {
+                    file_name: pack_name.unwrap_or_else(|| reference.clone()),
+                    reference,
+                    required: file.required,
+                    reason: "the file is no longer available on CurseForge".to_string(),
+                }),
+            }
             continue;
         };
         let raw_name = api_file
             .get("fileName")
             .and_then(Value::as_str)
             .unwrap_or_default();
-        let Some(file_name) = valid_file_name(raw_name) else {
+        let Some(file_name) = valid_file_name(raw_name).or(pack_name) else {
             unavailable.push(UnavailableFile {
-                file_name: format!("project {} / file {}", file.project_id, file.file_id),
-                reference: format!("project {} / file {}", file.project_id, file.file_id),
+                file_name: reference.clone(),
+                reference,
                 required: file.required,
                 reason: format!("CurseForge returned an unusable file name ({raw_name:?})"),
             });
@@ -418,7 +350,7 @@ async fn resolve_files(
         {
             unavailable.push(UnavailableFile {
                 file_name,
-                reference: format!("project {} / file {}", file.project_id, file.file_id),
+                reference,
                 required: file.required,
                 reason: "the file is marked unavailable on CurseForge".to_string(),
             });
@@ -427,7 +359,7 @@ async fn resolve_files(
         if !names.insert(file_name.to_ascii_lowercase()) {
             unavailable.push(UnavailableFile {
                 file_name,
-                reference: format!("project {} / file {}", file.project_id, file.file_id),
+                reference,
                 required: file.required,
                 reason: "another manifest entry already uses this file name".to_string(),
             });
@@ -442,7 +374,7 @@ async fn resolve_files(
         let Some(url) = url else {
             unavailable.push(UnavailableFile {
                 file_name,
-                reference: format!("project {} / file {}", file.project_id, file.file_id),
+                reference,
                 required: file.required,
                 reason: "the author disabled third-party downloads".to_string(),
             });
@@ -452,7 +384,7 @@ async fn resolve_files(
             path: PathBuf::from("mods").join(file_name),
             url,
             size_bytes: api_file.get("fileLength").and_then(Value::as_u64),
-            sha1: api_file
+            checksum: api_file
                 .get("hashes")
                 .and_then(Value::as_array)
                 .and_then(|hashes| {
@@ -460,8 +392,9 @@ async fn resolve_files(
                         .iter()
                         .find(|hash| hash.get("algo").and_then(Value::as_i64) == Some(1))
                         .and_then(|hash| hash.get("value").and_then(Value::as_str))
-                        .map(str::to_owned)
-                }),
+                        .map(|value| download::Checksum::Sha1(value.to_string()))
+                })
+                .unwrap_or(download::Checksum::None),
         });
     }
     Ok((resolved, unavailable))
@@ -553,36 +486,6 @@ mod tests {
     }
 
     #[test]
-    fn picks_the_root_manifest_over_a_nested_one() {
-        let names = vec![
-            "pack/manifest.json".to_string(),
-            "manifest.json".to_string(),
-        ];
-        assert_eq!(
-            choose_manifest(&names).expect("a manifest"),
-            "manifest.json"
-        );
-    }
-
-    #[test]
-    fn picks_a_single_nested_manifest() {
-        let names = vec![
-            "pack/manifest.json".to_string(),
-            "pack/overrides/config/a.toml".to_string(),
-        ];
-        assert_eq!(
-            choose_manifest(&names).expect("a manifest"),
-            "pack/manifest.json"
-        );
-    }
-
-    #[test]
-    fn rejects_two_manifests_at_the_same_depth() {
-        let names = vec!["a/manifest.json".to_string(), "b/manifest.json".to_string()];
-        assert!(choose_manifest(&names).is_err());
-    }
-
-    #[test]
     fn rejects_path_like_file_names() {
         assert_eq!(valid_file_name("mod.jar").as_deref(), Some("mod.jar"));
         assert_eq!(valid_file_name("../mod.jar"), None);
@@ -597,7 +500,7 @@ mod tests {
             std::env::temp_dir().join(format!("conic-modpack-test-{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&directory).expect("a temporary directory");
         std::fs::write(
-            directory.join("manifest.json"),
+            directory.join(MANIFEST),
             r#"{
                 "name": "Empty pack",
                 "minecraft": { "version": "1.20.1" },

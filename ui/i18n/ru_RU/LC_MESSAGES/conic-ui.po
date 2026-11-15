@@ -3250,11 +3250,6 @@ msgstr "Некоторые файлы модпака не удаётся ска�
 
 #: ui
 msgctxt "ModpackImport"
-msgid "The pack author disabled third-party downloads for these files. Continue without them, or cancel and download them manually."
-msgstr "Автор модпака отключил сторонние загрузки для этих файлов. Продолжите без них или отмените и скачайте их вручную."
-
-#: ui
-msgctxt "ModpackImport"
 msgid "Cancel"
 msgstr "Отмена"
 
@@ -3287,11 +3282,6 @@ msgstr "Всё равно установить"
 msgctxt "ModpackImport"
 msgid "Could not check the modpack files"
 msgstr "Не удалось проверить файлы модпака"
-
-#: ui
-msgctxt "ModpackImport"
-msgid "The CurseForge API could not be reached. Check your connection, then retry."
-msgstr "Не удалось подключиться к API CurseForge. Проверьте соединение и повторите попытку."
 
 #: ui
 msgctxt "ModpackImport"
@@ -3907,3 +3897,13 @@ msgstr "Продолжить игру"
 msgctxt "ConfirmStopGame"
 msgid "Stop game"
 msgstr "Остановить игру"
+
+#: ui
+msgctxt "ModpackImport"
+msgid "The pack lists files the launcher could not resolve. Continue without them, or cancel and download them manually."
+msgstr "Модпак содержит файлы, которые лаунчер не смог определить. Продолжите без них или отмените и скачайте их вручную."
+
+#: ui
+msgctxt "ModpackImport"
+msgid "The modpack's file list could not be fetched. Check your connection, then retry."
+msgstr "Не удалось получить список файлов модпака. Проверьте соединение и повторите попытку."
