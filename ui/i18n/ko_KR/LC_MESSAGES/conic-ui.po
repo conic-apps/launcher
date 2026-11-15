@@ -3185,11 +3185,6 @@ msgstr "{}"
 
 #: ui
 msgctxt "NotificationText"
-msgid "The task was cancelled"
-msgstr "작업이 취소되었습니다"
-
-#: ui
-msgctxt "NotificationText"
 msgid "The task finished"
 msgstr "작업이 완료되었습니다"
 

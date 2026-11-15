@@ -4,12 +4,13 @@
 
 //! The task centre: the application's scheduler of long-running work.
 //!
-//! It owns the ids, the ordering, the cancellation policy and the completion
-//! notices; a task is removed when it ends, because a finished task becomes a
-//! notification. `submit` hands over the description and the work, and nothing
-//! runs until the centre admits it — a task waits while its lane is full. A
-//! launch is not scheduled here: [`TaskCenter::reserve_exclusive`] lets it wait
-//! for the centre to go idle and then hold the exclusive lane itself.
+//! It owns the ids, the ordering, the cancellation policy and the end-of-task
+//! notices: a task that finishes or fails becomes a notification, while the
+//! cancel the user just asked for does not. `submit` hands over the description
+//! and the work, and nothing runs until the centre admits it — a task waits
+//! while its lane is full. A launch is not scheduled here:
+//! [`TaskCenter::reserve_exclusive`] lets it wait for the centre to go idle and
+//! then hold the exclusive lane itself.
 
 use std::{
     collections::{HashMap, VecDeque},
@@ -399,7 +400,9 @@ impl TaskCenter {
             id,
             outcome: outcome.clone(),
         });
-        (self.notices)(notice_for(&spec, &outcome, &self.action));
+        if let Some(notice) = notice_for(&spec, &outcome, &self.action) {
+            (self.notices)(notice);
+        }
         self.drain();
     }
 
@@ -436,17 +439,18 @@ fn instance_of(target: &TaskTarget) -> Option<&str> {
     }
 }
 
-fn notice_for(spec: &TaskSpec, outcome: &TaskOutcome, action: &TaskNoticeAction) -> Notice {
+fn notice_for(spec: &TaskSpec, outcome: &TaskOutcome, action: &TaskNoticeAction) -> Option<Notice> {
     match outcome {
         TaskOutcome::Completed => {
             let mut notice = Notice::new(NoticeKind::TaskFinished)
                 .with_arg(spec.subject.clone())
                 .with_arg(spec.kind.key());
             notice.action = action(&spec.target);
-            notice
+            Some(notice)
         }
-        TaskOutcome::Failed(error) => Notice::new(NoticeKind::TaskFailed).with_arg(error),
-        TaskOutcome::Cancelled => Notice::new(NoticeKind::TaskCancelled).with_arg(&spec.subject),
+        TaskOutcome::Failed(error) => Some(Notice::new(NoticeKind::TaskFailed).with_arg(error)),
+        // The user did it; telling them what they just did is noise.
+        TaskOutcome::Cancelled => None,
     }
 }
 
@@ -779,7 +783,7 @@ mod tests {
     }
 
     #[test]
-    fn a_short_task_cancels_immediately() {
+    fn a_short_task_cancels_immediately_without_a_notice() {
         let (center, events, notices) = centre();
         let runs = Arc::new(AtomicUsize::new(0));
         let cancelled = Arc::new(AtomicBool::new(false));
@@ -795,7 +799,7 @@ mod tests {
                 ..
             })
         ));
-        assert_eq!(lock(&notices)[0].kind, NoticeKind::TaskCancelled);
+        assert!(lock(&notices).is_empty());
     }
 
     #[test]

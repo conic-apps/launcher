@@ -65,9 +65,6 @@ export global NotificationText {
         if item.kind == "task-error" {
             return @tr("NotificationText" => "{}", arg(item, 0));
         }
-        if item.kind == "task-cancelled" {
-            return @tr("NotificationText" => "The task was cancelled");
-        }
         if item.kind == "task-finished" {
             if arg(item, 1) == "content-download" || arg(item, 1) == "library-download" {
                 return @tr("NotificationText" => "{} downloaded. Click here to view", arg(item, 0));

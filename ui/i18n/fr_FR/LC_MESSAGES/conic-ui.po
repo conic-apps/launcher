@@ -3185,11 +3185,6 @@ msgstr "{}"
 
 #: ui
 msgctxt "NotificationText"
-msgid "The task was cancelled"
-msgstr "La tâche a été annulée"
-
-#: ui
-msgctxt "NotificationText"
 msgid "The task finished"
 msgstr "La tâche est terminée"
 

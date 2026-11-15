@@ -164,6 +164,8 @@ DROP = {
     ("NotificationText", "Launcher update ready"),
     ("NotificationText", "Task failed"),
     ("NotificationText", "Task cancelled"),
+    # A cancel is the user's own click, so it posts no notice any more.
+    ("NotificationText", "The task was cancelled"),
     ("NotificationText", "Minecraft task finished"),
     ("NotificationText", "Notification"),
     ("NotificationText", "Setup skipped"),

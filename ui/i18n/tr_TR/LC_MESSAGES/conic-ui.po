@@ -3185,11 +3185,6 @@ msgstr "{}"
 
 #: ui
 msgctxt "NotificationText"
-msgid "The task was cancelled"
-msgstr "Görev iptal edildi"
-
-#: ui
-msgctxt "NotificationText"
 msgid "The task finished"
 msgstr "Görev tamamlandı"
 
