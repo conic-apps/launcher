@@ -2,20 +2,26 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The launch settings a source asks for in its own configuration, and how they
-//! reach a new instance.
+//! The settings a source asks for in its own configuration, and how they reach
+//! a new instance.
+//!
+//! Most of them are launch settings, but not all of them have to be: a source
+//! may also name its instance or carry a group, and batch imports will need that
+//! as much as the JVM arguments. They live together because they are one thing —
+//! what the source's configuration says the imported instance is — and they
+//! reach the instance through [`Settings::apply`].
 //!
 //! The formats disagree on the shape but not on the intent: Prism/MultiMC
-//! writes them into `instance.cfg`, MCBBS into `launchInfo`. A pack that asks
-//! for nothing leaves the instance on the launcher's global settings, which is
-//! why an empty [`LaunchSettings`] is not applied at all.
+//! writes them into `instance.cfg`, MCBBS into `launchInfo`. A source that asks
+//! for nothing leaves the instance on the launcher's defaults, which is why an
+//! empty [`Settings`] changes nothing.
 
 use config::launch::Server;
-use instance::InstanceLaunchConfig;
+use instance::InstanceConfig;
 
-/// The launch settings a pack's configuration carries.
+/// The settings a source's configuration carries.
 #[derive(Clone, Default)]
-pub(crate) struct LaunchSettings {
+pub(crate) struct Settings {
     max_memory: Option<usize>,
     extra_jvm_args: Option<String>,
     extra_mc_args: Option<String>,
@@ -24,7 +30,7 @@ pub(crate) struct LaunchSettings {
     height: Option<usize>,
 }
 
-impl LaunchSettings {
+impl Settings {
     pub(crate) fn is_empty(&self) -> bool {
         self.max_memory.is_none()
             && self.extra_jvm_args.is_none()
@@ -61,7 +67,7 @@ impl LaunchSettings {
         }
     }
 
-    /// Records the server the pack auto-joins, `host` or `host:port`.
+    /// Records the server the source auto-joins, `host` or `host:port`.
     pub(crate) fn set_server(&mut self, address: &str) {
         let address = address.trim();
         if address.is_empty() {
@@ -77,20 +83,24 @@ impl LaunchSettings {
         self.server = Some(Server { ip, port });
     }
 
-    /// Writes the pack's settings over `config`.
-    pub(crate) fn apply(&self, config: &mut InstanceLaunchConfig) {
-        config.enable_instance_specific_settings = true;
-        if let Some(memory) = self.max_memory {
-            // A pack that names a heap for itself would otherwise lose it to
-            // the launcher's automatic allocation.
-            config.auto_memory = Some(false);
-            config.max_memory = Some(memory);
+    /// Writes the source's settings into a new instance's configuration.
+    pub(crate) fn apply(&self, config: &mut InstanceConfig) {
+        if self.is_empty() {
+            return;
         }
-        config.extra_jvm_args = self.extra_jvm_args.clone();
-        config.extra_mc_args = self.extra_mc_args.clone();
-        config.server = self.server.clone();
-        config.width = self.width;
-        config.height = self.height;
+        let launch = &mut config.launch_config;
+        launch.enable_instance_specific_settings = true;
+        if let Some(memory) = self.max_memory {
+            // A source that names a heap for itself would otherwise lose it to
+            // the launcher's automatic allocation.
+            launch.auto_memory = Some(false);
+            launch.max_memory = Some(memory);
+        }
+        launch.extra_jvm_args = self.extra_jvm_args.clone();
+        launch.extra_mc_args = self.extra_mc_args.clone();
+        launch.server = self.server.clone();
+        launch.width = self.width;
+        launch.height = self.height;
     }
 }
 
@@ -109,14 +119,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn an_empty_pack_leaves_the_instance_on_the_global_settings() {
-        let launch = LaunchSettings::default();
+    fn an_empty_source_leaves_the_instance_on_the_launcher_defaults() {
+        let launch = Settings::default();
         assert!(launch.is_empty());
     }
 
     #[test]
     fn splits_a_server_address_into_host_and_port() {
-        let mut launch = LaunchSettings::default();
+        let mut launch = Settings::default();
         launch.set_server("mc.example.com:25566");
         let server = launch.server.clone().expect("a server");
         assert_eq!(server.ip, "mc.example.com");
@@ -130,18 +140,18 @@ mod tests {
 
     #[test]
     fn a_heap_disables_the_automatic_allocation() {
-        let mut launch = LaunchSettings::default();
+        let mut launch = Settings::default();
         launch.set_max_memory(6144);
-        let mut config = InstanceLaunchConfig::default();
-        launch.apply(&mut config);
-        assert_eq!(config.max_memory, Some(6144));
-        assert_eq!(config.auto_memory, Some(false));
-        assert!(config.enable_instance_specific_settings);
+        let mut applied = InstanceConfig::default();
+        launch.apply(&mut applied);
+        assert_eq!(applied.launch_config.max_memory, Some(6144));
+        assert_eq!(applied.launch_config.auto_memory, Some(false));
+        assert!(applied.launch_config.enable_instance_specific_settings);
     }
 
     #[test]
     fn empty_argument_lists_are_not_recorded() {
-        let mut launch = LaunchSettings::default();
+        let mut launch = Settings::default();
         launch.set_extra_jvm_args(vec![" ".to_string(), String::new()]);
         assert!(launch.extra_jvm_args.is_none());
     }

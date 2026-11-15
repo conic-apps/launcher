@@ -21,8 +21,8 @@ use super::curseforge::{self, CursePair};
 use super::relative_path;
 use crate::error::{Error, Result};
 use crate::files::FileTree;
-use crate::launch::LaunchSettings;
 use crate::loader::strip_minecraft_prefix;
+use crate::settings::Settings;
 use crate::source::Source;
 use crate::{Metadata, ResolvedFile, UnavailableFile};
 
@@ -56,7 +56,7 @@ struct Pack {
     #[serde(default, rename = "launchInfo")]
     launch_info: LaunchInfo,
     #[serde(default)]
-    settings: Settings,
+    settings: PackSettings,
 }
 
 #[derive(Deserialize)]
@@ -107,12 +107,12 @@ struct LaunchInfo {
 }
 
 #[derive(Deserialize)]
-struct Settings {
+struct PackSettings {
     #[serde(default = "default_true", rename = "install_mods")]
     install_mods: bool,
 }
 
-impl Default for Settings {
+impl Default for PackSettings {
     fn default() -> Self {
         Self { install_mods: true }
     }
@@ -196,7 +196,7 @@ pub(super) fn inspect(path: &Path, source: &Source) -> Result<(Metadata, Inspect
             minecraft,
             loader_type,
             loader_version,
-            launch: read_launch(&pack.launch_info),
+            settings: read_launch(&pack.launch_info),
         },
         Inspection {
             trees,
@@ -295,8 +295,8 @@ fn read_addons(addons: &[Addon]) -> Result<(String, Option<ModLoaderType>, Optio
     Ok((minecraft, loader_type, loader_version))
 }
 
-fn read_launch(info: &LaunchInfo) -> LaunchSettings {
-    let mut launch = LaunchSettings::default();
+fn read_launch(info: &LaunchInfo) -> Settings {
+    let mut launch = Settings::default();
     let mut jvm_arguments = Vec::new();
     if info.min_memory > 0 {
         // The launcher has no minimum-heap setting of its own, so the pack's
@@ -367,13 +367,16 @@ mod tests {
     fn reads_the_launch_info() {
         let pack = pack();
         let launch = read_launch(&pack.launch_info);
-        let mut applied = instance::InstanceLaunchConfig::default();
+        let mut applied = instance::InstanceConfig::default();
         launch.apply(&mut applied);
         assert_eq!(
-            applied.extra_jvm_args.as_deref(),
+            applied.launch_config.extra_jvm_args.as_deref(),
             Some("-Xms1024M -XX:+UseG1GC")
         );
-        assert_eq!(applied.extra_mc_args.as_deref(), Some("--demo"));
+        assert_eq!(
+            applied.launch_config.extra_mc_args.as_deref(),
+            Some("--demo")
+        );
     }
 
     #[test]

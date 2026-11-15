@@ -18,8 +18,8 @@ use serde::Deserialize;
 use crate::Metadata;
 use crate::error::{Error, Result};
 use crate::files::FileTree;
-use crate::launch::LaunchSettings;
 use crate::loader::VersionManifest;
+use crate::settings::Settings;
 use crate::source::Source;
 
 const MANIFEST: &str = "modpack.json";
@@ -93,7 +93,7 @@ pub(super) fn inspect(path: &Path, source: &Source) -> Result<(Metadata, Inspect
             minecraft,
             loader_type,
             loader_version,
-            launch: LaunchSettings::default(),
+            settings: Settings::default(),
         },
         Inspection { trees },
     ))

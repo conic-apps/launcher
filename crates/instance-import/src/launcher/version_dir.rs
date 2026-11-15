@@ -13,8 +13,8 @@ use std::path::Path;
 
 use crate::error::Result;
 use crate::files::FileTree;
-use crate::launch::LaunchSettings;
 use crate::loader::VersionManifest;
+use crate::settings::Settings;
 use crate::{Metadata, Resolved};
 
 /// What of such a folder is the launcher's own, not a game file.
@@ -74,7 +74,7 @@ pub(crate) fn inspect(path: &Path) -> Result<Option<(Metadata, Inspection)>> {
             minecraft: minecraft.to_string(),
             loader_type,
             loader_version,
-            launch: LaunchSettings::default(),
+            settings: Settings::default(),
         },
         Inspection { tree },
     )))

@@ -265,11 +265,13 @@ are the same reader and both are an `Instance` import. `manifest.json` is shared
 from another launcher can keep a stale one: the `addons` array is what makes a manifest MCBBS rather
 than CurseForge, and `mmc-pack.json` and `modrinth.index.json` are checked before it.
 
-A source may also carry instance launch settings — Prism/MultiMC's `instance.cfg` (`JvmArgs`,
-`MaxMemAlloc`, the auto-join server, the window size) and MCBBS's `launchInfo`. `Plan::launch` holds
-them, and the import writes them as instance-specific settings; a source that asks for nothing leaves
-the instance on the global configuration, and one that names a heap turns the automatic allocation
-off so its choice survives. Prism/MultiMC's `patches/` and `jarmods/` patch the game jar itself; they
+A source may also carry settings for the instance it becomes — mostly launch settings (Prism/MultiMC's
+`instance.cfg` carries `JvmArgs`, `MaxMemAlloc`, the auto-join server and the window size; MCBBS's
+`launchInfo` the JVM and game arguments), but nothing stops a source from naming something else.
+`settings.rs` keeps them off the format modules, `Plan::settings` carries them, and the import writes
+them into the new instance's configuration; a source that asks for nothing leaves the instance on the
+launcher's defaults, and one that names a heap turns the automatic allocation off so its choice
+survives. Prism/MultiMC's `patches/` and `jarmods/` patch the game jar itself; they
 are skipped with a log line rather than half-applied.
 
 ## Platform plumbing worth knowing

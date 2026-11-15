@@ -11,7 +11,7 @@ use std::sync::Arc;
 use config::Config;
 use download::progress::{DownloadSnapshot, DownloadState};
 use install as install_crate;
-use instance::{InstanceConfig, InstanceLaunchConfig, InstanceRuntime};
+use instance::{InstanceConfig, InstanceRuntime};
 use storage::LOCATIONS;
 
 use crate::Plan;
@@ -133,20 +133,16 @@ async fn create_instance(plan: &Plan, name: &str) -> Result<String> {
     let id = instance::unique_id(name)
         .await
         .map_err(|error| Error::Instance(format!("could not choose an instance id: {error}")))?;
-    let mut launch_config = InstanceLaunchConfig::default();
-    if !plan.launch.is_empty() {
-        plan.launch.apply(&mut launch_config);
-    }
-    let instance_config = InstanceConfig {
+    let mut instance_config = InstanceConfig {
         name: name.to_string(),
         runtime: InstanceRuntime {
             minecraft: plan.minecraft.clone(),
             mod_loader_type: plan.loader_type.clone(),
             mod_loader_version: plan.loader_version.clone(),
         },
-        launch_config,
         ..Default::default()
     };
+    plan.settings.apply(&mut instance_config);
     if let Err(error) = instance::create_instance(instance_config, Some(&id)).await {
         let _ = instance::delete_instance(&id).await;
         return Err(Error::Instance(format!(

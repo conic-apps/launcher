@@ -20,8 +20,8 @@ use instance::ModLoaderType;
 use crate::Metadata;
 use crate::error::{Error, Result};
 use crate::files::FileTree;
-use crate::launch::LaunchSettings;
 use crate::loader::strip_minecraft_prefix;
+use crate::settings::Settings;
 use crate::source::Source;
 
 const MANIFEST: &str = "mmc-pack.json";
@@ -117,7 +117,7 @@ pub(super) fn inspect(path: &Path, source: &Source) -> Result<(Metadata, Inspect
             minecraft,
             loader_type,
             loader_version,
-            launch: read_launch(&config),
+            settings: read_launch(&config),
         },
         Inspection { trees },
     ))
@@ -202,8 +202,8 @@ fn read_components(manifest: &Manifest) -> Result<(String, Option<ModLoaderType>
 ///
 /// `JavaPath` is deliberately ignored: it is the author's own installation, and
 /// pointing a launch at it would break on every machine but theirs.
-fn read_launch(config: &HashMap<String, String>) -> LaunchSettings {
-    let mut launch = LaunchSettings::default();
+fn read_launch(config: &HashMap<String, String>) -> Settings {
+    let mut launch = Settings::default();
     let mut jvm_arguments = Vec::new();
     if flag(config, "OverrideJavaArgs")
         && let Some(arguments) = config.get("JvmArgs")
@@ -375,14 +375,14 @@ mod tests {
         );
         assert_eq!(config.get("name").map(String::as_str), Some("My Pack"));
         let launch = read_launch(&config);
-        let mut applied = instance::InstanceLaunchConfig::default();
+        let mut applied = instance::InstanceConfig::default();
         launch.apply(&mut applied);
         assert_eq!(
-            applied.extra_jvm_args.as_deref(),
+            applied.launch_config.extra_jvm_args.as_deref(),
             Some("-XX:+UseG1GC -Dsun.stdout.encoding=UTF-8")
         );
-        assert_eq!(applied.max_memory, Some(6144));
-        let server = applied.server.expect("a server");
+        assert_eq!(applied.launch_config.max_memory, Some(6144));
+        let server = applied.launch_config.server.expect("a server");
         assert_eq!(server.ip, "play.example.com");
         assert_eq!(server.port, Some(25566));
     }
@@ -392,13 +392,13 @@ mod tests {
         let config = parse_ini(
             "OverrideJavaArgs=true\nJvmArgs=-XX:+UseG1GC\nOverrideMemory=true\nMinMemAlloc=1024\nMaxMemAlloc=6144\n",
         );
-        let mut applied = instance::InstanceLaunchConfig::default();
+        let mut applied = instance::InstanceConfig::default();
         read_launch(&config).apply(&mut applied);
         assert_eq!(
-            applied.extra_jvm_args.as_deref(),
+            applied.launch_config.extra_jvm_args.as_deref(),
             Some("-XX:+UseG1GC -Xms1024M")
         );
-        assert_eq!(applied.max_memory, Some(6144));
+        assert_eq!(applied.launch_config.max_memory, Some(6144));
     }
 
     #[test]

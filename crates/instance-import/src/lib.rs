@@ -13,10 +13,10 @@
 mod error;
 mod files;
 mod import;
-mod launch;
 mod launcher;
 mod loader;
 mod pack;
+mod settings;
 mod source;
 
 pub use error::{Error, Result};
@@ -25,7 +25,7 @@ pub use import::{Progress, import};
 use std::path::{Path, PathBuf};
 
 use instance::ModLoaderType;
-use launch::LaunchSettings;
+use settings::Settings;
 
 /// What a dropped path is, before its files are resolved.
 #[derive(Clone)]
@@ -35,7 +35,7 @@ pub struct Import {
     minecraft: String,
     loader_type: Option<ModLoaderType>,
     loader_version: Option<String>,
-    launch: LaunchSettings,
+    settings: Settings,
     kind: ImportKind,
     source: Recognized,
 }
@@ -81,7 +81,7 @@ pub struct Plan {
     minecraft: String,
     loader_type: Option<ModLoaderType>,
     loader_version: Option<String>,
-    launch: LaunchSettings,
+    settings: Settings,
     files: Vec<ResolvedFile>,
     trees: Vec<files::FileTree>,
 }
@@ -137,7 +137,7 @@ pub(crate) struct Metadata {
     pub(crate) minecraft: String,
     pub(crate) loader_type: Option<ModLoaderType>,
     pub(crate) loader_version: Option<String>,
-    pub(crate) launch: LaunchSettings,
+    pub(crate) settings: Settings,
 }
 
 /// What an import resolves into; the common [`Plan`] adds the identity around it.
@@ -164,7 +164,7 @@ pub fn inspect(path: &Path) -> Result<Import> {
             minecraft: metadata.minecraft,
             loader_type: metadata.loader_type,
             loader_version: metadata.loader_version,
-            launch: metadata.launch,
+            settings: metadata.settings,
             kind: pack.kind(),
             source: Recognized::Pack(pack),
         });
@@ -175,7 +175,7 @@ pub fn inspect(path: &Path) -> Result<Import> {
             minecraft: metadata.minecraft,
             loader_type: metadata.loader_type,
             loader_version: metadata.loader_version,
-            launch: metadata.launch,
+            settings: metadata.settings,
             kind: ImportKind::Instance,
             source: Recognized::Instance(instance),
         });
@@ -194,7 +194,7 @@ pub async fn resolve(candidate: Import) -> Result<Plan> {
         minecraft,
         loader_type,
         loader_version,
-        launch,
+        settings,
         source,
         ..
     } = candidate;
@@ -207,7 +207,7 @@ pub async fn resolve(candidate: Import) -> Result<Plan> {
         minecraft,
         loader_type,
         loader_version,
-        launch,
+        settings,
         unavailable: resolved.unavailable,
         files: resolved.files,
         trees: resolved.trees,

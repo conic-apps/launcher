@@ -21,7 +21,7 @@ use instance::ModLoaderType;
 
 use crate::error::{Error, Result};
 use crate::files::FileTree;
-use crate::launch::LaunchSettings;
+use crate::settings::Settings;
 use crate::source::Source;
 use crate::{Metadata, ResolvedFile, UnavailableFile};
 
@@ -111,7 +111,7 @@ pub(super) fn inspect(path: &Path, source: &Source) -> Result<(Metadata, Inspect
             minecraft: manifest.minecraft.version,
             loader_type,
             loader_version,
-            launch: LaunchSettings::default(),
+            settings: Settings::default(),
         },
         Inspection {
             files: manifest.files,
