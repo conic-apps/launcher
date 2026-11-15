@@ -16,7 +16,6 @@ pub enum NoticeKind {
     TaskFinished,
     /// `args[0]` is the failure detail.
     TaskFailed,
-    TaskCancelled,
     /// `args[0]` is the crashed instance's display name.
     GameCrashed,
     SetupSkipped,

@@ -266,7 +266,6 @@ fn kind_key(kind: NoticeKind) -> &'static str {
         NoticeKind::UpdateApplied => "update-applied",
         NoticeKind::TaskFinished => "task-finished",
         NoticeKind::TaskFailed => "task-error",
-        NoticeKind::TaskCancelled => "task-cancelled",
         NoticeKind::GameCrashed => "game-crashed",
         NoticeKind::SetupSkipped => "setup-skipped",
         NoticeKind::MinecraftReleased => "minecraft-released",
@@ -279,7 +278,6 @@ fn kind_icon(kind: NoticeKind) -> &'static str {
         NoticeKind::UpdateApplied => "checkmark-outline",
         NoticeKind::TaskFinished => "checkmark-outline",
         NoticeKind::TaskFailed => "warning",
-        NoticeKind::TaskCancelled => "ban",
         NoticeKind::GameCrashed => "warning",
         NoticeKind::SetupSkipped => "refresh",
         NoticeKind::MinecraftReleased => "minecraft",
@@ -335,8 +333,8 @@ mod tests {
     #[test]
     fn new_notices_go_to_the_front_of_both_models() {
         let controller = NotificationController::new();
-        controller.send(Notice::new(NoticeKind::TaskCancelled));
         controller.send(Notice::new(NoticeKind::TaskFinished));
+        controller.send(Notice::new(NoticeKind::TaskFailed));
 
         let first = controller.notifications.row_data(0).expect("newest notice");
         let preview = controller.toasts.row_data(0).expect("newest preview");
@@ -400,7 +398,7 @@ mod tests {
     #[test]
     fn a_plain_notice_is_not_actionable() {
         let controller = NotificationController::new();
-        controller.send(Notice::new(NoticeKind::TaskCancelled));
+        controller.send(Notice::new(NoticeKind::TaskFailed));
 
         let item = controller.notifications.row_data(0).expect("one notice");
         assert!(!item.has_action);

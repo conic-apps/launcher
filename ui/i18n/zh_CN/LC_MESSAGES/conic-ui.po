@@ -3080,11 +3080,6 @@ msgstr "{}"
 
 #: ui
 msgctxt "NotificationText"
-msgid "The task was cancelled"
-msgstr "任务已取消"
-
-#: ui
-msgctxt "NotificationText"
 msgid "The task finished"
 msgstr "任务已完成"
 

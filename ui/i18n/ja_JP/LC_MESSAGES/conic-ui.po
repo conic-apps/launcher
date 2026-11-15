@@ -3185,11 +3185,6 @@ msgstr "{}"
 
 #: ui
 msgctxt "NotificationText"
-msgid "The task was cancelled"
-msgstr "タスクはキャンセルされました"
-
-#: ui
-msgctxt "NotificationText"
 msgid "The task finished"
 msgstr "タスクが完了しました"
 
