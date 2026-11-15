@@ -340,8 +340,8 @@ export component App inherits Window {
 
             // The settings drawer. It is declared before the other app-root
             // panels so news, music and notifications still cover it, and below
-            // the `z: 1000` dropdown layer so the settings controls' popups
-            // render above it.
+            // the dropdown layer so the settings controls' popups render above
+            // it.
             SettingsOverlay {
                 y: root.title-bar-height;
                 height: root.height - root.title-bar-height;
@@ -350,16 +350,18 @@ export component App inherits Window {
             }
 
             // Floating dropdown list + outside-click layer, above the page stack.
-            // The `z` is load-bearing: the instance list's toolbar (`z: 114`) and
-            // scrollbars (`z: 500`) would otherwise paint over the panel.
+            // The `z` is load-bearing: the instance list's toolbar (`z: 114`),
+            // scrollbars (`z: 500`) and the title bar (`z: 1200`) would otherwise
+            // paint over the panel or keep the outside-click layer from seeing a
+            // press there.
             DropdownOverlay {
-                z: 1000;
+                z: 1201;
             }
 
-            // The instance list's right-click menu, above the dropdown panel and
-            // the page's own floating rows, below the notices and dialogs.
+            // The instance list's right-click menu, above the title bar and the
+            // page's own floating rows, below the palette and dialogs.
             InstanceMenuOverlay {
-                z: 1050;
+                z: 1201;
             }
 
             // The description tooltip, drawn here because both the settings

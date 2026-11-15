@@ -177,6 +177,8 @@ fn main() {
     });
 
     ui::overlays::music_player::watch_focus(&window);
+    // A right-click menu must not survive the window it belongs to losing focus.
+    ui::views::game::watch_menu_focus(&window);
 
     // Drag regions in `globals/window-drag.slint`, such as a dialog's scrim.
     ui.global::<slint_backend::WindowDrag>().on_start({
