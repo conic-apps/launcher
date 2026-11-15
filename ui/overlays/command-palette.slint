@@ -222,9 +222,9 @@ component PaletteRow inherits Rectangle {
     }
 }
 
-// The command palette overlay: a scrim and the panel. `Dialog`'s phase machine
-// drives the fade in and out, so an interrupted transition resumes from where
-// it got to instead of snapping.
+// The command palette overlay: the panel, over the scrim mounted above the
+// title bar. `Dialog`'s phase machine drives the panel's fade in and out, so an
+// interrupted transition resumes from where it got to instead of snapping.
 //
 // Keys are handled in `capture-key-pressed`, not `key-pressed`: a `TextInput`
 // accepts Backspace and the arrows first, so an ancestor would never see them.
@@ -232,8 +232,8 @@ component PaletteRow inherits Rectangle {
 export component CommandPaletteOverlay inherits Rectangle {
     width: 100%;
     height: 100%;
-    // Alpha is in the colour: an element `opacity` would create a render layer.
-    background: #000000.with-alpha(0.259 * root.scrim-alpha);
+    // The palette's scrim is the shared `Scrim` mounted above the title bar.
+    background: transparent;
     border-radius: 16px;
     // Between the content overlays and the dialogs (`z: 2000`).
     z: 1500;
@@ -270,7 +270,7 @@ export component CommandPaletteOverlay inherits Rectangle {
         triggered => { root.phase = "shown"; }
     }
 
-    // The leave's longest track: 60ms delay plus 150ms scrim.
+    // The leave's longest track: the 120ms panel fade.
     leave-timer := Timer {
         interval: 210ms;
         running: root.phase == "leaving";
@@ -285,16 +285,7 @@ export component CommandPaletteOverlay inherits Rectangle {
     }
 
     // Shorter than a dialog's, and with no delay in front of the panel: the
-    // palette is typed into, so it has to be there on the first keystroke. Only
-    // the scrim lags, and only on the way out, where it lets the panel leave the
-    // window before the window darkens.
-    private property <float> scrim-alpha: root.phase == "shown" ? 1.0 : 0.0;
-    animate scrim-alpha {
-        duration: 150ms;
-        delay: root.phase == "shown" ? 0ms : 60ms;
-        easing: ease-out-quad;
-    }
-
+    // palette is typed into, so it has to be there on the first keystroke.
     private property <float> panel-alpha: root.phase == "shown" ? 1.0 : 0.0;
     private property <float> panel-scale: root.phase == "shown" ? 1.0 : 0.96;
     animate panel-alpha {

@@ -1,0 +1,29 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// The dimming layer the overlays draw over the window. One instance per band of
+// the window, and `OverlayShadow` asks for one band at a time, so a second open
+// overlay replaces the dim instead of stacking a darker one on it.
+export component Scrim inherits Rectangle {
+    /// Whether the overlay this band carries is asking for the dim.
+    in property <bool> wanted: false;
+
+    width: 100%;
+    height: 100%;
+    // A single layer: the level is the weight the content panels' own scrim
+    // had, so nothing has to make up for a layer that is no longer there.
+    private property <float> dim: 0.5;
+    // The alpha lives in the colour: an element `opacity` would put the subtree
+    // in a render layer. The element is never hidden either — an unpainted
+    // element does not advance an animation, and this fade is all a reopened
+    // overlay relies on.
+    background: #000000.with-alpha(root.dim * root.level);
+
+    private property <float> level: root.wanted ? 1.0 : 0.0;
+    animate level {
+        duration: root.wanted ? 150ms : 200ms;
+        delay: root.wanted ? 0ms : 100ms;
+        easing: ease-out-quad;
+    }
+}

@@ -97,15 +97,15 @@ component PlaylistItem inherits Rectangle {
     }
 }
 
-// The background-music panel: a scrim, the player card in the top-right, and
-// the playlist popup beneath it. Both cards use `base` with a 1px border and a
-// blurred shadow (Slint has no shadow offset).
+// The background-music panel: the player card in the top-right and the playlist
+// popup beneath it, over the shared scrim. Both cards use `base` with a 1px
+// border and a blurred shadow (Slint has no shadow offset).
 export component MusicPlayerOverlay inherits Rectangle {
     in property <bool> open: MusicState.panel-open;
 
     width: 100%;
     height: 100%;
-    background: #000000.with-alpha(0.45 * root.scrim-alpha);
+    background: transparent;
 
     // As in `Dialog`, the panel shows one frame at the start values because an
     // animated property only advances while read.
@@ -135,7 +135,7 @@ export component MusicPlayerOverlay inherits Rectangle {
         triggered => { root.phase = "shown"; }
     }
 
-    // The leave's longest track: the scrim's 100ms delay plus its 200ms fade.
+    // The leave's longest track: the 200ms the playlist takes to fold.
     leave-timer := Timer {
         interval: 300ms;
         running: root.phase == "leaving";
@@ -199,15 +199,8 @@ export component MusicPlayerOverlay inherits Rectangle {
         triggered => { root.playlist-phase = "closed"; }
     }
 
-    // `Dialog`'s two tracks: the scrim fades under the card as the card scales
-    // up from 0.9 with that overshoot, and the leave runs them back in the
-    // reverse order.
-    private property <float> scrim-alpha: root.phase == "shown" ? 1.0 : 0.0;
-    animate scrim-alpha {
-        duration: 200ms;
-        delay: root.phase == "shown" ? 0ms : 100ms;
-        easing: ease-out-quad;
-    }
+    // `Dialog`'s two tracks: the card scales up from 0.9 while the shared scrim
+    // fades in under it, and the leave runs them back in the reverse order.
     private property <float> card-alpha: root.phase == "shown" ? 1.0 : 0.0;
     private property <float> card-scale: root.phase == "shown" ? 1.0 : 0.9;
     animate card-alpha, card-scale {

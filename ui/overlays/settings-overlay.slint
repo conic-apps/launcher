@@ -134,8 +134,8 @@ export component SettingsOverlay inherits Rectangle {
 
     width: 100%;
     height: 100%;
-    // The notification centre's scrim: the game view stays visible, dimmed.
-    background: #000000.with-alpha(0.35 * root.scrim-alpha);
+    // The game view behind stays visible under the shared scrim.
+    background: transparent;
     // The drawer enters from outside the window; the root hides the part that
     // has not arrived yet.
     clip: true;
@@ -155,13 +155,7 @@ export component SettingsOverlay inherits Rectangle {
     // overlay layers. `starting` is one frame at the off-screen values so the
     // renderer sees them before the animated properties retarget.
     private property <string> phase: "closed";
-    private property <float> scrim-alpha: root.phase == "shown" ? 1.0 : 0.0;
     visible: root.phase != "closed";
-
-    animate scrim-alpha {
-        duration: 150ms;
-        easing: ease-out-quad;
-    }
 
     changed open => {
         if root.open {

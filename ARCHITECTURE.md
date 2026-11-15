@@ -97,7 +97,7 @@ where a file goes:
   - `containers/` — layout/behaviour wrappers: `ScrollView`, `ScrollViewHorizontal`,
     `SlideTransition`, `ZoomTransition`.
   - `display/` — presentational: `AppIcon`, `AccountAvatar`, `InstanceCard`, `PaletteRow`,
-    `WindowBackground`.
+    `Scrim`, `WindowBackground`.
   - `settings/` — `SettingItem`, `SettingGroup`, `SettingCollapse`, `SettingReveal`.
   - `markdown/` — the `.slint` half of `app/src/ui/components/markdown/`.
   - `title-bar.slint` plus a `title-bar/` folder of its private children
@@ -114,7 +114,8 @@ where a file goes:
   changelog reader — is `news/`, and the settings drawer's section bodies (`settings-general`,
   `settings-jvm`, …) are `settings/`.
 - **`globals/`** — one singleton per domain (`Navigation`, `AppConfig`, `ContentState`,
-  `PageMotion`, `SettingsShell`, `NotificationState`, `TaskState`, …). Slint components are only
+  `PageMotion`, `SettingsShell`, `NotificationState`, `TaskState`, `OverlayShadow`, …). Slint
+  components are only
   reachable from Rust through a global, and a global is also how cross-screen state is shared
   without prop drilling; the owning `app/src/ui/…` surface wires each one, and the ones no single
   surface owns (`scroll`, `tasks`) live in `app/src/ui/services/`.
@@ -140,11 +141,21 @@ are plain buttons, and only an open overlay fills its tile.
 
 The drawer's two parts animate independently: each starts with its right edge on the window's left
 edge and at zero opacity, and settles at its own target (the sidebar at 0, the content after it).
-The game view behind it is dimmed by the notification centre's 35% scrim, and the content's base
-colour and 24px shadow live on a panel behind the scrolling body, so the body can stay transparent
-and keep its own clipping. A fast live resize is kept out of the way by the background: the GPU
-framebuffer and the sky keep their old size and stretch until the window has been still for 350ms,
-instead of recreating a full-size framebuffer on every drag frame.
+The game view behind it is dimmed by the shared scrim, and the content's base colour and 24px shadow
+live on a panel behind the scrolling body, so the body can stay transparent and keep its own
+clipping. A fast live resize is kept out of the way by the background: the GPU framebuffer and the
+sky keep their old size and stretch until the window has been still for 350ms, instead of recreating
+a full-size framebuffer on every drag frame.
+
+### Overlay dimming
+
+Every overlay but the dialogs dims the window through one shared layer,
+`components/display/scrim.slint`, which owns the single dim level. Each band of the window mounts
+one instance — the game view's, the app root's and the palette's — and
+`globals/overlay-shadow.slint` lets only the topmost open overlay's band ask for it: an overlay
+opened over another takes the dim over, so two open overlays never darken the window twice. The
+palette's band spans the title bar, like a dialog; the others stop under it.
+`overlays/dialogs/dialog.slint` keeps its own scrim, drawn above all of them.
 
 ## Task centre
 

@@ -659,28 +659,24 @@ export component NotificationToasts inherits Rectangle {
     }
 }
 
-/// The notification centre: a right-side panel like the news surface.
+/// The notification centre: a right-side panel like the news surface, over the
+/// shared scrim.
 export component NotificationOverlay inherits Rectangle {
     width: 100%;
     height: 100%;
     visible: root.phase != "closed";
     // Clips the panel's shadow so it cannot cross into the title bar.
     clip: true;
-    background: #000000.with-alpha(0.35 * root.scrim-alpha);
+    background: transparent;
 
     private property <string> phase: "closed";
     private property <bool> open: NotificationState.visible;
-    private property <float> scrim-alpha: root.phase == "shown" ? 1.0 : 0.0;
     private property <length> panel-width: 300px;
     // Only the offset animates, so a resize moves the panel with the edge.
     private property <length> panel-offset: root.phase == "shown" ? 0px : root.panel-width;
     private property <bool> leaving: root.phase == "leaving";
     // Keeps rows mounted while leaving; the timer drops them after the stagger.
     private property <bool> clearing: false;
-    animate scrim-alpha {
-        duration: 150ms;
-        easing: ease-out-quad;
-    }
     animate panel-offset {
         duration: root.leaving ? 180ms : 220ms;
         easing: root.leaving ? cubic-bezier(0.47, 0, 1, 0.75) : cubic-bezier(0, 0.47, 0.25, 1);

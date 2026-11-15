@@ -26,6 +26,8 @@ import {
 } from "overlays/notifications.slint";
 import { NotificationState } from "globals/notifications.slint";
 import { NewsState } from "globals/news.slint";
+import { OverlayShadow } from "globals/overlay-shadow.slint";
+import { Scrim } from "components/display/scrim.slint";
 import { WindowDrag } from "globals/window-drag.slint";
 import { WindowBackground } from "components/display/window-background.slint";
 import { GameView } from "views/game-view.slint";
@@ -338,6 +340,15 @@ export component App inherits Window {
                 }
             }
 
+            // The dim under the app root's overlays, and under the page stack
+            // so an overlay opened here dims the page's own panels too. The
+            // title bar stays above it and keeps its ink.
+            Scrim {
+                y: root.title-bar-height;
+                height: root.height - root.title-bar-height;
+                wanted: OverlayShadow.app-open;
+            }
+
             // The settings drawer. It is declared before the other app-root
             // panels so news, music and notifications still cover it, and below
             // the dropdown layer so the settings controls' popups render above
@@ -457,7 +468,14 @@ export component App inherits Window {
             }
 
             // The command palette, mounted between the music player and the dialog
-            // layer.
+            // layer. Its dim is the one that covers the title bar, like a
+            // dialog's, so it is drawn above the bar instead of in the shared
+            // layer below it.
+            Scrim {
+                z: 1400;
+                wanted: OverlayShadow.palette-open;
+            }
+
             CommandPaletteOverlay { }
 
             // The dialog layer, above the palette and the music player, hence the
