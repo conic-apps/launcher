@@ -33,7 +33,7 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
     // the launch page is rejected separately: a launch or install is already
     // running there.
     let busy = Arc::new(AtomicBool::new(false));
-    let pending: Arc<Mutex<Option<instance_import::Plan>>> = Arc::new(Mutex::new(None));
+    let pending: Arc<Mutex<Option<instance_import::ImportPlan>>> = Arc::new(Mutex::new(None));
     let inspection: Arc<Mutex<Option<instance_import::ImportSource>>> = Arc::new(Mutex::new(None));
     let resolving: Arc<Mutex<Option<tokio::task::JoinHandle<()>>>> = Arc::new(Mutex::new(None));
     // A resolve that finishes after its dialog was cancelled (or replaced by a
@@ -305,7 +305,7 @@ fn start_resolve(
     weak: slint::Weak<App>,
     inspection: instance_import::ImportSource,
     inspection_slot: Arc<Mutex<Option<instance_import::ImportSource>>>,
-    pending: Arc<Mutex<Option<instance_import::Plan>>>,
+    pending: Arc<Mutex<Option<instance_import::ImportPlan>>>,
     resolving: Arc<Mutex<Option<tokio::task::JoinHandle<()>>>>,
     generation: Arc<AtomicU64>,
 ) {

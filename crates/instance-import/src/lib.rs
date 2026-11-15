@@ -74,7 +74,7 @@ pub enum ImportKind {
 }
 
 /// A fully resolved import, ready to bring in.
-pub struct Plan {
+pub struct ImportPlan {
     /// The source's display name, which seeds the instance id.
     name: String,
     /// The files that could not be resolved, in manifest order.
@@ -87,7 +87,7 @@ pub struct Plan {
     trees: Vec<files::FileTree>,
 }
 
-impl Plan {
+impl ImportPlan {
     pub fn unavailable(&self) -> &[UnavailableFile] {
         &self.unavailable
     }
@@ -141,7 +141,7 @@ pub(crate) struct Metadata {
     pub(crate) settings: Settings,
 }
 
-/// What an import resolves into; the common [`Plan`] adds the identity around it.
+/// What an import resolves into; the common [`ImportPlan`] adds the identity around it.
 pub(crate) struct Resolved {
     pub(crate) files: Vec<ResolvedFile>,
     pub(crate) unavailable: Vec<UnavailableFile>,
@@ -189,7 +189,7 @@ pub fn inspect(path: &Path) -> Result<ImportSource> {
 }
 
 /// Resolves the files an import needs.
-pub async fn resolve(candidate: ImportSource) -> Result<Plan> {
+pub async fn resolve(candidate: ImportSource) -> Result<ImportPlan> {
     let ImportSource {
         name,
         minecraft,
@@ -203,7 +203,7 @@ pub async fn resolve(candidate: ImportSource) -> Result<Plan> {
         Recognized::Pack(pack) => pack::resolve(pack).await?,
         Recognized::Instance(instance) => instance.resolve(),
     };
-    Ok(Plan {
+    Ok(ImportPlan {
         name,
         minecraft,
         loader_type,

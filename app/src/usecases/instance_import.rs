@@ -20,7 +20,7 @@ use shared::{
 use crate::usecases::tasks::TaskHandle;
 
 pub(crate) async fn import(
-    plan: instance_import::Plan,
+    plan: instance_import::ImportPlan,
     name: &str,
     config: Config,
     task: TaskHandle,

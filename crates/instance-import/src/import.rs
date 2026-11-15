@@ -14,7 +14,7 @@ use install as install_crate;
 use instance::{InstanceConfig, InstanceRuntime};
 use storage::LOCATIONS;
 
-use crate::Plan;
+use crate::ImportPlan;
 use crate::error::{Error, Result};
 
 /// What an import reports.
@@ -41,7 +41,7 @@ pub enum Progress {
 /// therefore leaves an uninstalled instance behind, exactly like cancelling a
 /// first launch does.
 pub async fn import(
-    plan: Plan,
+    plan: ImportPlan,
     name: &str,
     config: Config,
     sink: shared::Sink<Progress>,
@@ -122,7 +122,7 @@ pub async fn import(
 }
 
 /// Creates the instance for a resolved plan.
-async fn create_instance(plan: &Plan, name: &str) -> Result<String> {
+async fn create_instance(plan: &ImportPlan, name: &str) -> Result<String> {
     let name = name.trim();
     let name = if name.is_empty() {
         plan.name.as_str()
