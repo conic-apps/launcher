@@ -3185,11 +3185,6 @@ msgstr "In progress"
 
 #: ui
 msgctxt "NotificationText"
-msgid "Version {} will be applied when the launcher exits"
-msgstr "Version {} will be applied when the launcher exits"
-
-#: ui
-msgctxt "NotificationText"
 msgid "{}"
 msgstr "{}"
 

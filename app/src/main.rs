@@ -138,7 +138,7 @@ fn main() {
         ui.global::<AppConfig>()
             .set_update_self_updating(usecases::update::is_self_updating());
         if shared.borrow().auto_update && usecases::update::is_self_updating() {
-            spawn_update(&shared, notices);
+            spawn_update(&shared);
         }
     }
 
@@ -272,9 +272,9 @@ fn run_exit_work() {
 }
 
 /// Starts one background update check and staging download.
-fn spawn_update(shared: &Rc<RefCell<config::Config>>, notices: shared::notification::NoticeSink) {
+fn spawn_update(shared: &Rc<RefCell<config::Config>>) {
     let channel = shared.borrow().update_channel.clone();
-    crate::support::runtime::spawn(usecases::update::run(channel, notices));
+    crate::support::runtime::spawn(usecases::update::run(channel));
 }
 
 /// Removes the per-run scratch directory. It has a fresh UUID name each launch,

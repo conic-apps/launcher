@@ -3180,11 +3180,6 @@ msgstr "W toku"
 
 #: ui
 msgctxt "NotificationText"
-msgid "Version {} will be applied when the launcher exits"
-msgstr "Wersja {} zostanie zastosowana po zamknięciu launchera"
-
-#: ui
-msgctxt "NotificationText"
 msgid "{}"
 msgstr "{}"
 

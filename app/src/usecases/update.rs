@@ -3,13 +3,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The self-update use case: decide whether to look, run the check, and stage the
-//! bundle. Once a bundle is staged it posts one notice; the swap happens as the
-//! process exits, and the next launch with the new build posts the matching
-//! "updated" notice. Failures stay in the log.
+//! bundle. The swap happens as the process exits; the next launch with the new
+//! build posts the matching "updated" notice. Failures stay in the log.
 
 use std::sync::OnceLock;
 
-use shared::notification::{Notice, NoticeKind, NoticeSink};
 use update::{Channel, InstallForm};
 
 /// The install form, detected once. Reading the marker walks the filesystem, so
@@ -55,7 +53,7 @@ pub(crate) fn applied_version() -> Option<String> {
     }
 }
 
-pub(crate) async fn run(configured_channel: config::UpdateChannel, notices: NoticeSink) {
+pub(crate) async fn run(configured_channel: config::UpdateChannel) {
     let Some(kind) = install_form().kind() else {
         log::info!("update check skipped: this install is managed by a package manager");
         return;
@@ -81,13 +79,10 @@ pub(crate) async fn run(configured_channel: config::UpdateChannel, notices: Noti
 
     log::info!("update {} is available; downloading", info.version);
     match update::download_and_stage(&info, kind, shared::silent()).await {
-        Ok(staged) => {
-            log::info!(
-                "update {} downloaded and staged; it will be applied as the launcher exits",
-                staged.version
-            );
-            notices(Notice::new(NoticeKind::UpdateReady).with_arg(staged.version));
-        }
+        Ok(staged) => log::info!(
+            "update {} downloaded and staged; it will be applied as the launcher exits",
+            staged.version
+        ),
         Err(error) => log::warn!("update download failed: {error}"),
     }
 }

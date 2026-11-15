@@ -3180,11 +3180,6 @@ msgstr "진행 중"
 
 #: ui
 msgctxt "NotificationText"
-msgid "Version {} will be applied when the launcher exits"
-msgstr "런처 종료 시 버전 {}이(가) 적용됩니다"
-
-#: ui
-msgctxt "NotificationText"
 msgid "{}"
 msgstr "{}"
 
