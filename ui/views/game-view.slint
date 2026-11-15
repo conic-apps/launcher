@@ -5,6 +5,8 @@
 import { GameIntro, GameState } from "../globals/game.slint";
 import { FocusManager } from "../globals/focus.slint";
 import { PageMotion } from "../globals/page-motion.slint";
+import { OverlayShadow } from "../globals/overlay-shadow.slint";
+import { Scrim } from "../components/display/scrim.slint";
 import { InstanceSummary } from "game/instance-summary.slint";
 import { InstancesList } from "game/instances-list.slint";
 import { GameFooterBar } from "game/footer.slint";
@@ -75,6 +77,13 @@ export component GameView inherits Rectangle {
 
     GameFooterBar {
         y: parent.height - self.height;
+    }
+
+    // The dim behind this screen's overlays: above the page's own content and
+    // below the instance-settings, content and account panels, which are
+    // mounted after it. The app root mounts the same layer for its overlays.
+    Scrim {
+        wanted: OverlayShadow.page-open;
     }
 
     // Declaration order is the z-order: settings below content, account on top.

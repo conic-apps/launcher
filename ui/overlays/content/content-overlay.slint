@@ -4,12 +4,13 @@
 
 import { Theme } from "../../theme.slint";
 
-// The content overlays' shared shell: a full-window scrim and a sliding
-// container. The screenshots viewer spans the window with only the scrim fading.
+// The content overlays' shared shell: the sliding container, over the `Scrim`
+// its band of the window mounts. The screenshots viewer spans the window and
+// only the scrim underneath fades.
 //
 // Only `y` moves: `opacity` or `transform` on the panel would put the subtree in
-// a render layer, and the renderer gives up above 8192px. The scrim fade lives
-// in its background colour. The scrim does not drag the window; a press closes.
+// a render layer, and the renderer gives up above 8192px. The overlay takes no
+// drag; a press on the scrim closes it.
 //
 // Showing one frame at the start value is what makes the entrance play: a hidden
 // element is never painted, so an unread animated property snaps to its target.
@@ -36,30 +37,11 @@ export component ContentOverlay inherits Rectangle {
     height: 100%;
     // The container travels up from below; clipping hides the part not arrived.
     clip: true;
-    // Alpha lives in the colour, not an element `opacity`, which would create a
-    // render layer for the whole panel.
-    background: #000000.with-alpha(0.502 * root.scrim-alpha);
+    background: transparent;
 
     // "closed" | "starting" | "shown" | "leaving" — `Dialog`'s machine.
     private property <string> phase: "closed";
     visible: root.phase != "closed";
-
-    // What the animated bindings read, one frame behind `phase`: Slint drops the
-    // first of two same-frame changes, so a fast close/reopen would make the
-    // panel jump. The timer means a frame only sees the latest state.
-    private property <string> settled: "closed";
-    // `running` must be an owned property: a constant-bound timer cannot be
-    // started by `restart()`, leaving the overlay parked below the window.
-    private property <bool> settling: false;
-    changed phase => { root.settling = true; }
-    settle-timer := Timer {
-        interval: 16ms;
-        running: root.settling;
-        triggered => {
-            root.settled = root.phase;
-            root.settling = false;
-        }
-    }
 
     changed overlay-visible => {
         if root.overlay-visible {
@@ -82,7 +64,7 @@ export component ContentOverlay inherits Rectangle {
         triggered => { root.phase = "shown"; }
     }
 
-    // The longest of the leave's two tracks (280ms slide, 100 + 200ms scrim).
+    // The slide's 280ms.
     leave-timer := Timer {
         interval: 300ms;
         running: root.phase == "leaving";
@@ -93,26 +75,18 @@ export component ContentOverlay inherits Rectangle {
         // `changed` does not fire for the value a component is created with.
         if root.overlay-visible {
             root.phase = "shown";
-            root.settled = "shown";
         }
     }
 
     // The container's offset: the window height while parked, 0 once arrived.
     // Each transition moves it, so the 400ms/280ms pair applies per direction.
     private property <length> panel-y:
-        root.settled == "shown" || root.settled == "starting" ? 0px : root.height;
-    private property <bool> leaving: root.settled == "leaving";
+        root.phase == "shown" || root.phase == "starting" ? 0px : root.height;
+    private property <bool> leaving: root.phase == "leaving";
 
     animate panel-y {
         duration: root.leaving ? 280ms : 400ms;
         easing: root.leaving ? cubic-bezier(0.47, 0, 1, 0.75) : cubic-bezier(0, 0.47, 0.25, 1);
-    }
-
-    private property <float> scrim-alpha: root.settled == "shown" ? 1.0 : 0.0;
-    animate scrim-alpha {
-        duration: 200ms;
-        delay: root.leaving ? 100ms : 0ms;
-        easing: ease-out-quad;
     }
 
     scrim-touch := TouchArea {

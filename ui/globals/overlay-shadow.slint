@@ -1,0 +1,40 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { AccountViewState } from "account-view.slint";
+import { CommandPaletteState } from "command-palette.slint";
+import { ContentState } from "content.slint";
+import { CrashState } from "crash.slint";
+import { InstanceSettingsState } from "instance-settings.slint";
+import { MusicState } from "music.slint";
+import { NewsState } from "news.slint";
+import { NotificationState } from "notifications.slint";
+import { SettingsShell } from "settings-shell.slint";
+
+// Which band of the window owns the dimming layer. The bands are exclusive, from
+// the top down: an overlay opened over another takes the dim over, so two open
+// overlays never darken the window twice. The dialog is not part of this — it
+// draws its own scrim above all of them.
+export global OverlayShadow {
+    // The palette dims the title bar the way a dialog does, so its scrim is
+    // mounted above the title bar and not in the shared layer below it.
+    private property <bool> palette: CommandPaletteState.visible;
+    // The layers the app root mounts over the page stack.
+    private property <bool> app: SettingsShell.overlay-open
+        || NewsState.visible
+        || NewsState.detail-visible
+        || MusicState.panel-open
+        || NotificationState.visible
+        || CrashState.visible;
+
+    /// The palette's band, mounted above the title bar.
+    in property <bool> palette-open: OverlayShadow.palette;
+    /// The app root's band, mounted under the title bar.
+    in property <bool> app-open: !OverlayShadow.palette && OverlayShadow.app;
+    /// The game screen's band, under the page's own panels.
+    in property <bool> page-open: !OverlayShadow.palette && !OverlayShadow.app && (
+        ContentState.open-panel != ""
+        || InstanceSettingsState.visible
+        || AccountViewState.visible);
+}
