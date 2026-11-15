@@ -5,7 +5,6 @@
 import { Theme } from "../theme.slint";
 import { Icons } from "../icons.slint";
 import { CommandPaletteState } from "../globals/command-palette.slint";
-import { NavigationButton } from "title-bar/navigation-button.slint";
 import { TitleBarActionButton } from "title-bar/title-bar-action-button.slint";
 import { SearchBar } from "title-bar/search-bar.slint";
 import { NewsState } from "../globals/news.slint";
@@ -147,7 +146,6 @@ export component TitleBar inherits Rectangle {
     in property <int> window-control-pressed: -1;
     in property <string> search-placeholder;
     in property <string> search-hotkey;
-    in property <string> current-page: "game";
     /// Whether background music is on at all; turning it off pauses the player and
     /// closes its panel.
     in property <bool> music-enabled: true;
@@ -218,8 +216,8 @@ export component TitleBar inherits Rectangle {
         }
     }
 
-    // Left navigation actions (settings, home), at left:16, or left:90 on macOS
-    // to clear the traffic lights — except in fullscreen, where AppKit hides them.
+    // Left actions (settings, home), at left:16, or left:90 on macOS to clear the
+    // traffic lights — except in fullscreen, where AppKit hides them.
     Rectangle {
         x: root.left-actions-start;
         width: 60px;
@@ -228,7 +226,9 @@ export component TitleBar inherits Rectangle {
         HorizontalLayout {
             spacing: 4px;
 
-            NavigationButton {
+            // Only an open overlay marks itself, so the gear carries the selected
+            // fill; home never does, whatever page is showing.
+            TitleBarActionButton {
                 icon-commands: Icons.stroke-commands("settings");
                 icon-stroke-width: root.stroked-icon-width;
                 selected: SettingsShell.overlay-open;
@@ -236,10 +236,9 @@ export component TitleBar inherits Rectangle {
                 clicked => { root.open-settings(); }
             }
 
-            NavigationButton {
+            TitleBarActionButton {
                 icon-commands: Icons.stroke-commands("house");
                 icon-stroke-width: root.stroked-icon-width;
-                selected: root.current-page == "game" && !SettingsShell.overlay-open;
                 accessible-label: @tr("Home");
                 clicked => { root.open-home(); }
             }
