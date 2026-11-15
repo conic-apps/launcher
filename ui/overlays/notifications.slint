@@ -336,10 +336,28 @@ component NotificationRow inherits Rectangle {
     private property <float> body-alpha: root.body-fading ? 0.0 : 1.0;
     private property <string> title: NotificationText.notification-title(root.item);
     private property <bool> has-title: root.title != "";
+    private property <length> body-height: body-text.preferred-height;
+    // The card hugs its body; the floor keeps a one-line notice a card rather
+    // than a strip.
+    private property <length> card-height: max(68px,
+        root.body-height + (root.has-title ? 38px : 20px));
+    // Only an untitled card has the floor's spare height to centre its body in.
+    private property <length> body-y: root.has-title ? 28px
+        : (root.card-height - root.body-height) / 2;
+    // A stack consumes the slot, not the card. Collapsing it on the way out is
+    // what glides the rows below up, now that no fixed pitch fits two heights.
+    private property <bool> slot-closing: root.leaving || root.clearing || root.falling;
 
     width: 100%;
-    height: 68px;
+    height: root.slot-closing ? 0px : root.card-height;
     background: transparent;
+
+    animate height {
+        duration: 200ms;
+        // A toss keeps its slot until the card is nearly gone.
+        delay: root.falling ? 250ms : root.clearing ? root.clear-index * 40ms : 0ms;
+        easing: cubic-bezier(0.33, 1, 0.68, 1);
+    }
 
     animate phase-dx, phase-alpha {
         duration: root.leaving ? 200ms : 240ms;
@@ -357,11 +375,11 @@ component NotificationRow inherits Rectangle {
         easing: ease-out-quad;
     }
 
-    // The wrapper's `y` belongs to the stack; the card moves inside it, so fall
+    // The slot's height belongs to the stack; the card keeps its own, so fall
     // and reflow animate different properties.
     card := Rectangle {
         width: 100%;
-        height: 68px;
+        height: root.card-height;
         x: root.phase-dx + root.clear-dx + root.fall-dx;
         y: root.fall-dy;
         transform-origin: { x: self.width / 2, y: self.height / 2 };
@@ -424,20 +442,16 @@ component NotificationRow inherits Rectangle {
             vertical-alignment: center;
         }
 
-        Text {
+        body-text := Text {
             x: 52px;
-            y: root.has-title ? 28px : 10px;
+            y: root.body-y;
             width: root.width - 92px;
-            height: root.has-title ? root.height - 34px : root.height - 20px;
+            height: root.body-height;
             text: NotificationText.notification-body(root.item);
             color: Theme.text;
             font-size: 12px;
             wrap: word-wrap;
-            // `elide` with `max-lines` drops the first line here, so a titled card
-            // clips instead; the instance name starts the sentence.
-            max-lines: root.has-title ? 2 : 3;
-            overflow: root.has-title ? clip : elide;
-            vertical-alignment: root.has-title ? top : center;
+            vertical-alignment: top;
         }
 
         dismiss-button := Rectangle {
@@ -555,7 +569,8 @@ component NotificationRow inherits Rectangle {
 component NotificationToast inherits Rectangle {
     in property <NotificationItem> item;
     width: 100%;
-    height: 68px;
+    // Follows the card's slot, which collapses itself on the way out.
+    height: card.height;
     background: transparent;
 
     private property <int> remaining-ms: 5000;
@@ -597,7 +612,6 @@ export component NotificationToasts inherits Rectangle {
     background: transparent;
 
     private property <length> toast-width: 320px;
-    private property <length> toast-pitch: 76px;
     private property <length> task-toast-pitch: 84px;
     private property <length> toast-margin: 16px;
     private property <length> task-toast-height: max(0px, TaskState.toasts.length * root.task-toast-pitch - 8px);
@@ -626,19 +640,20 @@ export component NotificationToasts inherits Rectangle {
         x: root.width - root.toast-width - root.toast-margin;
         y: root.notification-y;
         width: root.toast-width;
-        height: max(0px, NotificationState.toasts.length * root.toast-pitch - 8px);
+        height: toast-layout.preferred-height;
 
         animate y {
             duration: 260ms;
             easing: cubic-bezier(0.33, 1, 0.68, 1);
         }
 
-        for item[i] in NotificationState.toasts: NotificationToast {
-            item: item;
-            y: i * root.toast-pitch;
-            animate y {
-                duration: 260ms;
-                easing: cubic-bezier(0.33, 1, 0.68, 1);
+        // A preview's height follows its text, so the stack has to be a layout;
+        // the row collapses its own slot on the way out.
+        toast-layout := VerticalLayout {
+            spacing: 8px;
+
+            for item in NotificationState.toasts: NotificationToast {
+                item: item;
             }
         }
     }
@@ -834,21 +849,17 @@ export component NotificationOverlay inherits Rectangle {
                     }
                 }
 
-                // Absolute rows so one outliving the card above can glide to its
-                // new slot; a layout would snap it.
-                notifications-stack := Rectangle {
-                    height: max(0px, NotificationState.notifications.length * 76px - 8px);
+                // A card's height follows its text, so the rows stack in a layout
+                // instead of at a pitch. A leaving row collapses its own slot,
+                // which is what glides the rows below into place.
+                notifications-layout := VerticalLayout {
+                    spacing: 8px;
 
                     for item[i] in NotificationState.notifications: NotificationRow {
                         item: item;
-                        y: i * 76px;
                         clearing: root.clearing;
                         clear-index: i;
                         slide-on-exit: false;
-                        animate y {
-                            duration: 260ms;
-                            easing: cubic-bezier(0.33, 1, 0.68, 1);
-                        }
                         // During Clear all, rows survive until the list timer drops
                         // them; an individual exit must not break the stagger.
                         finished => {
