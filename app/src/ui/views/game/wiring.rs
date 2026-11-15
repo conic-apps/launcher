@@ -6,6 +6,22 @@
 
 use super::*;
 
+/// Closes the instance menu when the window loses focus.
+///
+/// A menu belongs to the window it opened in, so a click on another window is an
+/// outside click this process never sees; the focus event stands in for it.
+pub fn watch_menu_focus(window: &window::WindowService<App>) {
+    let weak = window.component_weak();
+    window.on_focus_changed(move |focused| {
+        if focused {
+            return;
+        }
+        if let Some(ui) = weak.upgrade() {
+            ui.global::<InstanceMenu>().set_visible(false);
+        }
+    });
+}
+
 pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     let controller = Rc::new(RefCell::new(GameController::new(config)));
     // The list model is handed to the view once and then kept in sync in place by

@@ -112,10 +112,10 @@ export component InstanceMenuOverlay inherits Rectangle {
 
     // The same reveal the dropdowns use: a clipped viewport that grows from the
     // anchor, with the panel kept at its final size behind it. Growing the panel
-    // itself reallocates the layer its shadow and opacity are drawn through on
-    // every frame. Downwards the top edge stays on the pointer and the rows are
-    // revealed from the first one down; upwards the bottom edge stays on the
-    // pointer and they are revealed from the last one up.
+    // itself reallocates the layer its opacity is drawn through on every frame.
+    // Downwards the top edge stays on the pointer and the rows are revealed from
+    // the first one down; upwards the bottom edge stays on the pointer and they
+    // are revealed from the last one up.
     private property <length> revealed: InstanceMenu.visible ? root.natural-height : 0px;
     private property <float> panel-opacity: InstanceMenu.visible ? 1.0 : 0.0;
     animate revealed, panel-opacity {
@@ -135,6 +135,22 @@ export component InstanceMenuOverlay inherits Rectangle {
         enabled: root.revealed > 0.5px;
         scroll-event(event) => { accept }
         clicked => { InstanceMenu.close(); }
+    }
+
+    // The shadow is cast here rather than by the panel: the viewport below clips
+    // its children, which would cut the whole shadow away and leave the panel
+    // flat. A transparent background still casts a shadow, so this draws the
+    // shadow and nothing else; following `revealed` keeps its edges on the
+    // panel's while the menu opens and closes.
+    Rectangle {
+        x: root.panel-x;
+        y: root.flip-y ? root.panel-y + root.natural-height - root.revealed : root.panel-y;
+        width: root.menu-width;
+        height: root.revealed;
+        background: transparent;
+        border-radius: Theme.dialog-border-radius;
+        drop-shadow-color: #4500611d;
+        drop-shadow-blur: 10px;
     }
 
     viewport := Rectangle {
@@ -158,8 +174,6 @@ export component InstanceMenuOverlay inherits Rectangle {
             border-width: 1px;
             border-color: Theme.controllers-border;
             background: Theme.base;
-            drop-shadow-color: #4500611d;
-            drop-shadow-blur: 10px;
 
             rows := VerticalLayout {
                 padding: 6px;
