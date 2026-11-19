@@ -1,0 +1,124 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+
+// One of the platform's own window controls, as the platform draws it. The glyph
+// and fills come from `src/native/windows/caption.rs`. The fill is published as
+// colours rather than baked into the bitmap so it can be interpolated, giving
+// hover and press a transition.
+export struct WindowControl {
+    /// 0 minimize, 1 maximize (or restore), 2 close.
+    index: int,
+    /// The glyph at rest, in the caption's own ink.
+    glyph: image,
+    /// The same glyph in the ink that reads on `plate`.
+    plate-glyph: image,
+    /// Whether this control's fill is an opaque plate rather than a translucent
+    /// wash, so its glyph changes ink. Only close is.
+    plate: bool,
+    /// The fill behind the glyph on hover.
+    hover-fill: color,
+    /// What the press adds on top of `hover-fill`. Compositing `a` and `b` gives
+    /// `a + b - a·b`, so the increment is `(pressed - hover) / (1 - hover)`;
+    /// `src/native/windows/caption.rs` computes it.
+    press-fill: color,
+}
+
+// The controls are non-client area, so the system hit tests and clicks them and
+// reports the pointer through `window-control-hovered` / `-pressed`. No
+// TouchArea or callback: the platform owns the presses, so a handler here would
+// never fire. The platform places them with the same inset this component is
+// given.
+export component SystemWindowControl inherits Rectangle {
+    in property <WindowControl> control;
+    in property <int> hovered: -1;
+    in property <int> pressed: -1;
+
+    width: 46px;
+    height: 100%;
+
+    // How far into the control the pointer is: 0 at rest, 1 hovered, 2 pressed.
+    // Two numbers so press can be quicker than hover and ride on top of it.
+    private property <float> hover-level: root.hovered == root.control.index ? 1 : 0;
+    private property <float> press-level: root.pressed == root.control.index ? 1 : 0;
+    animate hover-level {
+        duration: 120ms;
+        easing: ease-out;
+    }
+    animate press-level {
+        duration: 60ms;
+        easing: ease-out;
+    }
+    private property <float> level: root.hover-level + root.press-level;
+
+    // Two fill layers whose opacities carry the ramp, because `level` runs 0, 1, 2.
+    background: Colors.transparent;
+
+    Rectangle {
+        background: root.control.hover-fill;
+        opacity: clamp(root.level, 0, 1);
+    }
+
+    Rectangle {
+        background: root.control.press-fill;
+        opacity: clamp(root.level - 1, 0, 1);
+    }
+
+    // The glyph in whichever ink the fill needs. Only close changes ink; the
+    // others keep one image at full opacity so they are not composited twice
+    // mid-transition, which would thin the glyph out.
+    Image {
+        source: root.control.glyph;
+        width: 100%;
+        height: 100%;
+        opacity: root.control.plate ? 1 - clamp(root.level, 0, 1) : 1;
+        // The artwork is rendered at this rectangle's device size.
+        image-fit: fill;
+    }
+
+    Image {
+        source: root.control.plate-glyph;
+        width: 100%;
+        height: 100%;
+        opacity: root.control.plate ? clamp(root.level, 0, 1) : 0;
+        image-fit: fill;
+    }
+}
+
+// The controls the app draws itself, because Linux has none of its own. Unlike
+// `SystemWindowControl` these are ordinary buttons with a callback.
+export component LinuxWindowControlButton inherits Rectangle {
+    in property <string> icon-commands;
+    callback clicked;
+
+    width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    background: touch.pressed ? Theme.overlay-0
+        : touch.has-hover ? Theme.surface-2
+        : Theme.surface-1;
+
+    accessible-role: button;
+    accessible-action-default => { root.clicked(); }
+
+    Path {
+        commands: root.icon-commands;
+        viewbox-width: 512;
+        viewbox-height: 512;
+        width: 14px;
+        height: 14px;
+        x: (root.width - self.width) / 2;
+        y: (root.height - self.height) / 2;
+        fill: transparent;
+        stroke: Theme.default-text-color;
+        stroke-width: 1px;
+        stroke-line-cap: LineCap.round;
+        stroke-line-join: LineJoin.round;
+    }
+
+    touch := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}

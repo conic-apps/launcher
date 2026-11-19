@@ -21,8 +21,8 @@ export global Background {
     // background covers it, which also stops the renderer.
     in-out property <bool> world-shown: true;
     // Whether the camera is advancing right now. The component turns this into
-    // a per-frame dependency (see `window-background.slint`), which is what
-    // keeps Slint painting the world while it moves.
+    // a per-frame dependency (see `ui/window/window-background.slint`), which is
+    // what keeps Slint painting the world while it moves.
     in-out property <bool> camera-moving: false;
     // Set when the renderer has no OpenGL, so the world is not drawn at all and
     // the background is the hyperbola sky alone. The settings drawer greys out the

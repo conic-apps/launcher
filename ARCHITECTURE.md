@@ -54,6 +54,10 @@ and `native/` are usable from any layer, and `native/` is the only one of them t
   `ui::services::report::{report, deliver}`, or through a crate's `Sink`, whose implementation is a
   `ui/` port.
 
+`ui/window/` is the one bucket with no `app/src/ui/` counterpart: it is the window's own chrome, not
+a surface. Its Rust side is `app/src/support/native/`, which produces the window-control model and
+sets the window attributes, and `crates/window` behind that.
+
 ## Crate map
 
 | Crate             | Purpose                                                                                                                      |
