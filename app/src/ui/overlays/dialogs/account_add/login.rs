@@ -7,25 +7,22 @@
 use super::*;
 
 use account::authcode;
+use url::Url;
 
 /// Recomputes whether the offline form can be submitted. The test trims the
 /// username; Slint has no `trim`, so it lives here.
 pub(crate) fn refresh_offline_submit(state: &AccountAddState) {
-    let can_submit = crate::usecases::account_login::offline_can_submit(
-        &state.get_offline_username(),
-        state.get_offline_uuid_invalid(),
-    );
-    state.set_offline_can_submit(can_submit);
+    let input_invalid =
+        state.get_offline_username().trim().is_empty() || state.get_offline_uuid_invalid();
+    state.set_offline_can_submit(input_invalid);
 }
 
 /// The same for the Yggdrasil form, whose three fields are trimmed as well.
 pub(crate) fn refresh_yggdrasil_submit(state: &AccountAddState) {
-    let ready = crate::usecases::account_login::yggdrasil_can_submit(
-        &state.get_yggdrasil_api_root(),
-        &state.get_yggdrasil_username(),
-        &state.get_yggdrasil_password(),
-    );
-    state.set_yggdrasil_can_submit(ready);
+    let input_invalid = state.get_yggdrasil_api_root().trim().is_empty()
+        || state.get_yggdrasil_username().trim().is_empty()
+        || state.get_yggdrasil_password().trim().is_empty();
+    state.set_yggdrasil_can_submit(input_invalid);
 }
 
 /// Picks a default account, reloads the account list and dismisses the dialog after
@@ -331,10 +328,8 @@ pub(crate) fn show_profile_chooser(ui: &App, credentials: &PendingYggdrasil) {
                 .unwrap_or_default(),
                 // The same profile on the same server is already added.
                 added: existing.yggdrasil.iter().any(|account| {
-                    crate::usecases::account_login::same_api_root(
-                        &account.api_root,
-                        &credentials.api_root,
-                    ) && account.profile.name == profile.name
+                    same_api_root(&account.api_root, &credentials.api_root)
+                        && account.profile.name == profile.name
                         && account.profile.id == profile.id
                 }),
                 selected: false,
@@ -350,6 +345,17 @@ pub(crate) fn show_profile_chooser(ui: &App, credentials: &PendingYggdrasil) {
     });
     state.set_yggdrasil_has_selection(false);
     state.set_yggdrasil_view("profiles".into());
+}
+
+/// Compares API roots: the same host and port, and the same path with any
+/// trailing slashes ignored.
+fn same_api_root(a: &str, b: &str) -> bool {
+    let (Ok(a), Ok(b)) = (Url::parse(a), Url::parse(b)) else {
+        return false;
+    };
+    a.host_str() == b.host_str()
+        && a.port() == b.port()
+        && a.path().trim_end_matches('/') == b.path().trim_end_matches('/')
 }
 
 /// Stores one account per chosen profile, each with its own identifier and copy
@@ -386,4 +392,26 @@ pub(crate) fn add_yggdrasil_accounts(
         }
         crate::ui::services::report::report(&weak, move |ui| finish_add(&ui));
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn api_roots_match_ignoring_a_trailing_slash() {
+        assert!(same_api_root(
+            "https://a.example/api",
+            "https://a.example/api/"
+        ));
+        assert!(!same_api_root(
+            "https://a.example/api",
+            "https://b.example/api"
+        ));
+        assert!(!same_api_root(
+            "https://a.example:8080/api",
+            "https://a.example/api"
+        ));
+        assert!(!same_api_root("not a url", "https://a.example/api"));
+    }
 }

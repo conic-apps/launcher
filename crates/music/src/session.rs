@@ -2,8 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The saved track and playback position, `{ path, current_time }` in a JSON file
-//! next to `config.toml` in the shared data directory.
+//! The saved track and playback position, `{ path, current_time }` in
+//! `states/music_session.json` under the launcher's data directory.
 
 use std::path::PathBuf;
 
@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use storage::LOCATIONS;
 
 fn session_file() -> PathBuf {
-    LOCATIONS.launcher.root.join("music_session.json")
+    LOCATIONS.launcher.states.join("music_session.json")
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]

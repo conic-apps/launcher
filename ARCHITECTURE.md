@@ -68,6 +68,12 @@ next to the executable. Debug builds append `-debug` to the folder name.
 because the config file is inside the launcher location, so it is written to a `locations.toml`
 bootstrap file at the platform anchor and applied on the next start.
 
+Inside the launcher location, `config.toml` is the settings and `states/` is the reconstructible
+session state — the selected instance, the saved track, the version reminder, the staged-update
+records. `states/` may be deleted at any time to get the defaults back; everything else there
+(`accounts/`, `cache/`, `logs/`, `music/`, `native/`, `favorites.json`, `statistics.json`) is data
+the user would miss.
+
 A first run (`Config.setup_completed` is `false`) opens the setup wizard. Its storage step, right
 after the language step, offers the same three roots; finishing writes the config into the chosen
 launcher directory, moves the data there and restarts, so a mid-wizard location change does not lose

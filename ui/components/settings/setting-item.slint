@@ -28,9 +28,6 @@ export component SettingItem inherits Rectangle {
     in property <bool> resetable: false;
     /// Shows a spinner after the title while the row's value is loading.
     in property <bool> loading: false;
-    /// A second string after the title, for the value the row is about. Slint's
-    /// only slot, `@children`, is already spent on the chevron.
-    in property <string> title-suffix: "";
     // Hover/pressed state a parent can drive for non-navigable clickable rows.
     in property <bool> hovered: false;
     in property <bool> pressed: false;
@@ -183,21 +180,6 @@ export component SettingItem inherits Rectangle {
                             font-weight: Theme.font-weight-normal;
                             color: Theme.default-text-color.transparentize(0.1);
                             overflow: elide;
-                        }
-                    }
-
-                    if root.title-suffix != "": title-suffix-box := HorizontalLayout {
-                        // 8px on the right separates the suffix from the reset
-                        // button and chevron; `Text` has no padding of its own.
-                        cross-axis-alignment: center;
-                        padding-right: 8px;
-
-                        Text {
-                            text: root.title-suffix;
-                            font-size: 14px;
-                            font-weight: Theme.font-weight-normal;
-                            color: Theme.default-text-color.transparentize(0.1);
-                            opacity: 0.8;
                         }
                     }
 

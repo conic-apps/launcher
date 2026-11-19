@@ -4,7 +4,8 @@
 
 //! Downloading a bundle to the staging directory and remembering it for the next
 //! launch: the signature is verified as the download streams, so a large bundle is
-//! never held in memory, and a verified bundle is recorded in `pending.json`.
+//! never held in memory, and a verified bundle is recorded in
+//! `states/update_pending.json`.
 
 use std::path::{Path, PathBuf};
 
@@ -38,7 +39,10 @@ pub fn updates_dir() -> PathBuf {
 }
 
 fn pending_path() -> PathBuf {
-    updates_dir().join("pending.json")
+    storage::LOCATIONS
+        .launcher
+        .states
+        .join("update_pending.json")
 }
 
 pub fn read_pending() -> Result<Option<Staged>> {
@@ -64,7 +68,7 @@ pub fn clear_pending() -> Result<()> {
 }
 
 fn write_pending(staged: &Staged) -> Result<()> {
-    std::fs::create_dir_all(updates_dir())?;
+    std::fs::create_dir_all(&storage::LOCATIONS.launcher.states)?;
     let bytes = serde_json::to_vec_pretty(staged)?;
     std::fs::write(pending_path(), bytes)?;
     Ok(())
@@ -180,7 +184,7 @@ pub async fn download_and_stage(
         .await
         .map_err(|error| {
             // The record is written below, so a failed rename here means a
-            // `pending.json` that points at nothing: the next launch would try to
+            // pending record that points at nothing: the next launch would try to
             // apply an artifact that was never moved into place.
             log::error!(
                 "could not move the staged update {} into place: {error}",

@@ -12,7 +12,6 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::error::Result;
-use crate::staged::updates_dir;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Applied {
@@ -26,11 +25,14 @@ impl Applied {
 }
 
 fn applied_path() -> PathBuf {
-    updates_dir().join("applied.json")
+    storage::LOCATIONS
+        .launcher
+        .states
+        .join("update_applied.json")
 }
 
 pub fn record(version: &str) -> Result<()> {
-    std::fs::create_dir_all(updates_dir())?;
+    std::fs::create_dir_all(&storage::LOCATIONS.launcher.states)?;
     let bytes = serde_json::to_vec_pretty(&Applied {
         version: version.to_owned(),
     })?;

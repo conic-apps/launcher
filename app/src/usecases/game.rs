@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The instance list's own state, kept between runs: the selected instance, the
-//! sort order, its grouping and the groups left open. It goes to a file next to
-//! `config.toml` in the shared data directory.
+//! sort order, its grouping and the groups left open. It goes to `states/` in the
+//! launcher's data directory.
 //!
 //! Reading is forgiving: a `sort` or `group_mode` value that names no known mode
 //! falls back to that setting's default, so an older or hand-edited file loses
@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 use storage::LOCATIONS;
 
 fn state_file() -> PathBuf {
-    LOCATIONS.launcher.root.join("instance_view.json")
+    LOCATIONS.launcher.states.join("instance_view.json")
 }
 
 /// How the list is ordered.

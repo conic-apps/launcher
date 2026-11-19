@@ -284,8 +284,6 @@ component SettingsStep inherits ZoomTransition {
         SettingItem {
             group-last: true;
             title: @tr("CreateInstance" => "Loader version");
-            // Shown as a title suffix.
-            title-suffix: CreateInstanceState.minecraft-version;
             icon: "extension-puzzle";
             description: CreateInstanceState.minecraft-version != ""
                 ? (CreateInstanceState.mod-loader-version != ""

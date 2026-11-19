@@ -6,7 +6,6 @@
 //! here mentions Slint, the `ui/` modules or `slint_backend`; a frontend owns the
 //! state and the ports and calls in.
 
-pub(crate) mod account_login;
 pub(crate) mod content;
 pub(crate) mod content_install;
 pub(crate) mod crash_report;

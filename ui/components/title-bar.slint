@@ -97,6 +97,7 @@ component SystemWindowControl inherits Rectangle {
 
     // Two fill layers whose opacities carry the ramp, because `level` runs 0, 1, 2.
     background: Colors.transparent;
+
     Rectangle {
         background: root.control.hover-fill;
         opacity: clamp(root.level, 0, 1);

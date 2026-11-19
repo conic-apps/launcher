@@ -22,6 +22,10 @@ pub struct LauncherLocation {
     pub music: PathBuf,
     /// The Conic Nexus dynamic library and any other native helper.
     pub native: PathBuf,
+    /// Reconstructible session state — the selected instance, the saved track,
+    /// the version reminder, the staged-update records. Losing it costs a
+    /// default, never data.
+    pub states: PathBuf,
     /// The per-run scratch directory, under the OS temp directory rather than
     /// the root: it is deleted on exit and must never be confused with data.
     pub temp: PathBuf,
@@ -48,6 +52,7 @@ impl LauncherLocation {
             logs: root.join("logs"),
             music: root.join("music"),
             native: root.join("native"),
+            states: root.join("states"),
             temp,
             config: root.join("config.toml"),
             root,
@@ -74,6 +79,12 @@ impl LauncherLocation {
             log::warn!(
                 "Could not create the Conic Nexus directory {}: {error}",
                 self.native.display()
+            );
+        }
+        if let Err(error) = std::fs::create_dir_all(&self.states) {
+            log::warn!(
+                "Could not create the state directory {}: {error}",
+                self.states.display()
             );
         }
     }

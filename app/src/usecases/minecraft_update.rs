@@ -6,7 +6,7 @@
 //!
 //! The first check after a reminder is switched on records the current latest
 //! without a notice, and switching it off forgets that record. The recorded pair
-//! lives beside `config.toml` rather than in it: it remembers what was shown, not
+//! lives in `states/` rather than in the config: it remembers what was shown, not
 //! a setting the user edits.
 
 use std::path::PathBuf;
@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use storage::LOCATIONS;
 
 fn state_file() -> PathBuf {
-    LOCATIONS.launcher.root.join("minecraft_reminder.json")
+    LOCATIONS.launcher.states.join("minecraft_reminder.json")
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
