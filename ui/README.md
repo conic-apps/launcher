@@ -32,9 +32,9 @@ where a file goes:
   distinguishes it from `components/`: the title bar's search, gear, news, music and notification
   buttons are fixed parts of this app's window frame, not reusable widgets.
 - **`screens/`** — the destinations `Navigation` can navigate to: one `*-screen.slint` each
-  (`game-screen`, `launch-screen`, `setup-screen`, `todo-placeholder`) with a same-named folder for
-  its parts (`game/`, `setup/`). A screen is exactly a navigation destination, and nothing else is:
-  a wizard's or dialog's inner step is a step (or phase), never a screen.
+  (`game-screen`, `launch-screen`, `setup-screen`) with a same-named folder for its parts (`game/`,
+  `setup/`). A screen is exactly a navigation destination, and nothing else is: a wizard's or
+  dialog's inner step is a step (or phase), never a screen.
 - **`overlays/`** — everything drawn above a screen. The app-root layers (`dialog-root`,
   `dropdown-overlay`, `instance-menu`, `description-tooltip`, `command-palette`, `music-player`,
   `settings-overlay`, `instance-settings`) sit here; a dialog _flow_ gets a folder
