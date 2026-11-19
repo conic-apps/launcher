@@ -1,7 +1,8 @@
 # Windows packaging payload
 
 Everything the `.msi` installs that is **not** the executable itself, plus the executable's icon.
-Both files are **committed**, and both are read by `tools/package-windows.ps1`.
+Both files are **committed**, and both are read by `tools/package-windows.ps1`, which builds the
+`.msi` with `wix build` and copies the standalone `.exe` beside it.
 
 | Consumer                       | Reads                                        |
 | ------------------------------ | -------------------------------------------- |
@@ -28,8 +29,8 @@ preprocessor, which `package-windows.ps1` passes as `-d`:
 The WiX v4+ schema (`http://wixtoolset.org/schemas/v4/wxs`), which is WiX 5, 6 and 7. **Not** the
 WiX v3 dialect: that variant is EOL, and `candle`/`light` read a different XML language rather than
 an older spelling of this one. The workflow installs the v6 tool with `dotnet tool install` on both
-runners — see [`CONTRIBUTING.md`](../../CONTRIBUTING.md#windows) for why not the v3 one the x64
-runner image happens to carry.
+runners — see [The script and CI](#the-script-and-ci) for why not the v3 one the x64 runner image
+happens to carry.
 
 Three spellings in here that are WiX 6's and not what the older documentation suggests, each of
 which is a build error rather than a warning:
@@ -42,6 +43,26 @@ which is a build error rather than a warning:
   `DowngradeErrorMessage` unless `AllowDowngrades="yes"`, and then _rejects_
   `AllowSameVersionUpgrades` outright. The pair above is the only combination that both upgrades a
   same-version package and still refuses a downgrade.
+
+## The script and CI
+
+The script and its CI job carry a few decisions the payload files above do not:
+
+- **PowerShell, not bash.** `wix`, `msiexec` and `dotnet` are Windows programs, and a bash script
+  driving them spends its length fighting Git-Bash's path rewriting on exactly the strings the
+  installer needs verbatim.
+- **WiX 6 is installed as a pinned .NET tool on both runners, not taken from the image.**
+  `windows-2025` carries WiX v3.14.1, `windows-11-arm` carries none, and WiX v3 is EOL — the image's
+  copy would mean two dialects for one `.wxs`. The version is pinned (6.0.2): an installer that
+  builds one week and not the next is not a reproducible release.
+- **`WixToolset.UI.wixext` is installed explicitly.** Without it the MSI builds and installs with no
+  interface at all, so its absence is not an error.
+- **CI builds each architecture natively** (`windows-2025`, `windows-11-arm`), for the reason
+  [`../macos/README.md`](../macos/README.md) gives. The script therefore has no `--target` and reads
+  its architecture out of `rustc -vV`.
+- **The workflow installs and uninstalls the MSI.** `wix` validates XML; `msiexec` is what refuses a
+  package the processor type does not support, and it is the only check that finds the packaged
+  binary is the one that was built.
 
 ## Two versions
 

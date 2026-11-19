@@ -101,7 +101,7 @@ Laden Sie das Installationspaket für Ihre Plattform von
 ## Aus dem Quellcode erstellen
 
 Stellen Sie sicher, dass [Rust 1.88+](https://rustup.rs/) installiert ist; unter Linux werden
-zusätzlich die [Build-Abhängigkeiten](../../CONTRIBUTING.md#linux-build-dependencies) benötigt.
+zusätzlich die [Build-Abhängigkeiten](../../packaging/README.md#linux-build-dependencies) benötigt.
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git

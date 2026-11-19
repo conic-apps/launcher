@@ -100,7 +100,7 @@ Platformunuza uygun kurulum dosyasını
 ## Kaynaktan derleme
 
 [Rust 1.88+](https://rustup.rs/) kurulu olduğundan emin olun; Linux'ta ayrıca
-[derleme bağımlılıkları](../../CONTRIBUTING.md#linux-build-dependencies) gerekir.
+[derleme bağımlılıkları](../../packaging/README.md#linux-build-dependencies) gerekir.
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git

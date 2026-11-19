@@ -100,7 +100,7 @@ Pobierz instalator dla swojej platformy z
 ## Budowanie ze źródeł
 
 Upewnij się, że zainstalowano [Rust 1.88+](https://rustup.rs/); w systemie Linux potrzebne są także
-[zależności budowania](../../CONTRIBUTING.md#linux-build-dependencies).
+[zależności budowania](../../packaging/README.md#linux-build-dependencies).
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
