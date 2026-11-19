@@ -288,6 +288,41 @@ async fn resolve_installer_java(
     )
 }
 
+/// Makes sure the Forge and NeoForge installers find a launcher profile they
+/// can consume before they are run.
+///
+/// The original is backed up rather than dropped, since it holds the official
+/// launcher's profiles and login, and the repair is reported in the install log.
+fn prepare_launcher_profiles(root: &Path, reporter: &ModLoaderReporter) {
+    match storage::ensure_launcher_profiles_at(root, storage::ProfilesPolicy::Repair) {
+        storage::ProfilesOutcome::Repaired { backups } => {
+            let originals = backups
+                .iter()
+                .map(|backup| backup.display().to_string())
+                .collect::<Vec<_>>()
+                .join(", ");
+            warn!(
+                "Replaced unusable launcher profiles in {}; the originals are at {originals}",
+                root.display()
+            );
+            reporter.report_installer_line(&format!(
+                "Replaced an unusable launcher profile; the original is saved as {}",
+                backups[0]
+                    .file_name()
+                    .map(|name| name.to_string_lossy())
+                    .unwrap_or_default()
+            ));
+        }
+        storage::ProfilesOutcome::Unusable(reason) => {
+            warn!(
+                "The launcher profile in {} is not usable: {reason}",
+                root.display()
+            );
+        }
+        storage::ProfilesOutcome::AlreadyUsable | storage::ProfilesOutcome::Created => {}
+    }
+}
+
 /// Installs the mod loader named by the runtime configuration.
 ///
 /// `java_path` is only used by the Java-based installers (Forge and NeoForge).

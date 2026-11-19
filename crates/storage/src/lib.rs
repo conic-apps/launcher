@@ -27,7 +27,9 @@ use once_cell::sync::Lazy;
 pub use bootstrap::{LocationOverrides, bootstrap_path, load_overrides, save_overrides};
 pub use instances::InstancesLocation;
 pub use launcher::LauncherLocation;
-pub use minecraft::MinecraftLocation;
+pub use minecraft::{
+    MinecraftLocation, ProfilesOutcome, ProfilesPolicy, ensure_launcher_profiles_at,
+};
 pub use platform::{APP_DIR_NAME, default_root, platform_anchor, platform_base};
 
 /// The resolved layout. Initialised before the logger and the config, which
