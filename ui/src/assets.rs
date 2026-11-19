@@ -33,8 +33,8 @@ pub mod skins {
     pub const WIDE_ZURI: &[u8] = include_bytes!("../assets/skins/wide/zuri.webp");
 }
 
-/// The 512px app icon, used where Slint's `Window.icon` cannot reach — the
-/// macOS Dock's `setApplicationIconImage:`.
+/// The 512px app icon, which `dock_icon` hands to the macOS Dock when the binary
+/// runs outside an `.app` bundle and so has no `CFBundleIconFile` to show.
 pub const APP_ICON_PNG: &[u8] = include_bytes!("../assets/images/app-icon.png");
 
 /// The card icon a save, mod, resource pack or pack falls back to when it has

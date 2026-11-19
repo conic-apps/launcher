@@ -11,10 +11,8 @@ two constraints:
   nowhere else, so a build machine that is not macOS cannot produce the `.icns`
   — and the `.app` bundle is assembled from files in this directory.
 * **One master, downsampled.** `ui/assets/logo.png` is the 4267px artwork.
-  The 512px `ui/assets/images/app-icon.png` is the macOS Dock icon (it is
-  embedded in the binary by `app/src/main.rs`), so it is also the worst possible
-  source for a `.icns`: macOS asks for 1024px, and upscaling produces the
-  blurriest possible result at the one size a Dock icon is judged at.
+  The 512px `ui/assets/images/app-icon.png` is a Dock icon and the wrong source
+  for a `.icns`: macOS asks for 1024px, so a `.icns` built from it is an upscale.
 
 `iconutil` takes a directory of pre-rendered PNGs in its own naming scheme rather
 than a master image, so the ladder is rendered here and handed over. The

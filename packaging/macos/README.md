@@ -21,9 +21,24 @@ Regenerate with `python3 tools/generate-icns.py`. It renders the ladder from
 `ui/assets/logo.png` and hands it to `iconutil`.
 
 **Not** from `ui/assets/images/app-icon.png`, which is also in the tree and looks like the
-obvious choice: that one is 512px and is embedded in the binary as the macOS Dock icon (see
-`app/src/main.rs`). macOS asks for a 1024px render for the 512x512@2x slot, so using it would mean
-upscaling the worst possible source at the one size a Dock icon is judged at.
+obvious choice: that one is 512px and is what `dock_icon` sets when the binary runs outside a
+bundle. macOS asks for a 1024px render for the 512x512@2x slot, so using it would mean upscaling
+the worst possible source at the one size a Dock icon is judged at.
+
+**The container around the artwork is IconServices', not the `.icns`'s.** Since macOS 26 a legacy
+`.icns` is not drawn as-is: the system masks it to a rounded container it draws itself, adds that
+container's border, and picks the variant the current light or dark appearance asks for — which is
+what changed every app's background after the update to 26. A tile baked into the artwork can only
+ever sit *inside* that container, as a rounded edge a few pixels in from the system's, with the
+container's own background showing in between; the artwork here therefore stays the bare mark on a
+transparent canvas, and the master's framing (the mark occupies about 82% of it) is what puts the
+mark at a sensible size once the system has scaled it into the container.
+
+The same rendering is why the app must not hand the Dock a bitmap of its own while running from a
+bundle. `setApplicationIconImage:` replaces the rendered icon outright, so the Dock shows the
+untiled artwork next to every other app's container — and the launch and close animations, which
+still draw the bundle icon, flash the container as it disappears. `dock_icon` only falls back to
+the embedded PNG when the bundle names no icon at all, which is the unpackaged case.
 
 `conic-launcher.iconset/` next to it is the rendered input, kept so the ladder that went in can be
 seen and diffed. It is not a place to hand-edit: the script regenerates it into a fresh directory on

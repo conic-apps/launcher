@@ -5,6 +5,25 @@
 //! Sets the macOS Dock and app-switcher icon, which the Slint `Window.icon`
 //! binding cannot reach; Windows and Linux use it in `app.slint`.
 
+/// Whether the running bundle names an icon of its own; false for an unpackaged
+/// run, which is the one case the embedded PNG is for.
+fn bundle_names_icon() -> bool {
+    use objc2::runtime::AnyObject;
+    use objc2::{class, msg_send};
+    use objc2_foundation::ns_string;
+
+    unsafe {
+        let bundle: *mut AnyObject = msg_send![class!(NSBundle), mainBundle];
+        // `CFBundleIconFile` names an `.icns`, `CFBundleIconName` an asset
+        // catalog entry; either is something IconServices can render.
+        let file: *mut AnyObject =
+            msg_send![bundle, objectForInfoDictionaryKey: ns_string!("CFBundleIconFile")];
+        let name: *mut AnyObject =
+            msg_send![bundle, objectForInfoDictionaryKey: ns_string!("CFBundleIconName")];
+        !file.is_null() || !name.is_null()
+    }
+}
+
 /// Defers [`set`] until the app has finished launching: AppKit discards an icon
 /// set earlier during its own launch.
 pub(super) fn install() {
@@ -29,12 +48,23 @@ pub(super) fn install() {
     }
 }
 
-/// Hands the embedded PNG to the shared `NSApplication`.
+/// Hands the embedded PNG to the shared `NSApplication`, unless the bundle has
+/// an icon for IconServices to render instead.
+///
+/// `setApplicationIconImage:` replaces the rendered icon with a raw bitmap, and
+/// since macOS 26 the rendering is what puts the artwork on a rounded container
+/// in the appearance's variant; a PNG skips it, so the Dock would show the bare
+/// artwork beside every other app's tile.
 fn set() {
     use objc2::runtime::AnyObject;
     use objc2::{class, msg_send};
 
     const ICON: &[u8] = conic_ui::assets::APP_ICON_PNG;
+
+    if bundle_names_icon() {
+        log::debug!(target: "shell", "the bundle's icon is left to IconServices");
+        return;
+    }
 
     unsafe {
         let data: *mut AnyObject = msg_send![
