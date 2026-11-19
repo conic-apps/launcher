@@ -1,5 +1,59 @@
 # The Conic Launcher Architecture
 
+## Architecture map
+
+Two relations carry the app's own layout: the three layers under `app/src/` read one way, and
+`app/src/ui/…` mirrors `ui/…` bucket for bucket.
+
+```text
+      +----------------------------------------------------------------------+
+      | app/src/main.rs      composition root                                |
+      | loads the config, seeds AppConfig, wires every surface's setup       |
+      +----------------------------------------------------------------------+
+                        |
+                        | constructs
+                        v
+      +----------------------------------------------------------------------+
+      | app/src/ui/          the Slint adapter                               |
+      | views/  overlays/  components/  services/                            |
+      | the only layer that names slint_backend                              |
+      +----------------------------------------------------------------------+
+                        |
+                        | calls
+                        v
+      +----------------------------------------------------------------------+
+      | app/src/usecases/    UI-neutral orchestration                        |
+      | launch  tasks (TaskCenter)  progress  generation::{Gate, Token}      |
+      | no file here mentions Slint, slint_backend or ui/                    |
+      +----------------------------------------------------------------------+
+                        |
+                        | calls
+                        v
+      +----------------------------------------------------------------------+
+      | crates/*             domain crates                                   |
+      | one capability each, independent of the UI                           |
+      +----------------------------------------------------------------------+
+```
+
+`app/src/support/` sits beside the chain rather than on it: `runtime`, `logs`, `json`, `formatting`
+and `native/` are usable from any layer, and `native/` is the only one of them that touches
+`slint_backend`.
+
+```text
+   app/src/ui/               ui/                         bucket
+   ----------------------   --------------------------  --------------------------------------
+   views/<surface>       --> views/<surface>.slint       the pages
+   overlays/<surface>    --> overlays/<surface>.slint    above a page: dialogs/, news/, settings/
+   components/<widget>   --> components/<widget>.slint   widgets, grouped by role
+   services/<concern>    --> globals/<domain>.slint      cross-surface state and delivery
+```
+
+- The arrow into `ui/` lands on a `globals/` singleton or on a property/callback of the surface
+  being wired: a widget is reachable from Rust no other way.
+- The way back is the report path, not a call. Work off the event loop reaches the UI through
+  `ui::services::report::{report, deliver}`, or through a crate's `Sink`, whose implementation is a
+  `ui/` port.
+
 ## Data Location
 
 The launcher resolves three storage roots at startup — the launcher's own data, the shared Minecraft
@@ -58,32 +112,15 @@ Python tooling in `tools/` is not part of any CI gate:
 
 ## App layering (`app/src/`)
 
-Three layers, one direction: `main.rs` → `ui/` → `usecases/` → `crates/*`, with `support/` usable by
-any of them.
-
-- **`support/`** — process and OS plumbing with no UI counterpart: `runtime`, `logs`, `json`,
-  `formatting`, and `native/` (the winit backend hook, the macOS traffic lights and Dock icon, the
-  Windows caption). `native/` is the window-shell driver and the one support module that touches
-  `slint_backend`.
-- **`usecases/`** — the app's use cases: UI-neutral orchestration over the domain crates. Nothing
-  here mentions Slint, `slint_backend` or `ui/`. A use case reports progress through a
-  `shared::Sink<T>` port and staleness through `usecases::generation::{Gate, Token}`.
-  `usecases::tasks::TaskCenter` is the registry of running work: it owns task ids, the cancel
-  policy and the completion notices, while `usecases::progress` flattens the download/install
-  progress vocabularies into one task stage.
-- **`ui/`** — the Slint adapter, and the only layer that touches `slint_backend`. It **mirrors the
-  interface crate bucket for bucket**: `app/src/ui/views/<surface>` ↔ `ui/views/…`,
-  `app/src/ui/overlays/<surface>` ↔ `ui/overlays/…`, `app/src/ui/components/<component>` ↔
-  `ui/components/…`, plus `app/src/ui/services/` for the cross-surface concerns (`report` — delivery
-  onto the event loop; `app_config` — the `AppConfig` adapter and locale; `scroll`; `notifications` —
-  the notification model and its action table; `tasks` — the task model, click targets and cancel
-  confirmation; `sessions` — the running-session fan-out). The mirror is by surface/component, not per `.slint`
-  file, and `ui/components/` does not repeat the `controls`/`display`/… role split.
-
-`main.rs` is the composition root: it loads the config, seeds `AppConfig`, and wires every surface's
-`setup`. A background task never touches the UI; it reports through
-`crate::ui::services::report::{report, deliver}` (or a crate's `Sink`, whose implementation lives in
-a `ui/` port).
+- **`support/`** — process and OS plumbing with no UI counterpart. `native/` is the window-shell
+  driver: the winit backend hook, the macOS traffic lights and Dock icon, the Windows caption.
+- **`usecases/`** — the app's use cases: UI-neutral orchestration over the domain crates. A use case
+  reports progress through a `shared::Sink<T>` port and staleness through
+  `usecases::generation::{Gate, Token}`.
+- **`ui/`** — the Slint adapter. The mirror is by surface/component, not per `.slint` file, and
+  `ui/components/` does not repeat the `controls`/`display`/… role split. `app/src/ui/services/`
+  holds the cross-surface concerns: `report` (delivery onto the event loop), `app_config`, `scroll`,
+  `notifications`, `tasks`, `sessions`.
 
 ## UI layout (`ui/`)
 
@@ -114,11 +151,9 @@ where a file goes:
   changelog reader — is `news/`, and the settings drawer's section bodies (`settings-general`,
   `settings-jvm`, …) are `settings/`.
 - **`globals/`** — one singleton per domain (`Navigation`, `AppConfig`, `ContentState`,
-  `PageMotion`, `SettingsShell`, `NotificationState`, `TaskState`, `OverlayShadow`, …). Slint
-  components are only
-  reachable from Rust through a global, and a global is also how cross-screen state is shared
-  without prop drilling; the owning `app/src/ui/…` surface wires each one, and the ones no single
-  surface owns (`scroll`, `tasks`) live in `app/src/ui/services/`.
+  `PageMotion`, `SettingsShell`, `NotificationState`, `TaskState`, `OverlayShadow`, …), and how
+  cross-screen state is shared without prop drilling; the ones no single surface owns (`scroll`,
+  `tasks`) live in `app/src/ui/services/`.
 
 ### Settings placement
 
