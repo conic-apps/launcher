@@ -9,7 +9,7 @@ artwork, skins and the two embedded fonts; `i18n/` the twelve `.po` catalogues, 
 ## Layout
 
 `app.slint` is the root `Window`, `theme.slint` the design tokens and `icons.slint` a `build.rs`
-product. Everything else is one of four buckets, and the bucket — not the feature — is what decides
+product. Everything else is one of five buckets, and the bucket — not the feature — is what decides
 where a file goes:
 
 - **`components/`** — reusable, feature-agnostic widgets, split by role:
@@ -17,13 +17,20 @@ where a file goes:
     `Select`, `DropdownSelect`, `Switch`, `SliderBar`, `ListItem`, `Progress`, `Loading`.
   - `containers/` — layout/behaviour wrappers: `ScrollView`, `ScrollViewHorizontal`,
     `SlideTransition`, `ZoomTransition`.
-  - `display/` — presentational: `AppIcon`, `AccountAvatar`, `InstanceCard`, `PaletteRow`, `Scrim`,
-    `WindowBackground`.
+  - `display/` — presentational: `AppIcon`, `AccountAvatar`, `InstanceCard`, `PaletteRow`, `Scrim`.
   - `settings/` — `SettingItem`, `SettingGroup`, `SettingCollapse`, `SettingReveal`.
   - `markdown/` — the `.slint` half of `app/src/ui/components/markdown/`.
-  - `title-bar.slint` plus a `title-bar/` folder of its private children (`title-bar-action-button`,
-    `search-bar`). A component gets a same-named folder only when it has private children, and keeps
-    them there rather than in `components/`.
+- **`window/`** — the window's own chrome, not a widget. A file belongs here when the platform
+  decides its geometry or how it is drawn (macOS's traffic-light inset, the Windows caption
+  buttons), when the platform owns the input (the caption buttons have no `TouchArea` and no
+  callback, because the system hit-tests and clicks them), or when Rust's native layer produces or
+  consumes the type (`WindowControl`, built by `app/src/support/native/windows/caption.rs`). It
+  holds `title-bar.slint` with a `title-bar/` folder of its private children
+  (`title-bar-action-button`, `search-bar`), `window-background.slint` — the window's back layer,
+  drawn under everything else — and `window-control.slint`, the platform-control contract the title
+  bar draws from. This is the one bucket allowed to hold app-specific chrome, which is what
+  distinguishes it from `components/`: the title bar's search, gear, news, music and notification
+  buttons are fixed parts of this app's window frame, not reusable widgets.
 - **`screens/`** — the destinations `Navigation` can navigate to: one `*-screen.slint` each
   (`game-screen`, `launch-screen`, `setup-screen`, `todo-placeholder`) with a same-named folder for
   its parts (`game/`, `setup/`). A screen is exactly a navigation destination, and nothing else is:

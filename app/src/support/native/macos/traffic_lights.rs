@@ -31,7 +31,7 @@ use objc2_foundation::{
     CGPoint, CGRect, NSNotification, NSNotificationCenter, NSString, ns_string,
 };
 
-/// Height of the custom title bar in `ui/components/title-bar.slint`; AppKit
+/// Height of the custom title bar in `ui/window/title-bar.slint`; AppKit
 /// centres the buttons inside it.
 const TITLEBAR_HEIGHT: f64 = 44.0;
 

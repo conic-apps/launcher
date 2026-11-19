@@ -3,7 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme, ThemeProvider } from "theme.slint";
-import { TitleBar, WindowControl } from "components/title-bar.slint";
+import { TitleBar } from "window/title-bar.slint";
+import { WindowControl } from "window/window-control.slint";
 import { AppConfig } from "globals/settings.slint";
 import { CommandPaletteState } from "globals/command-palette.slint";
 import { Navigation } from "globals/navigation.slint";
@@ -29,7 +30,7 @@ import { NewsState } from "globals/news.slint";
 import { OverlayShadow } from "globals/overlay-shadow.slint";
 import { Scrim } from "components/display/scrim.slint";
 import { WindowDrag } from "globals/window-drag.slint";
-import { WindowBackground } from "components/display/window-background.slint";
+import { WindowBackground } from "window/window-background.slint";
 import { GameScreen } from "screens/game-screen.slint";
 import { LaunchScreen } from "screens/launch-screen.slint";
 import { SetupScreen } from "screens/setup-screen.slint";
@@ -64,7 +65,7 @@ export {
     MultiplayerPlayer,
     MultiplayerPeer,
 } from "globals/multiplayer.slint";
-export { WindowControl } from "components/title-bar.slint";
+export { WindowControl } from "window/window-control.slint";
 export { Background } from "globals/background.slint";
 export {
     ContentState,
