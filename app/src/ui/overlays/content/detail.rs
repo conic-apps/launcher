@@ -41,7 +41,7 @@ pub(crate) fn open_task_target(
 ) {
     ui.global::<GameState>()
         .invoke_select_instance(instance_id.into());
-    if ui.global::<Navigation>().get_current_page() != "game" {
+    if ui.global::<Navigation>().get_current_screen() != "game" {
         ui.global::<Navigation>().invoke_navigate("game".into());
     }
 

@@ -73,10 +73,11 @@ export component DescriptionTooltipOverlay inherits Rectangle {
         }
     }
 
-    // A page swap removes the anchor row without moving the pointer, so dismiss.
-    // Mirrored locally because `changed` watches this element's own properties.
-    private property <string> page: Navigation.current-page;
-    changed page => { root.dismiss(); }
+    // A screen swap removes the anchor row without moving the pointer, so
+    // dismiss. Mirrored locally because `changed` watches this element's own
+    // properties.
+    private property <string> screen: Navigation.current-screen;
+    changed screen => { root.dismiss(); }
 
     // One frame at the start values is enough for the renderer to see them.
     start-timer := Timer {

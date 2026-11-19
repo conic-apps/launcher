@@ -75,25 +75,25 @@ fn main() {
     let shared = Rc::new(RefCell::new(config));
     let save_timer = Rc::new(Timer::default());
 
-    // Before the game view, which reports the current instance to it.
+    // Before the game screen, which reports the current instance to it.
     ui::components::background::controller::setup(&ui, Rc::clone(&shared));
 
     // Before any account is drawn.
     ui::components::account_avatar::setup(&ui);
 
-    ui::views::game::setup(&ui, Rc::clone(&shared));
+    ui::screens::game::setup(&ui, Rc::clone(&shared));
     ui::overlays::account_view::setup(&ui, Rc::clone(&shared));
     ui::overlays::settings::wire(&ui, Rc::clone(&shared), Rc::clone(&save_timer));
     ui::overlays::instance_settings::setup(&ui, Rc::clone(&shared));
     ui::overlays::content::setup(&ui);
-    ui::views::launch::setup(&ui, Rc::clone(&shared));
+    ui::screens::launch::setup(&ui, Rc::clone(&shared));
     // The app's one subscriber to the launch crate's session events, so before
     // any launch. The crash overlay is one of its observers.
     ui::services::sessions::setup(&ui);
     ui::overlays::crash::setup(&ui);
     ui::overlays::dialogs::create_instance::setup(&ui, Rc::clone(&shared));
     ui::overlays::dialogs::account_add::setup(&ui);
-    ui::views::setup::setup(&ui, Rc::clone(&shared));
+    ui::screens::setup::setup(&ui, Rc::clone(&shared));
     ui::overlays::dialogs::multiplayer::setup(&ui);
     ui::services::scroll::setup(&ui);
     ui::services::tooltip::setup(&ui);
@@ -111,20 +111,20 @@ fn main() {
     {
         let weak_ui = ui.as_weak();
         let shared = Rc::clone(&shared);
-        let mut previous_page = ui.global::<Navigation>().get_current_page();
-        ui.global::<Navigation>().on_page_changed(move |page| {
-            let left_setup = previous_page.as_str() == "setup" && page.as_str() != "setup";
-            previous_page = page.clone();
+        let mut previous_screen = ui.global::<Navigation>().get_current_screen();
+        ui.global::<Navigation>().on_screen_changed(move |screen| {
+            let left_setup = previous_screen.as_str() == "setup" && screen.as_str() != "setup";
+            previous_screen = screen.clone();
             if let Some(ui) = weak_ui.upgrade() {
                 if left_setup {
-                    ui::views::setup::notify_if_abandoned(&ui, &shared);
+                    ui::screens::setup::notify_if_abandoned(&ui, &shared);
                 }
                 ui.global::<NewsState>().set_visible(false);
                 ui.global::<NotificationState>().set_visible(false);
-                // `Navigation.page-changed` holds one handler, so every surface
-                // that wants it is called from here; a second `on_page_changed`
+                // `Navigation.screen-changed` holds one handler, so every surface
+                // that wants it is called from here; a second `on_screen_changed`
                 // would be replaced by this one without a word.
-                ui::views::launch::page_left(&ui, page.as_str());
+                ui::screens::launch::screen_left(&ui, screen.as_str());
             }
         });
     }
@@ -168,7 +168,11 @@ fn main() {
             if dialogs.get_confirm_quit_app_visible() {
                 return slint::CloseRequestResponse::HideWindow;
             }
-            if ui.global::<slint_backend::Navigation>().get_current_page() == "launch" {
+            if ui
+                .global::<slint_backend::Navigation>()
+                .get_current_screen()
+                == "launch"
+            {
                 dialogs.set_confirm_quit_app_visible(true);
                 return slint::CloseRequestResponse::KeepWindowShown;
             }
@@ -178,7 +182,7 @@ fn main() {
 
     ui::overlays::music_player::watch_focus(&window);
     // A right-click menu must not survive the window it belongs to losing focus.
-    ui::views::game::watch_menu_focus(&window);
+    ui::screens::game::watch_menu_focus(&window);
 
     // Drag regions in `globals/window-drag.slint`, such as a dialog's scrim.
     ui.global::<slint_backend::WindowDrag>().on_start({
@@ -209,7 +213,7 @@ fn main() {
     // After the config is applied, since the wizard's steps read `AppConfig`.
     if !shared.borrow().setup_completed {
         ui.global::<slint_backend::Navigation>()
-            .set_current_page("setup".into());
+            .set_current_screen("setup".into());
     }
 
     // Terminate requests must run the same close flow as `⌘W`. `request-close`

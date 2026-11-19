@@ -226,7 +226,7 @@ pub(crate) fn favorite_key(platform: &str, kind: &str, id: &str) -> String {
 /// second frontend can own the same state; the Slint models and the measured
 /// layout live in the adapter.
 pub(crate) struct ContentSession {
-    /// The game view's current instance. Re-read whenever a panel opens.
+    /// The game screen's current instance. Re-read whenever a panel opens.
     pub(crate) instance_id: String,
     /// `<platform>:<kind>:<id>` — the favourites key.
     pub(crate) favorites: HashSet<String>,

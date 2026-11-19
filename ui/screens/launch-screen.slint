@@ -17,14 +17,15 @@ import { Progress } from "../components/controls/progress.slint";
 //
 // Layouts own their children's `x`/`y`, so every animated element sits in a slot that
 // keeps its layout box and carries the offset on a wrapper inside.
-export component LaunchView inherits Rectangle {
+export component LaunchScreen inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;
 
-    // `previous-page` is written before this view mounts, so it is set from the
-    // first frame. The wizard never launches, but it would take the grow branch.
-    private property <bool> from-game: Navigation.previous-page == "game";
+    // `previous-screen` is written before this screen mounts, so it is set from
+    // the first frame. The wizard never launches, but it would take the grow
+    // branch.
+    private property <bool> from-game: Navigation.previous-screen == "game";
 
     // "0" holds the first frame so the renderer sees the start values; "1" parks
     // the avatar at the centre for the hold; "2" runs the second beat.
@@ -70,8 +71,8 @@ export component LaunchView inherits Rectangle {
         ? 1.0
         : (root.intro-stage == 0 ? 0.0 : 1.0);
 
-    // The empty slot's centre, relative to this page. Subtracting the page
-    // position keeps the landing exact wherever the page stack sits.
+    // The empty slot's centre, relative to this screen. Subtracting the screen
+    // position keeps the landing exact wherever the screen stack sits.
     private property <length> avatar-target-x:
         avatar.absolute-position.x - root.absolute-position.x + avatar.width / 2;
     private property <length> avatar-target-y:
@@ -93,7 +94,7 @@ export component LaunchView inherits Rectangle {
     }
 
     // Beat one. Waits for `has-instance`, which the launch flow seeds when it
-    // opens the page; without it the intro would run while the column is
+    // opens the screen; without it the intro would run while the column is
     // invisible.
     intro-start-timer := Timer {
         interval: 50ms;

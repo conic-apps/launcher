@@ -20,7 +20,7 @@ export global OverlayShadow {
     // The palette dims the title bar the way a dialog does, so its scrim is
     // mounted above the title bar and not in the shared layer below it.
     private property <bool> palette: CommandPaletteState.visible;
-    // The layers the app root mounts over the page stack.
+    // The layers the app root mounts over the screen stack.
     private property <bool> app: SettingsShell.overlay-open
         || NewsState.visible
         || NewsState.detail-visible
@@ -32,8 +32,8 @@ export global OverlayShadow {
     in property <bool> palette-open: OverlayShadow.palette;
     /// The app root's band, mounted under the title bar.
     in property <bool> app-open: !OverlayShadow.palette && OverlayShadow.app;
-    /// The game screen's band, under the page's own panels.
-    in property <bool> page-open: !OverlayShadow.palette && !OverlayShadow.app && (
+    /// The game screen's band, under its own panels.
+    in property <bool> screen-open: !OverlayShadow.palette && !OverlayShadow.app && (
         ContentState.open-panel != ""
         || InstanceSettingsState.visible
         || AccountViewState.visible);

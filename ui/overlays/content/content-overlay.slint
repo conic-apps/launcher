@@ -26,7 +26,7 @@ export component ContentOverlay inherits Rectangle {
     in property <brush> panel-background: Theme.base;
 
     /// The container's size. Children written between the braces have the game
-    /// view as `parent`, so anything sizing against the container reads these.
+    /// screen as `parent`, so anything sizing against the container reads these.
     out property <length> panel-width: max(0px, root.width - root.panel-inset);
     out property <length> panel-height: root.height;
 
@@ -108,7 +108,7 @@ export component ContentOverlay inherits Rectangle {
         swallow := TouchArea { }
 
         // A plain `Rectangle`, not a layout: children written between the braces
-        // get the game view as `parent`, so a layout would size them against the
+        // get the game screen as `parent`, so a layout would size them against the
         // wrong box. This is why `panel-width`/`panel-height` are exposed.
         content := Rectangle {
             x: 0;

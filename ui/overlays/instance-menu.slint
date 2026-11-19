@@ -127,7 +127,7 @@ export component InstanceMenuOverlay inherits Rectangle {
     // frame; the backdrop stays armed until the reveal is over.
     visible: root.revealed > 0.5px;
 
-    // Any click outside the panel dismisses, and a wheel over the page must not
+    // Any click outside the panel dismisses, and a wheel over the screen must not
     // scroll it while the menu is up.
     dismiss := TouchArea {
         width: parent.width;
@@ -204,7 +204,7 @@ export component InstanceMenuOverlay inherits Rectangle {
                     clicked => {
                         InstanceMenu.close();
                         // The one item that switches: the settings overlay edits
-                        // the game view's current instance, so this is the same
+                        // the game screen's current instance, so this is the same
                         // thing as selecting the card and pressing its gear.
                         GameState.select-instance(InstanceMenu.target);
                         GameState.open-instance-settings();

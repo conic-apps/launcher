@@ -2,12 +2,12 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The launch page's callbacks and the app's one way to start a launch.
+//! The launch screen's callbacks and the app's one way to start a launch.
 //!
-//! [`request`] is the entry point every surface uses — the game view's launch
-//! button, the notice behind a finished task, the command palette. The page opens
-//! at once and the flow starts when the task centre goes idle, so the wait has
-//! somewhere to be shown and a cancel button.
+//! [`request`] is the entry point every surface uses — the game screen's launch
+//! button, the notice behind a finished task, the command palette. The screen
+//! opens at once and the flow starts when the task centre goes idle, so the wait
+//! has somewhere to be shown and a cancel button.
 
 use super::*;
 
@@ -20,17 +20,17 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         let weak = ui.as_weak();
         ui.global::<LaunchState>().on_cancel(move || {
             if let Some(ui) = weak.upgrade() {
-                // Leaving the page is the cancel: [`page_left`] owns the
-                // teardown, so the back button and any other way off the page
+                // Leaving the screen is the cancel: [`screen_left`] owns the
+                // teardown, so the back button and any other way off the screen
                 // cannot disagree.
                 ui.global::<Navigation>().invoke_back();
             }
         });
     }
 
-    // The teardown of a page that was left is driven by `main`'s single
-    // `Navigation.page-changed` handler, which calls [`page_left`]: a Slint
-    // callback keeps one handler, so a second `on_page_changed` here would be
+    // The teardown of a screen that was left is driven by `main`'s single
+    // `Navigation.screen-changed` handler, which calls [`screen_left`]: a Slint
+    // callback keeps one handler, so a second `on_screen_changed` here would be
     // replaced by that one later in `main` without a word.
 
     // A waiting launch is retried on every task event: the centre going idle is
@@ -38,40 +38,41 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     crate::ui::services::tasks::observe(try_start);
 }
 
-/// The launch page was left: the waiting request or the running flow ends with it,
-/// and a process the flow had already spawned is stopped with it. Called from
-/// `main`'s single `Navigation.page-changed` handler; without it a launch left
+/// The launch screen was left: the waiting request or the running flow ends with
+/// it, and a process the flow had already spawned is stopped with it. Called from
+/// `main`'s single `Navigation.screen-changed` handler; without it a launch left
 /// behind keeps its request pending and blocks every later one.
-pub(crate) fn page_left(ui: &App, page: &str) {
-    if page == "launch" {
+pub(crate) fn screen_left(ui: &App, screen: &str) {
+    if screen == "launch" {
         return;
     }
     let controller = launch_controller();
     if !controller.borrow_mut().cancel() {
         return;
     }
-    log::info!(target: "launch", "the launch page was left; the launch was cancelled");
+    log::info!(target: "launch", "the launch screen was left; the launch was cancelled");
     // The instance list is reloaded, so what the launch left on disk (a play
     // time) shows up at once.
     ui.global::<GameState>().invoke_refresh();
 }
 
-/// Back to the game view, whether or not there is a page to go back to.
+/// Back to the game screen, whether or not there is a screen to go back to.
 ///
-/// The launch page is only ever entered from the game view, so a `previous-page`
-/// of "" means an earlier `back()` already consumed it — navigating there again
-/// is the same destination and cannot leave the player on a dead screen.
-pub(crate) fn return_to_game_view(ui: &App) {
+/// The launch screen is only ever entered from the game screen, so a
+/// `previous-screen` of "" means an earlier `back()` already consumed it —
+/// navigating there again is the same destination and cannot leave the player on
+/// a dead screen.
+pub(crate) fn return_to_game(ui: &App) {
     let navigation = ui.global::<Navigation>();
-    if navigation.get_previous_page().is_empty() {
+    if navigation.get_previous_screen().is_empty() {
         navigation.invoke_navigate("game".into());
     } else {
         navigation.invoke_back();
     }
     log::debug!(
         target: "launch",
-        "the launch is over; the page is now '{}'",
-        navigation.get_current_page()
+        "the launch is over; the screen is now '{}'",
+        navigation.get_current_screen()
     );
 }
 
@@ -99,7 +100,7 @@ pub(crate) fn request(ui: &App, instance_id: String) {
     });
 }
 
-/// Opens the launch page on the instance and either starts the flow or waits.
+/// Opens the launch screen on the instance and either starts the flow or waits.
 fn enter(ui: &App, instance: Instance) {
     if launch_controller().borrow().busy() {
         log::warn!(
@@ -113,7 +114,7 @@ fn enter(ui: &App, instance: Instance) {
         // Nothing offers a launch for an uninstalled instance, but the command
         // palette and the notices can reach this path; an install is what the
         // player is after, and it queues behind whatever holds the lane.
-        crate::ui::views::game::install::start(ui, instance.id);
+        crate::ui::screens::game::install::start(ui, instance.id);
         return;
     }
     let config = SHARED_CONFIG.with(|slot| {
@@ -122,8 +123,8 @@ fn enter(ui: &App, instance: Instance) {
             .map(|config| config.borrow().clone())
             .unwrap_or_default()
     });
-    // Seeded before the navigation, so the page's intro sees an instance on its
-    // first frame instead of waiting for the flow's first report.
+    // Seeded before the navigation, so the screen's intro sees an instance on
+    // its first frame instead of waiting for the flow's first report.
     reset_state(ui, Some(&instance), &config);
     show_waiting(ui);
     launch_controller().borrow_mut().wait(instance, config);
@@ -151,7 +152,7 @@ fn try_start(ui: &App) {
     start_flow(ui, instance, config, reservation);
 }
 
-/// The flow proper: the page stops saying it is waiting and the launch begins.
+/// The flow proper: the screen stops saying it is waiting and the launch begins.
 fn start_flow(ui: &App, instance: Instance, config: Config, reservation: TaskReservation) {
     log::info!(
         target: "launch",

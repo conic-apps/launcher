@@ -10,7 +10,7 @@ import {
 } from "../components/containers/slide-transition.slint";
 import { FocusManager } from "../globals/focus.slint";
 import { Navigation } from "../globals/navigation.slint";
-import { PageMotion } from "../globals/page-motion.slint";
+import { ScreenMotion } from "../globals/screen-motion.slint";
 import { AccountAddState } from "../globals/dialogs.slint";
 import { SetupWizardState } from "../globals/setup.slint";
 import { SetupLanguage } from "setup/setup-language.slint";
@@ -78,15 +78,15 @@ component FooterButton inherits Rectangle {
 }
 
 // The first-run wizard: a mauve header, a step card and a bottom button bar.
-// The page swap drives entrance and exit separately; the step swap plays the
-// outgoing screen out before the incoming one in, like `AccountAdd`.
-export component SetupView inherits Rectangle {
+// The screen swap drives entrance and exit separately; the step swap plays the
+// outgoing step out before the incoming one in, like `AccountAdd`.
+export component SetupScreen inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;
 
-    // Driven by the app-wide page swap; "shown" is at rest.
-    private property <string> motion: PageMotion.phase("setup");
+    // Driven by the app-wide screen swap; "shown" is at rest.
+    private property <string> motion: ScreenMotion.phase("setup");
 
     private property <length> header-inset: 100px;
     private property <length> body-inset: 186px;
@@ -287,8 +287,8 @@ export component SetupView inherits Rectangle {
         : root.phases[root.wanted + 1] == "import-instances" ? @tr("SetupView" => "Next (Import instances)")
         : @tr("SetupView" => "Next");
 
-    // The page stack rebuilds this view on every navigation, so mount the first
-    // step.
+    // The screen stack rebuilds this screen on every navigation, so mount the
+    // first step.
     init => {
         root.shown = root.phases[0];
     }

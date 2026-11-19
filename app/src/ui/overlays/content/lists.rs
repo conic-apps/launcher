@@ -73,7 +73,7 @@ pub(crate) fn save_card(
         // The label and the relative time are both translated, so neither can
         // be composed here; the tag carries the parts `GameTime.last-played`
         // needs and the card resolves them.
-        let relative = crate::ui::views::game::relative_time(last_played);
+        let relative = crate::ui::screens::game::relative_time(last_played);
         tags.push(PendingTag {
             text: String::new(),
             label: String::new(),

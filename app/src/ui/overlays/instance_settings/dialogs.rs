@@ -171,7 +171,7 @@ pub(crate) fn setup_delete_dialog(ui: &App) {
                     ui.global::<DeleteInstanceState>().set_deleting(false);
                     match result {
                         Ok(()) => {
-                            // The game view's own reload keeps the selection
+                            // The game screen's own reload keeps the selection
                             // when it is still there and falls back to the
                             // first.
                             ui.global::<Dialogs>()

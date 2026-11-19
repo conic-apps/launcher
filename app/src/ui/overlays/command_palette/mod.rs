@@ -196,7 +196,7 @@ pub(crate) enum Action {
     },
     CreateInstance,
     AddAccount,
-    /// Selects the instance and opens the launch page: the "launch instance"
+    /// Selects the instance and opens the launch screen: the "launch instance"
     /// mode's rows.
     LaunchInstance {
         id: String,
@@ -213,7 +213,7 @@ pub(crate) enum Action {
         id: String,
         kind: InstanceCommandKind,
     },
-    /// The game page, then the project's detail panel.
+    /// The game screen, then the project's detail panel.
     OpenProject {
         platform: &'static str,
         id: String,
@@ -392,7 +392,7 @@ impl PaletteController {
     fn open(ui: &App) {
         let weak = ui.as_weak();
         crate::support::runtime::spawn(async move {
-            // Read from the crate rather than borrowed from the game view's rows,
+            // Read from the crate rather than borrowed from the game screen's rows,
             // which are the grouped, filtered model and not the instance list the
             // palette filters. `filtered` sorts by last played itself.
             let instances = instance::list_instances(SortBy::Playtime)
@@ -448,7 +448,7 @@ impl PaletteController {
 
     /// Opens one instance's five operations, in place of the row that was chosen.
     /// The instance is not selected here: that happens when one of the operations
-    /// is chosen, so backing out leaves the game view where it was.
+    /// is chosen, so backing out leaves the game screen where it was.
     fn enter_instance_actions(&mut self, ui: &App, id: String, name: String) {
         self.target_id = id;
         self.target_name = name;
@@ -692,9 +692,9 @@ impl PaletteController {
                 ui.global::<GameState>()
                     .invoke_select_instance(id.clone().into());
                 self.close(ui);
-                // The launch page's own entry point, so the palette cannot start a
+                // The launch screen's own entry point, so the palette cannot start a
                 // launch that skips the waiting and the cancel button.
-                crate::ui::views::launch::request(ui, id);
+                crate::ui::screens::launch::request(ui, id);
             }
             Action::EnterInstanceActions { id, name } => {
                 self.enter_instance_actions(ui, id, name);
@@ -706,20 +706,20 @@ impl PaletteController {
                 ui.global::<GameState>()
                     .invoke_select_instance(id.clone().into());
                 self.close(ui);
-                // Every operation but launch is one of the game page's buttons,
-                // and the palette is opened from the title bar on every page — so
-                // bring that page up before the overlay reads its global.
+                // Every operation but launch is one of the game screen's buttons,
+                // and the palette is opened from the title bar on every screen —
+                // so bring that screen up before the overlay reads its global.
                 if !matches!(kind, InstanceCommandKind::Launch)
-                    && ui.global::<Navigation>().get_current_page() != "game"
+                    && ui.global::<Navigation>().get_current_screen() != "game"
                 {
                     ui.global::<Navigation>().invoke_navigate("game".into());
                 }
                 match kind {
                     InstanceCommandKind::Launch => {
-                        // The launch page's own entry point, so the palette cannot
-                        // start a launch that skips the waiting and the cancel
-                        // button.
-                        crate::ui::views::launch::request(ui, id);
+                        // The launch screen's own entry point, so the palette
+                        // cannot start a launch that skips the waiting and the
+                        // cancel button.
+                        crate::ui::screens::launch::request(ui, id);
                     }
                     InstanceCommandKind::Settings => {
                         crate::ui::overlays::instance_settings::open(ui);
@@ -731,9 +731,9 @@ impl PaletteController {
             }
             Action::OpenProject { platform, id } => {
                 self.close(ui);
-                // The detail panels are mounted by the game view, so the page has
-                // to be there before the id is set.
-                if ui.global::<Navigation>().get_current_page() != "game" {
+                // The detail panels are mounted by the game screen, so the
+                // screen has to be there before the id is set.
+                if ui.global::<Navigation>().get_current_screen() != "game" {
                     ui.global::<Navigation>().invoke_navigate("game".into());
                 }
                 content::open_project_detail(ui, platform, &id);

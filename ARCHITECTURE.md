@@ -15,7 +15,7 @@ Two relations carry the app's own layout: the three layers under `app/src/` read
                                  v
       +------------------------------------------------------------------+
       | app/src/ui/          the Slint adapter                           |
-      | views/  overlays/  components/  services/                        |
+      | screens/  overlays/  components/  services/                      |
       | the only layer that names slint_backend                          |
       +------------------------------------------------------------------+
                                  |
@@ -42,8 +42,8 @@ and `native/` are usable from any layer, and `native/` is the only one of them t
 ```text
    app/src/ui/               ui/                         bucket
    ----------------------   --------------------------  --------------------------------------
-   views/<surface>       --> views/<surface>.slint       the pages
-   overlays/<surface>    --> overlays/<surface>.slint    above a page: dialogs/, news/, settings/
+   screens/<screen>      --> screens/<screen>.slint      the navigation destinations
+   overlays/<surface>    --> overlays/<surface>.slint    above a screen: dialogs/, news/, settings/
    components/<widget>   --> components/<widget>.slint   widgets, grouped by role
    services/<concern>    --> globals/<domain>.slint      cross-surface state and delivery
 ```
@@ -150,7 +150,7 @@ under a launching instance — without scheduling the launch.
 
 The launch crate's `running` registry is separate again: a session outlives the flow that started
 it, so `ui/services/sessions.rs` owns the app's **one** subscription (`running::subscribe` keeps a
-single slot) and fans the events out to the crash overlay and the game view. A second `subscribe`
+single slot) and fans the events out to the crash overlay and the game screen. A second `subscribe`
 would silently replace the first.
 
 - `crates/shared/src/task.rs` — the UI-neutral contract: ids, kinds (with their lane), states,
@@ -174,41 +174,43 @@ the section: it is a silent startup check, not work the user started.
 
 ### Install and launch are separate
 
-Installing is not a step inside a launch. The game view's button is the whole story — a **Download**
+Installing is not a step inside a launch. The game screen's button is the whole story — a **Download**
 when the instance has no `.install.lock`, a **Launch** when it does, **Cancel** while an install is
 queued or running, and the purple **Stop** while the instance's game process is alive (behind the
 `ui/overlays/dialogs/confirm-stop-game.slint` warning, because a stop loses unsaved progress):
 
-- `app/src/ui/views/game/install.rs` turns an instance id into a `GameInstall` task and mirrors its
+- `app/src/ui/screens/game/install.rs` turns an instance id into a `GameInstall` task and mirrors its
   progress into the strip beside the button (`install_progress.rs`, which is the launch screen's old
   install panel). It is also the repair path: instance settings drops the lock and submits the same
   task, which then only installs.
-- `app/src/ui/views/launch/wiring.rs`'s `request` is the only way to start a launch. It opens the
-  page at once, shows "Waiting for other tasks to finish" while the centre is busy, and starts
+- `app/src/ui/screens/launch/wiring.rs`'s `request` is the only way to start a launch. It opens the
+  screen at once, shows "Waiting for other tasks to finish" while the centre is busy, and starts
   `usecases::launch::run` when `reserve_exclusive` hands it the lane. The wait lives on the launch
-  page because that is where the player can call it off. Leaving the page cancels the launch through
-  `page_left`, which `main`'s one `Navigation.page-changed` handler calls — a Slint callback keeps a
-  single handler, so a surface that registers `on_page_changed` for itself is replaced by the next
-  one and its teardown silently never runs. A cancel also stops a process the flow has already
-  spawned (`LaunchController::cancel`); it only stops sessions whose pid was not running when the
-  request was made, so leaving the page never kills an older game of the same instance. The page's
-  cancel button is therefore never disabled.
-- `views/launch/ports.rs` runs on a worker thread: it may only reach the UI through
+  screen because that is where the player can call it off. Leaving the screen cancels the launch
+  through `screen_left`, which `main`'s one `Navigation.screen-changed` handler calls — a Slint
+  callback keeps a single handler, so a surface that registers `on_screen_changed` for itself is
+  replaced by the next one and its teardown silently never runs. A cancel also stops a process the
+  flow has already spawned (`LaunchController::cancel`); it only stops sessions whose pid was not
+  running when the request was made, so leaving the screen never kills an older game of the same
+  instance. The screen's cancel button is therefore never disabled.
+- `screens/launch/ports.rs` runs on a worker thread: it may only reach the UI through
   `deliver`/`report`. The controller is a thread-local, so a terminal report settles it on the event
   loop (`settle_on_event_loop`) — settling in the sink itself panics there, which drops the terminal
   report and leaks the lane reservation.
 - The startup wait in `crates/launch` ends on a start marker, or on the process itself exiting with
   no marker (`running::ExitWatch`), or on its twenty-second timeout. An exit without a marker is
   `Error::FailedBeforeStart`, which `usecases/launch.rs` reports as `Finished`: back to the instance
-  list, no error page, no quit, and the crash notice carries the reason.
+  list, no error screen, no quit, and the crash notice carries the reason.
 - `usecases/launch.rs` refuses an uninstalled instance rather than installing it.
 - `GameState.current-task`/`task-id` are the projection the button reads, re-derived from the centre
   after every task event, so the UI never keeps a second copy of the scheduler's state.
   `GameState.current-running` is re-derived from the session registry after every session event and
   turns the button into Stop; the right-click menu's `running` comes from the same query.
 
-Naming, once a file is placed: `*View` is a page, `*Overlay`/`*Dialog`/`*Panel`/ `*Card` is a
-surface, `*Root` is an overlay layer host. There is **no `base-` family** — the control itself is
+Naming, once a file is placed: `*Screen` is a destination `Navigation` can navigate to, which is
+the only thing a screen is; `*View` may name any other drawn thing (an overlay's contents, the
+Markdown renderer, a scroller). `*Overlay`/`*Dialog`/`*Panel`/ `*Card` is a surface, `*Root` is an
+overlay layer host. There is **no `base-` family** — the control itself is
 the base. Imports are relative paths, so moving a file means updating every importer; `cargo check`
 compiles the `.slint` tree and is what catches a missed one.
 

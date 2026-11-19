@@ -155,8 +155,8 @@ export global GameInstallText {
     }
 }
 
-/// Entrance animation state of the game view. `GameView` resets `played` on every
-/// instantiation and flips it true once the list has been measured.
+/// Entrance animation state of the game screen. `GameScreen` resets `played` on
+/// every instantiation and flips it true once the list has been measured.
 export global GameIntro {
     in-out property <bool> played: false;
 }
@@ -188,7 +188,7 @@ export global GameState {
 
     in-out property <bool> has-current: false;
     in-out property <string> current-name: "";
-    /// The current instance's id, which the launch view resolves back into an
+    /// The current instance's id, which the launch screen resolves back into an
     /// `Instance`.
     in-out property <string> current-id: "";
     in-out property <string> current-minecraft: "";
@@ -210,8 +210,8 @@ export global GameState {
 
     /// The current instance's install, as the task centre sees it:
     /// "idle" | "queued" | "running". The button is the cancel button whenever
-    /// this is not "idle". A launch is not a task: it has its own page and its
-    /// own cancel button.
+    /// this is not "idle". A launch is not a task: it has its own screen and
+    /// its own cancel button.
     in-out property <string> current-task: "idle";
     /// The task id that button stops, -1 when there is none.
     in-out property <int> task-id: -1;
@@ -238,7 +238,7 @@ export global GameState {
     in-out property <int> content-mods: 0;
     in-out property <int> content-resourcepacks: 0;
     in-out property <int> content-screenshots: 0;
-    /// The icons the game view's preview rows draw, up to five of each kind.
+    /// The icons the game screen's preview rows draw, up to five of each kind.
     in-out property <[image]> preview-saves: [];
     in-out property <[image]> preview-mods: [];
     in-out property <[image]> preview-resourcepacks: [];
@@ -291,7 +291,7 @@ export global GameState {
     callback cancel-task(int);
     /// Stops the running game the confirmation dialog named. Killing a live
     /// session can lose whatever it has not saved, which is why this only runs
-    /// after the warning dialog; the launch page's cancel does not warn.
+    /// after the warning dialog; the launch screen's cancel does not warn.
     callback stop-game(string);
     callback open-instance-folder(string);
     callback toggle-starred(string);

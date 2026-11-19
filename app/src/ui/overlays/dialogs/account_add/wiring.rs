@@ -9,7 +9,7 @@ use super::*;
 /// Registers every add-account callback on the `AccountAddState` global.
 ///
 /// No configuration is involved: an add writes an account file and then asks
-/// the game view to reload (`finish_add`), which is what picks the default
+/// the game screen to reload (`finish_add`), which is what picks the default
 /// account and persists the choice.
 pub fn setup(ui: &App) {
     setup_shell(ui);

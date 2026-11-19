@@ -303,7 +303,7 @@ export component CommandPaletteOverlay inherits Rectangle {
         width: parent.width;
         height: parent.height;
         clicked => { CommandPaletteState.close(); }
-        // Take the wheel, or the pages behind scroll.
+        // Take the wheel, or the screens behind scroll.
         scroll-event(event) => { accept }
     }
 

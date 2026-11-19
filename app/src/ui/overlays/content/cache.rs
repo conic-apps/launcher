@@ -163,7 +163,7 @@ pub(crate) fn screenshots(instance: &str) -> Option<Arc<Vec<PathBuf>>> {
 }
 
 /// Starts a parse of one kind. `deduped` is [`ensure`]'s case — it runs on every
-/// game view apply, so a search keystroke must not start a second parse over the
+/// game screen apply, so a search keystroke must not start a second parse over the
 /// same folder; [`refresh`] passes `false`, because it follows a write.
 fn start(ui: &App, instance: &str, kind: Kind, deduped: bool) {
     let key = (instance.to_string(), kind);
@@ -415,7 +415,7 @@ fn parsing(instance: &str, kind: Kind) -> bool {
 /// the flag has to describe that one.
 fn loading(ui: &App, instance: &str) {
     // The flags belong to whatever the overlay is showing, which is the game
-    // view's current instance. A parse that outlived the selection must not
+    // screen's current instance. A parse that outlived the selection must not
     // clear the spinner of the one that is on screen.
     if ui.global::<GameState>().get_current_id() != instance {
         return;

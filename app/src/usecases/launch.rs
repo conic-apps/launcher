@@ -129,7 +129,7 @@ pub async fn run(mut config: Config, instance: Option<Instance>, out: LaunchSink
                     out(LaunchUpdate::Dialog(LaunchDialog::NoSuitableJava));
                 }
                 // The game is gone, the player is not: go back to the instance
-                // list rather than leaving the launch page up, and do not quit the
+                // list rather than leaving the launch screen up, and do not quit the
                 // app even when this instance is set to. The crash itself is
                 // reported by the session watcher, and its report is what to read.
                 launch::Error::FailedBeforeStart => {

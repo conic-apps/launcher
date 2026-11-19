@@ -30,10 +30,10 @@ import { OverlayShadow } from "globals/overlay-shadow.slint";
 import { Scrim } from "components/display/scrim.slint";
 import { WindowDrag } from "globals/window-drag.slint";
 import { WindowBackground } from "components/display/window-background.slint";
-import { GameView } from "views/game-view.slint";
-import { LaunchView } from "views/launch-view.slint";
-import { SetupView } from "views/setup-view.slint";
-import { TodoPlaceholder } from "views/todo-placeholder.slint";
+import { GameScreen } from "screens/game-screen.slint";
+import { LaunchScreen } from "screens/launch-screen.slint";
+import { SetupScreen } from "screens/setup-screen.slint";
+import { TodoPlaceholder } from "screens/todo-placeholder.slint";
 
 // Re-export so the Rust side can access the globals and the runtime model.
 export { AppConfig, JavaRuntime } from "globals/settings.slint";
@@ -159,7 +159,7 @@ export component App inherits Window {
 
     // Closing while a task is running asks first
     // (`Dialogs.confirm-quit-app-visible`), then plays a 250ms scale + fade and
-    // closes the window 500ms later. A close on any other page never gets here.
+    // closes the window 500ms later. A close on any other screen never gets here.
     private property <bool> quitting: false;
     private property <float> quit-alpha: root.quitting ? 0.0 : 1.0;
     private property <float> quit-scale: root.quitting ? 93% : 100%;
@@ -185,28 +185,28 @@ export component App inherits Window {
         root.close();
     }
 
-    // The page-swap lifecycle. The 16ms beat holds a view at its start values
-    // for one frame before its animation retargets them; Slint has no timeline
-    // and a property only moves while something reads it.
-    page-settle-timer := Timer {
+    // The screen-swap lifecycle. The 16ms beat holds a screen at its start
+    // values for one frame before its animation retargets them; Slint has no
+    // timeline and a property only moves while something reads it.
+    screen-settle-timer := Timer {
         interval: 16ms;
         running: Navigation.transition-stage == "starting";
         triggered => { Navigation.transition-stage = "running"; }
     }
 
-    // The swap is at most the 250ms any view's exit is allowed. Clearing
-    // `leaving-page` lets a kept-mounted view (the wizard) unmount.
-    page-run-timer := Timer {
+    // The swap is at most the 250ms any screen's exit is allowed. Clearing
+    // `leaving-screen` lets a kept-mounted screen (the wizard) unmount.
+    screen-run-timer := Timer {
         interval: 250ms;
         running: Navigation.transition-stage == "running";
         triggered => {
             Navigation.transition-stage = "idle";
-            Navigation.leaving-page = "";
+            Navigation.leaving-screen = "";
         }
     }
 
-    // The first page's view can animate in too: the wizard reads "starting" as
-    // its entrance. `init` runs before the event loop.
+    // The first screen can animate in too: the wizard reads "starting" as its
+    // entrance. `init` runs before the event loop.
     init => {
         if Navigation.transition-stage == "idle" {
             Navigation.transition-stage = "starting";
@@ -252,7 +252,7 @@ export component App inherits Window {
         }
 
         // `⌘W` (`Control` + `W`): the platform's close-window shortcut. `close()`
-        // runs the close-requested callback, so the launch page asks first.
+        // runs the close-requested callback, so the launch screen asks first.
         KeyBinding {
             keys: @keys(Control + W);
             activated => { root.close(); }
@@ -265,11 +265,11 @@ export component App inherits Window {
             activated => { Navigation.escape(); }
         }
 
-        // Up/Down move the current instance on the game page. A `key-pressed`
+        // Up/Down move the current instance on the game screen. A `key-pressed`
         // handler rather than a `KeyBinding`: the winit backend reports arrows
         // through the key text, and a binding for them was not matched.
         key-pressed(event) => {
-            if Navigation.current-page == "game" && !CommandPaletteState.visible {
+            if Navigation.current-screen == "game" && !CommandPaletteState.visible {
                 if event.text == Key.UpArrow {
                     GameState.move-selection(-1);
                     return accept;
@@ -309,7 +309,7 @@ export component App inherits Window {
             border-color: #ffffff.with-alpha(0.16);
             clip: true;
 
-            // Behind every page and every overlay.
+            // Behind every screen and every overlay.
             WindowBackground { }
 
             VerticalLayout {
@@ -324,24 +324,24 @@ export component App inherits Window {
                     background: transparent;
                 }
 
-                // Page stack. The account view is an overlay on the game screen,
-                // not a page; the fallback catches any page with no screen.
-                // Animation lives at the view: a page playing its exit stays
-                // mounted while `leaving-page` is set.
-                page-stack := Rectangle {
+                // Screen stack. The account view is an overlay on the game screen,
+                // not a screen of its own; the fallback catches a destination no
+                // surface draws yet. Animation lives at the screen: one playing
+                // its exit stays mounted while `leaving-screen` is set.
+                screen-stack := Rectangle {
                     width: 100%;
                     vertical-stretch: 1;
                     clip: true;
 
-                    if Navigation.current-page == "game" || Navigation.leaving-page == "game": GameView { }
-                    if Navigation.current-page == "launch": LaunchView { }
-                    if Navigation.current-page == "setup" || Navigation.leaving-page == "setup": SetupView { }
-                    if Navigation.current-page != "game" && Navigation.current-page != "launch" && Navigation.current-page != "setup": TodoPlaceholder { }
+                    if Navigation.current-screen == "game" || Navigation.leaving-screen == "game": GameScreen { }
+                    if Navigation.current-screen == "launch": LaunchScreen { }
+                    if Navigation.current-screen == "setup" || Navigation.leaving-screen == "setup": SetupScreen { }
+                    if Navigation.current-screen != "game" && Navigation.current-screen != "launch" && Navigation.current-screen != "setup": TodoPlaceholder { }
                 }
             }
 
-            // The dim under the app root's overlays, and under the page stack
-            // so an overlay opened here dims the page's own panels too. The
+            // The dim under the app root's overlays, and under the screen stack
+            // so an overlay opened here dims the screen's own panels too. The
             // title bar stays above it and keeps its ink.
             Scrim {
                 y: root.title-bar-height;
@@ -360,7 +360,7 @@ export component App inherits Window {
                 closed => { SettingsShell.overlay-open = false; }
             }
 
-            // Floating dropdown list + outside-click layer, above the page stack.
+            // Floating dropdown list + outside-click layer, above the screen stack.
             // The `z` is load-bearing: the instance list's toolbar (`z: 114`),
             // scrollbars (`z: 500`) and the title bar (`z: 1200`) would otherwise
             // paint over the panel or keep the outside-click layer from seeing a
@@ -370,7 +370,7 @@ export component App inherits Window {
             }
 
             // The instance list's right-click menu, above the title bar and the
-            // page's own floating rows, below the palette and dialogs.
+            // screen's own floating rows, below the palette and dialogs.
             InstanceMenuOverlay {
                 z: 1201;
             }
@@ -385,7 +385,7 @@ export component App inherits Window {
                 height: root.height - root.title-bar-height;
             }
 
-            // The news browser, above the pages and below the command palette and
+            // The news browser, above the screens and below the command palette and
             // dialogs.
             NewsRoot {
                 y: root.title-bar-height;
@@ -414,7 +414,7 @@ export component App inherits Window {
                 z: 1180;
             }
 
-            // Mounted outside the page layout so the bar stays above the
+            // Mounted outside the screen layout so the bar stays above the
             // notification, news and music layers, but under the palette and dialogs.
             TitleBar {
                 x: 0;
@@ -440,8 +440,9 @@ export component App inherits Window {
                     Navigation.navigate("game");
                 }
                 open-settings => {
-                    // The drawer opens without a page change, so the page swap's
-                    // own teardown does not run: close these here for the same result.
+                    // The drawer opens without a screen change, so the screen
+                    // swap's own teardown does not run: close these here for the
+                    // same result.
                     if !SettingsShell.overlay-open {
                         NewsState.visible = false;
                         NewsState.detail-visible = false;
@@ -463,7 +464,7 @@ export component App inherits Window {
                 maximize-or-fullscreen => { root.maximize-or-fullscreen(); }
                 minimize-window => { root.minimize-window(); }
                 // `App.close()` runs the close-requested callback, where the
-                // launch-page confirm lives.
+                // launch screen's quit confirm lives.
                 close-window => { root.close(); }
             }
 

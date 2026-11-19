@@ -2,56 +2,56 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// Global page navigation. Page values are "setup" | "game" | "launch";
-// settings is an overlay, not a page.
+// Global screen navigation. Screen values are "setup" | "game" | "launch";
+// settings is an overlay, not a screen.
 export global Navigation {
-    in-out property <string> current-page: "game";
-    in-out property <string> previous-page: "";
+    in-out property <string> current-screen: "game";
+    in-out property <string> previous-screen: "";
 
-    /// The page being left while a swap plays, "" at rest. Written
-    /// synchronously because the page stack reads it in a binding to keep the
-    /// outgoing page mounted; a queued write would leave a frame with neither
-    /// page mounted.
-    in-out property <string> leaving-page: "";
+    /// The screen being left while a swap plays, "" at rest. Written
+    /// synchronously because the screen stack reads it in a binding to keep the
+    /// outgoing screen mounted; a queued write would leave a frame with neither
+    /// screen mounted.
+    in-out property <string> leaving-screen: "";
     /// Whether the in-flight navigation is a `back`, for directional animations.
     in-out property <bool> back-navigation: false;
-    /// The page-swap lifecycle the `App` timers drive: "idle" | "starting"
-    /// (incoming view held one frame) | "running".
+    /// The screen-swap lifecycle the `App` timers drive: "idle" | "starting"
+    /// (incoming screen held one frame) | "running".
     in-out property <string> transition-stage: "idle";
 
-    /// Fired whenever `current-page` changes, so a screen can run its teardown.
-    callback page-changed(string);
+    /// Fired whenever `current-screen` changes, so a screen can run its teardown.
+    callback screen-changed(string);
 
     /// The app-wide Escape shortcut: close transient UI and go home.
     callback escape();
 
-    changed current-page => {
-        self.page-changed(self.current-page);
+    changed current-screen => {
+        self.screen-changed(self.current-screen);
     }
 
-    public function navigate(page: string) {
-        if (self.current-page == page) {
+    public function navigate(screen: string) {
+        if (self.current-screen == screen) {
             return;
         }
-        // Leave `previous-page` alone when leaving `launch`, so back returns to
+        // Leave `previous-screen` alone when leaving `launch`, so back returns to
         // where the launch was started from.
-        if (self.current-page != "launch") {
-            self.previous-page = self.current-page;
+        if (self.current-screen != "launch") {
+            self.previous-screen = self.current-screen;
         }
-        self.leaving-page = self.current-page;
+        self.leaving-screen = self.current-screen;
         self.back-navigation = false;
-        self.current-page = page;
+        self.current-screen = screen;
         self.transition-stage = "starting";
     }
 
     public function back() {
-        if (self.previous-page == "") {
+        if (self.previous-screen == "") {
             return;
         }
-        self.leaving-page = self.current-page;
+        self.leaving-screen = self.current-screen;
         self.back-navigation = true;
-        self.current-page = self.previous-page;
-        self.previous-page = "";
+        self.current-screen = self.previous-screen;
+        self.previous-screen = "";
         self.transition-stage = "starting";
     }
 }
