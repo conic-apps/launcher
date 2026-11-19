@@ -59,8 +59,11 @@ export global NotificationText {
         if item.kind == "game-crashed" {
             return @tr("NotificationText" => "{} seems to have crashed. Click here to view the crash report", arg(item, 0));
         }
+        if item.kind == "update-ready" {
+            return @tr("NotificationText" => "An update is ready to install. Click here to restart the launcher!");
+        }
         if item.kind == "update-applied" {
-            return @tr("NotificationText" => "Conic Launcher has been updated to version {}. Click here to view the release notes", arg(item, 0));
+            return @tr("NotificationText" => "Conic Launcher has been updated to version {}.\n\nClick here to view the release notes!", arg(item, 0));
         }
         if item.kind == "task-error" {
             return @tr("NotificationText" => "{}", arg(item, 0));

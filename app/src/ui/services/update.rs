@@ -2,17 +2,35 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The notice for the update the previous session applied.
+//! The self-update notices: the bundle waiting for a restart to be installed,
+//! and the update the previous session applied.
 //!
-//! The use case owns the one-shot record; this module turns it into a card and
-//! wires the card's action to the GitHub release of that version, whose notes
-//! are the changelog the user is being pointed at.
+//! The use case owns the check, the staging and the one-shot record; this module
+//! turns their results into cards and wires each card's action.
 
 use shared::notification::{Notice, NoticeKind, NoticeSink};
 
+use crate::support::runtime;
 use crate::ui::services::app_config;
 use crate::usecases::update;
 
+/// Starts the background check and staging download. The staged bundle is swapped
+/// in as the process exits, so the card's action restarts the launcher.
+pub(crate) fn spawn_check(channel: config::UpdateChannel, notices: NoticeSink) {
+    runtime::spawn(async move {
+        let Some(version) = update::run(channel).await else {
+            return;
+        };
+        notices(
+            Notice::new(NoticeKind::UpdateReady)
+                .with_arg(version)
+                .on_click(app_config::relaunch),
+        );
+    });
+}
+
+/// Posts the version the previous session applied; the card opens that version's
+/// GitHub release, whose notes are the changelog.
 pub(crate) fn notify_applied(notices: NoticeSink) {
     let Some(version) = update::applied_version() else {
         return;

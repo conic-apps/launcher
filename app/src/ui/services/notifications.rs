@@ -263,6 +263,7 @@ fn update_count(state: &NotificationState, controller: &NotificationController) 
 
 fn kind_key(kind: NoticeKind) -> &'static str {
     match kind {
+        NoticeKind::UpdateReady => "update-ready",
         NoticeKind::UpdateApplied => "update-applied",
         NoticeKind::TaskFinished => "task-finished",
         NoticeKind::TaskFailed => "task-error",
@@ -275,6 +276,7 @@ fn kind_key(kind: NoticeKind) -> &'static str {
 
 fn kind_icon(kind: NoticeKind) -> &'static str {
     match kind {
+        NoticeKind::UpdateReady => "download",
         NoticeKind::UpdateApplied => "checkmark-outline",
         NoticeKind::TaskFinished => "checkmark-outline",
         NoticeKind::TaskFailed => "warning",

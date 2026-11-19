@@ -170,10 +170,11 @@ DROP = {
     ("NotificationText", "Notification"),
     ("NotificationText", "Setup skipped"),
     ("NotificationText", "You can reopen the setup wizard from Settings."),
-    # A staged update is not announced; the launch after it applied is.
+    # The update-applied card names the new version and the release notes on
+    # two paragraphs; the old one-liner is dropped below.
     (
         "NotificationText",
-        "Version {} will be applied when the launcher exits",
+        "Conic Launcher has been updated to version {}. Click here to view the release notes",
     ),
     # The Minecraft version reminder is a notification now, not a dialog.
     (
@@ -1652,6 +1653,19 @@ SAVE_TAGS = {
     # from the notice's args; the version, task and error ones were catalogued
     # by hand.
     "NotificationText": {
+        "An update is ready to install. Click here to restart the launcher!": {
+            "zh_CN": "已准备好安装更新，点击这里重启启动器！",
+            "zh_TW": "已準備好安裝更新，點擊這裡重新啟動啟動器！",
+            "ja_JP": "アップデートのインストール準備ができました。ここをクリックしてランチャーを再起動してください！",
+            "ko_KR": "업데이트 설치 준비가 완료되었습니다. 여기를 클릭하여 런처를 다시 시작하세요!",
+            "de_DE": "Ein Update kann jetzt installiert werden. Klicke hier, um den Launcher neu zu starten!",
+            "fr_FR": "Une mise à jour est prête à être installée. Cliquez ici pour redémarrer le launcher !",
+            "es_ES": "Una actualización está lista para instalarse. ¡Haz clic aquí para reiniciar el launcher!",
+            "pt_BR": "Uma atualização está pronta para ser instalada. Clique aqui para reiniciar o launcher!",
+            "ru_RU": "Обновление готово к установке. Нажмите здесь, чтобы перезапустить лаунчер!",
+            "tr_TR": "Bir güncelleme yüklenmeye hazır. Başlatıcıyı yeniden başlatmak için buraya tıklayın!",
+            "pl_PL": "Aktualizacja jest gotowa do zainstalowania. Kliknij tutaj, aby ponownie uruchomić launcher!",
+        },
         "Game did not exit normally": {
             "zh_CN": "游戏未正常退出",
             "zh_TW": "遊戲未正常結束",
@@ -1730,18 +1744,18 @@ SAVE_TAGS = {
             "tr_TR": "İlk kuruluma dönmek için buraya tıklayın",
             "pl_PL": "Kliknij tutaj, aby wrócić do konfiguracji początkowej",
         },
-        "Conic Launcher has been updated to version {}. Click here to view the release notes": {
-            "zh_CN": "Conic Launcher 已更新至 {}，点击此处查看更新日志",
-            "zh_TW": "Conic Launcher 已更新至 {}，點擊此處查看更新日誌",
-            "ja_JP": "Conic Launcher がバージョン {} に更新されました。ここをクリックしてリリースノートを表示",
-            "ko_KR": "Conic Launcher가 버전 {}(으)로 업데이트되었습니다. 여기를 클릭하여 릴리스 노트 보기",
-            "de_DE": "Conic Launcher wurde auf Version {} aktualisiert. Klicke hier, um die Versionshinweise anzuzeigen",
-            "fr_FR": "Conic Launcher a été mis à jour vers la version {}. Cliquez ici pour afficher les notes de version",
-            "es_ES": "Conic Launcher se ha actualizado a la versión {}. Haz clic aquí para ver las notas de la versión",
-            "pt_BR": "O Conic Launcher foi atualizado para a versão {}. Clique aqui para ver as notas da versão",
-            "ru_RU": "Conic Launcher обновлён до версии {}. Нажмите здесь, чтобы посмотреть примечания к выпуску",
-            "tr_TR": "Conic Launcher {} sürümüne güncellendi. Sürüm notlarını görüntülemek için buraya tıklayın",
-            "pl_PL": "Conic Launcher został zaktualizowany do wersji {}. Kliknij tutaj, aby zobaczyć informacje o wydaniu",
+        "Conic Launcher has been updated to version {}.\n\nClick here to view the release notes!": {
+            "zh_CN": "Conic Launcher 已更新到版本：{}。\n\n点击此处查看更新说明！",
+            "zh_TW": "Conic Launcher 已更新至版本：{}。\n\n點擊此處查看更新說明！",
+            "ja_JP": "Conic Launcher がバージョン {} に更新されました。\n\nリリースノートを見るにはここをクリックしてください！",
+            "ko_KR": "Conic Launcher가 버전 {}(으)로 업데이트되었습니다.\n\n여기를 클릭하여 릴리스 노트를 확인하세요!",
+            "de_DE": "Conic Launcher wurde auf Version {} aktualisiert.\n\nKlicke hier, um die Versionshinweise anzuzeigen!",
+            "fr_FR": "Conic Launcher a été mis à jour vers la version {}.\n\nCliquez ici pour afficher les notes de version !",
+            "es_ES": "Conic Launcher se ha actualizado a la versión {}.\n\n¡Haz clic aquí para ver las notas de la versión!",
+            "pt_BR": "O Conic Launcher foi atualizado para a versão {}.\n\nClique aqui para ver as notas da versão!",
+            "ru_RU": "Conic Launcher обновлён до версии {}.\n\nНажмите здесь, чтобы посмотреть примечания к выпуску!",
+            "tr_TR": "Conic Launcher {} sürümüne güncellendi.\n\nSürüm notlarını görüntülemek için buraya tıklayın!",
+            "pl_PL": "Conic Launcher został zaktualizowany do wersji {}.\n\nKliknij tutaj, aby zobaczyć informacje o wydaniu!",
         },
     },
     "InstanceImport": {
@@ -2551,11 +2565,12 @@ SAVE_TAGS.update({
 })
 
 def unescape(text: str) -> str:
-    return text.replace('\\"', '"').replace("\\\\", "\\")
+    escapes = {'"': '"', "\\": "\\", "n": "\n"}
+    return re.sub(r"\\(.)", lambda found: escapes.get(found.group(1), found.group(0)), text)
 
 
 def escape(text: str) -> str:
-    return text.replace("\\", "\\\\").replace('"', '\\"')
+    return text.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
 
 
 def parse_po(path: Path) -> tuple[list[tuple[str | None, str, str]], str]:
