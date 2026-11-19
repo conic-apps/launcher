@@ -34,7 +34,6 @@ import { WindowBackground } from "window/window-background.slint";
 import { GameScreen } from "screens/game-screen.slint";
 import { LaunchScreen } from "screens/launch-screen.slint";
 import { SetupScreen } from "screens/setup-screen.slint";
-import { TodoPlaceholder } from "screens/todo-placeholder.slint";
 
 // Re-export so the Rust side can access the globals and the runtime model.
 export { AppConfig, JavaRuntime } from "globals/settings.slint";
@@ -326,9 +325,8 @@ export component App inherits Window {
                 }
 
                 // Screen stack. The account view is an overlay on the game screen,
-                // not a screen of its own; the fallback catches a destination no
-                // surface draws yet. Animation lives at the screen: one playing
-                // its exit stays mounted while `leaving-screen` is set.
+                // not a screen of its own. Animation lives at the screen: one
+                // playing its exit stays mounted while `leaving-screen` is set.
                 screen-stack := Rectangle {
                     width: 100%;
                     vertical-stretch: 1;
@@ -337,7 +335,6 @@ export component App inherits Window {
                     if Navigation.current-screen == "game" || Navigation.leaving-screen == "game": GameScreen { }
                     if Navigation.current-screen == "launch": LaunchScreen { }
                     if Navigation.current-screen == "setup" || Navigation.leaving-screen == "setup": SetupScreen { }
-                    if Navigation.current-screen != "game" && Navigation.current-screen != "launch" && Navigation.current-screen != "setup": TodoPlaceholder { }
                 }
             }
 
