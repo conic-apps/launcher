@@ -52,7 +52,7 @@ impl Gate {
 
     /// Invalidates the outstanding token, so nothing in flight is delivered.
     pub(crate) fn invalidate(&self) {
-        // Reached by the launch view's cancel button and the multiplayer
+        // Reached by the launch screen's cancel button and the multiplayer
         // download's cancel. Without this, "launch flow started" and then
         // nothing is the whole trace of a launch the user gave up on.
         log::debug!(target: "shell", "the outstanding request was cancelled; its result will \

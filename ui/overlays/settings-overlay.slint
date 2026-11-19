@@ -123,18 +123,18 @@ component SettingsSection inherits VerticalLayout {
     @children
 }
 
-// The settings surface: a drawer over the game view. The section list, the
+// The settings surface: a drawer over the game screen. The section list, the
 // scrolling body and the two entrance layers all belong to this one component;
 // there is no second host to keep them compatible with.
 export component SettingsOverlay inherits Rectangle {
     in property <bool> open: false;
 
-    /// A click landed on the game view outside the drawer.
+    /// A click landed on the game screen outside the drawer.
     callback closed;
 
     width: 100%;
     height: 100%;
-    // The game view behind stays visible under the shared scrim.
+    // The game screen behind stays visible under the shared scrim.
     background: transparent;
     // The drawer enters from outside the window; the root hides the part that
     // has not arrived yet.
@@ -215,7 +215,7 @@ export component SettingsOverlay inherits Rectangle {
             : cubic-bezier(0, 0.65, 0.26, 1);
     }
 
-    // The game view behind is inert while the drawer is open: a press outside
+    // The game screen behind is inert while the drawer is open: a press outside
     // closes it, and the wheel does not scroll the instance list.
     outside-touch := TouchArea {
         width: 100%;

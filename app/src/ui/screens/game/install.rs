@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The game view's install producer: the one place an instance id becomes a
+//! The game screen's install producer: the one place an instance id becomes a
 //! `GameInstall` task.
 //!
 //! The task centre decides when the work runs and owns the card and the cancel
@@ -78,12 +78,12 @@ pub(crate) fn repair(ui: &App, instance_id: String) {
 /// One projection for both readers — the current instance's button and the
 /// right-click menu's target, which need not be the same instance.
 pub(crate) fn task_of(instance_id: &str) -> (&'static str, i32) {
-    // The game view is built before the task service in `main`, so the first
+    // The game screen is built before the task service in `main`, so the first
     // paint has nothing to read and says so.
     let Some(service) = crate::ui::services::tasks::service_if_ready() else {
         return ("idle", -1);
     };
-    // Only an install is a task. A launch has its own page and its own cancel
+    // Only an install is a task. A launch has its own screen and its own cancel
     // button, so nothing about it belongs on these.
     let Some(task) = service.active_on(TaskKind::GameInstall, instance_id) else {
         return ("idle", -1);
@@ -96,7 +96,7 @@ pub(crate) fn task_of(instance_id: &str) -> (&'static str, i32) {
 }
 
 /// Re-derives the launch button's state from the registries, after every task and
-/// session event and on every apply of the game view — the UI owns no copy of
+/// session event and on every apply of the game screen — the UI owns no copy of
 /// either registry.
 pub(crate) fn project(ui: &App) {
     let state = ui.global::<GameState>();

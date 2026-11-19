@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The game view's callbacks, registered on `GameState`.
+//! The game screen's callbacks, registered on `GameState`.
 
 use super::*;
 
@@ -196,7 +196,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         });
     }
     {
-        // `request` opens the page and lets it wait for the centre; the button
+        // `request` opens the launch screen and lets it wait for the centre; the button
         // does not get to decide when a launch may start. The id is the
         // caller's, so the right-click menu can launch a card that is not the
         // current instance.
@@ -207,7 +207,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
             if id.is_empty() {
                 return;
             }
-            crate::ui::views::launch::request(&ui, id);
+            crate::ui::screens::launch::request(&ui, id);
         });
     }
     {

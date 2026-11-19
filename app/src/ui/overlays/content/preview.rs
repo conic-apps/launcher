@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The game view's four preview rows: the first few icons of each content list.
+//! The game screen's four preview rows: the first few icons of each content list.
 //! A separate pass from the parse so the counts do not wait on thumbnails; icons
 //! go through the same memo the cards use, and the rows are kept as `VecModel`s so
 //! a landing icon fills one circle instead of re-creating all five.
@@ -42,7 +42,7 @@ thread_local! {
     /// The saves a row was last asked to read icons for. Their icons are files
     /// in the world folders rather than a field of anything the parse returns,
     /// so this is the only place that pass can be skipped — and it has to be
-    /// skipped, because it runs on every game view apply.
+    /// skipped, because it runs on every game screen apply.
     static SAVES: RefCell<Option<(String, Vec<String>)>> = const { RefCell::new(None) };
 }
 

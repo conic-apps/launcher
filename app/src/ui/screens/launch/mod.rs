@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The launch view's adapter: it waits for the task centre to go idle, holds the
+//! The launch screen's adapter: it waits for the task centre to go idle, holds the
 //! exclusive lane while the launch runs, and turns the [`LaunchUpdate`]s into
 //! `LaunchState`, gated by a [`Token`] so a cancelled or superseded run cannot
 //! draw.
@@ -13,7 +13,7 @@
 //!
 //! Cancelling is not only dropping the flow: once the crate has spawned the game,
 //! the process outlives the task, so [`LaunchController::cancel`] stops the
-//! session too. That is why the page's cancel button is never disabled.
+//! session too. That is why the screen's cancel button is never disabled.
 
 use std::{cell::RefCell, rc::Rc};
 
@@ -79,7 +79,7 @@ pub(crate) struct LaunchController {
     instance_id: Option<String>,
     /// The pids already running for that instance when the launch was requested.
     /// A cancel stops only what this launch started: the instance may have had a
-    /// game of its own before, and leaving the page must not kill that one.
+    /// game of its own before, and leaving the screen must not kill that one.
     running_before: Vec<u32>,
     gate: Gate,
 }
@@ -118,9 +118,9 @@ impl LaunchController {
         self.reservation = Some(reservation);
     }
 
-    /// The flow reported its own ending and the page is showing it. The lane is
-    /// given back at once: an error page is not work, and queued installs should
-    /// not wait for the player to close it.
+    /// The flow reported its own ending and the screen is showing it. The lane
+    /// is given back at once: an error screen is not work, and queued installs
+    /// should not wait for the player to close it.
     fn settle(&mut self) {
         self.task = None;
         self.reservation = None;

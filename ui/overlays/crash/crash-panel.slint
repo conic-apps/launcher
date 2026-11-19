@@ -8,7 +8,7 @@ import { InstanceCard } from "../../components/display/instance-card.slint";
 import { ScrollView } from "../../components/containers/scroll-view.slint";
 import { ContentTitleBar } from "../content/content-title-bar.slint";
 
-// The runtime facts' label/value pair, matching the game view's summary row.
+// The runtime facts' label/value pair, matching the game screen's summary row.
 component MetaColumn inherits Rectangle {
     in property <string> label;
     in property <string> value;
@@ -73,12 +73,12 @@ component LogLine inherits Rectangle {
     }
 }
 
-// The crash overlay's panel. The crashed instance uses the game view's card, so
+// The crash overlay's panel. The crashed instance uses the game screen's card, so
 // its loader and version come along without a custom summary. Rust splits the
 // report into tagged lines because a `Text` has one colour. The whole body
 // scrolls; the log is a content-sized card, not a nested scroller.
 export component CrashPanel inherits Rectangle {
-    /// Passed in because the container is inset from the page (see
+    /// Passed in because the container is inset from the screen (see
     /// `ContentOverlay`).
     in property <length> panel-width: 0px;
     in property <length> panel-height: 0px;

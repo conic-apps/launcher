@@ -57,7 +57,7 @@ pub(crate) fn launch_view(progress: &LaunchProgress) -> Option<LaunchView> {
         }
         LaunchProgress::GenerateScriptlet => LaunchView::stage("generate-script"),
         // The three startup markers share one screen state. Cancelling still
-        // works: the process exists by now, so the page stops it rather than
+        // works: the process exists by now, so the screen stops it rather than
         // leaving it running.
         LaunchProgress::WaitForLaunch
         | LaunchProgress::LogSettingUser

@@ -163,7 +163,7 @@ export global DeleteInstanceState {
     /// A delete is running: the confirm button is disabled.
     in-out property <bool> deleting: false;
     callback cancel();
-    /// Rust deletes the instance, refreshes the game view and closes the dialog.
+    /// Rust deletes the instance, refreshes the game screen and closes the dialog.
     callback confirm();
 }
 
@@ -269,7 +269,7 @@ export global CreateInstanceState {
     callback set-version-category(string);
     /// A version was picked: store it and refresh the mod loader lists.
     callback select-minecraft-version(string);
-    /// Rust creates the instance, refreshes the game view and closes the dialog.
+    /// Rust creates the instance, refreshes the game screen and closes the dialog.
     callback create();
     /// The "Set background image" row; the UI passes the translated picker label.
     callback pick-background(string);

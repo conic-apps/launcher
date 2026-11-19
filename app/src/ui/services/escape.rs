@@ -19,10 +19,10 @@ pub(crate) fn setup(ui: &App) {
     let weak = ui.as_weak();
     ui.global::<Navigation>().on_escape(move || {
         let Some(ui) = weak.upgrade() else { return };
-        let page = ui.global::<Navigation>().get_current_page();
+        let screen = ui.global::<Navigation>().get_current_screen();
         close(&ui);
         ui.global::<Navigation>().invoke_navigate("game".into());
-        log::debug!(target: "shell", "escape: {page} -> game");
+        log::debug!(target: "shell", "escape: {screen} -> game");
     });
 }
 

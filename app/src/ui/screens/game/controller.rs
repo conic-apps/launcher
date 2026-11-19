@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The game view's controller: the instance list, its rows and the
+//! The game screen's controller: the instance list, its rows and the
 //! current selection.
 
 use super::*;
@@ -75,7 +75,7 @@ impl GameController {
         let sort = controller().borrow().sort;
         let weak = ui.as_weak();
         crate::support::runtime::spawn(async move {
-            // Fall back to an empty listing rather than leaving the page blank:
+            // Fall back to an empty listing rather than leaving the screen blank:
             // `instance` warns per skipped directory, so this covers only the
             // failure to read the directory at all.
             let instances = match instance::list_instances(sort).await {

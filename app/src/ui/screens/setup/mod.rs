@@ -28,7 +28,7 @@ enum Channel {
 }
 
 /// Registers the wizard's callbacks and answers the platform question its Java
-/// screen asks.
+/// step asks.
 pub fn setup(ui: &App, shared: Rc<RefCell<config::Config>>) {
     // The Mojang runtimes are published for x86-64 and arm64 on Windows and
     // macOS, and for x86-64 only on Linux.
@@ -43,7 +43,7 @@ pub fn setup(ui: &App, shared: Rc<RefCell<config::Config>>) {
     ui.global::<SetupWizardState>()
         .set_jvm_auto_install_supported(supported);
 
-    // Whether the storage step has already been answered. The view mounts it
+    // Whether the storage step has already been answered. The screen mounts it
     // only while this is false, so reopening the wizard does not ask again.
     ui.global::<SetupWizardState>()
         .set_storage_configured(storage::load_overrides().initialized);
@@ -379,9 +379,9 @@ fn create_latest(weak: &Weak<App>, channel: Channel) {
                 Channel::Release => state.set_creating_release(false),
                 Channel::Snapshot => state.set_creating_snapshot(false),
             }
-            // The instance list is read again when the game view is entered,
+            // The instance list is read again when the game screen is entered,
             // which is where the wizard's last step ends. Asking for the
-            // refresh here rather than there is the same work one page
+            // refresh here rather than there is the same work one screen
             // earlier, and it is what `create_instance.rs` does for the
             // create-instance dialog.
             ui.global::<GameState>().invoke_refresh();

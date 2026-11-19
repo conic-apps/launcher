@@ -4,11 +4,11 @@
 
 //! The Slint frontend: interface adapters, presenters and drivers.
 //!
-//! This subtree mirrors `ui/`. `views/`, `overlays/` and `components/`
+//! This subtree mirrors `ui/`. `screens/`, `overlays/` and `components/`
 //! correspond to the same buckets there; `services/` holds the cross-surface UI
 //! concerns (delivery onto the event loop, the config adapter, scrolling).
 
 pub(crate) mod components;
 pub(crate) mod overlays;
+pub(crate) mod screens;
 pub(crate) mod services;
-pub(crate) mod views;

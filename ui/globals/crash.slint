@@ -201,8 +201,8 @@ export struct CrashLogLine {
 //
 // Rust raises it from the launch crate's session events
 // (`app/src/ui/overlays/crash/`): when a game exits abnormally the collected
-// `CrashReport` is pushed here and the overlay slides up over whatever page the
-// user is on. The strings are the crate's own output, unformatted — Slint
+// `CrashReport` is pushed here and the overlay slides up over whatever screen
+// the user is on. The strings are the crate's own output, unformatted — Slint
 // cannot format them — so the panel shows the raw summary, exit code, report
 // path and crash text; the labels are resolved through `CrashText`.
 export global CrashState {

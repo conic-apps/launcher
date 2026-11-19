@@ -30,7 +30,7 @@ use crate::ui::services::report;
 
 pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: NoticeSink) {
     // One import at a time, from the drop until the task finishes. A drop on
-    // the launch page is rejected separately: a launch or install is already
+    // the launch screen is rejected separately: a launch or install is already
     // running there.
     let busy = Arc::new(AtomicBool::new(false));
     let pending: Arc<Mutex<Option<instance_import::ImportPlan>>> = Arc::new(Mutex::new(None));
@@ -223,8 +223,8 @@ pub(crate) fn setup(ui: &App, config: Rc<RefCell<config::Config>>, notices: Noti
             };
             log::info!("import: dropped {}", path.display());
             let Some(ui) = weak.upgrade() else { return };
-            if ui.global::<Navigation>().get_current_page() == "launch" {
-                log::warn!("import: ignoring the drop while the launch page is open");
+            if ui.global::<Navigation>().get_current_screen() == "launch" {
+                log::warn!("import: ignoring the drop while the launch screen is open");
                 notices(
                     Notice::new(NoticeKind::TaskFailed)
                         .with_arg("another install is already running"),

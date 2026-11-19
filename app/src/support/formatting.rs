@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Human-readable formatting shared by the views.
+//! Human-readable formatting shared by the screens.
 
 /// `value` as a byte size: 1024-based units, two decimals, a bare `B` below a
 /// kibibyte.

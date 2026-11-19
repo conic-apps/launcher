@@ -7,7 +7,7 @@
 //!
 //! The subscription is installed once for the whole app, because a game outlives
 //! the launch flow that started it; `ui::services::sessions` owns it, since the
-//! game view reads the same events. The report callback writes one combined
+//! game screen reads the same events. The report callback writes one combined
 //! report and opens it.
 
 use launch::crash::{CrashReport, Reason};

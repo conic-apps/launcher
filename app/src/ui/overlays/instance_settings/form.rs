@@ -6,7 +6,7 @@
 
 use super::*;
 
-/// Opens the overlay on the current instance, from the game view's settings
+/// Opens the overlay on the current instance, from the game screen's settings
 /// button.
 ///
 /// The read of `instance.toml` runs on the runtime, and the fields are filled
@@ -38,8 +38,8 @@ pub(crate) fn show_instance(ui: &App, instance: &Instance) {
 thread_local! {
     /// The instance the overlay is editing. `open` reads it off disk on the
     /// runtime, and the callbacks need its *stored* config synchronously, to diff
-    /// an edit against what is on disk. It cannot change underneath: the game view
-    /// behind the overlay does not take a selection while it is up.
+    /// an edit against what is on disk. It cannot change underneath: the game
+    /// screen behind the overlay does not take a selection while it is up.
     static EDITING: RefCell<Option<Instance>> = const { RefCell::new(None) };
 }
 
@@ -174,7 +174,7 @@ pub(crate) fn collect(state: &InstanceSettingsState, mut config: InstanceConfig)
     config
 }
 
-/// Whether the game view shows something an edit changed: the instance's name
+/// Whether the game screen shows something an edit changed: the instance's name
 /// (the summary's title and its list card), `use_as_launcher_background`, the
 /// flag the window background resolves on, and `background_darkness`, which the
 /// window background reads through that resolution. Everything else the overlay
@@ -222,7 +222,7 @@ pub(crate) fn schedule_save(
             if !touches {
                 return;
             }
-            // The store is on disk, so the game view is asked to read it again
+            // The store is on disk, so the game screen is asked to read it again
             // for the summary and the list card to re-render.
             crate::ui::services::report::report(&weak, move |ui| {
                 ui.global::<GameState>().invoke_refresh()
@@ -242,7 +242,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
 /// that re-runs the install.
 ///
 /// Repair only installs. Starting the game is the launch button's job, and
-/// nothing here navigates to the launch page.
+/// nothing here navigates to the launch screen.
 fn setup_maintenance(ui: &App) {
     {
         let weak = ui.as_weak();
@@ -275,7 +275,7 @@ fn setup_maintenance(ui: &App) {
                     return;
                 };
                 ui.global::<InstanceSettingsState>().set_visible(false);
-                crate::ui::views::game::install::repair(&ui, instance.id);
+                crate::ui::screens::game::install::repair(&ui, instance.id);
             });
     }
 }

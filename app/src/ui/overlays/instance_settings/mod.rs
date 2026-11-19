@@ -11,7 +11,7 @@ use std::{cell::RefCell, rc::Rc, time::Duration};
 use slint::{ComponentHandle, Image, SharedPixelBuffer, Timer, TimerMode};
 
 use crate::slint_backend::{App, DeleteInstanceState, Dialogs, GameState, InstanceSettingsState};
-use crate::ui::views::game::format_play_time;
+use crate::ui::screens::game::format_play_time;
 use config::launch::{LaunchConfig, Server};
 use instance::{Instance, InstanceConfig, InstanceLaunchConfig};
 

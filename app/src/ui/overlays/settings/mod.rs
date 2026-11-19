@@ -261,7 +261,7 @@ fn wire_java_actions(ui: &App, shared: Rc<RefCell<config::Config>>) {
             let weak = weak.clone();
             // The scan walks the disk and starts a JVM per candidate, so it runs
             // on the runtime's blocking pool. `scan_java_runtimes_cached` reuses a
-            // result younger than 30s, so revisiting the page does not re-probe
+            // result younger than 30s, so revisiting the screen does not re-probe
             // every candidate.
             crate::support::runtime::spawn_blocking(move || {
                 let options = ScanOptions {
@@ -331,13 +331,13 @@ mod tests {
         App::new().expect("the app")
     }
 
-    // Slint queues the `changed` handlers, so the page mirror runs when the
+    // Slint queues the `changed` handlers, so the screen mirror runs when the
     // loop is given a turn even though no window exists.
     fn settle() {
         i_slint_backend_testing::mock_elapsed_time(Duration::ZERO);
     }
 
-    /// The gear is the drawer's toggle; it never changes the page from the game.
+    /// The gear is the drawer's toggle; it never changes the screen from the game.
     #[test]
     fn the_gear_toggles_the_drawer() {
         let ui = app();
@@ -347,18 +347,18 @@ mod tests {
         shell.invoke_toggle_settings();
         settle();
         assert!(shell.get_overlay_open());
-        assert_eq!(navigation.get_current_page(), "game");
+        assert_eq!(navigation.get_current_screen(), "game");
 
         shell.invoke_toggle_settings();
         settle();
         assert!(!shell.get_overlay_open());
-        assert_eq!(navigation.get_current_page(), "game");
+        assert_eq!(navigation.get_current_screen(), "game");
     }
 
-    /// The drawer lives over the game view, so opening it from another page
+    /// The drawer lives over the game screen, so opening it from another screen
     /// first navigates home.
     #[test]
-    fn opening_settings_from_another_page_goes_home_first() {
+    fn opening_settings_from_another_screen_goes_home_first() {
         let ui = app();
         let navigation = ui.global::<Navigation>();
         let shell = ui.global::<SettingsShell>();
@@ -369,11 +369,11 @@ mod tests {
         settle();
 
         assert!(shell.get_overlay_open());
-        assert_eq!(navigation.get_current_page(), "game");
+        assert_eq!(navigation.get_current_screen(), "game");
     }
 
-    /// Any navigation away from the game closes the drawer; the page mirror is
-    /// the one place that knows this.
+    /// Any navigation away from the game closes the drawer; the screen mirror
+    /// is the one place that knows this.
     #[test]
     fn leaving_the_game_closes_the_drawer() {
         let ui = app();

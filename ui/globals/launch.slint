@@ -4,7 +4,7 @@
 
 // The launch screen's state.
 //
-// The domain data comes from Rust (`app/src/ui/views/launch/`); the progress
+// The domain data comes from Rust (`app/src/ui/screens/launch/`); the progress
 // *description* is deliberately kept as a kind plus its parts rather than a
 // finished string, so the `@tr()` calls stay in the UI and can be re-evaluated
 // when the language changes at runtime. The byte counts are pre-formatted by
@@ -31,7 +31,7 @@ export global LaunchState {
     /// "preparing-launch", "generate-script", "wait-for-launch",
     /// "game-started" or "error".
     ///
-    /// Installing has its own screen state now — the game view's strip — so the
+    /// Installing has its own screen state now — the game screen's strip — so the
     /// install stages (Java, loader, installer, dependencies) are not described
     /// here any more; see `GameInstallText`.
     in-out property <string> progress-kind: "preparing";
@@ -42,10 +42,10 @@ export global LaunchState {
     in-out property <float> progress-value: 0;
     in-out property <float> progress-max: 0;
 
-    /// The back button — cancels the launch, which the page then leaves. It is
-    /// never disabled: once the game process exists, cancelling stops it (see
-    /// `app/src/ui/views/launch/mod.rs`), so there is no waiting state without a
-    /// way out.
+    /// The back button — cancels the launch, which the screen then leaves. It
+    /// is never disabled: once the game process exists, cancelling stops it (see
+    /// `app/src/ui/screens/launch/mod.rs`), so there is no waiting state without
+    /// a way out.
     callback cancel();
     /// The progress line, translated from `progress-kind` and its parts.
     public pure function description() -> string {

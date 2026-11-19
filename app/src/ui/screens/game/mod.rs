@@ -2,8 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The game view's script: drives the Rust domain crates and pushes the results
-//! into the `GameState` global.
+//! The game screen's script: drives the Rust domain crates and pushes the
+//! results into the `GameState` global.
 
 use std::{
     cell::RefCell,

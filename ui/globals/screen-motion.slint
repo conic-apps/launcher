@@ -1,0 +1,32 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Navigation } from "navigation.slint";
+
+// The presentation-facing description of a screen swap.
+//
+// `Navigation` knows which screen is leaving and on which lifecycle beat; this
+// global turns that into the three words a screen animates against — "enter",
+// "shown" or "leave" — so the vocabulary of animation never leaks back into the
+// navigation policy. A screen asks for itself by name. There is no shared
+// transition component: each screen draws its own phase however it likes.
+export global ScreenMotion {
+    /// The phase of `screen` in the current swap:
+    ///
+    ///   "enter"  the incoming screen, waiting at the entrance's start;
+    ///   "shown"  at rest, or the outgoing screen waiting to leave;
+    ///   "leave"  the outgoing screen playing its exit.
+    ///
+    /// A screen that is neither current nor leaving reports "shown"; it is not
+    /// mounted in that state, so the answer is only ever a fallback.
+    public pure function phase(screen: string) -> string {
+        if (Navigation.current-screen == screen) {
+            return Navigation.transition-stage == "starting" ? "enter" : "shown";
+        }
+        if (Navigation.leaving-screen == screen) {
+            return Navigation.transition-stage == "starting" ? "shown" : "leave";
+        }
+        return "shown";
+    }
+}

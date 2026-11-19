@@ -31,7 +31,7 @@ use crate::usecases::tasks::{CancelDecision, TaskCenter, TaskNoticeAction};
 thread_local! {
     static CONTROLLER: Rc<TaskController> = Rc::new(TaskController::new());
     static SERVICE: RefCell<Option<Rc<TaskService>>> = const { RefCell::new(None) };
-    /// Surfaces that want to know when the registry changed, e.g. the game view's
+    /// Surfaces that want to know when the registry changed, e.g. the game screen's
     /// launch button, which mirrors one instance's task into its own state.
     static OBSERVERS: RefCell<Vec<Observer>> = const { RefCell::new(Vec::new()) };
 }
@@ -263,7 +263,7 @@ pub(crate) fn service() -> Rc<TaskService> {
 
 /// The service, when the app has set it up yet.
 ///
-/// A surface that installs itself before the service — the game view, which
+/// A surface that installs itself before the service — the game screen, which
 /// `main` builds first — asks this instead of panicking on its first paint.
 pub(crate) fn service_if_ready() -> Option<Rc<TaskService>> {
     SERVICE.with(|slot| slot.borrow().clone())
@@ -448,7 +448,7 @@ fn activate_target(ui: &App, target: &TaskTarget) {
 fn select_instance(ui: &App, instance_id: &str) {
     ui.global::<GameState>()
         .invoke_select_instance(instance_id.into());
-    if ui.global::<Navigation>().get_current_page() != "game" {
+    if ui.global::<Navigation>().get_current_screen() != "game" {
         ui.global::<Navigation>().invoke_navigate("game".into());
     }
 }

@@ -5,23 +5,23 @@
 import { Navigation } from "navigation.slint";
 
 // The settings drawer's open state. The drawer is the only settings surface and
-// it belongs over the game view, so opening it from another page first goes
+// it belongs over the game screen, so opening it from another screen first goes
 // home; mirroring `Navigation` here closes it on any later navigation without
 // every caller remembering to.
 export global SettingsShell {
-    /// Whether the settings drawer is open over the game view.
+    /// Whether the settings drawer is open over the game screen.
     in-out property <bool> overlay-open: false;
 
-    private property <string> page: Navigation.current-page;
+    private property <string> screen: Navigation.current-screen;
 
-    changed page => {
-        if self.page != "game" {
+    changed screen => {
+        if self.screen != "game" {
             self.overlay-open = false;
         }
     }
 
     /// The title bar's gear: close the drawer when it is open, otherwise show
-    /// settings over the game view.
+    /// settings over the game screen.
     public function toggle-settings() {
         if self.overlay-open {
             self.overlay-open = false;
@@ -31,7 +31,7 @@ export global SettingsShell {
     }
 
     function open-settings() {
-        if Navigation.current-page != "game" {
+        if Navigation.current-screen != "game" {
             Navigation.navigate("game");
         }
         self.overlay-open = true;

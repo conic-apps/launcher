@@ -4,7 +4,7 @@
 
 import { GameIntro, GameState } from "../globals/game.slint";
 import { FocusManager } from "../globals/focus.slint";
-import { PageMotion } from "../globals/page-motion.slint";
+import { ScreenMotion } from "../globals/screen-motion.slint";
 import { OverlayShadow } from "../globals/overlay-shadow.slint";
 import { Scrim } from "../components/display/scrim.slint";
 import { InstanceSummary } from "game/instance-summary.slint";
@@ -17,20 +17,20 @@ import { ContentRoot } from "../overlays/content/content-root.slint";
 // The game screen: current-instance summary on the left, the grouped instance
 // list on the right and the footer bar beneath. The click-to-open content
 // overlays live in ContentRoot.
-export component GameView inherits Rectangle {
+export component GameScreen inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;
 
     // Only the exit uses this; the entrance is the `GameIntro` stagger, so an
     // "enter" here would double the intro.
-    opacity: PageMotion.phase("game") == "leave" ? 0.0 : 1.0;
+    opacity: ScreenMotion.phase("game") == "leave" ? 0.0 : 1.0;
     animate opacity {
         duration: 200ms;
         easing: ease-out-quad;
     }
 
-    // The page stack recreates this screen per navigation, so the intro replays.
+    // The screen stack recreates this screen per navigation, so the intro replays.
     init => {
         GameIntro.played = false;
     }
@@ -79,11 +79,11 @@ export component GameView inherits Rectangle {
         y: parent.height - self.height;
     }
 
-    // The dim behind this screen's overlays: above the page's own content and
+    // The dim behind this screen's overlays: above the screen's own content and
     // below the instance-settings, content and account panels, which are
     // mounted after it. The app root mounts the same layer for its overlays.
     Scrim {
-        wanted: OverlayShadow.page-open;
+        wanted: OverlayShadow.screen-open;
     }
 
     // Declaration order is the z-order: settings below content, account on top.

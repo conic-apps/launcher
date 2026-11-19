@@ -45,7 +45,7 @@ pub(crate) fn update_sink(weak: Weak<App>, token: Token) -> Sink<LaunchUpdate> {
             state.set_progress_loading(true);
         }),
         LaunchUpdate::Dialog(dialog) => {
-            // The dialog is the whole answer; the page stays as it is, and the
+            // The dialog is the whole answer; the screen stays as it is, and the
             // lane comes back so a queued install can run while the player reads
             // it.
             log::info!(target: "launch", "the launch was refused after the flow started");
@@ -72,7 +72,7 @@ pub(crate) fn update_sink(weak: Weak<App>, token: Token) -> Sink<LaunchUpdate> {
                 } else {
                     // The launch is what moved the play time on disk.
                     ui.global::<GameState>().invoke_refresh();
-                    return_to_game_view(&ui);
+                    return_to_game(&ui);
                 }
             })
         }

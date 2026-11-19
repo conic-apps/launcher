@@ -3,13 +3,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 // The first-run setup wizard's state: what Rust has to see or drive. The
-// import-instances screen fetches the Mojang manifest and writes an `instance.toml`,
+// import-instances step fetches the Mojang manifest and writes an `instance.toml`,
 // and the storage step opens the OS picker and commits the choice in Rust.
 //
 // Which step is mounted is deliberately *not* here: the swap is a transition whose
-// mounted screen lags the wanted one by the 80ms leave half, and a `changed` handler
+// mounted step lags the wanted one by the 80ms leave half, and a `changed` handler
 // cannot observe a global's qualified property, so the machine reads better next to
-// the transition that plays it (see `views/setup-view.slint`).
+// the transition that plays it (see `screens/setup-screen.slint`).
 export global SetupWizardState {
     /// Whether this machine can have a Java runtime downloaded for it: x86-64 or
     /// arm64 on Windows and macOS, and x86-64 only on Linux (the Mojang
@@ -39,13 +39,13 @@ export global SetupWizardState {
     /// The name the release button's instance is created under. It is a
     /// `@tr` here rather than in Rust so a language change renames it with the
     /// rest of the screen — the same reason `CreateInstanceState.default-name`
-    /// is a property of the view.
+    /// is a property of the component.
     out property <string> latest-release-name: @tr("SetupImportInstances" => "Latest release");
     out property <string> latest-snapshot-name: @tr("SetupImportInstances" => "Latest snapshot");
 
     /// Fetches the Mojang manifest and creates an instance on its latest
-    /// release. Rust then refreshes the game view, which is what picks the new
-    /// instance up.
+    /// release. Rust then refreshes the game screen, which is what picks the
+    /// new instance up.
     callback create-latest-release();
     /// …and the same for the latest snapshot.
     callback create-latest-snapshot();

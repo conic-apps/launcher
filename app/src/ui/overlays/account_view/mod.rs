@@ -157,7 +157,7 @@ fn select(ui: &App, key: &str) {
     };
     // Choosing here is the same act as the footer's switcher: it changes the
     // launcher's *current* account, not just what the overlay is looking at, so
-    // the footer and the launch page follow. The overlay shows that account too.
+    // the footer and the launch screen follow. The overlay shows that account too.
     if let Some(config) = config() {
         config.borrow_mut().current_account = Some(account.clone());
         if let Err(error) = config::save_config(&config.borrow()) {
@@ -684,7 +684,7 @@ fn apply_stats(ui: &App, entries: &[StatisticsEntry], names: &HashMap<String, St
                 .cloned()
                 .unwrap_or_else(|| entry.instance_id.clone());
             let time =
-                crate::ui::views::game::relative_time(Some(entry.launch_at_unix_secs * 1000));
+                crate::ui::screens::game::relative_time(Some(entry.launch_at_unix_secs * 1000));
             AccountActivity {
                 name: name.into(),
                 kind: time.kind.into(),
