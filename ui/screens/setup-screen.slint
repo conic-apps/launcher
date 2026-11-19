@@ -319,11 +319,11 @@ export component SetupScreen inherits Rectangle {
         }
     }
 
-    /// Tears down the embedded add-account body when leaving its step.
+    /// Tears down the embedded add-account step when leaving it.
     ///
-    /// The wizard hides the dialog's "Cancel" button, so this is the only
-    /// teardown left; otherwise the browser flow's loopback listener would
-    /// outlive the screen. See `AccountAddState.close`.
+    /// The wizard's copy of the flow has no "Cancel" button, so this is the only
+    /// teardown left; otherwise the browser flow's loopback listener would outlive
+    /// the screen. See `AccountAddState.close`.
     function close-add-account-host() {
         if root.shown == "add-account" {
             AccountAddState.close();

@@ -1,0 +1,127 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import {
+    SlideTransition,
+} from "../../components/containers/slide-transition.slint";
+import { AccountAddState } from "../../globals/dialogs.slint";
+import { SetupAccountAddMicrosoft } from "setup-account-add-microsoft.slint";
+import { SetupAccountAddOffline } from "setup-account-add-offline.slint";
+import { SetupAccountAddSelect } from "setup-account-add-select.slint";
+import { SetupAccountAddYggdrasil } from "setup-account-add-yggdrasil.slint";
+
+// Deliberately a copy of ui/overlays/dialogs/account-add/account-add.slint: the
+// wizard's step and the modal are free to diverge in styling, so each owns its
+// body. Where behaviour matters — the `AccountAddState` global both drive and the
+// callbacks they raise — the two must stay in sync.
+
+// The wizard's add-account step: the title, the service selector and the three
+// service screens swapping below. The outgoing screen decides the slide
+// direction, so it is fixed when the swap starts.
+export component SetupAccountAdd inherits VerticalLayout {
+    // The step's width, rather than the dialog's fixed body: the wizard lays the
+    // flow out across its whole card.
+    width: 100%;
+    padding: 0px;
+    spacing: 0px;
+    // `start`: a stretching column would split the height surplus into the
+    // header during the 300ms tween.
+    alignment: start;
+
+    private property <string> service: AccountAddState.auth-service;
+    /// The screen actually mounted, one 80ms beat behind `service`.
+    private property <string> shown: "";
+    private property <string> direction: "left";
+    private property <bool> leaving: false;
+    private property <bool> leave-armed: false;
+    private property <bool> enter-armed: false;
+    private property <string> arrive-phase: "shown";
+
+    init => {
+        root.shown = root.service;
+    }
+
+    changed service => {
+        if root.shown == "" {
+            root.shown = root.service;
+        } else if root.service == root.shown {
+            root.leaving = false;
+            root.leave-armed = false;
+        } else {
+            // The old service decides, so read it before it changes.
+            root.direction = root.shown == "microsoft" ? "left"
+                : root.shown == "offline" ? "right"
+                : root.service == "microsoft" ? "right"
+                : "left";
+            root.leaving = true;
+            root.leave-armed = true;
+            leave-timer.restart();
+        }
+    }
+
+    leave-timer := Timer {
+        interval: 80ms;
+        running: root.leave-armed;
+        triggered => {
+            root.leave-armed = false;
+            root.leaving = false;
+            if root.service != root.shown {
+                root.shown = root.service;
+                root.arrive-phase = "enter";
+                root.enter-armed = true;
+            }
+        }
+    }
+
+    enter-timer := Timer {
+        interval: 16ms;
+        running: root.enter-armed;
+        triggered => {
+            root.enter-armed = false;
+            root.arrive-phase = "shown";
+        }
+    }
+
+    // The stretching title pins the selector to the right; it still wraps, so a
+    // long translation cannot push the selector out.
+    HorizontalLayout {
+        // The default `stretch` distribution gives the stretching title the
+        // leftover width; `start` would leave the selector next to the title.
+        cross-axis-alignment: center;
+        padding-bottom: 16px;
+
+        Text {
+            text: @tr("Sign in");
+            font-size: 22px;
+            horizontal-stretch: 1;
+            wrap: word-wrap;
+            color: Theme.default-text-color.transparentize(0.1);
+        }
+
+        SetupAccountAddSelect {
+            value: AccountAddState.auth-service;
+            select-enabled: !AccountAddState.switch-disabled;
+            selected(service) => { AccountAddState.select-auth-service(service); }
+        }
+    }
+
+    if root.shown == "microsoft": SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: root.direction;
+        SetupAccountAddMicrosoft { }
+    }
+
+    if root.shown == "yggdrasil": SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: root.direction;
+        SetupAccountAddYggdrasil { }
+    }
+
+    if root.shown == "offline": SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: root.direction;
+        SetupAccountAddOffline { }
+    }
+}

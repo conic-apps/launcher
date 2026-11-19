@@ -12,6 +12,11 @@ import { AccountAddOffline } from "account-add-offline.slint";
 import { AccountAddSelect } from "account-add-select.slint";
 import { AccountAddYggdrasil } from "account-add-yggdrasil.slint";
 
+// Deliberately a copy of ui/views/setup/setup-account-add.slint: the modal and
+// the wizard's step are free to diverge in styling, so each owns its body. Where
+// behaviour matters — the `AccountAddState` global both drive and the callbacks
+// they raise — the two must stay in sync.
+
 // The add-account body: a header with the title and service selector, and the
 // three service screens swapping below. The outgoing screen decides the slide
 // direction, so it is fixed when the swap starts.
@@ -19,12 +24,8 @@ export component AccountAdd inherits VerticalLayout {
     /// The dialog's inner width; the panel is 16px wider each side.
     in property <length> content-width: 540px;
 
-    /// Mounted inside the setup wizard instead of the dialog: drops the panel's
-    /// padding and every screen's "Cancel". Forwarded to the screens.
-    in property <bool> wizard-host: false;
-
     width: root.content-width;
-    padding: root.wizard-host ? 0px : 8px;
+    padding: 8px;
     spacing: 0px;
     // `start`: a stretching column would split the height surplus into the
     // header during the 300ms tween.
@@ -110,24 +111,18 @@ export component AccountAdd inherits VerticalLayout {
     if root.shown == "microsoft": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
-        AccountAddMicrosoft {
-            wizard-host: root.wizard-host;
-        }
+        AccountAddMicrosoft { }
     }
 
     if root.shown == "yggdrasil": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
-        AccountAddYggdrasil {
-            wizard-host: root.wizard-host;
-        }
+        AccountAddYggdrasil { }
     }
 
     if root.shown == "offline": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
-        AccountAddOffline {
-            wizard-host: root.wizard-host;
-        }
+        AccountAddOffline { }
     }
 }
