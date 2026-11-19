@@ -92,7 +92,7 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 ## 從原始碼建構
 
 請確保已安裝
-[Rust 1.88+](https://rustup.rs/)；在 Linux 上，還需安裝[建構相依套件](../../CONTRIBUTING.md#linux-build-dependencies)。
+[Rust 1.88+](https://rustup.rs/)；在 Linux 上，還需安裝[建構相依套件](../../packaging/README.md#linux-build-dependencies)。
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git

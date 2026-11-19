@@ -1,9 +1,10 @@
 # macOS packaging payload
 
 The `.icns`, the `Info.plist` template and the disk image's window background that the `.app` bundle
-and its `.dmg` are assembled from, by `tools/package-macos.sh`. All of them are **committed**:
-`iconutil` exists only on macOS, a build machine has no SVG rasterizer and no copy of the launcher's
-font, and the bundle is built from files in this directory.
+and its `.dmg` are assembled from, by `tools/package-macos.sh` — which uses `codesign`, `hdiutil`,
+`lipo` and `python3` and nothing else. All of them are **committed**: `iconutil` exists only on
+macOS, a build machine has no SVG rasterizer and no copy of the launcher's font, and the bundle is
+built from files in this directory.
 
 | Consumer                     | Reads                                                 |
 | ---------------------------- | ----------------------------------------------------- |
@@ -77,6 +78,12 @@ discards the whole `icvp` silently, and the window opens with no background and 
 The second is the window's own position, which `WindowBounds` states from the bottom of a screen
 whose height nothing at build time knows.
 
+**The `.DS_Store` is written, not scripted.** Finder cannot be told to lay out a folder that does
+not exist yet without an Automation grant and a window on screen, so `tools/dmg-ds-store.py` writes
+the file and copies in the background picture directly — the Buddy allocator and the Carbon Alias
+record are implemented against the standard library rather than pulled in as `dmgbuild` or
+`ds_store`, because this script's contract is that a build machine needs nothing beyond macOS.
+
 **The window's size and the icon placement live in the `.svg`, not in the script.**
 `tools/dmg-ds-store.py` reads `width`, `height` and the `#applications-icon-cell` rectangle out of
 `background.svg` to write the `.DS_Store`, because Finder paints the background 1:1 from the content
@@ -92,6 +99,13 @@ runner cross-compiling the other. A `--target` build compiles for the guest whil
 build script on the host, so a host-only mistake in a `-sys` crate passes and a real Intel build
 fails — and Skia and `aws-lc-rs` are both built through `cc`. Two thin `.dmg`s beat one universal
 one for that reason; `--universal` is still there for a local build.
+
+**`x86_64-apple-darwin` needs care.** `objc-sys` types an Objective-C `BOOL` as `bool` on
+arm64 (where C's `BOOL` is `_Bool`) and as `i8` on x86_64 (where it is `signed char`), so code that
+returns one straight out of an FFI call builds for Apple Silicon and fails for Intel with
+`expected bool, found i8`. `app/src/support/native/macos/traffic_lights.rs`'s `add_method` is the
+one place this bites; it goes through `i8` to satisfy both. A `--universal` build is what surfaces
+this.
 
 **The bundle is signed ad-hoc, not notarized.** `codesign -s -` is all a build machine can do
 without a Developer ID certificate, and it is what makes the binary executable at all on arm64.

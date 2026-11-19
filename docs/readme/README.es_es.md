@@ -100,7 +100,7 @@ Descarga el instalador para tu plataforma desde
 ## Compilar desde el código fuente
 
 Asegúrate de tener instalado [Rust 1.88+](https://rustup.rs/); en Linux también necesitas las
-[dependencias de compilación](../../CONTRIBUTING.md#linux-build-dependencies).
+[dependencias de compilación](../../packaging/README.md#linux-build-dependencies).
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git

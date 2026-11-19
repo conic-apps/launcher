@@ -101,7 +101,7 @@ Téléchargez l'installateur correspondant à votre plateforme depuis
 ## Compilation depuis les sources
 
 Assurez-vous que [Rust 1.88+](https://rustup.rs/) est installé ; sous Linux, les
-[dépendances de compilation](../../CONTRIBUTING.md#linux-build-dependencies) sont également
+[dépendances de compilation](../../packaging/README.md#linux-build-dependencies) sont également
 nécessaires.
 
 ```bash

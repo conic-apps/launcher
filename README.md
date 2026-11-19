@@ -100,7 +100,7 @@ Download the installer for your platform from
 ## Build from Source
 
 Make sure [Rust 1.88+](https://rustup.rs/) is installed; on Linux you also need the
-[build dependencies](./CONTRIBUTING.md#linux-build-dependencies).
+[build dependencies](./packaging/README.md#linux-build-dependencies).
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
