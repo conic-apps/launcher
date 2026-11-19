@@ -5,8 +5,8 @@
 import { Theme } from "../../theme.slint";
 import { AccountAvatar } from "../../components/display/account-avatar.slint";
 import {
-    AccountAdd,
-} from "../../overlays/dialogs/account-add/account-add.slint";
+    SetupAccountAdd,
+} from "setup-account-add.slint";
 import { GameState } from "../../globals/game.slint";
 import { WizardTitle, WizardMessage } from "wizard-text.slint";
 
@@ -19,11 +19,7 @@ export component SetupAddAccount inherits VerticalLayout {
     // The paragraphs are full width, so this only centres the card.
     cross-axis-alignment: center;
 
-    if !GameState.has-account: AccountAdd {
-        content-width: root.width;
-        // The wizard's close/next buttons replace the dialog's hidden "Cancel".
-        wizard-host: true;
-    }
+    if !GameState.has-account: SetupAccountAdd { }
 
     if GameState.has-account: WizardTitle {
         title: @tr("SetupAddAccount" => "Account added!");

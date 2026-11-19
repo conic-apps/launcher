@@ -19,12 +19,8 @@ export component AccountAddMicrosoft inherits VerticalLayout {
     // `start`: a stretching column would spread height changes over the rows.
     alignment: start;
 
-    // The wizard hides the "Cancel" buttons and gives the link box more room.
-    in property <bool> wizard-host: false;
-
-    /// The link box's gap: 8px/16px in the dialog, 36px in the wizard. Margins
-    /// collapse, so the row below is `max(link-margin, 16px)` away, not the sum.
-    private property <length> link-margin: root.wizard-host ? 36px : 8px;
+    /// The gap under the paragraph, above its link box.
+    private property <length> link-margin: 8px;
 
     // Mirrored locally because `changed` cannot take a qualified global.
     private property <string> view: AccountAddState.ms-view;
@@ -96,12 +92,10 @@ export component AccountAddMicrosoft inherits VerticalLayout {
     }
 
     // The URL is only meaningful while its listener is bound on an OS-assigned
-    // port, so bind it exactly while this screen is on show with its host open.
-    // The wizard mounts the screen without the dialog, so `wizard-host` stands
-    // in for dialog visibility. `shown`, not `view`, because the swap is out-in.
-    private property <bool> dialog-visible: Dialogs.account-add-visible;
+    // port, so bind it exactly while this screen is on show in an open dialog.
+    // `shown`, not `view`, because the swap is out-in.
     private property <bool> browser-flow-on-screen: root.shown == "auth-code"
-        && (root.dialog-visible || root.wizard-host);
+        && Dialogs.account-add-visible;
     changed browser-flow-on-screen => {
         if root.browser-flow-on-screen {
             AccountAddState.prepare-auth-code-flow();
@@ -196,8 +190,7 @@ export component AccountAddMicrosoft inherits VerticalLayout {
             }
         }
 
-        // The wizard's 36px margin is spent below, where the button row's 16px
-        // would have collapsed into it.
+        // The gap under the paragraph.
         Rectangle {
             height: root.link-margin;
             background: transparent;
@@ -270,12 +263,12 @@ export component AccountAddMicrosoft inherits VerticalLayout {
             }
         }
 
-        // Its 16px applies only where the link's margin does not already exceed it.
+        // A row of its own so the 16px stays a floor under the link box.
         HorizontalLayout {
             padding-top: max(root.link-margin, 16px);
             spacing: 8px;
 
-            if !root.wizard-host: Button {
+            Button {
                 horizontal-stretch: 1;
                 text: @tr("Cancel");
                 clicked => { AccountAddState.cancel-microsoft-login(); }
@@ -369,7 +362,7 @@ export component AccountAddMicrosoft inherits VerticalLayout {
             padding-top: max(root.link-margin, 16px);
             spacing: 8px;
 
-            if !root.wizard-host: Button {
+            Button {
                 horizontal-stretch: 1;
                 text: @tr("Cancel");
                 clicked => { AccountAddState.cancel-microsoft-login(); }

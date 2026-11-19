@@ -16,9 +16,6 @@ export component AccountAddOffline inherits VerticalLayout {
     // `start`: a stretching column would spread the wrapped height over the rows.
     alignment: start;
 
-    // The wizard hides the "Cancel" button.
-    in property <bool> wizard-host: false;
-
     init => {
         // The screen is rebuilt whenever the dialog switches services.
         AccountAddState.reset-offline-form();
@@ -117,7 +114,7 @@ export component AccountAddOffline inherits VerticalLayout {
         padding-top: 12px;
         spacing: 8px;
 
-        if !root.wizard-host: Button {
+        Button {
             horizontal-stretch: 1;
             text: @tr("Cancel");
             clicked => { AccountAddState.close(); }
