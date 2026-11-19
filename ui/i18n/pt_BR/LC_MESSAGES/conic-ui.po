@@ -3759,11 +3759,6 @@ msgid "Minecraft {} has been released. Click here for details"
 msgstr "Minecraft {} foi lançado. Clique aqui para ver os detalhes"
 
 #: ui
-msgctxt "NotificationText"
-msgid "Conic Launcher has been updated to version {}. Click here to view the release notes"
-msgstr "O Conic Launcher foi atualizado para a versão {}. Clique aqui para ver as notas da versão"
-
-#: ui
 msgctxt "InstanceSettings"
 msgid "Maintenance"
 msgstr "Manutenção"
@@ -3917,3 +3912,13 @@ msgstr "Importando {}"
 msgctxt "TaskText"
 msgid "Copying files"
 msgstr "Copiando arquivos"
+
+#: ui
+msgctxt "NotificationText"
+msgid "An update is ready to install. Click here to restart the launcher!"
+msgstr "Uma atualização está pronta para ser instalada. Clique aqui para reiniciar o launcher!"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Conic Launcher has been updated to version {}.\n\nClick here to view the release notes!"
+msgstr "O Conic Launcher foi atualizado para a versão {}.\n\nClique aqui para ver as notas da versão!"

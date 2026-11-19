@@ -3759,11 +3759,6 @@ msgid "Minecraft {} has been released. Click here for details"
 msgstr "Minecraft {} 已发布，点击此处查看详细信息"
 
 #: ui
-msgctxt "NotificationText"
-msgid "Conic Launcher has been updated to version {}. Click here to view the release notes"
-msgstr "Conic Launcher 已更新至 {}，点击此处查看更新日志"
-
-#: ui
 msgctxt "InstanceSettings"
 msgid "Maintenance"
 msgstr "维护"
@@ -3917,3 +3912,13 @@ msgstr "正在导入 {}"
 msgctxt "TaskText"
 msgid "Copying files"
 msgstr "正在复制文件"
+
+#: ui
+msgctxt "NotificationText"
+msgid "An update is ready to install. Click here to restart the launcher!"
+msgstr "已准备好安装更新，点击这里重启启动器！"
+
+#: ui
+msgctxt "NotificationText"
+msgid "Conic Launcher has been updated to version {}.\n\nClick here to view the release notes!"
+msgstr "Conic Launcher 已更新到版本：{}。\n\n点击此处查看更新说明！"

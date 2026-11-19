@@ -429,7 +429,9 @@ pub fn pick_directory(prompt: &str, current: &Path) -> Option<PathBuf> {
         .pick_folder()
 }
 
-/// Re-executes the launcher so a changed storage location takes effect.
+/// Re-executes the launcher and ends this process, so the exit work runs: a
+/// staged self-update is swapped in there, and a changed storage location takes
+/// effect next launch.
 ///
 /// The child carries `CONIC_RELAUNCH`, telling `main` to wait for this process'
 /// single-instance claim to be released; without that wait the child would see
