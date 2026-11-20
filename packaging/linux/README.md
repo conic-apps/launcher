@@ -29,7 +29,7 @@ The set is the freedesktop hicolor ladder (`16x16` … `512x512`, plus `scalable
 looked up by an icon theme, so there is no reason to add a tenth raster.
 
 The master artwork is `ui/assets/logo.png`; the scalable entry is
-`ui/assets/images/logo-flat.svg`. Both are read in place, never copied into the app tree — the
+`ui/assets/logo-flat.svg`. Both are read in place, never copied into the app tree — the
 package payload is the only copy.
 
 ## Naming
