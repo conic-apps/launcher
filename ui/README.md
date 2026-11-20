@@ -2,22 +2,25 @@
 
 The Slint interface crate, `conic-ui`. `ui/**.slint` is the whole interface, and `ui/build.rs`
 compiles it into the generated Rust module `app` re-exports as `slint_backend`, generating
-`ui/icons.slint` from the SVGs under `ui/assets/icons/` on every build. `assets/` holds the icons,
+`ui/graphics/icons.slint` from the SVGs under `ui/assets/icons/` on every build. `assets/` holds the icons,
 artwork, skins and the two embedded fonts; `i18n/` the twelve `.po` catalogues, which
 [CONTRIBUTING.md](../CONTRIBUTING.md#translations) covers.
 
 ## Layout
 
-`app.slint` is the root `Window`, `theme.slint` the design tokens and `icons.slint` a `build.rs`
-product. Everything else is one of five buckets, and the bucket — not the feature — is what decides
-where a file goes:
+`app.slint` is the root `Window`. Everything else is one of five buckets, and the bucket — not the
+feature — is what decides where a file goes:
 
-- **`components/`** — reusable, feature-agnostic widgets, split by role:
+- **`graphics/`** — the design system, split by role: the tokens, and the reusable,
+  feature-agnostic widgets that read them. `theme.slint` (the Catppuccin palettes, the typography
+  tokens and the embedded fonts) and `icons.slint` (a `build.rs` product) sit at its root. A file may
+  join this bucket only if it is a widget — something a surface can put in a layout — and needs
+  nothing but those two, the cross-surface infrastructure under `globals/` and its own siblings.
   - `controls/` — form and display primitives, with **no prefix**: `Button`, `Checkbox`, `Input`,
     `Select`, `DropdownSelect`, `Switch`, `SliderBar`, `ListItem`, `Progress`, `Loading`.
   - `containers/` — layout/behaviour wrappers: `ScrollView`, `ScrollViewHorizontal`,
     `SlideTransition`, `ZoomTransition`.
-  - `display/` — presentational: `AppIcon`, `AccountAvatar`, `InstanceCard`, `PaletteRow`, `Scrim`.
+  - `display/` — presentational: `AppIcon`, `AccountAvatar`, `InstanceCard`, `Scrim`.
   - `settings/` — `SettingItem`, `SettingGroup`, `SettingCollapse`, `SettingReveal`.
   - `markdown/` — the `.slint` half of `app/src/ui/components/markdown/`.
 - **`window/`** — the window's own chrome, not a widget. A file belongs here when the platform
@@ -29,7 +32,7 @@ where a file goes:
   (`title-bar-action-button`, `search-bar`), `window-background.slint` — the window's back layer,
   drawn under everything else — and `window-control.slint`, the platform-control contract the title
   bar draws from. This is the one bucket allowed to hold app-specific chrome, which is what
-  distinguishes it from `components/`: the title bar's search, gear, news, music and notification
+  distinguishes it from `graphics/`: the title bar's search, gear, news, music and notification
   buttons are fixed parts of this app's window frame, not reusable widgets.
 - **`screens/`** — the destinations `Navigation` can navigate to: one `*-screen.slint` each
   (`game-screen`, `launch-screen`, `setup-screen`) with a same-named folder for its parts (`game/`,
@@ -77,7 +80,7 @@ a full-size framebuffer on every drag frame.
 ### Overlay dimming
 
 Every overlay but the dialogs dims the window through one shared layer,
-`components/display/scrim.slint`, which owns the single dim level. Each band of the window mounts
+`graphics/display/scrim.slint`, which owns the single dim level. Each band of the window mounts
 one instance — the game screen's, the app root's and the palette's — and
 `globals/overlay-shadow.slint` lets only the topmost open overlay's band ask for it: an overlay
 opened over another takes the dim over, so two open overlays never darken the window twice. The

@@ -5,12 +5,12 @@
 // Content overlay state. Only one panel is open at a time; the domain state
 // lives in Rust and the view writes back only pure UI state (search, selection).
 
-// The Markdown renderer's laid-out body types (`ui/components/markdown/`).
+// The Markdown renderer's laid-out body types (`ui/graphics/markdown/`).
 import {
     MdItem,
     MarkdownImage,
     MdChunk,
-} from "../components/markdown/markdown-view.slint";
+} from "../graphics/markdown/markdown-view.slint";
 
 /// One tag on a card. Its `kind` picks the surface colour.
 export struct CardTag {

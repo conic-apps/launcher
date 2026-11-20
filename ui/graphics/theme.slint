@@ -4,14 +4,14 @@
 
 // Embedded fonts: "Comfortaa Nunito" carries the Nunito digit glyphs merged
 // into Comfortaa (`tools/merge-digit-font.py`), and Fira Code is used for code.
-import "assets/fonts/ComfortaaNunito.ttf";
-import "assets/fonts/FiraCode-VF.ttf";
+import "../assets/fonts/ComfortaaNunito.ttf";
+import "../assets/fonts/FiraCode-VF.ttf";
 
 // `Palette.color-scheme` reflects the OS light/dark preference, so "follow
 // system" resolves without Rust help.
 import { Palette } from "std-widgets.slint";
 
-import { AppConfig } from "globals/settings.slint";
+import { AppConfig } from "../globals/settings.slint";
 
 // The 26 Catppuccin colors; high contrast reuses the raw colors and only changes
 // the semantic tokens derived from them.

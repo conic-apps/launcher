@@ -32,11 +32,11 @@ const COMPILER_STACK_BYTES: usize = 64 * 1024 * 1024;
 fn main() {
     // `slint-build` compiles this crate's `.slint` tree into a generated module
     // that `slint::include_modules!()` pulls into `lib.rs`. Fonts are embedded
-    // via `import "*.ttf"` in `theme.slint`; translations are bundled from
+    // via `import "*.ttf"` in `graphics/theme.slint`; translations are bundled from
     // `i18n/<lang>/LC_MESSAGES/<crate>.po` and selected at runtime with
     // `slint::select_bundled_translation()`.
     //
-    // `icons.slint` is generated first: it is a build product, and the compiler
+    // `graphics/icons.slint` is generated first: it is a build product, and the compiler
     // reads it like any other `.slint` file.
     check_embedded_fonts();
     generate_icons();
@@ -98,7 +98,7 @@ struct Icon {
     viewbox: i32,
 }
 
-/// Generate `icons.slint` from the SVGs `AppIcon` renders.
+/// Generate `graphics/icons.slint` from the SVGs `AppIcon` renders.
 ///
 /// The geometry is read with `usvg` — the same crate Slint rasterizes with — so
 /// attribute inheritance and every shape type are already resolved and the
@@ -151,7 +151,7 @@ fn generate_icons() {
         "no icon SVGs found; the table would be empty"
     );
     let source = render_icons_table(&icons);
-    let out = manifest.join("icons.slint");
+    let out = manifest.join("graphics/icons.slint");
     // Write only when the table actually changed. `slint-build` registers every
     // file the compiler imports as a `rerun-if-changed` path, and that includes
     // this one -- it is read like any other `.slint` file. Rewriting it with
