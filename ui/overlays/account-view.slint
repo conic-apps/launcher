@@ -12,7 +12,7 @@ import { SettingGroup } from "../graphics/settings/setting-group.slint";
 import { SettingItem } from "../graphics/settings/setting-item.slint";
 import { Button } from "../graphics/controls/button.slint";
 import { Loading } from "../graphics/controls/loading.slint";
-import { ContentOverlay } from "content/content-overlay.slint";
+import { OverlayPanel } from "shell/overlay-panel.slint";
 import { GameState, GameTime } from "../globals/game.slint";
 import { AccountViewState } from "../globals/account-view.slint";
 import { AvatarMask } from "../globals/avatar.slint";
@@ -45,7 +45,7 @@ component DetailItem inherits HorizontalLayout {
 }
 
 // The account view overlay: head, auth details, launch graph, recent activity,
-// capes and the danger zone, on the shared `ContentOverlay` shell.
+// capes and the danger zone, on the shared `OverlayPanel` shell.
 //
 // The top band (title bar, summary, graph) runs full width with no gaps; the
 // sections below it are rounded cards.
@@ -761,8 +761,8 @@ export component AccountViewRoot inherits Rectangle {
     height: 100%;
     background: transparent;
 
-    overlay := ContentOverlay {
-        overlay-visible: AccountViewState.visible;
+    overlay := OverlayPanel {
+        panel-visible: AccountViewState.visible;
         panel-inset: 200px;
         // Lavender at the body's weaker ratio.
         panel-background: Theme.base.mix(Theme.lavender, 0.9);

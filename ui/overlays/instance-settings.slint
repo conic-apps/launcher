@@ -16,7 +16,7 @@ import { Switch } from "../graphics/controls/switch.slint";
 import { InstanceCard } from "../graphics/display/instance-card.slint";
 import { InstanceSettingsState } from "../globals/instance-settings.slint";
 import { AppConfig } from "../globals/settings.slint";
-import { ContentOverlay } from "content/content-overlay.slint";
+import { OverlayPanel } from "shell/overlay-panel.slint";
 
 // The instance settings overlay, sliding inside the shared content shell with a
 // narrower container. The subtree is static (no `for`, no measured `if` row), so
@@ -482,8 +482,8 @@ export component InstanceSettingsRoot inherits Rectangle {
     height: 100%;
     background: transparent;
 
-    overlay := ContentOverlay {
-        overlay-visible: InstanceSettingsState.visible;
+    overlay := OverlayPanel {
+        panel-visible: InstanceSettingsState.visible;
         panel-inset: 200px;
         closed => { InstanceSettingsState.close(); }
 

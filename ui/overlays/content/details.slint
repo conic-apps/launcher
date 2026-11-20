@@ -11,7 +11,7 @@ import { ScrollView } from "../../graphics/containers/scroll-view.slint";
 import {
     ScrollViewHorizontal,
 } from "../../graphics/containers/scroll-view-horizontal.slint";
-import { ContentOverlay } from "content-overlay.slint";
+import { OverlayPanel } from "../shell/overlay-panel.slint";
 import { ContentTitleBar } from "content-title-bar.slint";
 import { MarkdownBody } from "markdown-body.slint";
 component MetadataEntry inherits Rectangle {
@@ -387,8 +387,8 @@ export component DetailPanels inherits Rectangle {
     height: 100%;
     background: transparent;
 
-    ContentOverlay {
-        overlay-visible: ContentState.open-detail != "";
+    OverlayPanel {
+        panel-visible: ContentState.open-detail != "";
         panel-background: Theme.base;
         closed => { ContentState.close-detail(); }
 

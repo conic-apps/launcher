@@ -4,7 +4,7 @@
 
 import { Theme } from "../../graphics/theme.slint";
 import { NewsState } from "../../globals/news.slint";
-import { ContentOverlay } from "../content/content-overlay.slint";
+import { OverlayPanel } from "../shell/overlay-panel.slint";
 import { NewsListPanel } from "news-panel.slint";
 import { NewsDetailPanel } from "news-detail.slint";
 
@@ -15,8 +15,8 @@ export component NewsRoot inherits Rectangle {
     height: 100%;
     background: transparent;
 
-    list-overlay := ContentOverlay {
-        overlay-visible: NewsState.visible;
+    list-overlay := OverlayPanel {
+        panel-visible: NewsState.visible;
         panel-inset: 150px;
         closed => { NewsState.close(); }
 
@@ -27,8 +27,8 @@ export component NewsRoot inherits Rectangle {
     }
 
     // Declared last: a detail covers the list.
-    detail-overlay := ContentOverlay {
-        overlay-visible: NewsState.detail-visible;
+    detail-overlay := OverlayPanel {
+        panel-visible: NewsState.detail-visible;
         panel-inset: 150px;
         panel-background: Theme.base;
         closed => { NewsState.close-detail(); }
