@@ -43,7 +43,7 @@ use instance::Instance;
 use java_discovery::ResolveJavaOptions;
 use platform::{OsFamily, PLATFORM_INFO, strip_unc_prefix};
 use shared::{ChangeReporter, Sink};
-use statistics::{StatisticsProfile, log_launch};
+use statistics::{StatisticsProfile, record_launch};
 use storage::LOCATIONS;
 use version::{Version, resolve_version};
 
@@ -447,7 +447,7 @@ async fn spawn_minecraft_process(
         Account::Offline(account) => StatisticsProfile::Offline(account.uuid),
         Account::Yggdrasil(account) => StatisticsProfile::Yggdrasil(account.identifier),
     };
-    let _ = log_launch(statistics_profile, instance.id).await;
+    let _ = record_launch(statistics_profile, instance.id).await;
     Ok(pid)
 }
 
