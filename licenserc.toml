@@ -7,10 +7,24 @@ SPDX-License-Identifier: GPL-3.0-only
 
 [files]
 root = "{{ config_dir }}"
-includes = ["**/*.rs", "**/*.slint", "**/*.py", "**/*.sh", "**/*.html"] # NOTE: .ps1 file is unsupported.
+includes = ["**/*.rs", "**/*.slint", "**/*.py", "**/*.sh", "**/*.html", "**/*.vert", "**/*.frag", "**/*.ps1"]
 excludes = ["target/**"]
 
 [[rules]]
 extensions = ["slint"]
 style_out = "doubleslash"
 styles_in = ["doubleslash"]
+
+# GLSL has no built-in language entry, so without this rule `hawkeye` reports the
+# shaders as unsupported and exits 0 -- a missing header there goes unnoticed.
+[[rules]]
+extensions = ["vert", "frag"]
+style_out = "doubleslash"
+styles_in = ["doubleslash"]
+
+# PowerShell's `#` comments are the `script` style, the same one `sh` and `py`
+# use. Without the rule hawkeye reports a `.ps1` as unsupported and exits 0.
+[[rules]]
+extensions = ["ps1"]
+style_out = "script"
+styles_in = ["script"]
