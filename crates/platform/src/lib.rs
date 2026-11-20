@@ -52,9 +52,7 @@ pub enum OsArch {
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub enum OsFamily {
     Windows,
-
     Linux,
-
     Macos,
 }
 
@@ -63,11 +61,8 @@ pub struct PlatformInfo {
     /// The real hardware CPU architecture, detected at runtime via `os_info`.
     pub arch: OsArch,
     pub os_type: Type,
-
     pub os_family: OsFamily,
-
     pub os_version: Version,
-
     pub edition: Option<String>,
 }
 

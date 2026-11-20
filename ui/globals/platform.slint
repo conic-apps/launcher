@@ -1,0 +1,12 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// The platform family, as `platform::PLATFORM_INFO` reports it. Decides the
+// window frame, the window controls and the shortcut glyph, and mirrors the Rust
+// `platform::OsFamily` so the host maps one onto the other exhaustively.
+export enum OsFamily {
+    macos,
+    linux,
+    windows,
+}
