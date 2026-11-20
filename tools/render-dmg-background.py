@@ -46,7 +46,7 @@ SOURCE = DMG / "background.svg"
 OUTPUT = DMG / "background.png"
 
 # The font the launcher embeds, which is also `Theme.font-family`
-# (`ui/theme.slint`). It is one variable font, so the heading's two weights
+# (`ui/graphics/theme.slint`). It is one variable font, so the heading's two weights
 # are two instances of this file rather than two files.
 FONT = ROOT / "ui/assets/fonts/ComfortaaNunito.ttf"
 

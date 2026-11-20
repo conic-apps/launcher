@@ -44,7 +44,7 @@ and `native/` are usable from any layer, and `native/` is the only one of them t
    ----------------------   --------------------------  --------------------------------------
    screens/<screen>      --> screens/<screen>.slint      the navigation destinations
    overlays/<surface>    --> overlays/<surface>.slint    above a screen: dialogs/, news/, settings/
-   components/<widget>   --> components/<widget>.slint   widgets, grouped by role
+   --                    --> graphics/<role>/*.slint     the design system: tokens and widgets
    services/<concern>    --> globals/<domain>.slint      cross-surface state and delivery
 ```
 
@@ -54,9 +54,10 @@ and `native/` are usable from any layer, and `native/` is the only one of them t
   `ui::services::report::{report, deliver}`, or through a crate's `Sink`, whose implementation is a
   `ui/` port.
 
-`ui/window/` is the one bucket with no `app/src/ui/` counterpart: it is the window's own chrome, not
-a surface. Its Rust side is `app/src/support/native/`, which produces the window-control model and
-sets the window attributes, and `crates/window` behind that.
+`ui/window/` and `ui/graphics/` are the buckets with no `app/src/ui/` counterpart, and neither is a
+surface: the first is the window's own chrome, whose Rust side is `app/src/support/native/` --
+producing the window-control model and setting the window attributes, with `crates/window` behind it
+-- and the second is the design system, reached from Rust only through a surface that uses it.
 
 ## Crate map
 
@@ -117,7 +118,7 @@ Delete the debug folder by hand to reset a debug install.
   the Markdown/HTML renderer are in [`app/README.md`](./app/README.md).
 - **`ui/`** — the Slint interface crate (`conic-ui`). `ui/**.slint` is the whole interface and
   `ui/build.rs` compiles it into the generated Rust module that `app` re-exports as `slint_backend`,
-  generating `ui/icons.slint` from the SVGs under `ui/assets/icons/` (gitignored). The crate also
+  generating `ui/graphics/icons.slint` from the SVGs under `ui/assets/icons/` (gitignored). The crate also
   owns the interface's assets — `ui/assets/`, which holds the icons, artwork, skins and the two
   embedded fonts — and the translation catalogues, and it is separate from `app` so a change to the
   app's Rust does not recompile the generated interface. The bucket layout is in

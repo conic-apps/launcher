@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The Rust half of the reusable Slint components: drivers and pixel producers
-//! for their matching components under `ui/components/`.
+//! for their matching components under `ui/graphics/`.
 
 pub(crate) mod account_avatar;
 pub(crate) mod background;

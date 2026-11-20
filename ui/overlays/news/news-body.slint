@@ -5,10 +5,10 @@
 // A changelog's HTML body. It shares the content detail panels' engine but binds
 // to `NewsState`, so a body pushed to one surface does not repaint the other.
 
-import { Theme } from "../../theme.slint";
-import { Icons } from "../../icons.slint";
+import { Theme } from "../../graphics/theme.slint";
+import { Icons } from "../../graphics/icons.slint";
 import { NewsState } from "../../globals/news.slint";
-import { MarkdownView } from "../../components/markdown/markdown-view.slint";
+import { MarkdownView } from "../../graphics/markdown/markdown-view.slint";
 
 export component NewsBody inherits Rectangle {
     /// The scroller's offset, in the shared `ScrollView` sign (negative down).
