@@ -61,6 +61,9 @@ pub async fn install(
     reporter: &ModLoaderReporter,
 ) -> Result<()> {
     info!("Start downloading the neoforge installer");
+    // Before anything is downloaded: the installer refuses to start without the
+    // profile and crashes on one it cannot parse.
+    crate::prepare_launcher_profiles(install_dir, reporter);
     let installer_path = download_installer(neoforge_version, reporter).await?;
     info!(
         "Running {} -jar {} --installClient {}",

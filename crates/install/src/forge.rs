@@ -116,6 +116,9 @@ pub async fn install(
     reporter: &ModLoaderReporter,
 ) -> Result<()> {
     info!("Start downloading the forge installer");
+    // Before anything is downloaded: the installer refuses to start without the
+    // profile and crashes on one it cannot parse.
+    crate::prepare_launcher_profiles(&minecraft_location.root, reporter);
     let installer_path = download_installer(mcversion, forge_version, reporter).await?;
     // Prefetch is best-effort — the install can still proceed and re-download
     // later — but a failure must not be silent.
