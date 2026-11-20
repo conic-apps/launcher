@@ -5,6 +5,7 @@
 import { Theme, ThemeProvider } from "graphics/theme.slint";
 import { TitleBar } from "window/title-bar.slint";
 import { WindowControl } from "window/window-control.slint";
+import { OsFamily } from "globals/platform.slint";
 import { AppConfig } from "globals/settings.slint";
 import { CommandPaletteState } from "globals/command-palette.slint";
 import { Navigation } from "globals/navigation.slint";
@@ -100,6 +101,7 @@ export {
     NotificationItem,
 } from "globals/notifications.slint";
 export { TaskState, TaskItem, TaskText } from "globals/tasks.slint";
+export { OsFamily } from "globals/platform.slint";
 
 // Application root window. macOS keeps the native traffic lights, Linux draws
 // its own window controls, and Windows draws the platform's own over the title
@@ -115,7 +117,7 @@ export component App inherits Window {
     // macOS blends its native title bar into the client area; Linux leaves the
     // corners transparent for the rounded, frameless window. Windows stays
     // opaque because its frame is DWM's and rounds the window itself.
-    background: self.macos || self.linux ? transparent : Theme.crust;
+    background: self.os-family != OsFamily.windows ? transparent : Theme.crust;
     // The floor, not a fixed size: fixed `width`/`height` on the root Window pin
     // min == max and make it non-resizable.
     min-width: 840px;
@@ -124,17 +126,15 @@ export component App inherits Window {
     preferred-height: 532px;
     // Linux has no window controls of its own, and Windows drops the caption so
     // the platform's controls sit on the app's title bar.
-    no-frame: self.linux || self.windows;
-    resize-border-width: (self.linux || self.windows) ? 6px : 0px;
+    no-frame: self.os-family != OsFamily.macos;
+    resize-border-width: self.os-family != OsFamily.macos ? 6px : 0px;
     // The initial focus element: a window with nothing focused discards its key
     // events, which would kill the `Ctrl`/`⌘` + `/` shortcut after the first
     // click. The scope wraps the whole window so a key event from any focused
     // field inside it still reaches its binding on the way up.
     forward-focus: app-scope;
 
-    in-out property <bool> macos: false;
-    in-out property <bool> linux: false;
-    in-out property <bool> windows: false;
+    in property <OsFamily> os-family: OsFamily.macos;
     /// The custom title bar's height, shared with the platform, which sizes and
     /// hit tests the window controls against it (`app/src/support/native/windows/caption.rs`).
     in property <length> title-bar-height: 44px;
@@ -409,9 +409,7 @@ export component App inherits Window {
                 width: 100%;
                 height: root.title-bar-height;
                 z: 1200;
-                macos: root.macos;
-                linux: root.linux;
-                windows: root.windows;
+                os-family: root.os-family;
                 fullscreen: root.window-fullscreen;
                 window-controls-inset: root.window-controls-inset;
                 window-controls: root.window-controls;

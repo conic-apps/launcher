@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../graphics/theme.slint";
+import { OsFamily } from "../globals/platform.slint";
 import { Icons } from "../graphics/icons.slint";
 import { CommandPaletteState } from "../globals/command-palette.slint";
 import { TitleBarActionButton } from "title-bar/title-bar-action-button.slint";
@@ -20,9 +21,7 @@ import {
 // `window-control.slint`, and Windows the platform's own controls at the
 // right-hand end.
 export component TitleBar inherits Rectangle {
-    in property <bool> macos: false;
-    in property <bool> linux: false;
-    in property <bool> windows: false;
+    in property <OsFamily> os-family: OsFamily.macos;
     /// Whether the window is in native fullscreen, where macOS hides the
     /// traffic lights (see the leading controls below).
     in property <bool> fullscreen: false;
@@ -52,10 +51,10 @@ export component TitleBar inherits Rectangle {
     // What the right-hand actions must clear: Linux's 86px of custom controls,
     // or the platform's controls plus a 10px gap.
     private property <length> controls-inset:
-        root.linux ? 86px : root.window-controls-inset + 10px;
+        root.os-family == OsFamily.linux ? 86px : root.window-controls-inset + 10px;
 
     private property <length> left-actions-start:
-        root.macos && !root.fullscreen ? 90px : 16px;
+        root.os-family == OsFamily.macos && !root.fullscreen ? 90px : 16px;
     private property <length> right-actions-width:
         28px + 8px + 28px + (root.music-enabled ? 8px + 28px : 0px);
     private property <length> right-actions-start:
@@ -75,7 +74,7 @@ export component TitleBar inherits Rectangle {
 
     // Windows' own window controls, flush right and as tall as the bar. Outside
     // `WindowMoveArea`: they are non-client area, so the system hit tests them.
-    if root.windows: Rectangle {
+    if root.os-family == OsFamily.windows: Rectangle {
         width: root.window-controls-inset;
         height: 100%;
         x: root.width - self.width;
@@ -134,7 +133,7 @@ export component TitleBar inherits Rectangle {
         }
     }
 
-    if root.linux: Rectangle {
+    if root.os-family == OsFamily.linux: Rectangle {
         width: 78px;
         height: 28px;
         x: root.width - self.width;

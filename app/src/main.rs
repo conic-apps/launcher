@@ -20,14 +20,17 @@ use std::{cell::RefCell, rc::Rc};
 use log::info;
 use slint::{ComponentHandle, Timer, Weak};
 
-use slint_backend::{App, AppConfig, Navigation, NewsState, NotificationState};
+use slint_backend::{App, AppConfig, Navigation, NewsState, NotificationState, OsFamily};
 use window::WindowService;
 
 fn main() {
     storage::LOCATIONS.init();
     support::logs::init();
 
-    info!("Conic Launcher is starting up");
+    info!(
+        "Conic Launcher {} is starting up",
+        env!("CARGO_PKG_VERSION")
+    );
     info!(
         "Conic Launcher is open source, You can view the source code on Github: https://github.com/conic-apps/launcher"
     );
@@ -58,16 +61,24 @@ fn main() {
     ui::services::app_config::select_locale(config.language.as_deref());
 
     let platform = platform::PLATFORM_INFO.clone();
-    ui.set_macos(platform.os_family == platform::OsFamily::Macos);
-    ui.set_linux(platform.os_family == platform::OsFamily::Linux);
-    ui.set_windows(platform.os_family == platform::OsFamily::Windows);
+    let os_family = match platform.os_family {
+        platform::OsFamily::Macos => OsFamily::Macos,
+        platform::OsFamily::Linux => OsFamily::Linux,
+        platform::OsFamily::Windows => OsFamily::Windows,
+    };
+    ui.set_os_family(os_family);
     log::info!(
         "detected platform: {:?} ({})",
         platform.os_type,
         platform.os_family
     );
 
-    ui.set_search_hotkey(if ui.get_macos() { "⌘/" } else { "Ctrl+/" }.into());
+    let hotkey = if os_family == OsFamily::Macos {
+        "⌘/"
+    } else {
+        "Ctrl+/"
+    };
+    ui.set_search_hotkey(hotkey.into());
 
     let settings = ui.global::<AppConfig>();
     ui::services::app_config::apply_config(&settings, &config);
@@ -199,7 +210,7 @@ fn main() {
     watch_launches(single_instance, ui.as_weak());
 
     // Double-click the title bar: fullscreen on macOS, maximized elsewhere.
-    let macos = ui.get_macos();
+    let macos = os_family == OsFamily::Macos;
     let ws = window.clone();
     ui.on_maximize_or_fullscreen(move || {
         if macos {
