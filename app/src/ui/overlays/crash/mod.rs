@@ -152,8 +152,9 @@ fn detail_lines(details: &str) -> ModelRc<CrashLogLine> {
     let lines = details
         .lines()
         .map(|line| CrashLogLine {
-            // Slint draws a tab as a missing glyph, so expand it before the
-            // `Text` element sees it.
+            // Slint skips the glyph of a control character but keeps the advance
+            // of the missing glyph it was shaped as, which is no tab stop, so
+            // expand it before the `Text` element sees it.
             text: SharedString::from(expand_tabs(line)),
             kind: SharedString::from(log_line_kind(line)),
         })

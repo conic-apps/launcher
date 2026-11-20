@@ -110,18 +110,21 @@ export component SetupAccountAdd inherits VerticalLayout {
     if root.shown == "microsoft": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
+
         SetupAccountAddMicrosoft { }
     }
 
     if root.shown == "yggdrasil": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
+
         SetupAccountAddYggdrasil { }
     }
 
     if root.shown == "offline": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
+
         SetupAccountAddOffline { }
     }
 }

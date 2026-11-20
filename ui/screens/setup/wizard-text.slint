@@ -41,7 +41,7 @@ export component WizardMessage inherits Text {
     font-weight: Theme.font-weight-normal;
     color: Theme.default-text-color.transparentize(0.1);
     wrap: word-wrap;
-    // 1.18 has no `line-height`; `line-height-factor` multiplies the font's
+    // Slint has no `line-height`; `line-height-factor` multiplies the font's
     // natural line box (~1.115em) rather than the font size, so this comes out
     // a shade taller than the intended 19.5px.
     line-height-factor: 1.5;

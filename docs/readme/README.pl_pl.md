@@ -99,7 +99,7 @@ Pobierz instalator dla swojej platformy z
 
 ## Budowanie ze źródeł
 
-Upewnij się, że zainstalowano [Rust 1.88+](https://rustup.rs/); w systemie Linux potrzebne są także
+Upewnij się, że zainstalowano [Rust 1.95+](https://rustup.rs/); w systemie Linux potrzebne są także
 [zależności budowania](../../packaging/README.md#linux-build-dependencies).
 
 ```bash

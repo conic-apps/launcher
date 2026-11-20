@@ -4,8 +4,9 @@
 
 // The pixel-level corner rounding and drop shadow of avatar heads.
 //
-// Slint cannot round an `Image` — a `clip: true` with a `border-radius` is clipped
-// rectangularly by the software renderer — so the round goes in the pixels.
+// The head is rounded in the pixels rather than clipped: the account view's big
+// head casts a shadow blurred from the image's own alpha, so the round has to be
+// in the image for that, and one mechanism then serves every size.
 //
 // A radius of half the shorter side or more is the inscribed pill. `draw-size` is
 // the width the caller draws at, so the radius is measured on screen rather than in

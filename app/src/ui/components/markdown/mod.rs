@@ -58,7 +58,7 @@ impl Renderer {
     }
 
     /// For a Slint application, pass
-    /// `slint::fontique_011::shared_collection()`, or every advance and line
+    /// `slint::fontique_012::shared_collection()`, or every advance and line
     /// break will be slightly wrong. The crate does not reach for it itself
     /// because it is behind an unstable Slint feature.
     pub fn with_collection(collection: fontique::Collection) -> Self {

@@ -83,7 +83,7 @@ impl BodyRenderer {
     /// collections would be two sets of advances and every line break wrong.
     fn new() -> Self {
         let mut renderer = crate::ui::components::markdown::Renderer::with_collection(
-            slint::fontique_011::shared_collection(),
+            slint::fontique_012::shared_collection(),
         );
         let mono = monospace_family();
         renderer.set_style(
@@ -114,8 +114,8 @@ thread_local! {
 /// `font-family` takes a family *name* — `monospace` means nothing to it — so
 /// naming the embedded family keeps the engine and the view in the same face.
 pub(crate) fn monospace_family() -> String {
-    use slint::fontique_011::fontique::GenericFamily;
-    let mut collection = slint::fontique_011::shared_collection();
+    use slint::fontique_012::fontique::GenericFamily;
+    let mut collection = slint::fontique_012::shared_collection();
 
     const EMBEDDED: &str = "Fira Code";
     if collection.family_id(EMBEDDED).is_some() {

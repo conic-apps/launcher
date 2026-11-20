@@ -99,7 +99,7 @@ Platformunuza uygun kurulum dosyasını
 
 ## Kaynaktan derleme
 
-[Rust 1.88+](https://rustup.rs/) kurulu olduğundan emin olun; Linux'ta ayrıca
+[Rust 1.95+](https://rustup.rs/) kurulu olduğundan emin olun; Linux'ta ayrıca
 [derleme bağımlılıkları](../../packaging/README.md#linux-build-dependencies) gerekir.
 
 ```bash

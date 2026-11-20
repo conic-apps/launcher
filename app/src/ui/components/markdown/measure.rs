@@ -99,7 +99,7 @@ impl Measurer {
     }
 
     /// A measurer over the caller's own font collection, which for a Slint app
-    /// is `slint::fontique_011::shared_collection()`.
+    /// is `slint::fontique_012::shared_collection()`.
     pub fn with_collection(collection: Collection) -> Self {
         // `shared: true` avoids loading the same font files twice.
         let source_cache = SourceCache::new(SourceCacheOptions { shared: true });
@@ -138,13 +138,12 @@ impl Measurer {
         // No wrapping and one style, so this is one line; the clusters are
         // already in visual order.
         for line in layout.lines() {
-            let line_metrics = *line.metrics();
-            metrics.ascent = metrics.ascent.max(line_metrics.ascent);
-            metrics.descent = metrics.descent.max(line_metrics.descent);
-            metrics.leading = metrics.leading.max(line_metrics.leading);
-            metrics.baseline = line_metrics.baseline;
+            metrics.baseline = line.metrics().baseline;
             for run in line.runs() {
-                let run_metrics = *run.metrics();
+                let run_metrics = run.font_metrics();
+                metrics.ascent = metrics.ascent.max(run_metrics.ascent);
+                metrics.descent = metrics.descent.max(run_metrics.descent);
+                metrics.leading = metrics.leading.max(run_metrics.leading);
                 metrics.strike_offset = run_metrics.strikethrough_offset;
                 metrics.strike_size = run_metrics.strikethrough_size;
                 metrics.underline_offset = run_metrics.underline_offset;
@@ -178,6 +177,10 @@ impl Measurer {
             // from becoming one indivisible cluster.
             word_break: WordBreak::Normal,
             overflow_wrap: OverflowWrap::Anywhere,
+            // Never collapse: every run is shaped on its own, so trimming the
+            // end would glue two runs of a sentence together. The caller
+            // collapses.
+            white_space_collapse: WhiteSpaceCollapse::Preserve,
             ..Default::default()
         };
         // A zero or negative size would make every advance zero and every
@@ -188,9 +191,6 @@ impl Measurer {
         let mut builder =
             self.layout_ctx
                 .tree_builder(&mut self.font_ctx, self.scale, false, &text_style);
-        // Never collapse here: every run is shaped on its own, so trimming the
-        // end would glue two runs of a sentence together. The caller collapses.
-        builder.set_white_space_mode(WhiteSpaceCollapse::Preserve);
         builder.push_text(text);
         let (mut layout, laid_out) = builder.build();
         layout.break_all_lines(None);

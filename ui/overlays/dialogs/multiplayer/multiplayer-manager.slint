@@ -460,9 +460,8 @@ component HostReadyScreen inherits VerticalLayout {
                     player: player;
                 }
 
-                // The italic is dropped: Slint has no oblique for the embedded
-                // font. The 8px is padding because the list's spacing has no rows
-                // to sit between.
+                // The 8px is padding because the list's spacing has no rows to
+                // sit between.
                 if MultiplayerState.players.length == 0: VerticalLayout {
                     padding-top: 8px;
 
@@ -750,36 +749,43 @@ export component MultiplayerManager inherits VerticalLayout {
     if root.shown == "waiting": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: MultiplayerState.screen-direction;
+
         WaitingScreen { }
     }
     if root.shown == "hostScan": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: MultiplayerState.screen-direction;
+
         HostScanScreen { }
     }
     if root.shown == "hostReady": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: MultiplayerState.screen-direction;
+
         HostReadyScreen { }
     }
     if root.shown == "guestCodeInput": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: MultiplayerState.screen-direction;
+
         GuestCodeInputScreen { }
     }
     if root.shown == "guestJoining": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: MultiplayerState.screen-direction;
+
         GuestJoiningScreen { }
     }
     if root.shown == "guestReady": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: MultiplayerState.screen-direction;
+
         GuestReadyScreen { }
     }
     if root.shown == "exception": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: MultiplayerState.screen-direction;
+
         ExceptionScreen { }
     }
 

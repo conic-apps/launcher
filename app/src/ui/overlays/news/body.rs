@@ -37,7 +37,7 @@ struct Body {
 
 impl Body {
     fn new() -> Self {
-        let mut renderer = Renderer::with_collection(slint::fontique_011::shared_collection());
+        let mut renderer = Renderer::with_collection(slint::fontique_012::shared_collection());
         let mono = monospace_family();
         renderer.set_style(MdStyle::default().with_families(theme_font_family(), mono.clone()));
         Self {

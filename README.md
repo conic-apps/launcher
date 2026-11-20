@@ -99,7 +99,7 @@ Download the installer for your platform from
 
 ## Build from Source
 
-Make sure [Rust 1.88+](https://rustup.rs/) is installed; on Linux you also need the
+Make sure [Rust 1.95+](https://rustup.rs/) is installed; on Linux you also need the
 [build dependencies](./packaging/README.md#linux-build-dependencies).
 
 ```bash

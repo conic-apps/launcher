@@ -74,7 +74,7 @@ jobs:
       - name: Install slint-lsp
         uses: taiki-e/install-action@v2
         with:
-          tool: slint-lsp@1.18.1
+          tool: slint-lsp@1.19.0
 
       - name: Run slint-lsp format check
         shell: bash

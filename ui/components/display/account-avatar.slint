@@ -11,12 +11,11 @@ import { AvatarMask } from "../../globals/avatar.slint";
 // bundled default; the placeholder disc with the per-account-type ring is drawn
 // while it is empty.
 //
-// The corners are cut in the pixels, not by a `clip`: a clipped box with a
-// `border-radius` is clipped rectangularly by Slint's software renderer, which the
-// winit backend falls back to when the OpenGL context cannot be created. Slint's
-// `Rectangle` takes no `background-image` and `Image` takes no `border-radius`, so
-// `AvatarMask.rounded` masks the square in Rust. `corner-radius` is what it rounds
-// to: `10000px` (the default) is the inscribed circle, `0px` leaves the head square.
+// The corners are cut in the pixels, not by a `clip`: the account view's head casts
+// a shadow blurred from its own alpha, so the head has to arrive rounded, and
+// `AvatarMask.rounded` is what keeps the two surfaces alike. `corner-radius` is what
+// it rounds to: `10000px` (the default) is the inscribed circle, `0px` leaves the
+// head square.
 export component AccountAvatar inherits Rectangle {
     in property <length> size: 56px;
     in property <image> skin;

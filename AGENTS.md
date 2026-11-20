@@ -42,7 +42,7 @@ cargo test
 
 ## Rust conventions
 
-- Workspace edition 2024, `rust-version = "1.88"`, resolver 3.
+- Workspace edition 2024, `rust-version = "1.95"`, resolver 3.
 - `#![deny(clippy::unwrap_used)]` applies to `app/src/main.rs` only. The Slint-generated module in
   `ui/src/lib.rs` is opted out with `#[allow(clippy::unwrap_used)]` — keep that scoped, do not widen
   it.
@@ -87,6 +87,10 @@ cargo test
   is why `main` calls it before `App::new`.
 - Translations go through `@tr()`; never hardcode user-visible text. Add the string to all
   catalogues via `tools/update-i18n.py`.
+- `ui/slint-project.json` carries the Slint edition the UI is written for. `ui/build.rs` compiles the
+  directory rather than `app.slint` so that the build and `slint-lsp` read it; an edition opts into
+  the layout and state semantics of its release, so raising it is a UI change that needs a visual
+  pass.
 
 ## License
 
