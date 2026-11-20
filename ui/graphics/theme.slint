@@ -161,23 +161,23 @@ global Catppuccin {
     };
 }
 
-// The active design tokens, derived from `AppConfig.palette`,
-// `AppConfig.palette-follow-system` and `AppConfig.high-contrast`. The eight
+// The active design tokens, derived from `AppConfig.theme`,
+// `AppConfig.theme-follow-system` and `AppConfig.high-contrast`. The eight
 // schemes are the four flavors, each with and without high contrast.
 //
 // Slint globals cannot animate, so the colors are declared here but produced and
 // animated by `ThemeProvider`, instantiated once at the app root.
 export global Theme {
-    // The palette actually in effect. Slint only reports the real scheme once the
-    // window exists, so while it is `Unknown` fall back to the configured
-    // palette. That intermediate value is never painted: the tokens reach the
-    // final palette without animating (see `transitions-enabled`).
-    in property <string> active-palette:
-        AppConfig.palette-follow-system
+    // The theme actually in effect. Slint only reports the real scheme once the
+    // window exists, so while it is `Unknown` fall back to the configured one.
+    // That intermediate value is never painted: the tokens reach the final theme
+    // without animating (see `transitions-enabled`).
+    in property <string> active:
+        AppConfig.theme-follow-system
         ? (Palette.color-scheme == ColorScheme.dark ? "Mocha"
         : Palette.color-scheme == ColorScheme.light ? "Latte"
-        : AppConfig.palette)
-        : AppConfig.palette;
+        : AppConfig.theme)
+        : AppConfig.theme;
     in property <bool> high-contrast: AppConfig.high-contrast;
 
     in-out property <color> base;
@@ -252,10 +252,10 @@ export global Theme {
     // "create" buttons and checkboxes use it.
     in property <color> latte-lavender: #7287fd;
 
-    // Whether a palette change eases over `transitions-duration` or snaps. The
+    // Whether a theme change eases over `transitions-duration` or snaps. The
     // settings screens and setup wizard arm it before a user-made change; it
-    // stays armed afterwards. Startup must not animate: the palette moves twice
-    // before the first frame (first to the configured palette, then to what the
+    // stays armed afterwards. Startup must not animate: the theme moves twice
+    // before the first frame (first to the configured one, then to what the
     // platform reports), so the tokens have to arrive rather than fade.
     in-out property <bool> transitions-enabled: false;
     // The animation duration, in one place so the pair cannot drift.
@@ -266,15 +266,15 @@ export global Theme {
     in property <color> latte-teal: #179299;
 }
 
-// Produces the theme colors from the selected palette and interpolates them
+// Produces the theme colors from the selected flavor and interpolates them
 // when the selection changes. Instantiated once by the root `App`.
 export component ThemeProvider inherits Rectangle {
     width: 0;
     height: 0;
 
-    // Tell the platform the resolved palette once the app is up, which is the
+    // Tell the platform the resolved theme once the app is up, which is the
     // first moment it can have reported its scheme. `changed dark` alone would
-    // not fire when the configured palette already is the resolved one.
+    // not fire when the configured theme already is the resolved one.
     startup-timer := Timer {
         interval: 100ms;
         running: true;
@@ -285,19 +285,19 @@ export component ThemeProvider inherits Rectangle {
     }
 
     // Latte is the only light flavor; the other three are dark.
-    private property <bool> dark: Theme.active-palette != "Latte";
+    private property <bool> dark: Theme.active != "Latte";
     private property <bool> hc: Theme.high-contrast;
 
-    // The Windows caption buttons take their ink from the palette rather than the
+    // The Windows caption buttons take their ink from the theme rather than the
     // system, so they stay legible on this title bar. This does not animate: the
     // platform cannot interpolate its own glyphs.
     callback caption-dark-changed(dark: bool);
     changed dark => { root.caption-dark-changed(root.dark); }
 
     private property <CatppuccinPalette> ctp:
-        Theme.active-palette == "Latte" ? Catppuccin.latte
-        : Theme.active-palette == "Frappe" ? Catppuccin.frappe
-        : Theme.active-palette == "Macchiato" ? Catppuccin.macchiato
+        Theme.active == "Latte" ? Catppuccin.latte
+        : Theme.active == "Frappe" ? Catppuccin.frappe
+        : Theme.active == "Macchiato" ? Catppuccin.macchiato
         : Catppuccin.mocha;
 
     in-out property <color> base: ctp.base;
@@ -328,10 +328,10 @@ export component ThemeProvider inherits Rectangle {
     in-out property <color> lavender: ctp.lavender;
 
     in-out property <color> default-text-color:
-        root.hc && (Theme.active-palette == "Mocha" || Theme.active-palette == "Macchiato")
+        root.hc && (Theme.active == "Mocha" || Theme.active == "Macchiato")
         ? #ffffff : ctp.text;
     in-out property <color> text-inverse:
-        Theme.active-palette == "Latte" ? Catppuccin.mocha.text : Catppuccin.latte.text;
+        Theme.active == "Latte" ? Catppuccin.mocha.text : Catppuccin.latte.text;
 
     in-out property <color> titlebar-background: ctp.surface0;
 
@@ -343,7 +343,7 @@ export component ThemeProvider inherits Rectangle {
     in-out property <color> controllers-border:
         root.hc ? ctp.overlay2
         : ctp.lavender.with-alpha(
-            root.dark ? (Theme.active-palette == "Mocha" ? 0.18 : 0.48) : 0.58);
+            root.dark ? (Theme.active == "Mocha" ? 0.18 : 0.48) : 0.58);
     // Latte keeps the lavender focus outline even in high contrast.
     in-out property <color> controllers-outline-focus:
         root.hc && root.dark ? ctp.overlay2 : ctp.lavender;
@@ -357,7 +357,7 @@ export component ThemeProvider inherits Rectangle {
     // reproduced rather than corrected.
     in-out property <color> setting-group-border:
         root.hc
-        ? (Theme.active-palette == "Mocha" ? Catppuccin.latte.overlay2 : ctp.overlay2)
+        ? (Theme.active == "Mocha" ? Catppuccin.latte.overlay2 : ctp.overlay2)
         : (root.dark ? transparent : ctp.crust);
     in-out property <color> setting-group-danger-border: ctp.red;
 
@@ -376,7 +376,7 @@ export component ThemeProvider inherits Rectangle {
     in-out property <color> dialog-background: root.dark ? ctp.base : ctp.crust;
     in-out property <color> dialog-border:
         root.dark
-        ? (root.hc && Theme.active-palette != "Frappe" ? ctp.overlay2 : #383b41)
+        ? (root.hc && Theme.active != "Frappe" ? ctp.overlay2 : #383b41)
         : ctp.crust;
     in-out property <length> dialog-border-radius: 10px;
 

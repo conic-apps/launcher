@@ -64,7 +64,9 @@ LANGUAGES = [
 # remote list draws now resolves under its own panel's name.
 # The import dialog now takes another launcher's instances as well as packs, so
 # its sentences are looked up under `InstanceImport` rather than `ModpackImport`.
-CONTEXT_RENAME = {"ModpackImport": "InstanceImport"}
+# The setup wizard's palette step is the theme step, and the appearance settings'
+# palette group is the theme group.
+CONTEXT_RENAME = {"ModpackImport": "InstanceImport", "SetupPalette": "SetupTheme"}
 
 RECONTEXT = {
     ("RemoteListView", "Try adjusting keywords or filters and search again"): [
@@ -117,6 +119,9 @@ RECONTEXT = {
 # Sentences to drop: a component that no longer exists at all.
 DROP = {
     ("RemoteListView", "Try adjusting keywords or filters and search again"),
+    # The appearance settings' group is titled "Theme" now, which re-keys the
+    # entry; `SAVE_TAGS` carries the translations across.
+    ("SettingsAppearance", "Palette"),
     # The Data storage rows used to carry a "Change" button; the row itself is
     # the chooser now.
     ("SettingsGeneral", "Change"),
@@ -206,6 +211,24 @@ DROP = {
 # ---------------------------------------------------------------------------
 
 SAVE_TAGS = {
+    # The appearance settings' group that picks the Catppuccin flavor. The
+    # translations are the ones the entry carried under the old "Palette"
+    # title, kept verbatim: every one of them still describes the control.
+    "SettingsAppearance": {
+        "Theme": {
+            "zh_CN": "调色板",
+            "zh_TW": "調色盤",
+            "ja_JP": "パレット",
+            "ko_KR": "색 구성표",
+            "de_DE": "Farbschema",
+            "fr_FR": "Palette",
+            "es_ES": "Esquema de colores",
+            "pt_BR": "Paleta de cores",
+            "ru_RU": "Цветовая схема",
+            "tr_TR": "Renk şeması",
+            "pl_PL": "Paleta",
+        },
+    },
     # The title bar's search field, which opens the quick-actions palette.
     "App": {
         "Action": {

@@ -113,8 +113,8 @@ pub fn apply_config(settings: &AppConfig, config: &config::Config) {
 
     settings.set_prefer_mojang_java(config.prefer_mojang_java);
 
-    settings.set_palette_follow_system(config.appearance.palette_follow_system);
-    settings.set_palette(config.appearance.palette.clone().into());
+    settings.set_theme_follow_system(config.appearance.theme_follow_system);
+    settings.set_theme(config.appearance.theme.clone().into());
     settings.set_background_image(
         config
             .appearance
@@ -240,8 +240,8 @@ pub fn collect_config(settings: &AppConfig, mut config: config::Config) -> confi
 
     config.prefer_mojang_java = settings.get_prefer_mojang_java();
 
-    config.appearance.palette_follow_system = settings.get_palette_follow_system();
-    config.appearance.palette = settings.get_palette().to_string();
+    config.appearance.theme_follow_system = settings.get_theme_follow_system();
+    config.appearance.theme = settings.get_theme().to_string();
     let background = settings.get_background_image().to_string();
     config.appearance.background_image = if background.is_empty() {
         None

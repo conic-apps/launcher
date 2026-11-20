@@ -170,11 +170,6 @@ msgstr "현재 테마에 고대비 모드를 활성화합니다 (지원하는 �
 
 #: ui
 msgctxt "SettingsAppearance"
-msgid "Palette"
-msgstr "색 구성표"
-
-#: ui
-msgctxt "SettingsAppearance"
 msgid "Follow system dark mode"
 msgstr "시스템 다크 모드 따르기"
 
@@ -2369,22 +2364,22 @@ msgid "This wizard will quickly walk you through some important settings so you 
 msgstr "이 마법사가 중요한 설정을 빠르게 안내하여 바로 게임을 시작할 수 있도록 도와드립니다."
 
 #: ui
-msgctxt "SetupPalette"
+msgctxt "SetupTheme"
 msgid "Choose a color scheme"
 msgstr "색 구성표 선택"
 
 #: ui
-msgctxt "SetupPalette"
+msgctxt "SetupTheme"
 msgid "Conic Launcher supports multiple color schemes. Pick one that suits your style."
 msgstr "Conic Launcher는 다양한 색 구성표를 지원합니다. 취향에 맞는 것을 골라보세요."
 
 #: ui
-msgctxt "SetupPalette"
+msgctxt "SetupTheme"
 msgid "Follow system dark mode"
 msgstr "시스템 다크 모드 따르기"
 
 #: ui
-msgctxt "SetupPalette"
+msgctxt "SetupTheme"
 msgid "Uses Latte when the system is set to light mode, otherwise uses Mocha"
 msgstr "시스템이 라이트 모드일 때는 Latte를, 그 외에는 Mocha를 사용합니다"
 
@@ -3922,3 +3917,8 @@ msgstr "업데이트 설치 준비가 완료되었습니다. 여기를 클릭하
 msgctxt "NotificationText"
 msgid "Conic Launcher has been updated to version {}.\n\nClick here to view the release notes!"
 msgstr "Conic Launcher가 버전 {}(으)로 업데이트되었습니다.\n\n여기를 클릭하여 릴리스 노트를 확인하세요!"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Theme"
+msgstr "색 구성표"

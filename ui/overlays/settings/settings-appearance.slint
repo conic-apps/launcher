@@ -9,7 +9,7 @@ import { SettingReveal } from "../../graphics/settings/setting-reveal.slint";
 import { Switch } from "../../graphics/controls/switch.slint";
 import { Button } from "../../graphics/controls/button.slint";
 import { SliderBar } from "../../graphics/controls/slider-bar.slint";
-import { PaletteRow } from "palette-row.slint";
+import { ThemeRow } from "theme-row.slint";
 import { AppConfig } from "../../globals/settings.slint";
 import { Background } from "../../globals/background.slint";
 
@@ -21,7 +21,7 @@ export component SettingsAppearance inherits VerticalLayout {
     alignment: start;
 
     SettingGroup {
-        title: @tr("Palette");
+        title: @tr("Theme");
 
         SettingItem {
             group-first: true;
@@ -31,7 +31,7 @@ export component SettingsAppearance inherits VerticalLayout {
             icon-outline: true;
 
             Switch {
-                checked <=> AppConfig.palette-follow-system;
+                checked <=> AppConfig.theme-follow-system;
                 // Arms the palette transition so a user change animates;
                 // tokens are evaluated lazily from the event loop, so setting
                 // this in `toggled` is early enough.
@@ -42,11 +42,11 @@ export component SettingsAppearance inherits VerticalLayout {
             }
         }
 
-        // `PaletteRow` is not a `SettingItem`, so it rounds its own bottom as
+        // `ThemeRow` is not a `SettingItem`, so it rounds its own bottom as
         // the group's last child.
-        PaletteRow {
-            selected: Theme.active-palette;
-            swatches-disabled: AppConfig.palette-follow-system;
+        ThemeRow {
+            selected: Theme.active;
+            swatches-disabled: AppConfig.theme-follow-system;
         }
     }
 

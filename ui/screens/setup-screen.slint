@@ -15,7 +15,7 @@ import { AccountAddState } from "../globals/dialogs.slint";
 import { SetupWizardState } from "../globals/setup.slint";
 import { SetupLanguage } from "setup/setup-language.slint";
 import { SetupStorage } from "setup/setup-storage.slint";
-import { SetupPalette } from "setup/setup-palette.slint";
+import { SetupTheme } from "setup/setup-theme.slint";
 import { SetupAddAccount } from "setup/setup-add-account.slint";
 import { SetupJavaSettings } from "setup/setup-java-settings.slint";
 import { SetupLaunchOptions } from "setup/setup-launch-options.slint";
@@ -216,7 +216,7 @@ export component SetupScreen inherits Rectangle {
                     phase: root.leaving ? "leave" : root.arrive-phase;
                     direction: root.direction;
 
-                    SetupPalette { }
+                    SetupTheme { }
                 }
 
                 if root.shown == "add-account": SlideTransition {

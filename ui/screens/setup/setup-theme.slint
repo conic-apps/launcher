@@ -6,23 +6,23 @@ import { Theme } from "../../graphics/theme.slint";
 import { SettingGroup } from "../../graphics/settings/setting-group.slint";
 import { SettingItem } from "../../graphics/settings/setting-item.slint";
 import { Switch } from "../../graphics/controls/switch.slint";
-import { PaletteRow } from "../../overlays/settings/palette-row.slint";
+import { ThemeRow } from "../../overlays/settings/theme-row.slint";
 import { AppConfig } from "../../globals/settings.slint";
 import { WizardTitle, WizardMessage } from "wizard-text.slint";
 
-// The appearance settings' palette group, without a title and at full width.
-// `Theme.active-palette` resolves "follow system"; the tiles arm the transition.
-export component SetupPalette inherits VerticalLayout {
+// The appearance settings' theme group, without a title and at full width.
+// `Theme.active` resolves "follow system"; the tiles arm the transition.
+export component SetupTheme inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
     alignment: start;
 
     WizardTitle {
-        title: @tr("SetupPalette" => "Choose a color scheme");
+        title: @tr("SetupTheme" => "Choose a color scheme");
     }
 
     WizardMessage {
-        message: @tr("SetupPalette" => "Conic Launcher supports multiple color schemes. Pick one that suits your style.");
+        message: @tr("SetupTheme" => "Conic Launcher supports multiple color schemes. Pick one that suits your style.");
     }
 
     VerticalLayout {
@@ -37,13 +37,13 @@ export component SetupPalette inherits VerticalLayout {
 
             SettingItem {
                 group-first: true;
-                title: @tr("SetupPalette" => "Follow system dark mode");
-                description: @tr("SetupPalette" => "Uses Latte when the system is set to light mode, otherwise uses Mocha");
+                title: @tr("SetupTheme" => "Follow system dark mode");
+                description: @tr("SetupTheme" => "Uses Latte when the system is set to light mode, otherwise uses Mocha");
                 icon: "moon";
                 icon-outline: true;
 
                 Switch {
-                    checked <=> AppConfig.palette-follow-system;
+                    checked <=> AppConfig.theme-follow-system;
                     // Arms the palette transition so this reads as a user change.
                     toggled => {
                         Theme.transitions-enabled = true;
@@ -52,9 +52,9 @@ export component SetupPalette inherits VerticalLayout {
                 }
             }
 
-            PaletteRow {
-                selected: Theme.active-palette;
-                swatches-disabled: AppConfig.palette-follow-system;
+            ThemeRow {
+                selected: Theme.active;
+                swatches-disabled: AppConfig.theme-follow-system;
             }
         }
     }
