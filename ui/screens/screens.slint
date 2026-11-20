@@ -1,0 +1,27 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Navigation } from "../globals/navigation.slint";
+import { GameScreen } from "game-screen.slint";
+import { LaunchScreen } from "launch-screen.slint";
+import { SetupScreen } from "setup-screen.slint";
+
+// The screen stack: the one place that maps `Navigation`'s screen name to a
+// component, and the only thing the app root needs to know about the screens.
+// The account view is an overlay on the game screen, not a screen of its own.
+//
+// A screen playing its exit stays mounted while `leaving-screen` is set, which is
+// why two of these check a disjunction rather than `current-screen` alone.
+export component Screens inherits Rectangle {
+    // The slot between the title bar's row and the bottom of the window. The
+    // stretch belongs to this component because its caller has nothing else to
+    // pass it through.
+    width: 100%;
+    vertical-stretch: 1;
+    clip: true;
+
+    if Navigation.current-screen == "game" || Navigation.leaving-screen == "game": GameScreen { }
+    if Navigation.current-screen == "launch": LaunchScreen { }
+    if Navigation.current-screen == "setup" || Navigation.leaving-screen == "setup": SetupScreen { }
+}
