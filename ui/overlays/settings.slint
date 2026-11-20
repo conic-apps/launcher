@@ -19,6 +19,7 @@ import {
     SettingsAccessibility,
 } from "settings/settings-accessibility.slint";
 import { SettingsAbout } from "settings/settings-about.slint";
+import { Footer } from "settings/settings-footer.slint";
 
 component NavItem inherits Rectangle {
     in property <string> icon;
@@ -313,6 +314,10 @@ export component SettingsOverlay inherits Rectangle {
 
                     SettingsAbout { }
                 }
+
+                // The drawer's own footer: the app's name, version, copyright
+                // and the Mojang disclaimer, below every section.
+                Footer { }
             }
         }
     }

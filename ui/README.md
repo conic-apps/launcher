@@ -45,7 +45,7 @@ feature — is what decides where a file goes:
   screen.
 - **`overlays/`** — everything drawn above a screen. The app-root layers (`dialog-root`,
   `dropdown-overlay`, `instance-menu`, `description-tooltip`, `command-palette`, `music-player`,
-  `settings-overlay`, `instance-settings`) sit here, so which layer covers which is read off
+  `settings.slint`, `instance-settings`) sit here, so which layer covers which is read off
   `app.slint`'s declaration order and nowhere else. `shell/` holds the two shells a layer draws into
   — `overlay-panel` (the sliding full-window panel over its scrim) and `dialog` (the centred modal
   panel) — and nothing else belongs there. A flow gets a folder: `dialogs/*` for the dialogs
@@ -61,7 +61,7 @@ feature — is what decides where a file goes:
 
 ### Settings placement
 
-Settings is one drawer, `overlays/settings-overlay.slint`, over the game screen; there is no
+Settings is one drawer, `overlays/settings.slint`, over the game screen; there is no
 settings screen and no screen/nav/content component split. The section list, the scroll-spy, the scrolling body
 and the section imports all live in that file, while the bodies it imports live in `settings/` — the
 setup wizard composes two of them (`settings-game`, `settings-jvm`) instead of duplicating them. The
