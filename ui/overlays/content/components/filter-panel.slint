@@ -2,15 +2,15 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { Theme } from "../../graphics/theme.slint";
-import { AppIcon } from "../../graphics/display/app-icon.slint";
+import { Theme } from "../../../graphics/theme.slint";
+import { AppIcon } from "../../../graphics/display/app-icon.slint";
 import {
     ContentSearch,
     ContentState,
     ContentText,
     FilterChip,
     FilterRow,
-} from "../../globals/content.slint";
+} from "../../../globals/content.slint";
 component ChipPager inherits Rectangle {
     in property <bool> flipped: false;
     in property <bool> disabled: false;
@@ -189,7 +189,7 @@ component FilterRowView inherits Rectangle {
     }
 }
 
-export component ContentSearchPanel inherits Rectangle {
+export component FilterPanel inherits Rectangle {
     width: 100%;
     // A layout has no margin, so the 16px gap below is outside the panel's fill.
     height: panel-content.preferred-height + 16px;

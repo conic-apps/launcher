@@ -2,8 +2,8 @@
 
 The Slint interface crate, `conic-ui`. `ui/**.slint` is the whole interface, and `ui/build.rs`
 compiles it into the generated Rust module `app` re-exports as `slint_backend`, generating
-`ui/graphics/icons.slint` from the SVGs under `ui/assets/icons/` on every build. `assets/` holds the icons,
-artwork, skins and the two embedded fonts; `i18n/` the twelve `.po` catalogues, which
+`ui/graphics/icons.slint` from the SVGs under `ui/assets/icons/` on every build. `assets/` holds the
+icons, artwork, skins and the two embedded fonts; `i18n/` the twelve `.po` catalogues, which
 [CONTRIBUTING.md](../CONTRIBUTING.md#translations) covers.
 
 ## Layout
@@ -12,15 +12,18 @@ artwork, skins and the two embedded fonts; `i18n/` the twelve `.po` catalogues, 
 feature — is what decides where a file goes:
 
 - **`graphics/`** — the design system, split by role: the tokens, and the reusable,
-  feature-agnostic widgets that read them. `theme.slint` (the Catppuccin palettes, the typography
-  tokens and the embedded fonts) and `icons.slint` (a `build.rs` product) sit at its root. A file may
-  join this bucket only if it is a widget — something a surface can put in a layout — and needs
-  nothing but those two, the cross-surface infrastructure under `globals/` and its own siblings.
+  feature-agnostic widgets that read them. `theme.slint` (the Catppuccin palettes, the typography tokens and the
+  embedded fonts) and `icons.slint` (a `build.rs` product) sit at its root. A file may join this
+  bucket only if it is a widget — something a surface can put in a layout — and needs nothing but
+  those two, the cross-surface infrastructure under `globals/` and its own siblings. A widget that
+  reads one surface's state belongs to that surface; a shell that owns a scrim, a transition or a
+  `@children` sizing protocol belongs to `overlays/shell/`.
   - `controls/` — form and display primitives, with **no prefix**: `Button`, `Checkbox`, `Input`,
     `Select`, `DropdownSelect`, `Switch`, `SliderBar`, `ListItem`, `Progress`, `Loading`.
   - `containers/` — layout/behaviour wrappers: `ScrollView`, `ScrollViewHorizontal`,
     `SlideTransition`, `ZoomTransition`.
-  - `display/` — presentational: `AppIcon`, `AccountAvatar`, `InstanceCard`, `Scrim`.
+  - `display/` — presentational: `AppIcon`, `AccountAvatar`, `InstanceCard`, `Scrim`, `EmptyState`,
+    `HeaderBar`.
   - `settings/` — `SettingItem`, `SettingGroup`, `SettingCollapse`, `SettingReveal`.
   - `markdown/` — the `.slint` half of `app/src/ui/components/markdown/`.
 - **`window/`** — the window's own chrome, not a widget. A file belongs here when the platform
@@ -47,9 +50,10 @@ feature — is what decides where a file goes:
   — `overlay-panel` (the sliding full-window panel over its scrim) and `dialog` (the centred modal
   panel) — and nothing else belongs there. A flow gets a folder: `dialogs/*` for the dialogs
   (`dialogs/account-add/`, `dialogs/create-instance/`, `dialogs/multiplayer/`); `content/` for the
-  content browser; `news/` for the news browser — a list flow over the Mojang news feed and the Java
-  changelogs, with an in-panel changelog reader; and `settings/` for the settings drawer's section
-  bodies (`settings-general`, `settings-jvm`, …).
+  content browser's panels and, in `content/components/`, the parts they share (the card, the card
+  grid, the pager, the filter panel, the README body and the save's world map); `news/` for the news browser — a list flow over
+  the Mojang news feed and the Java changelogs, with an in-panel changelog reader; and `settings/`
+  for the settings drawer's section bodies (`settings-general`, `settings-jvm`, …).
 - **`globals/`** — one singleton per domain (`Navigation`, `AppConfig`, `ContentState`,
   `ScreenMotion`, `SettingsShell`, `NotificationState`, `TaskState`, `OverlayShadow`, …), and how
   cross-screen state is shared without prop drilling; the ones no single surface owns (`scroll`,
@@ -88,5 +92,5 @@ Every overlay but the dialogs dims the window through one shared layer,
 one instance — the game screen's, the app root's and the command palette's — and
 `globals/overlay-shadow.slint` lets only the topmost open overlay's band ask for it: an overlay
 opened over another takes the dim over, so two open overlays never darken the window twice. The
-palette's band spans the title bar, like a dialog; the others stop under it.
+band spans the title bar, like a dialog; the others stop under it.
 `overlays/shell/dialog.slint` keeps its own scrim, drawn above all of them.

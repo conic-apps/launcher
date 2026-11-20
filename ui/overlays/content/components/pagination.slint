@@ -2,9 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { Theme } from "../../graphics/theme.slint";
-import { AppIcon } from "../../graphics/display/app-icon.slint";
-import { PageButton } from "../../globals/content.slint";
+import { Theme } from "../../../graphics/theme.slint";
+import { AppIcon } from "../../../graphics/display/app-icon.slint";
+import { PageButton } from "../../../globals/content.slint";
 component PageNumber inherits Rectangle {
     in property <string> label: "";
     in property <bool> active: false;
@@ -65,7 +65,7 @@ component ArrowButton inherits Rectangle {
     }
 }
 
-export component ContentPagination inherits Rectangle {
+export component Pagination inherits Rectangle {
     in property <[PageButton]> pages: [];
     in property <int> current-page: 1;
     in property <int> total-pages: 0;

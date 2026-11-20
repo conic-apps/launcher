@@ -1,0 +1,78 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { ContentState } from "../../globals/content.slint";
+import { ScrollView } from "../../graphics/containers/scroll-view.slint";
+import { HeaderBar } from "../../graphics/display/header-bar.slint";
+import { CardGrid } from "components/card-grid.slint";
+import {
+    LoadingState,
+    EmptyState,
+} from "../../graphics/display/empty-state.slint";
+
+// The five content panels. Each is one `ScrollView` holding a 52px header bar
+// and its content, so the search header scrolls away with the grid.
+//
+// The local and remote lists are written out per panel rather than behind a
+// wrapper. A wrapper whose child sits inside an `if` measures zero, so every
+// state block below has a definite height.
+
+export component ContentSavesPanel inherits Rectangle {
+    /// Passed in because `parent` is the game screen, not the inset container.
+    in property <length> panel-width: 0px;
+    in property <length> panel-height: 0px;
+
+    width: panel-width;
+    height: panel-height;
+    background: transparent;
+
+    // Reported here, not from the grid: layout-assigned geometry skips `changed`.
+    // `init` covers creation; the handlers only catch later resizes.
+    init => { ContentState.grid-resized(root.width, root.height); }
+    changed width => { ContentState.grid-resized(root.width, root.height); }
+    changed height => { ContentState.grid-resized(root.width, root.height); }
+
+    // The panels stay alive, so the scroll is reset by hand on open. Clearing the
+    // selection happens inside the scroller, or it would swallow the cards' input.
+    private property <bool> panel-open: ContentState.open-panel == "saves";
+    changed panel-open => {
+        if root.panel-open {
+            list-scroll.scroll-to(0px, false);
+        }
+    }
+
+    list-scroll := ScrollView {
+        background-clicked => { ContentState.select-save(""); }
+
+        HeaderBar {
+            icon: "save";
+            title: @tr("Saves");
+            // A 16px gap below the bar on this panel alone.
+            title-gap: 16px;
+        }
+
+        if ContentState.saves-loading: LoadingState { }
+
+        if !ContentState.saves-loading && ContentState.saves.length > 0: CardGrid {
+            cards: ContentState.saves;
+            icon-size: 64px;
+            subtitle-style: "folder";
+            grid-height: ContentState.saves-grid-height;
+
+            select(id) => { ContentState.select-save(id); }
+            open-path(id) => { ContentState.open-path(id); }
+            // Opens the confirmation rather than deleting outright.
+            delete(id, title) => { ContentState.request-delete-save(id, title); }
+            // Play carries no handler; the click clears the expanded save.
+            play(id) => { ContentState.select-save(""); }
+        }
+    }
+
+    // Outside the scroller, over the whole panel; its block is the panel height.
+    saves-not-found := EmptyState {
+        show: !ContentState.saves-loading && ContentState.saves.length == 0;
+        block-height: ContentState.panel-height;
+        description: @tr("Consider launching the game and creating some saves");
+    }
+}

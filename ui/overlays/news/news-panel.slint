@@ -6,8 +6,8 @@ import { Theme } from "../../graphics/theme.slint";
 import { Loading } from "../../graphics/controls/loading.slint";
 import { NewsState } from "../../globals/news.slint";
 import { ScrollView } from "../../graphics/containers/scroll-view.slint";
-import { ContentTitleBar } from "../content/content-title-bar.slint";
-import { ContentNotFound } from "../content/content-not-found.slint";
+import { HeaderBar } from "../../graphics/display/header-bar.slint";
+import { EmptyState } from "../../graphics/display/empty-state.slint";
 import { NewsSearchPanel } from "news-search-panel.slint";
 import { NewsCardView } from "news-card.slint";
 
@@ -53,7 +53,7 @@ export component NewsListPanel inherits Rectangle {
 
     list-scroll := ScrollView {
         // No `title-gap`: the search panel sits directly under the header.
-        ContentTitleBar {
+        HeaderBar {
             icon: "newspaper";
             title: @tr("News");
         }
@@ -82,7 +82,7 @@ export component NewsListPanel inherits Rectangle {
             }
         }
 
-        if !NewsState.loading && NewsState.cards.length == 0: not-found := ContentNotFound {
+        if !NewsState.loading && NewsState.cards.length == 0: not-found := EmptyState {
             show: true;
             // Below the search panel, so its block is content plus padding.
             block-height: not-found.content-height + 80px;
@@ -100,7 +100,7 @@ export component NewsListPanel inherits Rectangle {
         // Swallows presses, while the scrim keeps its own clicks.
         TouchArea { }
 
-        // The same mark `ContentLoading` draws; the fade and shrink are on this
+        // The same mark `LoadingState` draws; the fade and shrink are on this
         // box so the ring travels with it.
         Rectangle {
             width: 64px;

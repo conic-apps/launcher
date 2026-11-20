@@ -12,8 +12,9 @@ import {
     ScrollViewHorizontal,
 } from "../../graphics/containers/scroll-view-horizontal.slint";
 import { OverlayPanel } from "../shell/overlay-panel.slint";
-import { ContentTitleBar } from "content-title-bar.slint";
-import { MarkdownBody } from "markdown-body.slint";
+import { HeaderBar } from "../../graphics/display/header-bar.slint";
+import { MarkdownBody } from "components/markdown-body.slint";
+
 component MetadataEntry inherits Rectangle {
     in property <string> icon: "";
     in property <string> text: "";
@@ -137,14 +138,14 @@ component DetailBody inherits Rectangle {
     // Named so the body can read its scroll offset and cull hidden items.
     scroller := ScrollView {
         details-column := VerticalLayout {
-            ContentTitleBar {
+            HeaderBar {
                 // Packs use a package glyph; mods and resource packs a puzzle.
                 icon: ContentState.remote-kind == "packs" ? "package" : "extension-puzzle";
                 title: ContentText.detail-title(ContentState.remote-kind);
             }
 
             // 40px above and below the spinner. The list panels use
-            // `ContentLoading` instead.
+            // `LoadingState` instead.
             if ContentState.detail-loading: Rectangle {
                 width: 100%;
                 height: 112px;
@@ -382,7 +383,7 @@ component DetailBody inherits Rectangle {
     }
 }
 
-export component DetailPanels inherits Rectangle {
+export component DetailPanel inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;

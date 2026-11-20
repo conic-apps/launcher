@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../../graphics/theme.slint";
-import { AppIcon } from "../../graphics/display/app-icon.slint";
+import { AppIcon } from "app-icon.slint";
 
 // A source switcher button: tinted by its source, `surface2` while active.
 component SourceButton inherits Rectangle {
@@ -41,7 +41,7 @@ component SourceButton inherits Rectangle {
     }
 }
 
-export component ContentTitleBar inherits Rectangle {
+export component HeaderBar inherits Rectangle {
     in property <string> icon: "";
     in property <length> icon-size: 20px;
     in property <string> title: "";
