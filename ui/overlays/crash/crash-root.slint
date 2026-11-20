@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { CrashState } from "../../globals/crash.slint";
-import { ContentOverlay } from "../content/content-overlay.slint";
+import { OverlayPanel } from "../shell/overlay-panel.slint";
 import { CrashPanel } from "crash-panel.slint";
 
 // The crash overlay layer, using the content shell so a crash interrupts the
@@ -14,8 +14,8 @@ export component CrashRoot inherits Rectangle {
     height: 100%;
     background: transparent;
 
-    overlay := ContentOverlay {
-        overlay-visible: CrashState.visible;
+    overlay := OverlayPanel {
+        panel-visible: CrashState.visible;
         closed => { CrashState.close(); }
 
         CrashPanel {

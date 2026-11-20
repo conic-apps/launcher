@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { ContentState } from "../../globals/content.slint";
-import { ContentOverlay } from "content-overlay.slint";
+import { OverlayPanel } from "../shell/overlay-panel.slint";
 import {
     ContentModsPanel,
     ContentResourcepacksPanel,
@@ -23,8 +23,8 @@ export component ContentRoot inherits Rectangle {
 
     // One overlay per panel, each with its own enter/leave, so switching panels
     // plays both animations.
-    saves-overlay := ContentOverlay {
-        overlay-visible: ContentState.open-panel == "saves";
+    saves-overlay := OverlayPanel {
+        panel-visible: ContentState.open-panel == "saves";
         closed => { ContentState.close(); }
 
         ContentSavesPanel {
@@ -33,8 +33,8 @@ export component ContentRoot inherits Rectangle {
         }
     }
 
-    mods-overlay := ContentOverlay {
-        overlay-visible: ContentState.open-panel == "mods";
+    mods-overlay := OverlayPanel {
+        panel-visible: ContentState.open-panel == "mods";
         closed => { ContentState.close(); }
 
         ContentModsPanel {
@@ -43,8 +43,8 @@ export component ContentRoot inherits Rectangle {
         }
     }
 
-    resourcepacks-overlay := ContentOverlay {
-        overlay-visible: ContentState.open-panel == "resourcepacks";
+    resourcepacks-overlay := OverlayPanel {
+        panel-visible: ContentState.open-panel == "resourcepacks";
         closed => { ContentState.close(); }
 
         ContentResourcepacksPanel {
@@ -54,8 +54,8 @@ export component ContentRoot inherits Rectangle {
     }
 
     // Mounted without the sliding container, so it spans the window.
-    screenshots-overlay := ContentOverlay {
-        overlay-visible: ContentState.open-panel == "screenshots";
+    screenshots-overlay := OverlayPanel {
+        panel-visible: ContentState.open-panel == "screenshots";
         slide: false;
         panel-inset: 0px;
         panel-background: transparent;
@@ -67,8 +67,8 @@ export component ContentRoot inherits Rectangle {
         }
     }
 
-    packs-overlay := ContentOverlay {
-        overlay-visible: ContentState.open-panel == "packs";
+    packs-overlay := OverlayPanel {
+        panel-visible: ContentState.open-panel == "packs";
         closed => { ContentState.close(); }
 
         ContentPacksPanel {

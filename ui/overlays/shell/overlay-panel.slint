@@ -4,9 +4,10 @@
 
 import { Theme } from "../../graphics/theme.slint";
 
-// The content overlays' shared shell: the sliding container, over the `Scrim`
-// its band of the window mounts. The screenshots viewer spans the window and
-// only the scrim underneath fades.
+// The shell of a full-window panel overlay: the sliding container, over the
+// `Scrim` its band of the window mounts. The content browser, the news layers,
+// the crash panel, the account view and the instance settings all draw it. The
+// screenshots viewer spans the window and only the scrim underneath fades.
 //
 // Only `y` moves: `opacity` or `transform` on the panel would put the subtree in
 // a render layer, and the renderer gives up above 8192px. The overlay takes no
@@ -14,8 +15,8 @@ import { Theme } from "../../graphics/theme.slint";
 //
 // Showing one frame at the start value is what makes the entrance play: a hidden
 // element is never painted, so an unread animated property snaps to its target.
-export component ContentOverlay inherits Rectangle {
-    in property <bool> overlay-visible: false;
+export component OverlayPanel inherits Rectangle {
+    in property <bool> panel-visible: false;
     /// How much of the window width the container leaves free — 150px, or 200px
     /// for the instance-settings panel.
     in property <length> panel-inset: 150px;
@@ -43,8 +44,8 @@ export component ContentOverlay inherits Rectangle {
     private property <string> phase: "closed";
     visible: root.phase != "closed";
 
-    changed overlay-visible => {
-        if root.overlay-visible {
+    changed panel-visible => {
+        if root.panel-visible {
             if root.phase != "shown" {
                 // Play the entrance from wherever the panel is, so an
                 // interrupted leave carries on from its offset.
@@ -73,7 +74,7 @@ export component ContentOverlay inherits Rectangle {
 
     init => {
         // `changed` does not fire for the value a component is created with.
-        if root.overlay-visible {
+        if root.panel-visible {
             root.phase = "shown";
         }
     }

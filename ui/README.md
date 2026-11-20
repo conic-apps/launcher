@@ -40,12 +40,14 @@ feature — is what decides where a file goes:
   dialog's inner step is a step (or phase), never a screen.
 - **`overlays/`** — everything drawn above a screen. The app-root layers (`dialog-root`,
   `dropdown-overlay`, `instance-menu`, `description-tooltip`, `command-palette`, `music-player`,
-  `settings-overlay`, `instance-settings`) sit here; a dialog _flow_ gets a folder
-  (`dialogs/account-add/`, `dialogs/create-instance/`, `dialogs/multiplayer/`) with
-  `dialogs/dialog.slint` as the shared modal shell, the content browser is `content/`, the news
-  browser — a list flow over the Mojang news feed and the Java changelogs, with an in-panel
-  changelog reader — is `news/`, and the settings drawer's section bodies (`settings-general`,
-  `settings-jvm`, …) are `settings/`.
+  `settings-overlay`, `instance-settings`) sit here, so which layer covers which is read off
+  `app.slint`'s declaration order and nowhere else. `shell/` holds the two shells a layer draws into
+  — `overlay-panel` (the sliding full-window panel over its scrim) and `dialog` (the centred modal
+  panel) — and nothing else belongs there. A flow gets a folder: `dialogs/*` for the dialogs
+  (`dialogs/account-add/`, `dialogs/create-instance/`, `dialogs/multiplayer/`); `content/` for the
+  content browser; `news/` for the news browser — a list flow over the Mojang news feed and the Java
+  changelogs, with an in-panel changelog reader; and `settings/` for the settings drawer's section
+  bodies (`settings-general`, `settings-jvm`, …).
 - **`globals/`** — one singleton per domain (`Navigation`, `AppConfig`, `ContentState`,
   `ScreenMotion`, `SettingsShell`, `NotificationState`, `TaskState`, `OverlayShadow`, …), and how
   cross-screen state is shared without prop drilling; the ones no single surface owns (`scroll`,
@@ -81,8 +83,8 @@ a full-size framebuffer on every drag frame.
 
 Every overlay but the dialogs dims the window through one shared layer,
 `graphics/display/scrim.slint`, which owns the single dim level. Each band of the window mounts
-one instance — the game screen's, the app root's and the palette's — and
+one instance — the game screen's, the app root's and the command palette's — and
 `globals/overlay-shadow.slint` lets only the topmost open overlay's band ask for it: an overlay
 opened over another takes the dim over, so two open overlays never darken the window twice. The
 palette's band spans the title bar, like a dialog; the others stop under it.
-`overlays/dialogs/dialog.slint` keeps its own scrim, drawn above all of them.
+`overlays/shell/dialog.slint` keeps its own scrim, drawn above all of them.
