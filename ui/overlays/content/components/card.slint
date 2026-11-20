@@ -2,17 +2,17 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { Theme } from "../../graphics/theme.slint";
-import { AppIcon } from "../../graphics/display/app-icon.slint";
-import { Loading } from "../../graphics/controls/loading.slint";
+import { Theme } from "../../../graphics/theme.slint";
+import { AppIcon } from "../../../graphics/display/app-icon.slint";
+import { Loading } from "../../../graphics/controls/loading.slint";
 import { WorldMap } from "world-map.slint";
-import { WorldMapState } from "../../globals/worldmap.slint";
+import { WorldMapState } from "../../../globals/worldmap.slint";
 import {
     CardTag,
-    ContentCard as CardData,
+    ContentCard,
     ContentText,
-} from "../../globals/content.slint";
-import { GameState, GameTime } from "../../globals/game.slint";
+} from "../../../globals/content.slint";
+import { GameState, GameTime } from "../../../globals/game.slint";
 
 // One card of a content grid, shared by all nine grids. The card is three
 // overlapping boxes (image, info, action column) and the hover state reaches into
@@ -124,8 +124,8 @@ component TagChip inherits Rectangle {
     }
 }
 
-export component ContentCard inherits Rectangle {
-    in property <CardData> card;
+export component Card inherits Rectangle {
+    in property <ContentCard> card;
     /// 72px for the content lists, 64px for the saves.
     in property <length> icon-size: 72px;
     /// The empty-state placeholder that covers an empty grid turns this off.

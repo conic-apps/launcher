@@ -3,16 +3,16 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import {
-    ContentCard as CardData,
+    ContentCard,
     ContentState,
-} from "../../globals/content.slint";
-import { ContentCard } from "content-card.slint";
+} from "../../../globals/content.slint";
+import { Card } from "card.slint";
 
 // The card grid, shared by all nine lists. Slint has no wrapping grid, so Rust
 // computes the columns from the panel width and places every card; this is the
 // `for` that draws them.
-export component ContentCardGrid inherits Rectangle {
-    in property <[CardData]> cards: [];
+export component CardGrid inherits Rectangle {
+    in property <[ContentCard]> cards: [];
     /// 72px for the content lists, 64px for the saves.
     in property <length> icon-size: 72px;
     in property <string> subtitle-style: "authors";
@@ -41,7 +41,7 @@ export component ContentCardGrid inherits Rectangle {
         height: root.grid-height;
         background: transparent;
 
-        for card in root.cards: ContentCard {
+        for card in root.cards: Card {
             card: card;
             icon-size: root.icon-size;
             subtitle-style: root.subtitle-style;

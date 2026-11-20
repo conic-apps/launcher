@@ -6,7 +6,7 @@ import { Theme } from "../../graphics/theme.slint";
 import { CrashState, CrashText } from "../../globals/crash.slint";
 import { InstanceCard } from "../../graphics/display/instance-card.slint";
 import { ScrollView } from "../../graphics/containers/scroll-view.slint";
-import { ContentTitleBar } from "../content/content-title-bar.slint";
+import { HeaderBar } from "../../graphics/display/header-bar.slint";
 
 // The runtime facts' label/value pair, matching the game screen's summary row.
 component MetaColumn inherits Rectangle {
@@ -92,7 +92,7 @@ export component CrashPanel inherits Rectangle {
             width: 100%;
             spacing: 0;
 
-            ContentTitleBar {
+            HeaderBar {
                 icon: "warning";
                 title: @tr("CrashView" => "Crash report");
             }

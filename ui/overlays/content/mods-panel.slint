@@ -1,0 +1,108 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import {
+    ContentState,
+    ContentSearch,
+} from "../../globals/content.slint";
+import { ScrollView } from "../../graphics/containers/scroll-view.slint";
+import { HeaderBar } from "../../graphics/display/header-bar.slint";
+import { CardGrid } from "components/card-grid.slint";
+import { FilterPanel } from "components/filter-panel.slint";
+import { Pagination } from "components/pagination.slint";
+import {
+    LoadingState,
+    EmptyState,
+} from "../../graphics/display/empty-state.slint";
+
+export component ContentModsPanel inherits Rectangle {
+    in property <length> panel-width: 0px;
+    in property <length> panel-height: 0px;
+
+    width: panel-width;
+    height: panel-height;
+    background: transparent;
+
+    init => { ContentState.grid-resized(root.width, root.height); }
+    changed width => { ContentState.grid-resized(root.width, root.height); }
+    changed height => { ContentState.grid-resized(root.width, root.height); }
+
+    private property <bool> panel-open: ContentState.open-panel == "mods";
+    changed panel-open => {
+        if root.panel-open {
+            list-scroll.scroll-to(0px, false);
+        }
+    }
+
+    list-scroll := ScrollView {
+        HeaderBar {
+            icon: "extension-puzzle";
+            title: @tr("Mods");
+            sources: ["local", "modrinth", "curseforge"];
+            active-source: ContentState.source;
+            source-selected(source) => { ContentState.set-source(source); }
+        }
+
+        if ContentState.source == "local" && ContentState.local-mods-loading: LoadingState { }
+
+        if (ContentState.source == "local" && !ContentState.local-mods-loading && ContentState.local-mods.length > 0): CardGrid {
+            cards: ContentState.local-mods;
+            icon-size: 72px;
+            grid-height: ContentState.local-mods-grid-height;
+
+            select(id) => { ContentState.select-card(id); }
+            open-path(id) => { ContentState.open-path(id); }
+            delete(id, title) => { ContentState.delete-save(id); }
+        }
+
+        if (ContentState.source == "local" && !ContentState.local-mods-loading && ContentState.local-mods.length == 0): EmptyState {
+            show: true;
+            // The title bar is a sibling above, so remove its 52px to centre the
+            // body over the whole panel.
+            block-height: ContentState.panel-height - 52px;
+            description: @tr("Consider downloading some mods from the internet");
+        }
+
+        if ContentState.source != "local": FilterPanel { }
+
+        if ContentState.source != "local" && ContentState.remote-loading: LoadingState { }
+
+        if (ContentState.source != "local" && !ContentState.remote-loading && !ContentState.remote-failed && ContentState.remote-cards.length > 0): CardGrid {
+            cards: ContentState.remote-cards;
+            icon-size: 72px;
+            grid-height: ContentState.remote-grid-height;
+
+            select(id) => { ContentState.select-card(id); }
+            open-link(url) => { ContentState.open-url(url); }
+            toggle-favorite(id) => { ContentState.toggle-favorite(id); }
+        }
+
+        if (ContentState.source != "local" && !ContentState.remote-loading && (ContentState.remote-failed || ContentState.remote-cards.length == 0)): remote-not-found := EmptyState {
+            show: true;
+            failed: ContentState.remote-failed;
+            block-height: remote-not-found.content-height + 80px;
+            description: ContentState.remote-failed ? "" : @tr("Try adjusting keywords or filters and search again");
+            retry => { ContentSearch.search(); }
+        }
+
+        // One bar per remote list, backed by that list's own page state. The bar
+        // shows from the result's page count; opening a panel or switching source
+        // clears the result and hides it.
+        Pagination {
+            pages: ContentSearch.pages;
+            current-page: ContentSearch.current-page;
+            total-pages: ContentSearch.total-pages;
+            shown: ContentState.source == "modrinth" && ContentSearch.total-pages > 1;
+            page-change(page) => { ContentSearch.go-to-page(page); }
+        }
+
+        Pagination {
+            pages: ContentSearch.pages;
+            current-page: ContentSearch.current-page;
+            total-pages: ContentSearch.total-pages;
+            shown: ContentState.source == "curseforge" && ContentSearch.total-pages > 1;
+            page-change(page) => { ContentSearch.go-to-page(page); }
+        }
+    }
+}

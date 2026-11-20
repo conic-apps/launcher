@@ -7,7 +7,7 @@ import { Loading } from "../../graphics/controls/loading.slint";
 import { ScrollView } from "../../graphics/containers/scroll-view.slint";
 import { GameTime } from "../../globals/game.slint";
 import { NewsState, NewsText } from "../../globals/news.slint";
-import { ContentTitleBar } from "../content/content-title-bar.slint";
+import { HeaderBar } from "../../graphics/display/header-bar.slint";
 import { NewsBody } from "news-body.slint";
 
 // The changelog detail panel: header and hero, then the full body.
@@ -21,7 +21,7 @@ export component NewsDetailPanel inherits Rectangle {
 
     scroller := ScrollView {
         details-column := VerticalLayout {
-            ContentTitleBar {
+            HeaderBar {
                 icon: "newspaper";
                 title: NewsState.detail-title;
             }
