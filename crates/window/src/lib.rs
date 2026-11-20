@@ -146,19 +146,8 @@ impl<H: ComponentHandle> WindowService<H> {
     }
 
     fn set_minimized(&self, minimized: bool) {
-        use i_slint_backend_winit::WinitWindowAccessor;
-        match self
-            .window()
-            .with_winit_window(|window| window.set_minimized(minimized))
-        {
-            Some(_) => log::debug!("the window manager was asked for minimized={minimized}"),
-            None => {
-                log::debug!(
-                    "no winit window to minimize; falling back to Slint for minimized={minimized}"
-                );
-                self.window().set_minimized(minimized);
-            }
-        }
+        self.window().set_minimized(minimized);
+        log::debug!("the window was asked for minimized={minimized}");
     }
 
     fn focus_window(&self) {

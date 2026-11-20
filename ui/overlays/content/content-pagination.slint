@@ -95,8 +95,8 @@ export component ContentPagination inherits Rectangle {
         }
 
         for page in root.pages: Rectangle {
-            // Must be given: both children are conditionals, which Slint measures
-            // as zero, stacking every number on the first.
+            // A page cell is one 30px square whether it holds a number or the
+            // ellipsis, so the row does not reflow as the pages change.
             width: 30px;
             height: 30px;
             background: transparent;

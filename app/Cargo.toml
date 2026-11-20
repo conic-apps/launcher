@@ -9,10 +9,10 @@ repository.workspace = true
 homepage = "https://github.com/conic-apps/launcher"
 
 [dev-dependencies]
-i-slint-backend-testing = "=1.18.1"
+i-slint-backend-testing = "=1.19.0"
 
 [dependencies]
-slint = { workspace = true, features = ["unstable-fontique-011"] }
+slint = { workspace = true, features = ["unstable-fontique-012"] }
 conic-ui.workspace = true
 platform.workspace = true
 window.workspace = true
@@ -60,7 +60,7 @@ rfd.workspace = true
 arboard.workspace = true
 open.workspace = true
 
-i-slint-backend-winit = "1.18"
+i-slint-backend-winit = "1.19"
 winit = "0.30"
 
 [target.'cfg(target_os = "macos")'.dependencies]

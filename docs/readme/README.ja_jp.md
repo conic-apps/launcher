@@ -90,7 +90,7 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 ## ソースからビルド
 
-[Rust 1.88+](https://rustup.rs/) がインストールされていることを確認してください。Linux では[ビルド依存関係](../../packaging/README.md#linux-build-dependencies)も必要です。
+[Rust 1.95+](https://rustup.rs/) がインストールされていることを確認してください。Linux では[ビルド依存関係](../../packaging/README.md#linux-build-dependencies)も必要です。
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git

@@ -51,7 +51,9 @@ fn main() {
 
 fn compile_ui() {
     let config = slint_build::CompilerConfiguration::new().with_bundled_translations("i18n");
-    slint_build::compile_with_config("app.slint", config).expect("failed to compile the app UI");
+    // The directory, not `app.slint`, so `slint-project.json` is read: it carries
+    // the edition the UI is written for.
+    slint_build::compile_with_config(".", config).expect("failed to compile the app UI");
 }
 
 /// Reject a font Slint cannot parse, at build time.

@@ -76,16 +76,19 @@ component MultiplayerConnect inherits VerticalLayout {
     if root.shown == "downloadDescription": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: "left";
+
         MultiplayerDownloadDescription { }
     }
     if root.shown == "downloadProgress": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: "left";
+
         MultiplayerDownloadProgress { }
     }
     if root.shown == "multiplayerManager": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: "left";
+
         MultiplayerManager { }
     }
 }

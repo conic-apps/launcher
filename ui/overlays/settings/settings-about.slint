@@ -131,7 +131,7 @@ export component SettingsAbout inherits VerticalLayout {
             background: transparent;
 
             // The sentence is split so the link can hug the translated label.
-            // Slint 1.18 always underlines `Style::Link` spans (no hover state).
+            // Slint always underlines a `Style::Link` span; there is no hover state.
             disclaimer-text := StyledText {
                 width: 100%;
                 text: @markdown("\{@tr("Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios ")}[\{@tr("Brand and Asset Guidelines")}](https://www.minecraft.net/en-us/usage-guidelines)\{@tr(".")}");

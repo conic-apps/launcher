@@ -745,15 +745,18 @@ export component NotificationOverlay inherits Rectangle {
         ScrollView {
             scrollbar-top: 8px;
             scrollbar-bottom: 8px;
+
             VerticalLayout {
                 padding-top: 16px;
                 padding-right: 24px;
                 padding-bottom: 16px;
                 padding-left: 24px;
                 spacing: 8px;
+
                 HorizontalLayout {
                     height: 24px;
                     spacing: 8px;
+
                     Text {
                         text: @tr("NotificationOverlay" => "Notifications");
                         color: Theme.text;
@@ -809,6 +812,7 @@ export component NotificationOverlay inherits Rectangle {
                     HorizontalLayout {
                         height: 24px;
                         spacing: 8px;
+
                         Text {
                             text: @tr("NotificationOverlay" => "Active tasks");
                             color: Theme.text;

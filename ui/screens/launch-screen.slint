@@ -135,6 +135,7 @@ export component LaunchScreen inherits Rectangle {
             width: name-text.preferred-width;
             height: name-text.height;
             opacity: root.entry-opacity;
+
             name-text := Text {
                 y: root.entry-rise;
                 height: 32px;
@@ -153,12 +154,14 @@ export component LaunchScreen inherits Rectangle {
             width: info-layout.preferred-width;
             height: info-layout.preferred-height;
             opacity: root.entry-opacity;
+
             info-layout := HorizontalLayout {
                 y: root.entry-rise;
                 width: self.preferred-width;
                 height: self.preferred-height;
                 alignment: center;
                 spacing: 16px;
+
                 Text {
                     height: 16px;
                     text: "Minecraft " + LaunchState.minecraft-version;
@@ -186,6 +189,7 @@ export component LaunchScreen inherits Rectangle {
             width: progress-container.width;
             height: progress-container.height;
             opacity: root.entry-opacity;
+
             progress-container := Rectangle {
                 y: root.entry-rise;
                 width: 340px;
@@ -245,6 +249,7 @@ export component LaunchScreen inherits Rectangle {
             width: login-grid.preferred-width;
             height: login-grid.preferred-height;
             opacity: root.entry-opacity;
+
             login-grid := GridLayout {
                 y: root.entry-sink;
                 width: self.preferred-width;
@@ -306,6 +311,7 @@ export component LaunchScreen inherits Rectangle {
             width: back-button.width;
             height: back-button.height;
             opacity: root.entry-opacity;
+
             back-button := Rectangle {
                 y: root.entry-sink;
                 width: 240px;

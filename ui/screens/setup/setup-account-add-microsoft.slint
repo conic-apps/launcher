@@ -174,7 +174,7 @@ export component SetupAccountAddMicrosoft inherits VerticalLayout {
         direction: root.direction;
 
         // `StyledText` is the only element that can hold a link inside a wrapping
-        // paragraph; Slint 1.18 has no click target for a span.
+        // paragraph; Slint has no click target for a span.
         StyledText {
             width: 100%;
             text: @markdown("\{@tr("Open a web page on any device — ")}[\{AccountAddState.ms-verification-uri}](conic:open-verification)\{@tr(", enter the device code below and sign in. It expires in {}.", root.countdown-text(AccountAddState.ms-expires-in))} [\{@tr("Click here")}](conic:use-auth-code)\{@tr(" to sign in with your browser instead.")}");

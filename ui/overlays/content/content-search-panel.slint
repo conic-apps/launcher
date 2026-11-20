@@ -202,7 +202,6 @@ export component ContentSearchPanel inherits Rectangle {
         y: 0;
         width: 100%;
         height: panel-content.preferred-height;
-        // No backdrop blur in Slint 1.18, so the panel is translucent only.
         background: Theme.crust.with-alpha(0.92);
 
         panel-content := VerticalLayout {

@@ -111,18 +111,21 @@ export component AccountAdd inherits VerticalLayout {
     if root.shown == "microsoft": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
+
         AccountAddMicrosoft { }
     }
 
     if root.shown == "yggdrasil": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
+
         AccountAddYggdrasil { }
     }
 
     if root.shown == "offline": SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
+
         AccountAddOffline { }
     }
 }

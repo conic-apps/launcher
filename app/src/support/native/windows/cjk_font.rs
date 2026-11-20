@@ -9,7 +9,7 @@
 //! Replaces rather than appends to the OS answer, so a sentence never mixes two
 //! Han fonts.
 
-use slint::fontique_011::fontique::{Collection, FallbackKey, FamilyId, Script};
+use slint::fontique_012::fontique::{Collection, FallbackKey, FamilyId, Script};
 
 /// Simplified Chinese families, best first; the first installed one wins. The
 /// tail keeps the result sane on a Windows install without YaHei.
@@ -41,7 +41,7 @@ const TRADITIONAL: &[&str] = &[
 /// the thread that owns the Slint global context (the main thread), which is
 /// where both the startup call and the settings callback live.
 pub(crate) fn apply(locale: &str) {
-    let mut collection = slint::fontique_011::shared_collection();
+    let mut collection = slint::fontique_012::shared_collection();
 
     // zh_TW is the only bundled locale that wants Traditional glyph forms.
     // Everything else — including the language picker, which hardcodes

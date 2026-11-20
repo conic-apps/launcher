@@ -99,7 +99,7 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 ## Сборка из исходного кода
 
-Убедитесь, что установлен [Rust 1.88+](https://rustup.rs/); в Linux также нужны
+Убедитесь, что установлен [Rust 1.95+](https://rustup.rs/); в Linux также нужны
 [зависимости для сборки](../../packaging/README.md#linux-build-dependencies).
 
 ```bash

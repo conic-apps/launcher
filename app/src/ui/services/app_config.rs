@@ -371,7 +371,7 @@ pub fn reveal_in_dir(path: &str) -> std::io::Result<()> {
 /// selection before the user could paste (the reason `wl-copy`/`xclip` daemonise).
 static CLIPBOARD: Mutex<Option<arboard::Clipboard>> = Mutex::new(None);
 
-/// Slint 1.18 has no application-level clipboard API, so copy buttons go to the
+/// Slint has no application-level clipboard API, so copy buttons go to the
 /// platform directly via `arboard`, which reaches Wayland through its
 /// `wayland-data-control` feature.
 pub fn copy_to_clipboard(text: &str) -> std::io::Result<()> {

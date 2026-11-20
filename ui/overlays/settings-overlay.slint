@@ -267,11 +267,13 @@ export component SettingsOverlay inherits Rectangle {
 
                 s0 := SettingsSection {
                     title: @tr("General");
+
                     SettingsGeneral { }
                 }
 
                 s1 := SettingsSection {
                     title: @tr("Launch");
+
                     SettingsGame { }
                 }
 
@@ -284,26 +286,31 @@ export component SettingsOverlay inherits Rectangle {
 
                 s3 := SettingsSection {
                     title: @tr("Appearance");
+
                     SettingsAppearance { }
                 }
 
                 s4 := SettingsSection {
                     title: @tr("Audio");
+
                     SettingsAudio { }
                 }
 
                 s5 := SettingsSection {
                     title: @tr("Download");
+
                     SettingsDownload { }
                 }
 
                 s6 := SettingsSection {
                     title: @tr("Accessibility");
+
                     SettingsAccessibility { }
                 }
 
                 s7 := SettingsSection {
                     title: @tr("About");
+
                     SettingsAbout { }
                 }
             }

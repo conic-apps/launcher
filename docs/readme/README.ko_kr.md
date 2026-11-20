@@ -89,7 +89,7 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 ## 소스에서 빌드
 
-[Rust 1.88+](https://rustup.rs/)가 설치되어 있어야 합니다. Linux에서는
+[Rust 1.95+](https://rustup.rs/)가 설치되어 있어야 합니다. Linux에서는
 [빌드 의존성](../../packaging/README.md#linux-build-dependencies)도 필요합니다.
 
 ```bash

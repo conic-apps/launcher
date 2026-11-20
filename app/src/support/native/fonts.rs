@@ -5,7 +5,7 @@
 //! A symbol font behind the Han fallback, so Han text keeps its font and only its
 //! missing characters reach a symbol font.
 
-use slint::fontique_011::fontique::{FallbackKey, FamilyId, Script};
+use slint::fontique_012::fontique::{FallbackKey, FamilyId, Script};
 
 /// Symbol families, best first; every installed one is appended.
 #[cfg(target_os = "macos")]
@@ -25,7 +25,7 @@ const SYMBOLS: &[&str] = &[
 /// Appends the symbol families after the `Hani` fallback's Han families, keeping
 /// Han text on its own font. Idempotent.
 pub(crate) fn apply() {
-    let mut collection = slint::fontique_011::shared_collection();
+    let mut collection = slint::fontique_012::shared_collection();
     let key = FallbackKey::new(Script::from_bytes(*b"Hani"), None);
 
     // Collected because the iterator borrows the collection `family_id` needs.

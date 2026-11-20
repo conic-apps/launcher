@@ -201,42 +201,49 @@ export component SetupScreen inherits Rectangle {
                 if root.shown == "language": SlideTransition {
                     phase: root.leaving ? "leave" : root.arrive-phase;
                     direction: root.direction;
+
                     SetupLanguage { }
                 }
 
                 if root.shown == "storage": SlideTransition {
                     phase: root.leaving ? "leave" : root.arrive-phase;
                     direction: root.direction;
+
                     SetupStorage { }
                 }
 
                 if root.shown == "palette": SlideTransition {
                     phase: root.leaving ? "leave" : root.arrive-phase;
                     direction: root.direction;
+
                     SetupPalette { }
                 }
 
                 if root.shown == "add-account": SlideTransition {
                     phase: root.leaving ? "leave" : root.arrive-phase;
                     direction: root.direction;
+
                     SetupAddAccount { }
                 }
 
                 if root.shown == "java-settings": SlideTransition {
                     phase: root.leaving ? "leave" : root.arrive-phase;
                     direction: root.direction;
+
                     SetupJavaSettings { }
                 }
 
                 if root.shown == "launch-options": SlideTransition {
                     phase: root.leaving ? "leave" : root.arrive-phase;
                     direction: root.direction;
+
                     SetupLaunchOptions { }
                 }
 
                 if root.shown == "import-instances": SlideTransition {
                     phase: root.leaving ? "leave" : root.arrive-phase;
                     direction: root.direction;
+
                     SetupImportInstances { }
                 }
             }
@@ -356,7 +363,6 @@ export component SetupScreen inherits Rectangle {
         easing: cubic-bezier(0.215, 0.61, 0.355, 1);
     }
 
-    // No backdrop blur (Slint 1.18 has none), so content shows through.
     footer := Rectangle {
         x: 0px;
         y: root.height - self.height + root.footer-drop;

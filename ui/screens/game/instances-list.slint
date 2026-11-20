@@ -38,9 +38,8 @@ component InstanceListCard inherits Rectangle {
     width: 480px;
     height: 56px;
     // One path: the outer 8px rounded rect with the content card's 6px rect
-    // punched out. The subpaths wind oppositely because Slint 1.18 ignores
-    // `fill-rule: evenodd`, leaving the hole under the nonzero rule. The geometry
-    // must match the content card below.
+    // punched out, so only the frame is filled. The geometry must match the
+    // content card below.
     background: transparent;
     transform-origin: { x: self.width / 2, y: self.height / 2 };
     transform-scale-x: card-touch.pressed && !root.item.current ? 0.99 : root.item.current ? 1.03 : 1.0;

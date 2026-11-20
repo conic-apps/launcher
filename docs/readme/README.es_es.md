@@ -99,7 +99,7 @@ Descarga el instalador para tu plataforma desde
 
 ## Compilar desde el código fuente
 
-Asegúrate de tener instalado [Rust 1.88+](https://rustup.rs/); en Linux también necesitas las
+Asegúrate de tener instalado [Rust 1.95+](https://rustup.rs/); en Linux también necesitas las
 [dependencias de compilación](../../packaging/README.md#linux-build-dependencies).
 
 ```bash

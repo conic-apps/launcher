@@ -711,6 +711,7 @@ export component CommandPaletteOverlay inherits Rectangle {
     // Folds query and mode because `changed` cannot watch a global. The control
     // character separator cannot occur in either.
     private property <string> debounce-key: CommandPaletteState.query + "\u{1}" + CommandPaletteState.mode;
+
     debounce := Timer {
         interval: 250ms;
         running: false;
