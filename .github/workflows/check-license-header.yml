@@ -10,6 +10,9 @@ on:
       - "**/*.slint"
       - "**/*.py"
       - "**/*.sh"
+      - "**/*.vert"
+      - "**/*.frag"
+      - "**/*.ps1"
   pull_request:
     branches: ["dev"]
     paths:
@@ -19,6 +22,9 @@ on:
       - "**/*.slint"
       - "**/*.py"
       - "**/*.sh"
+      - "**/*.vert"
+      - "**/*.frag"
+      - "**/*.ps1"
 
 permissions:
   contents: read

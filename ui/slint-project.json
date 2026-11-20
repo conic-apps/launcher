@@ -1,7 +1,4 @@
 {
-    // Read by `slint-build`, `slint-lsp` and `slint-viewer`; the edition opts
-    // into the 1.19 layout semantics, so an `if` or `for` child is sized like
-    // any other.
-    "edition": "1.19",
-    "main": "app.slint"
+  "edition": "1.19",
+  "main": "app.slint"
 }
