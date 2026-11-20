@@ -175,118 +175,99 @@ fn target_size(ui: &App) -> (i32, i32) {
     )
 }
 
-// The layer's 0.3 opacity is folded in here: this image is one layer of Slint's
-// composite rather than an element of its own, and Slint rounds the window's
-// corners when it composites.
+// The layer's 0.3 opacity is folded into the passes below: this image is one
+// layer of Slint's composite rather than an element of its own, and Slint
+// rounds the window's corners when it composites.
+//
+// The bodies live in `shaders/` so that an editor highlights them, a diff shows
+// the line that changed and a grep finds the pass that uses a uniform.
+// `include_str!` keeps them inside the binary, so there is still no asset to
+// ship or to find at runtime. The version and precision lines are not in the
+// files; see `Dialect`.
 
-const FILL_VERTEX: &str = r#"
-layout(location = 0) in vec3 aPos;
-layout(location = 1) in float aAlpha;
-uniform float uCamX;
-uniform float uCamY;
-uniform float uCamZ;
-uniform float uFocal;
-uniform float uHalfW;
-uniform float uHalfH;
-uniform float uNearZ;
-uniform float uFarZ;
-out float vAlpha;
-void main() {
-  float dz = aPos.z - uCamZ;
-  float s = uFocal / dz;
-  float ndcX = (aPos.x - uCamX) * s / uHalfW;
-  float ndcY = (aPos.y - uCamY) * s / uHalfH;
-  float ndcZ = clamp((dz - uNearZ) / (uFarZ - uNearZ) * 2.0 - 1.0, -1.0, 1.0);
-  gl_Position = vec4(ndcX, ndcY, ndcZ, 1.0);
-  vAlpha = aAlpha;
-}
-"#;
+const FILL_VERTEX: &str = include_str!("shaders/fill.vert");
+const FILL_FRAGMENT: &str = include_str!("shaders/fill.frag");
+const EDGE_VERTEX: &str = include_str!("shaders/edge.vert");
+const EDGE_FRAGMENT: &str = include_str!("shaders/edge.frag");
+const RESOLVE_VERTEX: &str = include_str!("shaders/resolve.vert");
+const RESOLVE_FRAGMENT: &str = include_str!("shaders/resolve.frag");
 
-// Premultiplied. Slint hands the borrowed texture to femtovg without
-// `ImageFlags::PREMULTIPLIED`, so femtovg multiplies by alpha as it samples;
-// the resolve pass divides it back out (see `RESOLVE_FRAGMENT`).
-const FILL_FRAGMENT: &str = r#"
-in float vAlpha;
-uniform vec4 uBgColor;
-uniform float uLayerAlpha;
-out vec4 outColor;
-void main() {
-  float a = vAlpha * uLayerAlpha;
-  outColor = vec4(uBgColor.rgb * a, a);
-}
-"#;
+/// The camera the world shaders project through, as `(name, type)`.
+///
+/// Declared here rather than in `fill.vert` and `edge.vert` because GLSL ES 3.0
+/// has no `#include`, so two hand-written copies had to be kept in step.
+/// Instead the block is stitched onto the front of each world vertex stage, and
+/// the passes take their uniform locations from this same list — a name cannot
+/// drift from its declaration, and a ninth uniform is added once.
+const CAMERA_UNIFORMS: &[(&str, &str)] = &[
+    ("uCamX", "float"),
+    ("uCamY", "float"),
+    ("uCamZ", "float"),
+    ("uFocal", "float"),
+    ("uHalfW", "float"),
+    ("uHalfH", "float"),
+    ("uNearZ", "float"),
+    ("uFarZ", "float"),
+];
 
-const EDGE_VERTEX: &str = r#"
-layout(location = 0) in vec3 aPos;
-layout(location = 1) in float aMix;
-layout(location = 2) in vec3 aOther;
-layout(location = 3) in float aSide;
-uniform float uCamX;
-uniform float uCamY;
-uniform float uCamZ;
-uniform float uFocal;
-uniform float uHalfW;
-uniform float uHalfH;
-uniform float uNearZ;
-uniform float uFarZ;
-uniform float uEdgeWidth;
-out float vMix;
-void main() {
-  // The segments are expanded into fixed-width quads in screen space (in
-  // pixels), so that a sub-pixel line is never dropped by the rasteriser and
-  // cannot flicker as the camera moves.
-  float dz0 = aPos.z - uCamZ;
-  float dz1 = aOther.z - uCamZ;
-  float s0 = uFocal / dz0;
-  float s1 = uFocal / dz1;
-  vec2 p0 = vec2((aPos.x - uCamX) * s0, (aPos.y - uCamY) * s0);
-  vec2 p1 = vec2((aOther.x - uCamX) * s1, (aOther.y - uCamY) * s1);
-  vec2 d = p1 - p0;
-  vec2 n = vec2(-d.y, d.x);
-  float len = length(n);
-  vec2 off = len > 1e-5 ? (n / len) * (uEdgeWidth * 0.5) : vec2(0.0);
-  vec2 p = p0 + off * aSide;
-  float ndcZ = clamp((dz0 - uNearZ) / (uFarZ - uNearZ) * 2.0 - 1.0, -1.0, 1.0);
-  gl_Position = vec4(p.x / uHalfW, p.y / uHalfH, ndcZ, 1.0);
-  vMix = aMix;
+/// The stage a body is compiled for. The two differ only in what
+/// [`Dialect::source`] puts above the body, never in the body itself.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Stage {
+    Vertex,
+    Fragment,
 }
-"#;
 
-const EDGE_FRAGMENT: &str = r#"
-in float vMix;
-uniform vec4 uBgColor;
-uniform vec4 uEdgeColor;
-uniform float uLayerAlpha;
-out vec4 outColor;
-void main() {
-  vec3 c = mix(uBgColor.rgb, uEdgeColor.rgb, vMix);
-  outColor = vec4(c * uLayerAlpha, uLayerAlpha);
+impl Stage {
+    fn gl(self) -> u32 {
+        match self {
+            Self::Vertex => glow::VERTEX_SHADER,
+            Self::Fragment => glow::FRAGMENT_SHADER,
+        }
+    }
 }
-"#;
 
-// The resolve: the world is drawn premultiplied, Slint samples it as straight,
-// so this pass divides the alpha back out. It is what makes the two agree —
-// without it everything drawn comes out `alpha` times too dark, which is a hard
-// colour step at the horizon in a dark palette and an obvious one in a light
-// one (a light crust has far more to lose).
-const RESOLVE_VERTEX: &str = r#"
-layout(location = 0) in vec2 aPos;
-out vec2 vUv;
-void main() {
-  vUv = aPos * 0.5 + 0.5;
-  gl_Position = vec4(aPos, 0.0, 1.0);
+/// What a pass puts above the body of each stage.
+#[derive(Clone, Copy)]
+enum Prelude {
+    /// Nothing beyond the version line and, on ES, the fragment precision.
+    Nothing,
+    /// [`CAMERA_UNIFORMS`], on the vertex stage only: the fragment stage of the
+    /// same pass never reads them, and the driver drops a declaration nothing
+    /// reads while `Program::build` still asks for its location.
+    Camera,
 }
-"#;
 
-const RESOLVE_FRAGMENT: &str = r#"
-in vec2 vUv;
-uniform sampler2D uWorld;
-out vec4 outColor;
-void main() {
-  vec4 c = texture(uWorld, vUv);
-  outColor = vec4(c.a > 0.0 ? c.rgb / c.a : vec3(0.0), c.a);
+impl Prelude {
+    fn source(self, stage: Stage) -> String {
+        match (self, stage) {
+            (Self::Camera, Stage::Vertex) => CAMERA_UNIFORMS
+                .iter()
+                .map(|(name, ty)| format!("uniform {ty} {name};\n"))
+                .collect(),
+            _ => String::new(),
+        }
+    }
 }
-"#;
+
+/// The names the world passes look the camera up by, in declaration order.
+fn camera_uniform_names() -> Vec<&'static str> {
+    CAMERA_UNIFORMS.iter().map(|(name, _)| *name).collect()
+}
+
+/// What the fill pass sets: the camera, then its own uniforms.
+fn fill_uniform_names() -> Vec<&'static str> {
+    let mut names = camera_uniform_names();
+    names.extend(["uBgColor", "uLayerAlpha"]);
+    names
+}
+
+/// What the edge pass sets: the camera, then its own uniforms.
+fn edge_uniform_names() -> Vec<&'static str> {
+    let mut names = camera_uniform_names();
+    names.extend(["uBgColor", "uEdgeColor", "uLayerAlpha", "uEdgeWidth"]);
+    names
+}
 
 /// The version line differs between desktop and ES contexts; the shader bodies
 /// are the same above it.
@@ -311,9 +292,16 @@ impl Dialect {
         }
     }
 
-    fn source(&self, fragment: bool, body: &str) -> String {
-        let precision = if fragment { self.precision } else { "" };
-        format!("{}{precision}{body}", self.version)
+    /// What the driver sees: the version line, the precision line fragments
+    /// need on ES, whatever the pass prepends, then the body from `shaders/`.
+    fn source(&self, stage: Stage, prelude: Prelude, body: &str) -> String {
+        let version = self.version;
+        let precision = if stage == Stage::Fragment {
+            self.precision
+        } else {
+            ""
+        };
+        format!("{version}{precision}{}{body}", prelude.source(stage))
     }
 }
 
@@ -425,6 +413,7 @@ impl Program {
     fn build(
         gl: &glow::Context,
         dialect: &Dialect,
+        prelude: Prelude,
         vertex: &str,
         fragment: &str,
         names: &[&'static str],
@@ -432,12 +421,9 @@ impl Program {
         let id = unsafe {
             let program = gl.create_program()?;
             let mut shaders = Vec::new();
-            for (kind, body, is_fragment) in [
-                (glow::VERTEX_SHADER, vertex, false),
-                (glow::FRAGMENT_SHADER, fragment, true),
-            ] {
-                let shader = gl.create_shader(kind)?;
-                let source = dialect.source(is_fragment, body);
+            for (stage, body) in [(Stage::Vertex, vertex), (Stage::Fragment, fragment)] {
+                let shader = gl.create_shader(stage.gl())?;
+                let source = dialect.source(stage, prelude, body);
                 gl.shader_source(shader, &source);
                 gl.compile_shader(shader);
                 if !gl.get_shader_compile_status(shader) {
@@ -535,42 +521,27 @@ impl Renderer {
         let fill = Program::build(
             &gl,
             &dialect,
+            Prelude::Camera,
             FILL_VERTEX,
             FILL_FRAGMENT,
-            &[
-                "uCamX",
-                "uCamY",
-                "uCamZ",
-                "uFocal",
-                "uHalfW",
-                "uHalfH",
-                "uNearZ",
-                "uFarZ",
-                "uBgColor",
-                "uLayerAlpha",
-            ],
+            &fill_uniform_names(),
         )?;
         let edge = Program::build(
             &gl,
             &dialect,
+            Prelude::Camera,
             EDGE_VERTEX,
             EDGE_FRAGMENT,
-            &[
-                "uCamX",
-                "uCamY",
-                "uCamZ",
-                "uFocal",
-                "uHalfW",
-                "uHalfH",
-                "uNearZ",
-                "uFarZ",
-                "uBgColor",
-                "uEdgeColor",
-                "uLayerAlpha",
-                "uEdgeWidth",
-            ],
+            &edge_uniform_names(),
         )?;
-        let resolve = Program::build(&gl, &dialect, RESOLVE_VERTEX, RESOLVE_FRAGMENT, &["uWorld"])?;
+        let resolve = Program::build(
+            &gl,
+            &dialect,
+            Prelude::Nothing,
+            RESOLVE_VERTEX,
+            RESOLVE_FRAGMENT,
+            &["uWorld"],
+        )?;
         let (resolve_vao, resolve_vertices) = unsafe {
             let vao = gl.create_vertex_array()?;
             let vertices = gl.create_buffer()?;
@@ -1077,8 +1048,8 @@ impl Renderer {
         }
     }
 
-    /// Both programs name these uniforms the same, so one function sets up both
-    /// passes; the program must already be current.
+    /// Both passes declare the camera from `CAMERA_UNIFORMS`, so one function
+    /// sets up both; the program must already be current.
     fn set_common_uniforms(
         &self,
         program: &Program,
@@ -1098,5 +1069,124 @@ impl Renderer {
             gl.uniform_1_f32(program.uniform("uNearZ"), scene::NEAR_PLANE);
             gl.uniform_1_f32(program.uniform("uFarZ"), scene::FADE_END);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::BTreeSet;
+
+    /// The desktop dialect. The bodies are the same above either version line,
+    /// so this is enough to check what the declarations look like.
+    fn dialect() -> Dialect {
+        Dialect {
+            version: "#version 330 core\n",
+            precision: "",
+        }
+    }
+
+    fn bodies() -> [&'static str; 6] {
+        [
+            FILL_VERTEX,
+            FILL_FRAGMENT,
+            EDGE_VERTEX,
+            EDGE_FRAGMENT,
+            RESOLVE_VERTEX,
+            RESOLVE_FRAGMENT,
+        ]
+    }
+
+    /// The names a source declares as `uniform <type> <name>;`. These shaders
+    /// declare every uniform on a line of its own, so a line scan is enough.
+    fn declared(source: &str) -> BTreeSet<&str> {
+        source
+            .lines()
+            .map(str::trim)
+            .filter_map(|line| line.strip_prefix("uniform "))
+            .filter_map(|decl| decl.strip_suffix(';'))
+            .filter_map(|decl| decl.split_whitespace().last())
+            .collect()
+    }
+
+    fn program(prelude: Prelude, vertex: &str, fragment: &str) -> String {
+        let dialect = dialect();
+        let mut source = dialect.source(Stage::Vertex, prelude, vertex);
+        source.push_str(&dialect.source(Stage::Fragment, prelude, fragment));
+        source
+    }
+
+    /// A uniform a pass looks up but nothing declares makes `Program::build`
+    /// fail, and it fails on the machine with a GPU — this is the only place
+    /// that mismatch shows up without one.
+    #[test]
+    fn every_requested_uniform_is_declared() {
+        for (prelude, vertex, fragment, names) in [
+            (
+                Prelude::Camera,
+                FILL_VERTEX,
+                FILL_FRAGMENT,
+                fill_uniform_names(),
+            ),
+            (
+                Prelude::Camera,
+                EDGE_VERTEX,
+                EDGE_FRAGMENT,
+                edge_uniform_names(),
+            ),
+            (
+                Prelude::Nothing,
+                RESOLVE_VERTEX,
+                RESOLVE_FRAGMENT,
+                vec!["uWorld"],
+            ),
+        ] {
+            let source = program(prelude, vertex, fragment);
+            let declared = declared(&source);
+            for name in names {
+                assert!(
+                    declared.contains(name),
+                    "`{name}` is looked up but nothing declares it"
+                );
+            }
+        }
+    }
+
+    /// The camera is declared by the prelude and only by the prelude. Writing a
+    /// declaration back into a `.vert` file is a duplicate declaration, which
+    /// the driver rejects outright.
+    #[test]
+    fn the_camera_is_declared_only_by_the_prelude() {
+        let camera: BTreeSet<&str> = CAMERA_UNIFORMS.iter().map(|(name, _)| *name).collect();
+        for body in bodies() {
+            assert!(
+                declared(body).is_disjoint(&camera),
+                "a body declares a uniform the prelude already declares"
+            );
+        }
+    }
+
+    /// A uniform declared but never read is optimised out, and
+    /// `get_uniform_location` then returns null — the pass fails to build with
+    /// nothing misspelled to point at.
+    #[test]
+    fn every_camera_uniform_is_read_by_both_world_passes() {
+        for vertex in [FILL_VERTEX, EDGE_VERTEX] {
+            for (name, _) in CAMERA_UNIFORMS {
+                assert!(vertex.contains(name), "`{name}` is never read");
+            }
+        }
+    }
+
+    /// `#version` is the first thing a driver must see, so it belongs to the
+    /// dialect. One in a file is a file that only compiles on one backend and
+    /// two is a compile error.
+    #[test]
+    fn the_version_and_precision_lines_are_owned_by_the_dialect() {
+        for body in bodies() {
+            assert!(!body.contains("#version"), "the dialect owns the version");
+            assert!(!body.contains("precision "), "the dialect owns precision");
+        }
+        assert!(program(Prelude::Camera, FILL_VERTEX, FILL_FRAGMENT).starts_with("#version "));
     }
 }
