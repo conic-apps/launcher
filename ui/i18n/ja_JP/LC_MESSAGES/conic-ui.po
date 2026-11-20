@@ -170,11 +170,6 @@ msgstr "現在のテーマでハイコントラストモードを有効にしま
 
 #: ui
 msgctxt "SettingsAppearance"
-msgid "Palette"
-msgstr "パレット"
-
-#: ui
-msgctxt "SettingsAppearance"
 msgid "Follow system dark mode"
 msgstr "システムのダークモードに従う"
 
@@ -2369,22 +2364,22 @@ msgid "This wizard will quickly walk you through some important settings so you 
 msgstr "このウィザードで重要な設定を簡単に確認して、すぐにゲームを始めましょう。"
 
 #: ui
-msgctxt "SetupPalette"
+msgctxt "SetupTheme"
 msgid "Choose a color scheme"
 msgstr "カラースキームを選択"
 
 #: ui
-msgctxt "SetupPalette"
+msgctxt "SetupTheme"
 msgid "Conic Launcher supports multiple color schemes. Pick one that suits your style."
 msgstr "Conic Launcher は複数のカラースキームに対応しています。お好みのものを選んでください。"
 
 #: ui
-msgctxt "SetupPalette"
+msgctxt "SetupTheme"
 msgid "Follow system dark mode"
 msgstr "システムのダークモードに従う"
 
 #: ui
-msgctxt "SetupPalette"
+msgctxt "SetupTheme"
 msgid "Uses Latte when the system is set to light mode, otherwise uses Mocha"
 msgstr "システムがライトモードの場合は Latte、それ以外の場合は Mocha を使用します"
 
@@ -3922,3 +3917,8 @@ msgstr "アップデートのインストール準備ができました。ここ
 msgctxt "NotificationText"
 msgid "Conic Launcher has been updated to version {}.\n\nClick here to view the release notes!"
 msgstr "Conic Launcher がバージョン {} に更新されました。\n\nリリースノートを見るにはここをクリックしてください！"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Theme"
+msgstr "パレット"

@@ -170,11 +170,6 @@ msgstr "Geçerli tema için yüksek karşıtlık modunu etkinleştirir (varsa)"
 
 #: ui
 msgctxt "SettingsAppearance"
-msgid "Palette"
-msgstr "Renk şeması"
-
-#: ui
-msgctxt "SettingsAppearance"
 msgid "Follow system dark mode"
 msgstr "Sistem karanlık modunu takip et"
 
@@ -2369,22 +2364,22 @@ msgid "This wizard will quickly walk you through some important settings so you 
 msgstr "Bu sihirbaz, hemen oynamaya başlayabilmeniz için bazı önemli ayarlarda size hızlıca yol gösterecek."
 
 #: ui
-msgctxt "SetupPalette"
+msgctxt "SetupTheme"
 msgid "Choose a color scheme"
 msgstr "Bir renk şeması seçin"
 
 #: ui
-msgctxt "SetupPalette"
+msgctxt "SetupTheme"
 msgid "Conic Launcher supports multiple color schemes. Pick one that suits your style."
 msgstr "Conic Launcher birden fazla renk şemasını destekler. Tarzınıza uygun olanı seçin."
 
 #: ui
-msgctxt "SetupPalette"
+msgctxt "SetupTheme"
 msgid "Follow system dark mode"
 msgstr "Sistem karanlık modunu takip et"
 
 #: ui
-msgctxt "SetupPalette"
+msgctxt "SetupTheme"
 msgid "Uses Latte when the system is set to light mode, otherwise uses Mocha"
 msgstr "Sistem açık moddayken Latte kullanır, aksi halde Mocha kullanır"
 
@@ -3922,3 +3917,8 @@ msgstr "Bir güncelleme yüklenmeye hazır. Başlatıcıyı yeniden başlatmak i
 msgctxt "NotificationText"
 msgid "Conic Launcher has been updated to version {}.\n\nClick here to view the release notes!"
 msgstr "Conic Launcher {} sürümüne güncellendi.\n\nSürüm notlarını görüntülemek için buraya tıklayın!"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Theme"
+msgstr "Renk şeması"

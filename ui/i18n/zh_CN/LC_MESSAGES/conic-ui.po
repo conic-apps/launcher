@@ -170,11 +170,6 @@ msgstr "启用当前主题的高对比度模式（如果可用）"
 
 #: ui
 msgctxt "SettingsAppearance"
-msgid "Palette"
-msgstr "调色板"
-
-#: ui
-msgctxt "SettingsAppearance"
 msgid "Follow system dark mode"
 msgstr "跟随系统深色设置"
 
@@ -2399,22 +2394,22 @@ msgid "This wizard will quickly walk you through some important settings so you 
 msgstr "这个指南将快速带你完成一些重要的设置项，以便待会儿你能够快速上手并启动你的游戏。"
 
 #: ui
-msgctxt "SetupPalette"
+msgctxt "SetupTheme"
 msgid "Choose a color scheme"
 msgstr "选择配色方案"
 
 #: ui
-msgctxt "SetupPalette"
+msgctxt "SetupTheme"
 msgid "Conic Launcher supports multiple color schemes. Pick one that suits your style."
 msgstr "Conic Launcher 支持多种配色方案，你可以按自己的喜好选择一个。"
 
 #: ui
-msgctxt "SetupPalette"
+msgctxt "SetupTheme"
 msgid "Follow system dark mode"
 msgstr "跟随系统深色设置"
 
 #: ui
-msgctxt "SetupPalette"
+msgctxt "SetupTheme"
 msgid "Uses Latte when the system is set to light mode, otherwise uses Mocha"
 msgstr "如果系统设置中设置为浅色，则使用 Latte ，否则使用 Mocha"
 
@@ -3922,3 +3917,8 @@ msgstr "已准备好安装更新，点击这里重启启动器！"
 msgctxt "NotificationText"
 msgid "Conic Launcher has been updated to version {}.\n\nClick here to view the release notes!"
 msgstr "Conic Launcher 已更新到版本：{}。\n\n点击此处查看更新说明！"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Theme"
+msgstr "调色板"

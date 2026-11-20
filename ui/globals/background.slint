@@ -52,7 +52,7 @@ export global Background {
     /// follows the 300ms palette transition.
     out property <color> crust: Theme.crust;
     /// Latte outlines in black, every other flavour in white.
-    out property <bool> dark: Theme.active-palette != "Latte";
+    out property <bool> dark: Theme.active != "Latte";
 
     /// The palette moved: the world has to be redrawn in the new colour. A
     /// palette change animates `Theme.crust` over 300ms, so this fires for each

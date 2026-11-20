@@ -196,8 +196,12 @@ impl Default for AccessibilityConfig {
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AppearanceConfig {
-    pub palette_follow_system: bool,
-    pub palette: String,
+    /// `palette_follow_system` and `palette` are the names these fields shipped
+    /// under; the aliases keep an existing `config.toml` readable.
+    #[serde(alias = "palette_follow_system")]
+    pub theme_follow_system: bool,
+    #[serde(alias = "palette")]
+    pub theme: String,
     pub background_camera_move: bool,
     pub background_parallax: bool,
     pub background_image: Option<String>,
@@ -207,8 +211,8 @@ pub struct AppearanceConfig {
 impl Default for AppearanceConfig {
     fn default() -> Self {
         Self {
-            palette_follow_system: true,
-            palette: "Mocha".to_string(),
+            theme_follow_system: true,
+            theme: "Mocha".to_string(),
             background_camera_move: true,
             background_parallax: true,
             background_image: None,
@@ -313,7 +317,7 @@ mod tests {
         assert!(config.auto_update);
         assert!(config.prefer_mojang_java);
         assert_eq!(config.update_channel, UpdateChannel::Stable);
-        assert_eq!(config.appearance.palette, "Mocha");
+        assert_eq!(config.appearance.theme, "Mocha");
         assert!(config.accessibility.change_game_language);
         assert_eq!(config.launch.launcher_name, "Conic_Launcher");
         assert_eq!(config.launch.width, 854);
@@ -394,7 +398,16 @@ mod tests {
         assert!(!config.auto_update);
         // Every unmentioned section keeps its default.
         assert_eq!(config.launch.width, 854);
-        assert_eq!(config.appearance.palette, "Mocha");
+        assert_eq!(config.appearance.theme, "Mocha");
+    }
+
+    #[test]
+    fn the_retired_palette_keys_still_set_the_theme() {
+        let config: Config =
+            toml::from_str("[appearance]\npalette = \"Latte\"\npalette_follow_system = false\n")
+                .expect("valid toml");
+        assert_eq!(config.appearance.theme, "Latte");
+        assert!(!config.appearance.theme_follow_system);
     }
 
     #[test]
