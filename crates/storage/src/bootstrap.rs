@@ -75,9 +75,6 @@ pub fn save_overrides(overrides: &LocationOverrides) -> io::Result<()> {
     }
     let text = toml::to_string_pretty(overrides).map_err(io::Error::other)?;
     fs::write(&path, text)?;
-    // Logged because the write is what a relocation rests on: the app restarts
-    // immediately afterwards and reads this back, so a failure here is a
-    // relocation that silently did not happen.
     log::info!(
         "wrote {} (launcher: {:?}, minecraft: {:?}, instances: {:?})",
         path.display(),
