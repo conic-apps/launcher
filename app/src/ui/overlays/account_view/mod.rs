@@ -595,7 +595,7 @@ fn fetch_stats(ui: &App, account: &Account) {
     let key = account.key();
     let weak = ui.as_weak();
     crate::support::runtime::spawn(async move {
-        let entries = statistics::get_statistics_by_profile(profile)
+        let entries = statistics::read_statistics_by_profile(profile)
             .await
             .unwrap_or_default();
         let names: HashMap<String, String> = instance::list_instances(instance::SortBy::Playtime)
