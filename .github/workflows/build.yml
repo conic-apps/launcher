@@ -263,7 +263,7 @@ jobs:
 
       - name: Inspect the app
         run: |
-          app=target/package/conic-launcher.app
+          app="target/package/Conic Launcher.app"
           echo "### the bundle"
           find "$app" | sed "s|$app|.|" | sort
           echo "### Info.plist"
@@ -292,7 +292,7 @@ jobs:
           # Zipped rather than a bare `.app`, because an artifact upload turns a
           # directory into a file on its own and the symlinks inside the bundle
           # need the archiver to preserve them.
-          path: ${{ github.workspace }}/target/package/conic-launcher.app
+          path: ${{ github.workspace }}/target/package/Conic Launcher.app
 
       - name: Upload the dmg
         uses: actions/upload-artifact@v7
