@@ -59,6 +59,15 @@ feature — is what decides where a file goes:
   cross-screen state is shared without prop drilling; the ones no single surface owns (`scroll`,
   `tasks`) live in `app/src/ui/services/`.
 
+### Naming
+
+`*Screen` is a destination `Navigation` can navigate to, which is the only thing a screen is;
+`*View` may name any other drawn thing (an overlay's contents, the Markdown renderer, a scroller).
+`*Overlay`/`*Dialog`/`*Panel`/`*Card` is a surface, `*Root` is an overlay layer host. There is **no
+`base-` family** — the control itself is the base. Imports are relative paths, so moving a file
+means updating every importer; `cargo check` compiles the `.slint` tree and is what catches a missed
+one.
+
 ### Settings placement
 
 Settings is one drawer, `overlays/settings.slint`, over the game screen; there is no
