@@ -7,7 +7,7 @@ import { OsFamily } from "../globals/platform.slint";
 import { Icons } from "../graphics/icons.slint";
 import { CommandPaletteState } from "../globals/command-palette.slint";
 import { TitleBarActionButton } from "title-bar/title-bar-action-button.slint";
-import { SearchBar } from "title-bar/search-bar.slint";
+import { QuickActionButton } from "title-bar/quick-action-button.slint";
 import { NewsState } from "../globals/news.slint";
 import { NotificationState } from "../globals/notifications.slint";
 import { SettingsShell } from "../globals/settings-shell.slint";
@@ -94,8 +94,6 @@ export component TitleBar inherits Rectangle {
     // window. macOS's double-click-to-zoom is disabled in
     // `native/macos/traffic_lights.rs`.
     WindowMoveArea {
-        width: root.width;
-        height: root.height;
 
         TouchArea {
             width: root.width;
@@ -173,7 +171,7 @@ export component TitleBar inherits Rectangle {
         height: root.height;
         y: 0px;
 
-        search-bar := SearchBar {
+        search-bar := QuickActionButton {
             width: 100%;
             height: 26px;
             x: 0px;
