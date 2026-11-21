@@ -4,7 +4,7 @@
     Copyright 2022-2026 ConicMC developers. All rights reserved.
     SPDX-License-Identifier: GPL-3.0-only
 
-    The Windows installer, built by `tools/package-windows.ps1` with the WiX
+    The Windows installer, built by `package.ps1` with the WiX
     toolset (see `packaging/windows/README.md`).
 
     Everything version- or machine-specific comes in through the preprocessor,

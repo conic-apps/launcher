@@ -18,7 +18,7 @@
 # accepts globs, and the icon theme ladder is a set of sibling directories that a
 # tenth size would add to without touching this file. The paths come from
 # `[package.metadata.rpm.files]` in `app/Cargo.toml`, which is staged into
-# `app/.rpm/usr/` by `tools/package-linux.sh` -- the spec and that table have to
+# `app/.rpm/usr/` by `packaging/linux/package.sh` -- the spec and that table have to
 # agree on the layout, and the table is where the layout is actually written
 # down.
 #
@@ -116,6 +116,6 @@ rm -rf %{buildroot}
 %{_datadir}/icons/hicolor/scalable/apps/%{name}.svg
 # The self-updater's marker, which tells the app this install is owned by the
 # package manager rather than the updater (see the deb's `assets` for the same
-# file). `tools/package-linux.sh` stages it beside the payload, so a `%files`
+# file). `packaging/linux/package.sh` stages it beside the payload, so a `%files`
 # that forgets it fails the build on an unpackaged file.
 %{_datadir}/conic-launcher/update-policy

@@ -7,10 +7,10 @@
 # with `--universal`), and a `.dmg`.
 #
 # Usage:
-#   tools/package-macos.sh                    # .app + .dmg, native arch only
-#   tools/package-macos.sh --universal        # both arches in one binary
-#   tools/package-macos.sh --dmg-only         # the .dmg only; the .app is not kept
-#   tools/package-macos.sh --no-dmg           # the .app only, no disk image
+#   packaging/macos/package.sh                    # .app + .dmg, native arch only
+#   packaging/macos/package.sh --universal        # both arches in one binary
+#   packaging/macos/package.sh --dmg-only         # the .dmg only; the .app is not kept
+#   packaging/macos/package.sh --no-dmg           # the .app only, no disk image
 #
 # Everything lands in `<target-dir>/package/`.
 #
@@ -20,7 +20,7 @@
 
 set -euo pipefail
 
-readonly ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly CRATE=conic-launcher
 readonly APP="$CRATE.app"
 readonly PAYLOAD="$ROOT/packaging/macos"
@@ -29,7 +29,8 @@ readonly ICONS="$PAYLOAD/$CRATE.icns"
 # The Finder window background, committed rather than rendered here: a build
 # machine has no SVG rasterizer and no copy of the launcher's font.
 readonly DMG_BACKGROUND="$PAYLOAD/dmg/background.png"
-# The volume name, which is the one thing `dmg-ds-store.py` cannot check for
+readonly DS_STORE="$PAYLOAD/ds-store.py"
+# The volume name, which is the one thing `ds-store.py` cannot check for
 # itself: Finder resolves the background picture through an alias that names the
 # volume, and a mismatch here is a window with no background and nothing to say
 # why. It is a variable rather than a literal at both uses so the two cannot drift.
@@ -124,7 +125,7 @@ command -v python3 > /dev/null 2>&1 ||
 [[ -f "$ICONS" ]] ||
     die "$ICONS is missing; regenerate it with tools/generate-icns.py"
 [[ -f "$DMG_BACKGROUND" ]] ||
-    die "$DMG_BACKGROUND is missing; regenerate it with tools/render-dmg-background.py"
+    die "$DMG_BACKGROUND is missing; regenerate it with packaging/macos/render-dmg-background.py"
 
 # ---------------------------------------------------------------------------
 # Build the executable(s)
@@ -398,11 +399,11 @@ ln -s /Applications "$STAGE_DMG/Applications"
 
 # The window the image opens with: a background, the two icons either side of its
 # middle and an arrow between them, rather than a list of two names stacked in the
-# corner. `dmg-ds-store.py` writes the `.DS_Store` and copies in the `.background`
+# corner. `ds-store.py` writes the `.DS_Store` and copies in the `.background`
 # picture, and reads the window's size and the icon placement out of
 # `packaging/macos/dmg/background.svg` so the artwork and the placement cannot
 # disagree.
-python3 "$ROOT/tools/dmg-ds-store.py" --volume "$VOLUME" "$STAGE_DMG" ||
+python3 "$DS_STORE" --volume "$VOLUME" "$STAGE_DMG" ||
     die "could not write the disk image's Finder layout"
 
 rm -f "$DMG"

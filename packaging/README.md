@@ -1,36 +1,36 @@
 # Packaging
 
-One directory per platform, each holding the payload that platform's formats install. The
-`README.md` in each documents its contents and what is easy to break there:
+One directory per platform, holding the payload that platform's formats install *and* the script
+that assembles them. The `README.md` in each documents its contents and what is easy to break there:
 
 - [`linux/`](./linux/README.md) — the desktop entry and hicolor icon set, the only copy the deb,
   rpm, AppImage and Arch package install.
-- [`macos/`](./macos/README.md) — the `.icns`, the `Info.plist` template and the disk image's window
-  background.
+- [`macos/`](./macos/README.md) — the `.icns`, the `Info.plist` template, the disk image's window
+  background, and the two scripts that lay the `.dmg` out.
 - [`windows/`](./windows/README.md) — the `.wxs` and the `.ico`.
 - [`arch/`](./arch/README.md) — the `PKGBUILD` and its `.SRCINFO`.
 
-The scripts that assemble the artifacts, all writing to `<target-dir>/package/`:
+Each script writes its artifacts to `<target-dir>/package/` and runs from the repository root:
 
 ```bash
-tools/package-linux.sh              # deb + rpm + AppImage
-tools/package-linux.sh deb rpm      # a subset
+packaging/linux/package.sh              # deb + rpm + AppImage
+packaging/linux/package.sh deb rpm      # a subset
 
-tools/package-macos.sh              # .app + .dmg, native arch
-tools/package-macos.sh --universal  # both arches in one binary, local only; CI
-                                    # builds each natively instead (see macos/)
+packaging/macos/package.sh              # .app + .dmg, native arch
+packaging/macos/package.sh --universal  # both arches in one binary, local only; CI
+                                        # builds each natively instead (see macos/)
 
-pwsh tools/package-windows.ps1      # .exe + .msi, native arch
-pwsh tools/package-windows.ps1 msi  # a subset
+pwsh packaging/windows/package.ps1      # .exe + .msi, native arch
+pwsh packaging/windows/package.ps1 msi  # a subset
 ```
 
 | Format        | Recipe                                                                                                             |
 | ------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `.msi`/`.exe` | `tools/package-windows.ps1`, see [windows/](./windows/README.md)                                                   |
+| `.msi`/`.exe` | `packaging/windows/package.ps1`, see [windows/](./windows/README.md)                                               |
 | `.deb`        | `[package.metadata.deb]` in `app/Cargo.toml`                                                                       |
 | `.rpm`        | `[package.metadata.rpm]` + the spec at `app/.rpm/conic-launcher.spec`                                              |
-| `.AppImage`   | the AppDir `tools/package-linux.sh` assembles, then `appimagetool`                                                 |
-| `.app`/`.dmg` | the bundle `tools/package-macos.sh` assembles, then `hdiutil`, with the window layout from `tools/dmg-ds-store.py` |
+| `.AppImage`   | the AppDir `packaging/linux/package.sh` assembles, then `appimagetool`                                             |
+| `.app`/`.dmg` | the bundle `packaging/macos/package.sh` assembles, then `hdiutil`, with the window layout from `macos/ds-store.py` |
 | Arch          | [`arch/PKGBUILD`](./arch/PKGBUILD) — `makepkg -si`                                                                 |
 
 One rule spans every format: **each spells the version differently.** `0.1.0-alpha.2` ships as
@@ -40,8 +40,8 @@ what makes the pre-release sort below the final), as `0.1.0` + a build of `0.1.0
 macOS bundle (`CFBundleShortVersionString` must be dotted integers), and verbatim in the AppImage,
 the `.dmg` and the Arch package. Never hardcode a filename.
 
-`tools/package-linux.sh` needs Linux: `dpkg-deb`, `rpmbuild`, `dpkg-shlibdeps` and `appimagetool`
-have no counterpart elsewhere, and it says so rather than failing three steps in.
+`packaging/linux/package.sh` needs Linux: `dpkg-deb`, `rpmbuild`, `dpkg-shlibdeps` and
+`appimagetool` have no counterpart elsewhere, and it says so rather than failing three steps in.
 
 ## Linux build dependencies
 

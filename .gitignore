@@ -25,7 +25,7 @@ __pycache__/
 /ui/graphics/icons.slint
 
 # The payload `cargo rpm` packages from, staged into `app/.rpm/` by
-# `tools/package-linux.sh` out of `packaging/linux/` and `LICENSE`. The spec next
+# `packaging/linux/package.sh` out of `packaging/linux/` and `LICENSE`. The spec next
 # to it is hand-written and IS committed -- see `app/.rpm/conic-launcher.spec`.
 /app/.rpm/usr/
 

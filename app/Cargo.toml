@@ -158,7 +158,7 @@ assets = [
 # `cargo rpm` reads its extra files from the `.rpm/` directory next to *this*
 # file rather than from arbitrary paths, so the entries below are keys into
 # `app/.rpm/` -- populated from `packaging/linux/` by
-# `tools/package-linux.sh`. The spec that consumes them is `app/.rpm/conic-launcher.spec`.
+# `packaging/linux/package.sh`. The spec that consumes them is `app/.rpm/conic-launcher.spec`.
 [package.metadata.rpm.cargo]
 # Only used when `cargo rpm` builds for itself, which the script does not do (it
 # passes `--no-cargo-build` so the executable above is the one packaged). Here so

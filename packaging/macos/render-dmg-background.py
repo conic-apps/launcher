@@ -7,7 +7,7 @@
 Finder paints a folder window's background from a raster image, so the disk image
 carries a PNG. The `.svg` next to it is the design those pixels come from, and
 both are committed for the same reason `conic-launcher.icns` is: the `.dmg` is
-assembled by `tools/package-macos.sh` on a machine that has neither an SVG
+assembled by `packaging/macos/package.sh` on a machine that has neither an SVG
 rasterizer nor this project's fonts, and a committed artifact is one that cannot
 be missing.
 
@@ -21,7 +21,7 @@ is in the wrong face with no error anywhere. So the glyphs are laid out here --
 from the same file, with the `wght` axis instanced per `font-weight` and the GPOS
 `kern` pairs applied -- and handed over as `<path>`.
 
-Run:  python3 tools/render-dmg-background.py
+Run:  python3 packaging/macos/render-dmg-background.py
 """
 
 from __future__ import annotations
@@ -40,8 +40,8 @@ from fontTools.pens.transformPen import TransformPen
 from fontTools.ttLib import TTFont
 from fontTools.varLib import instancer
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
-DMG = ROOT / "packaging/macos/dmg"
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+DMG = pathlib.Path(__file__).resolve().parent / "dmg"
 SOURCE = DMG / "background.svg"
 OUTPUT = DMG / "background.png"
 
@@ -143,7 +143,7 @@ class Shaper:
                         die(
                             "the embedded font uses a PairPos format this script "
                             "does not read; regenerate the font, or teach "
-                            "tools/render-dmg-background.py the format"
+                            "render-dmg-background.py the format"
                         )
                     for first, pair_set in zip(subtable.Coverage.glyphs, subtable.PairSet):
                         for pair in pair_set.PairValueRecord:

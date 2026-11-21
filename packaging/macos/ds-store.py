@@ -2,23 +2,22 @@
 # Copyright 2022-2026 ConicMC developers. All rights reserved.
 # SPDX-License-Identifier: GPL-3.0-only
 
-"""Write the `.dmg`'s Finder layout: `tools/package-macos.sh` calls this on the
-staging directory and it drops in `.DS_Store` and `.background.png`.
+"""Write the `.dmg`'s Finder layout: `package.sh` calls this on the staging
+directory and it drops in `.DS_Store` and `.background.png`.
 
 **Why a script and not Finder.** `hdiutil create -srcfolder` bakes in whatever
 the staging directory already holds, and Finder cannot be scripted to lay out a
 folder that does not exist yet: driving it would need an Automation grant and a
 window on screen, neither of which a release build has. So the layout is written
-directly, which is what `create-dmg` and `dmgbuild` do too, and why
-`tools/package-macos.sh` used to ship an image whose window opened as a plain
-list of two names.
+directly, which is what `create-dmg` and `dmgbuild` do too, and why `package.sh`
+used to ship an image whose window opened as a plain list of two names.
 
 **Why no `ds_store` or `dmgbuild` dependency.** Both are `pip install`, and this
 script's contract with its build machines is that they need nothing beyond macOS
-itself: `package-macos.sh` already refuses to run without `hdiutil` and
-`codesign`. So the two formats involved are implemented here against the
-standard library, which for a file holding six fixed records is a couple of
-hundred lines rather than a dependency tree:
+itself: `package.sh` already refuses to run without `hdiutil` and `codesign`. So
+the two formats involved are implemented here against the standard library, which
+for a file holding six fixed records is a couple of hundred lines rather than a
+dependency tree:
 
 * `.DS_Store` is a Buddy allocator wrapping a B-tree of records (TN1150, plus
   the reverse engineering in Alastair Houghton's `ds_store`).
@@ -36,8 +35,8 @@ means the artwork and the placement cannot disagree; the app icon is then the
 mirror image of the `Applications` one about the window's centre line, which is
 what puts the two on either side of the middle.
 
-Run:  python3 tools/dmg-ds-store.py --volume <name> <staging-directory>
-      python3 tools/dmg-ds-store.py --check
+Run:  python3 packaging/macos/ds-store.py --volume <name> <staging-directory>
+      python3 packaging/macos/ds-store.py --check
 """
 
 from __future__ import annotations
@@ -50,12 +49,11 @@ import struct
 import sys
 import xml.etree.ElementTree as ET
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
-DMG = ROOT / "packaging/macos/dmg"
+DMG = pathlib.Path(__file__).resolve().parent / "dmg"
 BACKGROUND_SVG = DMG / "background.svg"
 BACKGROUND_PNG = DMG / "background.png"
 
-# What `package-macos.sh` puts on the volume. Both are checked for below, so a
+# What `package.sh` puts on the volume. Both are checked for below, so a
 # rename on either side is an error rather than a layout that quietly points at
 # nothing.
 APP_BUNDLE = "conic-launcher.app"
@@ -550,14 +548,14 @@ def check(geometry: Geometry) -> int:
         size = image.size
         dpi = image.info.get("dpi", (0.0, 0.0))[0]
     if not dpi:
-        die(f"{BACKGROUND_PNG.name} has no resolution; re-render it with tools/render-dmg-background.py")
+        die(f"{BACKGROUND_PNG.name} has no resolution; re-render it with render-dmg-background.py")
     points = (size[0] * 72.0 / dpi, size[1] * 72.0 / dpi)
     if (round(points[0]), round(points[1])) != (geometry.width, geometry.height):
         die(
             f"{BACKGROUND_PNG.name} is {size[0]}x{size[1]} px at {dpi:g} dpi, which is "
             f"{points[0]:.2f}x{points[1]:.2f} pt, but the window is "
             f"{geometry.width:g}x{geometry.height:g} pt; re-render it with "
-            "tools/render-dmg-background.py"
+            "render-dmg-background.py"
         )
     print(f"background     {size[0]}x{size[1]} px at {dpi:g} dpi = {points[0]:g}x{points[1]:g} pt")
     return 0
@@ -573,7 +571,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--volume",
-        help="the volume name `package-macos.sh` passes to hdiutil's -volname",
+        help="the volume name `package.sh` passes to hdiutil's -volname",
     )
     parser.add_argument(
         "--check",

@@ -24,7 +24,7 @@ installs the package. Compilation requires Rust 1.95 or newer.
 
 There is no Node.js or pnpm step: the app is a Slint/Rust binary, and
 `cargo build --release --locked` is the whole build. The `.deb`, `.rpm` and `.AppImage` that
-`tools/package-linux.sh` produces are not used here — Arch takes a native package.
+`packaging/linux/package.sh` produces are not used here — Arch takes a native package.
 
 Launch **Conic Launcher** from the application menu or run `conic-launcher`. The package also
 installs icons and the `conic-launcher://` URL handler.

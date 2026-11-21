@@ -8,11 +8,11 @@ format.
 | ------------------------------------------------------- | -------------------------------------- |
 | `cargo deb` — `app/Cargo.toml` `[package.metadata.deb]` | `assets` below, relative to `app/`     |
 | `cargo rpm` — `app/Cargo.toml` `[package.metadata.rpm]` | the staged copy under `app/.rpm/`      |
-| AppDir layout — `tools/package-linux.sh`                | the same two, laid out under `AppDir/` |
+| AppDir layout — `package.sh`                            | the same two, laid out under `AppDir/` |
 | `packaging/arch/PKGBUILD`                               | `package()`, relative to the repo root |
 
 `cargo rpm` is the odd one out: it only reads extra files from a staging directory it calls `.rpm/`
-next to the crate's `Cargo.toml`, not from arbitrary paths. `tools/package-linux.sh` populates
+next to the crate's `Cargo.toml`, not from arbitrary paths. `package.sh` populates
 `app/.rpm/usr/` from here before it runs, so this directory stays the single source of truth. The
 spec sitting next to that staging tree, `app/.rpm/conic-launcher.spec`, **is** committed —
 `cargo rpm` reads it rather than generating one, and its `%files` section is the only place that

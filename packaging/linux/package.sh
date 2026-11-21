@@ -12,8 +12,8 @@
 # here. See `packaging/linux/README.md`.
 #
 # Usage:
-#   tools/package-linux.sh              # deb, rpm and AppImage
-#   tools/package-linux.sh deb rpm      # just those two
+#   packaging/linux/package.sh              # deb, rpm and AppImage
+#   packaging/linux/package.sh deb rpm      # just those two
 #
 # Everything lands in `<target-dir>/package/`.
 #
@@ -22,7 +22,7 @@
 
 set -euo pipefail
 
-readonly ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly CRATE=conic-launcher
 readonly PAYLOAD="$ROOT/packaging/linux"
 readonly STAGE="$ROOT/app/.rpm"     # what cargo-rpm reads extra files from
@@ -86,7 +86,7 @@ wants() {
     die "Linux packages can only be built on Linux (this is $(uname -s)).
     The build itself is platform-independent, so a container works:
       docker run --rm -v \"\$PWD:/src\" -w /src ubuntu:24.04 \\
-        bash -c 'apt-get update && apt-get install -y --no-install-recommends ... && tools/package-linux.sh'"
+        bash -c 'apt-get update && apt-get install -y --no-install-recommends ... && packaging/linux/package.sh'"
 
 if wants deb; then
     require dpkg-deb "  (Debian/Ubuntu: 'dpkg-dev', which also provides dpkg-deb)"

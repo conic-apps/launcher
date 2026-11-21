@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  Conic Launcher bundle metadata. `tools/package-macos.sh` fills in the two
+  Conic Launcher bundle metadata. `package.sh` fills in the two
   @VERSION@ placeholders and renders this with PlistBuddy.
 
   Hand-written rather than generated, because every key here is a decision:
@@ -22,7 +22,7 @@
       carries `LC_VERSION_MIN_MACOSX version 10.12`, those being each target's
       own `rust-std` default rather than anything chosen here. 11.0 is the stricter
       of the two and is what both slices actually run on, so it is what goes in.
-      `tools/package-macos.sh` asserts this one-directionally — the plist may
+      `package.sh` asserts this one-directionally — the plist may
       promise more than the binary needs, never less.
 
     * `LSApplicationCategoryType` — `public.app-category.games`, so Finder's Get
