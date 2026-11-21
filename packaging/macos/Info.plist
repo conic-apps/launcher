@@ -13,7 +13,11 @@
       a second literal that can drift from it.
 
     * `CFBundleExecutable` — must equal the file name in `Contents/MacOS/`, and
-      that is the *binary* name, not the product name. They differ in case only.
+      that is the *binary* name, not the product name. The three names this app
+      carries are deliberately different: the bundle directory is
+      `Conic Launcher.app` (what Finder and the Dock show), the binary inside it
+      stays `conic-launcher` (no space, so every script can spell it without
+      quoting), and this key is what ties the two together.
 
     * `LSMinimumSystemVersion` — 11.0. It has
       to be at least as high as whatever the built binary asks for, and the two

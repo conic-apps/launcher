@@ -22,7 +22,12 @@ set -euo pipefail
 
 readonly ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly CRATE=conic-launcher
-readonly APP="$CRATE.app"
+# The name the user sees in Finder and the Dock, which is the bundle directory's
+# own name — not `CFBundleName`, and not the binary inside it. Those three differ
+# here on purpose: the executable stays lowercase and space-free because it is a
+# file name every script points at, and macOS reads `CFBundleName` only where it
+# has no bundle path to take the name from.
+readonly APP="Conic Launcher.app"
 readonly PAYLOAD="$ROOT/packaging/macos"
 readonly TEMPLATE="$PAYLOAD/Info.plist"
 readonly ICONS="$PAYLOAD/$CRATE.icns"

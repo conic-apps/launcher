@@ -56,7 +56,7 @@ BACKGROUND_PNG = DMG / "background.png"
 # What `package.sh` puts on the volume. Both are checked for below, so a
 # rename on either side is an error rather than a layout that quietly points at
 # nothing.
-APP_BUNDLE = "conic-launcher.app"
+APP_BUNDLE = "Conic Launcher.app"
 APPLICATIONS_LINK = "Applications"
 # Finder looks for a folder's background under this name at its root and works
 # the format out of the extension, which is why the picture has to be something
