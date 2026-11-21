@@ -228,8 +228,8 @@ fn init_stdout() {
 /// Installs `builder`, or says on stderr that it could not.
 fn init_or_report(mut builder: env_logger::Builder, sink: &str) {
     match builder.try_init() {
-        Ok(()) => println!("logging to {sink}"),
-        Err(error) => eprintln!("the logger could not be installed for {sink}: {error}"),
+        Ok(()) => println!("Logging to {sink}"),
+        Err(error) => eprintln!("The logger could not be installed for {sink}: {error}"),
     }
 }
 
@@ -239,7 +239,7 @@ fn init_file() {
         Ok(rotating) => rotating,
         Err(error) => {
             eprintln!(
-                "could not open the log file in {}: {error}",
+                "Could not open the log file in {}: {error}",
                 directory.display()
             );
             init_stderr();

@@ -29,9 +29,6 @@ export component AppIcon inherits Rectangle {
         commands: Icons.stroke-commands(root.name);
         viewbox-width: Icons.viewbox(root.name);
         viewbox-height: Icons.viewbox(root.name);
-        width: root.width;
-        height: root.height;
-        fill: transparent;
         stroke: root.icon-color;
         stroke-width: root.size * Icons.stroke-width(root.name) / Icons.viewbox(root.name);
         stroke-line-cap: LineCap.round;
@@ -42,9 +39,6 @@ export component AppIcon inherits Rectangle {
         commands: Icons.fill-commands(root.name);
         viewbox-width: Icons.viewbox(root.name);
         viewbox-height: Icons.viewbox(root.name);
-        width: root.width;
-        height: root.height;
         fill: root.no-fill ? transparent : root.icon-color;
-        stroke: transparent;
     }
 }

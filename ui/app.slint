@@ -236,8 +236,6 @@ export component App inherits Window {
     // scope does not steal clicks from the control under the pointer; it is only
     // ever focused explicitly.
     app-scope := FocusScope {
-        width: 100%;
-        height: 100%;
         focus-on-click: false;
         focus-on-tab-navigation: false;
 
@@ -319,7 +317,6 @@ export component App inherits Window {
                 Rectangle {
                     width: 100%;
                     height: root.title-bar-height;
-                    background: transparent;
                 }
 
                 // Screen stack. The account view is an overlay on the game screen,
