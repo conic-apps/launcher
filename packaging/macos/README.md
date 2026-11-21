@@ -1,14 +1,15 @@
-# macOS packaging payload
+# macOS packaging
 
-The `.icns`, the `Info.plist` template and the disk image's window background that the `.app` bundle
-and its `.dmg` are assembled from, by `tools/package-macos.sh` — which uses `codesign`, `hdiutil`,
-`lipo` and `python3` and nothing else. All of them are **committed**: `iconutil` exists only on
-macOS, a build machine has no SVG rasterizer and no copy of the launcher's font, and the bundle is
-built from files in this directory.
+The `.icns`, the `Info.plist` template and the disk image's window background that the `.app`
+bundle and its `.dmg` are assembled from, by `package.sh` — which uses `codesign`, `hdiutil`,
+`lipo` and `python3` and nothing else — plus the two scripts that lay the disk image out,
+`ds-store.py` and `render-dmg-background.py`. All of them are **committed**: `iconutil` exists only
+on macOS, a build machine has no SVG rasterizer and no copy of the launcher's font, and the bundle
+is built from files in this directory.
 
 | Consumer                     | Reads                                                 |
 | ---------------------------- | ----------------------------------------------------- |
-| `tools/package-macos.sh`     | the `.icns`, the plist template, `dmg/background.png` |
+| `package.sh`                 | the `.icns`, the plist template, `dmg/background.png` |
 | the `.app` inside the `.dmg` | a copy of the same assembled bundle                   |
 
 Nothing here is per-architecture: one `.icns`, one `Info.plist` and one background serve every
@@ -74,9 +75,9 @@ two icons either side of the middle, an arrow between them, and a dashed frame a
   gradient-filled heading stay sharp on a Retina display. Finder paints a folder background from a
   raster image and cannot paint from an `.svg` at all, which is why there are two files.
 
-Regenerate the PNG with `python3 tools/render-dmg-background.py`, which needs `fontTools`, an SVG
-rasterizer (`rsvg-convert` or `resvg`) and `Pillow`. The render is committed so that none of those
-are a build dependency.
+Regenerate the PNG with `python3 packaging/macos/render-dmg-background.py`, which needs `fontTools`,
+an SVG rasterizer (`rsvg-convert` or `resvg`) and `Pillow`. The render is committed so that none of
+those are a build dependency.
 
 **The text becomes outlines at render time.** The `.svg` asks for `"Comfortaa Nunito"`, which
 `tools/merge-digit-font.py` bakes out of Comfortaa and a Nunito digit subset and which is embedded
@@ -88,24 +89,24 @@ and hands over `<path>`.
 **Two things about the window are Finder's and cannot be set.** The name Finder draws under each
 icon has no colour key anywhere in the format — `backgroundColor*` in `icvp` only tints a solid fill
 — so over this backdrop it comes out near-black, and the only lever is its size.
-`tools/dmg-ds-store.py` sets that to 10pt, which is the smallest Finder accepts: at 9 or below it
+`ds-store.py` sets that to 10pt, which is the smallest Finder accepts: at 9 or below it
 discards the whole `icvp` silently, and the window opens with no background and nothing to say why.
 The second is the window's own position, which `WindowBounds` states from the bottom of a screen
 whose height nothing at build time knows.
 
 **The `.DS_Store` is written, not scripted.** Finder cannot be told to lay out a folder that does
-not exist yet without an Automation grant and a window on screen, so `tools/dmg-ds-store.py` writes
+not exist yet without an Automation grant and a window on screen, so `ds-store.py` writes
 the file and copies in the background picture directly — the Buddy allocator and the Carbon Alias
 record are implemented against the standard library rather than pulled in as `dmgbuild` or
 `ds_store`, because this script's contract is that a build machine needs nothing beyond macOS.
 
 **The window's size and the icon placement live in the `.svg`, not in the script.**
-`tools/dmg-ds-store.py` reads `width`, `height` and the `#applications-icon-cell` rectangle out of
+`ds-store.py` reads `width`, `height` and the `#applications-icon-cell` rectangle out of
 `background.svg` to write the `.DS_Store`, because Finder paints the background 1:1 from the content
 view's top-left corner: a window the wrong size shows a misaligned background, and a picture the
 wrong size shows scrollbars. Move the marker and both icons follow, which is the only way the
-artwork and the placement stay in step. Run `python3 tools/dmg-ds-store.py --check` to see what it
-derived and to catch a rendered PNG that no longer matches the `.svg`.
+artwork and the placement stay in step. Run `python3 packaging/macos/ds-store.py --check` to see
+what it derived and to catch a rendered PNG that no longer matches the `.svg`.
 
 ## Builds and signing
 

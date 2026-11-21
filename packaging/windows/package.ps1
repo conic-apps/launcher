@@ -6,31 +6,31 @@
 # Build the Windows artifacts: the single-file executable and the `.msi`.
 #
 # Usage:
-#   tools/package-windows.ps1              # the .exe and the .msi
-#   tools/package-windows.ps1 exe          # the standalone executable only
-#   tools/package-windows.ps1 msi          # the installer only
+#   packaging/windows/package.ps1              # the .exe and the .msi
+#   packaging/windows/package.ps1 exe          # the standalone executable only
+#   packaging/windows/package.ps1 msi          # the installer only
 #
 # Everything lands in `<target-dir>/package/`.
 #
-# PowerShell rather than bash, unlike `package-linux.sh` and
-# `package-macos.sh`. Not a preference: the MSI is assembled by `wix`, which is a
-# Windows program that only runs on Windows, and a bash script driving it would
-# spend its length translating paths that have no business being translated —
-# `Git-Bash`'s automatic `/c/Program Files` rewriting turns a `Target=` the
-# installer needs into something else. `msiexec`, `dotnet` and the WiX tool are all
-# native here for the same reason.
+# PowerShell rather than bash, unlike `packaging/linux/package.sh` and
+# `packaging/macos/package.sh`. Not a preference: the MSI is assembled by `wix`,
+# which is a Windows program that only runs on Windows, and a bash script driving
+# it would spend its length translating paths that have no business being
+# translated — `Git-Bash`'s automatic `/c/Program Files` rewriting turns a
+# `Target=` the installer needs into something else. `msiexec`, `dotnet` and the
+# WiX tool are all native here for the same reason.
 #
-# No `--target`, for the reason `package-macos.sh` gives at length: the runner *is*
-# the architecture. A `--target` build compiles for the guest while every build
-# script runs on the host, so Skia and `aws-lc-rs` (both built through `cc`) come
-# out subtly wrong rather than failing. CI builds each architecture on a native
-# runner — `windows-2025` and `windows-11-arm` — for the same reason `macos-15`
-# and `macos-15-intel` are two jobs.
+# No `--target`, for the reason `packaging/macos/package.sh` gives at length: the
+# runner *is* the architecture. A `--target` build compiles for the guest while
+# every build script runs on the host, so Skia and `aws-lc-rs` (both built through
+# `cc`) come out subtly wrong rather than failing. CI builds each architecture on a
+# native runner — `windows-2025` and `windows-11-arm` — for the same reason
+# `macos-15` and `macos-15-intel` are two jobs.
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$Root = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
+$Root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $Crate = 'conic-launcher'
 $Payload = Join-Path $Root 'packaging/windows'
 $Wxs = Join-Path $Payload 'conic-launcher.wxs'
@@ -65,12 +65,12 @@ function Require([string]$Command, [string]$Hint) {
 # ---------------------------------------------------------------------------
 
 # `-h` before anything is parsed as a format, for the reason it is before
-# everything in `package-linux.sh`: a script that answers `--help` by complaining
+# everything in `packaging/linux/package.sh`: a script that answers `--help` by complaining
 # about an unknown format has not answered it.
 if ($args -contains '-h' -or $args -contains '--help') {
     # The header comment is the usage, printed rather than duplicated. The first
     # comment line is dropped because it is the shebang, which
-    # `package-macos.sh` drops the same way with `sed -n '2,20p'`.
+    # `packaging/macos/package.sh` drops the same way with `sed -n '2,20p'`.
     Get-Content $PSCommandPath |
         Where-Object { $_ -match '^#' } |
         Select-Object -Skip 1 |
@@ -78,7 +78,7 @@ if ($args -contains '-h' -or $args -contains '--help') {
     exit 0
 }
 
-# Same shape as `package-linux.sh`'s `deb rpm appimage`: no arguments means every
+# Same shape as `packaging/linux/package.sh`'s `deb rpm appimage`: no arguments means every
 # format, and naming one restricts the run to it.
 $Wanted = if ($args.Count -eq 0) { @('exe', 'msi') } else { $args }
 foreach ($format in $Wanted) {
@@ -218,7 +218,7 @@ $ProductCode = (New-DeterministicGuid $Namespace "$Crate|$Version|$Arch").ToUppe
 # Build the executable
 # ---------------------------------------------------------------------------
 
-# `--locked`, for the reason `package-linux.sh` gives: a release pipeline has to be
+# `--locked`, for the reason `packaging/linux/package.sh` gives: a release pipeline has to be
 # reproducible from a commit, and a packaging run that silently updated
 # `Cargo.lock` would not be.
 Step "Building $Crate $Version (release, $Arch)"

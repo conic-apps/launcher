@@ -1,7 +1,7 @@
 # Windows packaging payload
 
 Everything the `.msi` installs that is **not** the executable itself, plus the executable's icon.
-Both files are **committed**, and both are read by `tools/package-windows.ps1`, which builds the
+Both files are **committed**, and both are read by `package.ps1`, which builds the
 `.msi` with `wix build` and copies the standalone `.exe` beside it.
 
 | Consumer                       | Reads                                        |
@@ -16,7 +16,7 @@ the three are in the tools, not in this directory.
 ## `conic-launcher.wxs`
 
 One file for both architectures. Everything that differs per build arrives through the WiX
-preprocessor, which `package-windows.ps1` passes as `-d`:
+preprocessor, which `package.ps1` passes as `-d`:
 
 | Variable         | From                                      | Why it is not in the file                             |
 | ---------------- | ----------------------------------------- | ----------------------------------------------------- |
@@ -108,8 +108,8 @@ from one reviewed GUID and the same commit always produces the same one.
 
 The architecture is spelled the way Windows spells it — **`x64` and `arm64`**, not `x86_64`/`amd64`
 and not `aarch64`/`arm64`. The `.msi`'s platform is `x64` or `arm64`, `wix build -arch` takes those,
-and a user reading a download page is reading a Windows architecture. `package-linux.sh` uses
-`x86_64`/`aarch64` because that is what `uname -m` prints; `package-macos.sh` uses `arm64` because
+and a user reading a download page is reading a Windows architecture. `packaging/linux/package.sh` uses
+`x86_64`/`aarch64` because that is what `uname -m` prints; `packaging/macos/package.sh` uses `arm64` because
 that is what `lipo` reports. Same three concepts, three vocabularies.
 
 The installed names are fixed: `conic-launcher.exe` and `LICENSE` in

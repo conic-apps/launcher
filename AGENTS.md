@@ -25,9 +25,10 @@ cargo build --release       # what the packages ship
 ## Tools
 
 [`tools/README.md`](./tools/README.md) covers the scripts that regenerate the committed icon sets,
-the merged font, the `.po` catalogues and the disk image's `.DS_Store`: what each writes, what it
-needs installed, and the traps in the formats they touch. None of them runs during `cargo build`,
-and no gate verifies their output.
+the merged font and the `.po` catalogues: what each writes, what it needs installed, and the traps in
+the formats they touch. None of them runs during `cargo build`, and no gate verifies their output.
+[`packaging/README.md`](./packaging/README.md) covers the per-platform payload alongside the script
+in each directory that assembles the artifacts from it.
 
 ## Verification (Matching `check-rust.yml`)
 

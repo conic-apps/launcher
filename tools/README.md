@@ -1,16 +1,12 @@
 # tools
 
 Scripts that maintain what the build consumes: the icon sets, the embedded font, the `.po`
-catalogues, the disk image's layout. None of them runs during `cargo build`, and every file they
-write is **committed** — a clone builds and packages the launcher without any of this tooling.
-Nothing verifies that output either, so a regenerated file is a change to review like any other.
+catalogues. None of them runs during `cargo build`, and every file they write is **committed** — a
+clone builds and packages the launcher without any of this tooling. Nothing verifies that output
+either, so a regenerated file is a change to review like any other.
 
-## Packaging
-
-`package-linux.sh`, `package-macos.sh` and `package-windows.ps1` are the three entry points the
-release jobs call, and they write the artifacts rather than anything committed.
-[`../packaging/README.md`](../packaging/README.md) documents them along with the payload they
-install.
+Assembling the release artifacts is not this directory's job: each platform directory under
+[`../packaging/`](../packaging/) holds its payload and the script that packages it.
 
 ## Icons
 
@@ -37,14 +33,6 @@ python3 tools/merge-digit-font.py --verify   # then render-compares every weight
 
 Inputs are `fonts/Comfortaa-Latin.woff2` and `fonts/Nunito-Digits.woff2` beside this README; the
 merge needs `fontTools` and `numpy`, and `--verify` (through `verify_merge.py`) adds Pillow.
-
-## The `.dmg` window
-
-`package-macos.sh` calls `dmg-ds-store.py` to lay the Finder window out, and
-`render-dmg-background.py` produces the picture it copies in — the latter needs `fontTools`, Pillow
-and an SVG rasterizer (`rsvg-convert` or `resvg`). What the format limits, such as the 10pt label
-size and the `.svg` owning the window's geometry, is in
-[`../packaging/macos/README.md`](../packaging/macos/README.md).
 
 ## i18n catalogues
 

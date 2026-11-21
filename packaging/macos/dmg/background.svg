@@ -4,7 +4,7 @@
   Copyright 2022-2026 ConicMC developers. All rights reserved.
   SPDX-License-Identifier: GPL-3.0-only
 
-  The `.dmg` window background, as an editable source. `tools/render-dmg-background.py`
+  The `.dmg` window background, as an editable source. `render-dmg-background.py`
   renders it to `background.png`, which is what the disk image actually carries;
   this file is the design, and is kept so the artwork can be changed without a
   designer.
@@ -16,7 +16,7 @@
 
   Coordinates here are the window's points, and the window is exactly this big.
   Finder paints the background at 1:1 from the content view's top-left corner,
-  so `width`/`height` below and the `WindowBounds` that `tools/dmg-ds-store.py`
+  so `width`/`height` below and the `WindowBounds` that `ds-store.py`
   writes are the same fact stated twice, and that script reads the size from here
   rather than repeating it.
 
@@ -30,7 +30,7 @@
   paths from `ui/assets/fonts/ComfortaaNunito.ttf`, because that font is embedded
   in the binary and installed nowhere a rasterizer could find it.
 
-  Regenerate the PNG:  python3 tools/render-dmg-background.py
+  Regenerate the PNG:  python3 packaging/macos/render-dmg-background.py
 -->
 <svg xmlns="http://www.w3.org/2000/svg" width="720" height="500" viewBox="0 0 720 500">
   <title>Conic Launcher disk image background</title>
@@ -142,7 +142,7 @@
   </g>
 
   <!--
-    The affordances. `dmg-ds-store.py` puts the two icons on either side of the
+    The affordances. `ds-store.py` puts the two icons on either side of the
     centre line and this is what makes that legible: two chevrons between them, and
     a dashed frame around `Applications` so the drop target reads as one object
     rather than as a folder that happens to be there.
