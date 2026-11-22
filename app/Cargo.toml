@@ -41,9 +41,12 @@ music.workspace = true
 news.workspace = true
 update.workspace = true
 
-glow.workspace = true
 bytemuck.workspace = true
-euclid.workspace = true
+# The world's shaders are WGSL, which is not in the feature set Slint selects for
+# its own wgpu build. The version has to stay the one `slint::wgpu_30` re-exports
+# — a different major would put a second copy of the crate in the graph, whose
+# textures `Image::try_from` does not accept.
+wgpu = { version = "30", default-features = false, features = ["wgsl"] }
 base64.workspace = true
 image = { version = "0.25", default-features = false, features = ["png", "webp", "jpeg", "gif"] }
 url.workspace = true
@@ -107,11 +110,16 @@ runtime is located on the system or downloaded on demand."""
 # `dpkg-shlibdeps`, and an installed package missing any of it dies at startup
 # with `error while loading shared libraries: …` and no explanation:
 #
-#   glutin (x11-dl, glutin_glx_sys)  libX11, libX11-xcb, libGL, libXi
 #   winit    (x11-dl)                libX11, libXcursor, libXrender, libxcb
 #   winit    (xkbcommon-dl)          libxkbcommon, libxkbcommon-x11
 #   winit    (wayland-backend)       libwayland-client, libwayland-egl
-#   Skia / i-slint-renderer-skia     libGL, libEGL
+#   wgpu     (ash)                   libvulkan.so.1
+#
+# The Vulkan loader is the entry above that is not a windowing library: without
+# it wgpu cannot bring up an adapter, and Skia falls back to its software
+# rasteriser — an interface that runs without a GPU, and a background that loses
+# the world (`gpu::install`). The driver behind the loader, the ICD, is the one
+# the GPU's own package brings.
 #
 # X11 and Wayland are both listed even though a session uses one of them: every
 # current desktop ships the other through Xwayland, so both are present, and a
@@ -126,7 +134,7 @@ runtime is located on the system or downloaded on demand."""
 #                     login browser and every link in a panel.
 depends = """\
 $auto, ca-certificates, xdg-utils, \
-libegl1, libgl1, libx11-6, libxcb1, libxcursor1, libxi6, \
+libvulkan1, libx11-6, libxcb1, libxcursor1, libxi6, \
 libxkbcommon-x11-0, libxkbcommon0, libxrender1, \
 libwayland-client0, libwayland-egl1"""
 # `dbus` is the session bus: `reveal_in_dir`'s `dbus-send` fallback and rfd's

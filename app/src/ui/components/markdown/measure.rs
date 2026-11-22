@@ -18,8 +18,8 @@ use parley::{FontContext, Layout, LayoutContext};
 /// This renderer positions but never paints, so the brush carries nothing.
 type Brush = ();
 
-/// The generic families Slint appends behind a `Text`'s family, in Slint's
-/// order, which puts `SansSerif` first for FemtoVG.
+/// The generic families Slint appends behind a `Text`'s family, in the order
+/// this list puts them in.
 const FALLBACK_FAMILIES: [GenericFamily; 2] = [GenericFamily::SansSerif, GenericFamily::SystemUi];
 
 /// The same for monospace. Without the generic monospace face in the chain an

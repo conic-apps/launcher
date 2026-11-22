@@ -52,9 +52,9 @@ build:
 pkg-config  libfontconfig1-dev  libasound2-dev  libudev-dev
 ```
 
-fontconfig via `fontique`, ALSA via `cpal`, libudev via `i-slint-backend-linuxkms`. GL, xkbcommon,
-X11 and Wayland are `dlopen`ed by glutin, winit and Skia rather than linked: runtime dependencies of
-the package, not build dependencies of the crate, and invisible to every dependency scanner — see
-[`linux/`](./linux/README.md) for how the deb and rpm name them by hand. At runtime the app also
+fontconfig via `fontique`, ALSA via `cpal`, libudev via `i-slint-backend-linuxkms`. Vulkan,
+xkbcommon, X11 and Wayland are opened by wgpu, winit and Skia at runtime rather than linked: runtime
+dependencies of the package, not build dependencies of the crate, and invisible to every dependency
+scanner — see [`linux/`](./linux/README.md) for how the deb and rpm name them by hand. At runtime the app also
 shells out to `xdg-open` and `dbus-send`; file and folder pickers go through the XDG desktop portal
 (`rfd`), whose file chooser `xdg-desktop-portal` implements.

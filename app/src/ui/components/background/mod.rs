@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The window background: a hyperbola sky and a 3D block world, software
-//! rasterised here (with a direct GPU path in [`gl`]) and crossed by the user's
+//! rasterised here (with a direct GPU path in [`gpu`]) and crossed by the user's
 //! custom background images. The world renders on a worker thread.
 
 pub mod controller;
-pub mod gl;
+pub mod gpu;
 pub mod raster;
 pub mod scene;
 pub mod sky;

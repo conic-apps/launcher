@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-only
 
 [files]
 root = "{{ config_dir }}"
-includes = ["**/*.rs", "**/*.slint", "**/*.py", "**/*.sh", "**/*.html", "**/*.vert", "**/*.frag", "**/*.ps1"]
+includes = ["**/*.rs", "**/*.slint", "**/*.py", "**/*.sh", "**/*.html", "**/*.wgsl", "**/*.ps1"]
 excludes = ["target/**"]
 
 [[rules]]
@@ -15,10 +15,10 @@ extensions = ["slint"]
 style_out = "doubleslash"
 styles_in = ["doubleslash"]
 
-# GLSL has no built-in language entry, so without this rule `hawkeye` reports the
+# WGSL has no built-in language entry, so without this rule `hawkeye` reports the
 # shaders as unsupported and exits 0 -- a missing header there goes unnoticed.
 [[rules]]
-extensions = ["vert", "frag"]
+extensions = ["wgsl"]
 style_out = "doubleslash"
 styles_in = ["doubleslash"]
 

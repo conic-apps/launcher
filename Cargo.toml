@@ -41,7 +41,24 @@ tilemap = { path = "./crates/tilemap", version = "0.0.0" }
 update = { path = "./crates/update", version = "0.0.0" }
 
 # ----- non-local crates -----
-slint = { version = "1.19", default-features = true }
+# Skia draws the interface, so femtovg is not compiled at all: of the two,
+# the winit backend picks whichever comes first in its own list, and shipping
+# both would leave the choice to that list rather than to this file. Skia brings
+# its own software rasteriser, which is the fallback a machine without a GPU
+# takes.
+#
+# `unstable-wgpu-30` is what lets the world background draw on the GPU: it hands
+# the render notifier the wgpu device Skia draws with, and a texture on that
+# device can be made into an image. Without it a surface reports only an
+# inaccessible API, the software one and the wgpu one alike.
+slint = { version = "1.19", default-features = false, features = [
+    "std",
+    "backend-winit",
+    "renderer-skia",
+    "unstable-wgpu-30",
+    "accessibility",
+    "compat-1-2",
+] }
 slint-build = "1.19"
 usvg = { version = "0.49", default-features = false }
 symphonia = { version = "0.5", default-features = false, features = [
@@ -58,10 +75,7 @@ symphonia = { version = "0.5", default-features = false, features = [
 ] }
 cpal = "0.15"
 rustfft = "6.4"
-glow = "0.18"
 bytemuck = "1"
-# `IntSize` for the borrowed-texture builder — the type Slint asks for.
-euclid = "0.22"
 base64 = "0.22"
 chrono = "0.4"
 conic-worldmap = { git="https://github.com/conic-apps/conic-worldmap", rev="a86489bb0cf12c1ce7c8a3e2b07bdb01d5c09cf7" }
