@@ -77,9 +77,9 @@ jobs:
       #   libfontconfig1-dev  — `fontique` -> `yeslogic-fontconfig-sys`
       #   libasound2-dev      — `alsa-sys`, via `cpal` in the music player
       #   libudev-dev         — `libudev-sys`, via `i-slint-backend-linuxkms`
-      # GL, xkbcommon and the X11 libraries are `dlopen`ed by glutin, winit and
-      # Skia rather than linked, so they are runtime dependencies of the package
-      # and not build dependencies of the crate.
+      # Vulkan, xkbcommon and the X11 libraries are opened by wgpu, winit and
+      # Skia at runtime rather than linked, so they are runtime dependencies of
+      # the package and not build dependencies of the crate.
       - name: Install dependencies
         run: |
           sudo apt-get update

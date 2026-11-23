@@ -20,7 +20,7 @@ use std::{
 
 use slint::{ComponentHandle, Image, Rgba8Pixel, SharedPixelBuffer};
 
-use super::gl::{self, Gpu};
+use super::gpu::{self, Gpu};
 use super::scene::CAMERA_SPEED;
 use super::sky::{self, SkyRequest};
 use super::world::{FrameRequest, WorldRenderer};
@@ -38,8 +38,8 @@ const TICK_MS: u64 = 8;
 
 /// A resize settles for this long before the sky is redrawn at the new size.
 /// The old image stretches in the meantime; a full-resolution sky pass for every
-/// intermediate size is what makes a live resize crawl. The GPU framebuffer
-/// uses the same settle, so the whole background updates once after the drag.
+/// intermediate size is what makes a live resize crawl. The GPU targets use the
+/// same settle, so the whole background updates once after the drag.
 const SKY_SETTLE_MS: u64 = 350;
 
 const FADE_MS: f32 = 400.0;
@@ -227,7 +227,7 @@ struct Renderer {
 }
 
 impl Renderer {
-    fn spawn(ui: &App, dispatch_state: &Arc<gl::Flag>) -> Self {
+    fn spawn(ui: &App, dispatch_state: &Arc<gpu::Flag>) -> Self {
         let (requests, incoming) = mpsc::sync_channel::<Request>(1);
         let busy = Arc::new(AtomicBool::new(false));
         let weak = ui.as_weak();
@@ -362,10 +362,10 @@ pub struct Controller {
     world_dirty: bool,
     /// A resize is still moving; the sky waits until this instant.
     resize_settle: Option<Instant>,
-    gpu_shared: gl::Handle,
+    gpu_shared: gpu::Handle,
     gpu_engaged: bool,
     gpu_asked: Instant,
-    /// No OpenGL, so the world is not drawn at all: only the sky remains, and a
+    /// No device, so the world is not drawn at all: only the sky remains, and a
     /// CPU-rasterised world is far too slow to be worth showing.
     software_only: bool,
     parallax: (f32, f32),
@@ -384,7 +384,7 @@ pub struct Controller {
 
 impl Controller {
     fn new(ui: &App, config: Rc<RefCell<config::Config>>) -> Self {
-        let gpu_shared = gl::Shared::new();
+        let gpu_shared = gpu::Shared::new();
         let gpu = Arc::clone(&gpu_shared.gpu);
         Self {
             config,
@@ -765,11 +765,11 @@ impl Controller {
             self.world_dirty = true;
         }
 
-        // No OpenGL, and none is coming: the world goes away for good.
+        // No GPU device, and none is coming: the world goes away for good.
         if !self.software_only && self.gpu() != Gpu::Running && !self.gpu_waiting() {
             log::info!(
                 target: "background",
-                "no OpenGL renderer: the background is the hyperbola sky alone",
+                "no GPU renderer: the background is the hyperbola sky alone",
             );
             self.software_only = true;
             let background = ui.global::<Background>();
@@ -1160,9 +1160,9 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     controller.borrow_mut().refresh(ui);
     controller.borrow_mut().request_frame(ui);
     // The world is handed to the GPU only after it has drawn one, so a renderer
-    // without OpenGL keeps this frame.
+    // without a device keeps this frame.
     let shared = Rc::clone(&controller.borrow().gpu_shared);
-    super::gl::install(ui, shared);
+    super::gpu::install(ui, shared);
 }
 
 pub fn set_instance(ui: &App, current: Option<(&str, bool, bool, u8)>) {

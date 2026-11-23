@@ -14,8 +14,8 @@ license=('GPL-3.0-only' 'LicenseRef-Conic-Additional-Terms')
 #   libx11, libxcb — winit's X11 backend (x11-dl and the pure-Rust x11rb)
 #   libxcursor, libxrender, libxi — what winit's X11 backend `dlopen`s
 #   wayland-libs   — winit's Wayland backend; a `dlopen`ed libwayland-client
-#   libglvnd       — provides both libGL.so and libEGL.so, which Skia and glutin
-#                    load at runtime rather than link against
+#   vulkan-icd-loader — libvulkan.so.1, which wgpu opens to bring up an adapter;
+#                    the ICD behind it is the GPU driver's own package
 #   alsa-lib       — `cpal`, for the background music player
 #   hicolor-icon-theme — where the icon set is installed
 #   ca-certificates — `rustls-platform-verifier` reads the system trust store
@@ -30,13 +30,13 @@ depends=(
   'gcc-libs'
   'glibc'
   'hicolor-icon-theme'
-  'libglvnd'
   'libx11'
   'libxcb'
   'libxcursor'
   'libxi'
   'libxkbcommon'
   'libxrender'
+  'vulkan-icd-loader'
   'wayland-libs'
   # `xdg-open`, which the launcher runs to open the login browser and every link
   # in a detail panel.

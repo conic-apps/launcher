@@ -263,8 +263,8 @@ if wants appimage; then
     #
     # The shared libraries are deliberately NOT bundled. The AppImage spec itself
     # says an image must not carry `libc`, `libgcc_s` and friends, and what is
-    # left here (fontconfig, xkbcommon, GL, ALSA) is on every desktop that can run
-    # a Slint app at all.
+    # left here (fontconfig, xkbcommon, Vulkan, ALSA) is on every desktop that can
+    # run a Slint app at all.
     rm -rf "$APPDIR"
     # `stage_payload` lays out `<prefix>/usr/share/...`, so the prefix is the
     # AppDir itself — not `$APPDIR/usr`, which would give the image a

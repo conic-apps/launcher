@@ -90,9 +90,9 @@ The drawer's two parts animate independently: each starts with its right edge on
 edge and at zero opacity, and settles at its own target (the sidebar at 0, the content after it).
 The game screen behind it is dimmed by the shared scrim, and the content's base colour and 24px shadow
 live on a panel behind the scrolling body, so the body can stay transparent and keep its own
-clipping. A fast live resize is kept out of the way by the background: the GPU framebuffer and the
+clipping. A fast live resize is kept out of the way by the background: the GPU's targets and the
 sky keep their old size and stretch until the window has been still for 350ms, instead of recreating
-a full-size framebuffer on every drag frame.
+full-size textures on every drag frame.
 
 ### Overlay dimming
 
