@@ -966,6 +966,9 @@ mod tests {
     /// first draws.
     #[test]
     fn every_pipeline_entry_point_is_declared() {
+        // `include_str!` embeds the file as checked out, which carries CRLF line
+        // endings on Windows, so compare against a normalized copy.
+        let world = WORLD.replace("\r\n", "\n");
         for (stage, name) in [
             ("vertex", FILL_ENTRY_VERTEX),
             ("fragment", FILL_ENTRY_FRAGMENT),
@@ -975,7 +978,7 @@ mod tests {
             ("fragment", RESOLVE_ENTRY_FRAGMENT),
         ] {
             assert!(
-                WORLD.contains(&format!("@{stage}\nfn {name}(")),
+                world.contains(&format!("@{stage}\nfn {name}(")),
                 "`{name}` is not a {stage} entry point"
             );
         }
