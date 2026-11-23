@@ -147,6 +147,9 @@ mod tests {
         i_slint_backend_testing::init_no_event_loop();
         let ui = App::new().expect("the app");
         setup(&ui);
+        // A new Slint context picks the system locale's catalog, so pin the
+        // baseline rather than assuming the machine is English.
+        crate::ui::services::app_config::apply_locale("en_US");
 
         // Nothing is on screen, so nothing is listening and there is no URL to
         // point anywhere.
