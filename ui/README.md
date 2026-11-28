@@ -23,7 +23,7 @@ feature — is what decides where a file goes:
   - `containers/` — layout/behaviour wrappers: `ScrollView`, `ScrollViewHorizontal`,
     `SlideTransition`, `ZoomTransition`.
   - `display/` — presentational: `AppIcon`, `AccountAvatar`, `InstanceCard`, `Scrim`, `EmptyState`,
-    `HeaderBar`.
+    `HeaderBar`, `PillFace`.
   - `settings/` — `SettingItem`, `SettingGroup`, `SettingCollapse`, `SettingReveal`.
   - `markdown/` — the `.slint` half of `app/src/ui/components/markdown/`.
 - **`window/`** — the window's own chrome, not a widget. A file belongs here when the platform

@@ -1,0 +1,52 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { AppIcon } from "app-icon.slint";
+
+// One face of a cross-faded pill button: a glyph and its label as one centred
+// row.
+//
+// `pill-width` is what the pill sizes itself from — the row's own width plus the
+// padding — so the pill takes the width of the face on show and a longer
+// translation widens it instead of being elided.
+export component PillFace inherits Rectangle {
+    in property <string> icon;
+    in property <length> icon-size: 20px;
+    in property <string> text;
+    /// Horizontal padding on each side of the icon and label. One property,
+    /// because `pill-width` and the row's own box have to agree on it, and the
+    /// caller sets it when its pill has to sit tighter than the launch button's.
+    in property <length> side-padding: 24px;
+    /// The pill width this face needs.
+    out property <length> pill-width: content.preferred-width + root.side-padding + root.side-padding;
+
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    content := HorizontalLayout {
+        x: root.side-padding;
+        y: 0;
+        width: parent.width - root.side-padding - root.side-padding;
+        height: 100%;
+        alignment: center;
+        spacing: 4px;
+        cross-axis-alignment: center;
+
+        AppIcon {
+            name: root.icon;
+            size: root.icon-size;
+            icon-color: Theme.text-inverse;
+        }
+
+        Text {
+            text: root.text;
+            font-size: 15px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.text-inverse;
+            overflow: elide;
+        }
+    }
+}

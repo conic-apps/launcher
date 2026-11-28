@@ -122,6 +122,10 @@ RECONTEXT = {
 # Sentences to drop: a component that no longer exists at all.
 DROP = {
     ("RemoteListView", "Try adjusting keywords or filters and search again"),
+    # The content detail panel's action pill owns its labels now, so these two
+    # move to `DetailPill`'s context.
+    ("DetailBody", "Download"),
+    ("DetailBody", "Remove"),
     # The appearance settings' group is titled "Theme" now, which re-keys the
     # entry; `SAVE_TAGS` carries the translations across.
     ("SettingsAppearance", "Palette"),
@@ -2422,6 +2426,93 @@ SAVE_TAGS.update({
             "ru_RU": "Настройки сборки",
             "tr_TR": "Örnek ayarları",
             "pl_PL": "Ustawienia instancji",
+        },
+    },
+    # The content detail panel's action pill and the hint on the heart beside it.
+    # The pill owns its labels, which is why they are catalogued under `DetailPill`
+    # rather than under the panel drawing it.
+    "DetailPill": {
+        "Download": {
+            "zh_CN": "下载",
+            "zh_TW": "下載",
+            "ja_JP": "ダウンロード",
+            "ko_KR": "다운로드",
+            "de_DE": "Herunterladen",
+            "fr_FR": "Télécharger",
+            "es_ES": "Descargar",
+            "pt_BR": "Baixar",
+            "ru_RU": "Скачать",
+            "tr_TR": "İndir",
+            "pl_PL": "Pobierz",
+        },
+        "Cancel": {
+            "zh_CN": "取消",
+            "zh_TW": "取消",
+            "ja_JP": "キャンセル",
+            "ko_KR": "취소",
+            "de_DE": "Abbrechen",
+            "fr_FR": "Annuler",
+            "es_ES": "Cancelar",
+            "pt_BR": "Cancelar",
+            "ru_RU": "Отмена",
+            "tr_TR": "İptal",
+            "pl_PL": "Anuluj",
+        },
+        # The resting face of an installed project, before its hover turns the
+        # pill into a remove.
+        "Downloaded": {
+            "zh_CN": "已下载",
+            "zh_TW": "已下載",
+            "ja_JP": "ダウンロード済み",
+            "ko_KR": "다운로드됨",
+            "de_DE": "Heruntergeladen",
+            "fr_FR": "Téléchargé",
+            "es_ES": "Descargado",
+            "pt_BR": "Baixado",
+            "ru_RU": "Скачано",
+            "tr_TR": "İndirildi",
+            "pl_PL": "Pobrano",
+        },
+        "Remove": {
+            "zh_CN": "删除",
+            "zh_TW": "刪除",
+            "ja_JP": "削除",
+            "ko_KR": "삭제",
+            "de_DE": "Entfernen",
+            "fr_FR": "Supprimer",
+            "es_ES": "Eliminar",
+            "pt_BR": "Remover",
+            "ru_RU": "Удалить",
+            "tr_TR": "Kaldır",
+            "pl_PL": "Usuń",
+        },
+    },
+    "DetailBody": {
+        "Add to favorites": {
+            "zh_CN": "添加到收藏夹",
+            "zh_TW": "加入我的最愛",
+            "ja_JP": "お気に入りに追加",
+            "ko_KR": "즐겨찾기에 추가",
+            "de_DE": "Zu Favoriten hinzufügen",
+            "fr_FR": "Ajouter aux favoris",
+            "es_ES": "Añadir a favoritos",
+            "pt_BR": "Adicionar aos favoritos",
+            "ru_RU": "Добавить в избранное",
+            "tr_TR": "Favorilere ekle",
+            "pl_PL": "Dodaj do ulubionych",
+        },
+        "Remove from favorites": {
+            "zh_CN": "从收藏夹中移除",
+            "zh_TW": "從我的最愛移除",
+            "ja_JP": "お気に入りから削除",
+            "ko_KR": "즐겨찾기에서 제거",
+            "de_DE": "Aus Favoriten entfernen",
+            "fr_FR": "Retirer des favoris",
+            "es_ES": "Quitar de favoritos",
+            "pt_BR": "Remover dos favoritos",
+            "ru_RU": "Убрать из избранного",
+            "tr_TR": "Favorilerden kaldır",
+            "pl_PL": "Usuń z ulubionych",
         },
     },
     "InstanceSettings": {

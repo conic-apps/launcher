@@ -1435,16 +1435,6 @@ msgstr "目前篩選條件沒有符合的結果"
 
 #: ui
 msgctxt "DetailBody"
-msgid "Download"
-msgstr "下載"
-
-#: ui
-msgctxt "DetailBody"
-msgid "Remove"
-msgstr "刪除"
-
-#: ui
-msgctxt "DetailBody"
 msgid "Installed: {}"
 msgstr "已安裝：{}"
 
@@ -3922,3 +3912,33 @@ msgstr "Conic Launcher 已更新至版本：{}。\n\n點擊此處查看更新說
 msgctxt "SettingsAppearance"
 msgid "Theme"
 msgstr "調色盤"
+
+#: ui
+msgctxt "DetailPill"
+msgid "Download"
+msgstr "下載"
+
+#: ui
+msgctxt "DetailPill"
+msgid "Cancel"
+msgstr "取消"
+
+#: ui
+msgctxt "DetailPill"
+msgid "Remove"
+msgstr "刪除"
+
+#: ui
+msgctxt "DetailBody"
+msgid "Add to favorites"
+msgstr "加入我的最愛"
+
+#: ui
+msgctxt "DetailBody"
+msgid "Remove from favorites"
+msgstr "從我的最愛移除"
+
+#: ui
+msgctxt "DetailPill"
+msgid "Downloaded"
+msgstr "已下載"

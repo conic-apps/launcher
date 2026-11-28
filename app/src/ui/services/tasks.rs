@@ -269,6 +269,27 @@ pub(crate) fn service_if_ready() -> Option<Rc<TaskService>> {
     SERVICE.with(|slot| slot.borrow().clone())
 }
 
+/// The content download running for `project_id` in `instance_id`, if any.
+///
+/// The detail panel asks when it opens, so a panel reached from the notification
+/// centre starts on the task's Cancel instead of offering a second download of
+/// the same project.
+pub(crate) fn active_content_download(instance_id: &str, project_id: &str) -> Option<i32> {
+    let service = service_if_ready()?;
+    service
+        .center
+        .snapshot()
+        .into_iter()
+        .find_map(|snapshot| match &snapshot.spec.target {
+            shared::task::TaskTarget::Content {
+                instance_id: running,
+                project_id: project,
+                ..
+            } if running == instance_id && project == project_id => Some(snapshot.id),
+            _ => None,
+        })
+}
+
 fn apply_event(ui: &App, event: TaskEvent) {
     CONTROLLER.with(|controller| {
         match event {
@@ -277,7 +298,13 @@ fn apply_event(ui: &App, event: TaskEvent) {
                     .targets
                     .borrow_mut()
                     .insert(snapshot.id, snapshot.spec.target.clone());
-                apply_content_progress(ui, &snapshot.spec.target, &snapshot.progress, true);
+                apply_content_progress(
+                    ui,
+                    snapshot.id,
+                    &snapshot.spec.target,
+                    &snapshot.progress,
+                    true,
+                );
                 let row = item(&snapshot);
                 controller.tasks.insert(0, row.clone());
                 if !ui.global::<NotificationState>().get_visible() {
@@ -289,7 +316,13 @@ fn apply_event(ui: &App, event: TaskEvent) {
                     .targets
                     .borrow_mut()
                     .insert(snapshot.id, snapshot.spec.target.clone());
-                apply_content_progress(ui, &snapshot.spec.target, &snapshot.progress, true);
+                apply_content_progress(
+                    ui,
+                    snapshot.id,
+                    &snapshot.spec.target,
+                    &snapshot.progress,
+                    true,
+                );
                 let row = item(&snapshot);
                 match controller.index_of(snapshot.id) {
                     Some(index) => controller.tasks.set_row_data(index, row.clone()),
@@ -307,7 +340,7 @@ fn apply_event(ui: &App, event: TaskEvent) {
                 controller.close_toast(id);
                 controller.targets.borrow_mut().remove(&id);
                 if let Some(target) = target {
-                    apply_content_progress(ui, &target, &TaskProgress::Indeterminate, false);
+                    apply_content_progress(ui, id, &target, &TaskProgress::Indeterminate, false);
                 }
                 if controller.pending_cancel.get() == id {
                     controller.set_pending(-1);
@@ -323,7 +356,13 @@ fn apply_event(ui: &App, event: TaskEvent) {
 
 /// Mirrors a content task's progress into an open detail panel so a panel
 /// reopened during a download sees the same numbers as the task card.
-fn apply_content_progress(ui: &App, target: &TaskTarget, progress: &TaskProgress, operating: bool) {
+fn apply_content_progress(
+    ui: &App,
+    id: i32,
+    target: &TaskTarget,
+    progress: &TaskProgress,
+    operating: bool,
+) {
     let TaskTarget::Content { project_id, .. } = target else {
         return;
     };
@@ -332,6 +371,9 @@ fn apply_content_progress(ui: &App, target: &TaskTarget, progress: &TaskProgress
         return;
     }
     state.set_detail_operating(operating);
+    // The panel's Cancel face stops this task, so it needs the id while the
+    // task runs and none once it is gone.
+    state.set_detail_task_id(if operating { id } else { -1 });
     if !operating {
         state.set_detail_progress(0.0);
         state.set_detail_progress_max(0.0);

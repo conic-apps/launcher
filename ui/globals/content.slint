@@ -207,13 +207,16 @@ export global ContentState {
     in-out property <bool> detail-body-always: false;
     in-out property <[GalleryShot]> detail-gallery: [];
     in-out property <bool> detail-favorited: false;
-    /// The heart + download/remove row belongs to the mod and resource-pack
-    /// panels; a pack has no remove and is never "installed".
+    /// The heart + install row belongs to the mod and resource-pack panels; a
+    /// pack has no remove and is never "installed".
     in-out property <bool> detail-has-install: true;
     in-out property <bool> detail-installed: false;
     in-out property <string> detail-installed-version: "";
     in-out property <bool> detail-checking-installed: false;
     in-out property <bool> detail-operating: false;
+    /// The task behind `detail-operating`, -1 when nothing is running. The
+    /// cancel face stops that task, the same way the game view's button does.
+    in-out property <int> detail-task-id: -1;
     /// The in-flight install/remove download: `value`/`max` plus a formatted byte
     /// label. `max` is 0 while the size is unknown and the bar is hidden.
     in-out property <float> detail-progress: 0;

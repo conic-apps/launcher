@@ -666,6 +666,7 @@ pub(crate) fn setup_detail_actions(ui: &App) {
                         crate::ui::services::report::report(&weak_outer, move |ui| {
                             let state = ui.global::<ContentState>();
                             state.set_detail_operating(false);
+                            state.set_detail_task_id(-1);
                             state.set_detail_progress(0.0);
                             state.set_detail_progress_max(0.0);
                             state.set_detail_progress_text("".into());
