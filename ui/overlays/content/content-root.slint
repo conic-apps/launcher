@@ -10,6 +10,7 @@ import { ContentModsPanel } from "mods-panel.slint";
 import { ContentResourcepacksPanel } from "resourcepacks-panel.slint";
 import { ContentPacksPanel } from "packs-panel.slint";
 import { DetailPanel } from "details-panel.slint";
+import { SaveDetailsPanel } from "save-details-panel.slint";
 
 // The content overlay layer. Panels are shown/hidden rather than added/removed
 // with `if`, so a reopened panel keeps its scroll position. Details are drawn
@@ -79,4 +80,9 @@ export component ContentRoot inherits Rectangle {
     }
 
     DetailPanel { }
+
+    // A save's details live in their own layer over the saves grid. Only one of
+    // the two detail panels is ever open: the grid opens saves, the remote lists
+    // open projects.
+    SaveDetailsPanel { }
 }

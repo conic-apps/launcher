@@ -242,6 +242,8 @@ pub(crate) fn setup_close(ui: &App) {
             ui_state.set_open_panel(SharedString::default());
             ui_state.set_open_detail(SharedString::default());
             ui_state.set_screenshot_index(0);
+            // The details layers sit above the list and are closed with it.
+            close_save_detail(&ui);
         });
     }
     {
@@ -278,7 +280,13 @@ pub(crate) fn setup_card_selection(ui: &App) {
             let Some(_ui) = weak.upgrade() else { return };
             let target = controller().borrow().targets.get(id.as_str()).cloned();
             let Some(path) = (match target {
-                Some(CardTarget::Path(path)) | Some(CardTarget::Save(path)) => Some(path),
+                Some(CardTarget::Path(path)) => Some(path),
+                // A save's target is its folder name, not a path: the instance
+                // the grid was read for is what turns it into one.
+                Some(CardTarget::Save(folder)) => {
+                    let instance = controller().borrow().instance_id.clone();
+                    content::saves::get_save_path(&instance, &folder).ok()
+                }
                 _ => None,
             }) else {
                 return;
@@ -560,9 +568,16 @@ pub(crate) fn setup_version_carousel(ui: &App) {
 pub(crate) fn setup_saves_and_screenshots(ui: &App) {
     {
         let weak = ui.as_weak();
-        ui.global::<ContentState>().on_select_save(move |folder| {
+        ui.global::<ContentState>().on_open_save(move |folder| {
             let Some(ui) = weak.upgrade() else { return };
-            select_save(&ui, folder.as_ref());
+            open_save_detail(&ui, folder.as_ref());
+        });
+    }
+    {
+        let weak = ui.as_weak();
+        ui.global::<SaveDetailState>().on_close(move || {
+            let Some(ui) = weak.upgrade() else { return };
+            close_save_detail(&ui);
         });
     }
     {

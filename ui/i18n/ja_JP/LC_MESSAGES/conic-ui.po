@@ -3942,3 +3942,18 @@ msgstr "お気に入りから削除"
 msgctxt "DetailPill"
 msgid "Downloaded"
 msgstr "ダウンロード済み"
+
+#: ui
+msgctxt "SaveDetailsPanel"
+msgid "Save info"
+msgstr "ワールド情報"
+
+#: ui
+msgctxt "SaveDetailsPanel"
+msgid "Last played at"
+msgstr "最終プレイ日時"
+
+#: ui
+msgctxt "SaveDetailsPanel"
+msgid "Version"
+msgstr "バージョン"

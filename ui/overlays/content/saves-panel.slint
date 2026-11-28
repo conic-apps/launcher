@@ -43,8 +43,6 @@ export component ContentSavesPanel inherits Rectangle {
     }
 
     list-scroll := ScrollView {
-        background-clicked => { ContentState.select-save(""); }
-
         HeaderBar {
             icon: "save";
             title: @tr("Saves");
@@ -60,12 +58,12 @@ export component ContentSavesPanel inherits Rectangle {
             subtitle-style: "folder";
             grid-height: ContentState.saves-grid-height;
 
-            select(id) => { ContentState.select-save(id); }
+            // The card opens the save's details overlay, which owns the world
+            // map preview the card used to expand into.
+            select(id) => { ContentState.open-save(id); }
             open-path(id) => { ContentState.open-path(id); }
             // Opens the confirmation rather than deleting outright.
             delete(id, title) => { ContentState.request-delete-save(id, title); }
-            // Play carries no handler; the click clears the expanded save.
-            play(id) => { ContentState.select-save(""); }
         }
     }
 

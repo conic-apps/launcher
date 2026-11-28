@@ -1,0 +1,291 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../graphics/theme.slint";
+import { AppIcon } from "../../graphics/display/app-icon.slint";
+import { HeaderBar } from "../../graphics/display/header-bar.slint";
+import {
+    ContentState,
+    ContentText,
+    SaveChip,
+    SaveDetail,
+    SaveDetailState,
+} from "../../globals/content.slint";
+import { OverlayPanel } from "../shell/overlay-panel.slint";
+import { WorldMap } from "components/world-map.slint";
+
+// A save's details: what its `level.dat` says about the world, and the map it
+// covers. The grid's cards used to expand into that map in place; the overlay is
+// the one place it is drawn now, so a card stays a card.
+//
+// The parser's summary is the only source for the page, so it never disagrees
+// with the card the click came from. The words are resolved here rather than in
+// Rust, which cannot follow a language change.
+//
+// This page shares nothing with the project detail panel: a save has no
+// download, no favourites and no gallery, and its map is the reason to open it.
+
+/// One fact about the world, as a pill. Its `tone` picks the colour the same way
+/// a card's tag does, and a pill that opens something is the only one with a
+/// hover state.
+component SavePill inherits Rectangle {
+    in property <string> icon: "";
+    in property <string> label: "";
+    in property <string> text: "";
+    /// "game-mode-survival" | "game-mode-creative" | "game-mode-adventure"
+    /// | "game-mode-spectator" | "cheats" | "version" | "folder"
+    in property <string> tone: "";
+    /// The widest the value may be drawn; a longer one is elided. A folder name
+    /// is the only thing here that the user did not pick, so it is the only one
+    /// that needs a limit.
+    in property <length> max-text-width: 4000px;
+    in property <bool> clickable: false;
+    callback clicked;
+
+    private property <bool> filled: root.tone == "game-mode-survival"
+        || root.tone == "game-mode-creative"
+        || root.tone == "game-mode-adventure"
+        || root.tone == "game-mode-spectator"
+        || root.tone == "cheats"
+        || root.tone == "version";
+
+    height: 22px;
+    // From the inner layout: an all-positioned child measures zero, so a bare
+    // `self.preferred-width` would collapse every pill to its padding.
+    width: inner.preferred-width + 16px;
+    border-radius: 999px;
+    background: root.tone == "game-mode-survival" ? Theme.green
+        : root.tone == "game-mode-creative" ? Theme.mauve
+        : root.tone == "game-mode-adventure" ? Theme.peach
+        : root.tone == "game-mode-spectator" ? Theme.blue
+        : root.tone == "cheats" ? Theme.yellow
+        : root.tone == "version" ? Theme.lavender
+        : touch.has-hover && root.clickable ? Theme.surface-1
+        : Theme.surface-0;
+
+    private property <color> ink:
+        root.filled ? Theme.text-inverse : Theme.default-text-color.transparentize(0.1);
+
+    // Always declared, never conditional: an id inside an `if` is not in scope
+    // for the fill binding above, which reads its hover.
+    touch := TouchArea {
+        enabled: root.clickable;
+        clicked => { root.clicked(); }
+    }
+
+    inner := HorizontalLayout {
+        x: 8px;
+        height: parent.height;
+        spacing: 4px;
+        alignment: start;
+        cross-axis-alignment: center;
+
+        if root.icon != "": AppIcon {
+            name: root.icon;
+            size: 14px;
+            icon-color: root.ink;
+        }
+
+        if root.label != "": Text {
+            text: root.label;
+            font-size: 11px;
+            // The dimmed half of the pair reads as a caption, not a value.
+            color: root.filled
+                ? Theme.text-inverse.transparentize(0.35)
+                : Theme.subtext-1;
+            vertical-alignment: center;
+        }
+
+        Text {
+            text: root.text;
+            font-size: 11px;
+            color: root.ink;
+            max-width: root.max-text-width;
+            overflow: elide;
+            vertical-alignment: center;
+        }
+    }
+}
+
+export component SaveDetailsPanel inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    private property <SaveDetail> detail: SaveDetailState.detail;
+
+    /// A game mode keeps its own key as the tone, so the four modes stay the
+    /// four colours the card gives them.
+    pure function pill-tone(chip: SaveChip) -> string {
+        return chip.kind == "game-mode" ? chip.key : chip.kind;
+    }
+
+    pure function pill-text(chip: SaveChip) -> string {
+        if chip.kind == "game-mode" { return ContentText.save-tag(chip.key); }
+        if chip.kind == "cheats" { return ContentText.save-tag("command-enabled"); }
+        return chip.text;
+    }
+
+    // The page's own words: the pills that need a caption, and nothing else.
+    pure function pill-label(chip: SaveChip) -> string {
+        if chip.kind == "version" { return @tr("Version"); }
+        return "";
+    }
+
+    /// The folder pill, and the only pill that opens anything: the world's own
+    /// directory, revealed in the file manager.
+    pure function pill-icon(chip: SaveChip) -> string {
+        return chip.kind == "folder" ? "folder" : "";
+    }
+
+    OverlayPanel {
+        panel-visible: SaveDetailState.open;
+        panel-background: Theme.base;
+        closed => { SaveDetailState.close(); }
+
+        VerticalLayout {
+            HeaderBar {
+                icon: "save";
+                title: @tr("Save info");
+            }
+
+            // The picture and, beside it, everything read off the world: its
+            // name, when it was last opened, and the pills. The map below takes
+            // whatever this leaves.
+            Rectangle {
+                width: 100%;
+                height: self.preferred-height;
+                background: transparent;
+
+                HorizontalLayout {
+                    padding-left: 24px;
+                    padding-right: 24px;
+                    padding-top: 8px;
+                    padding-bottom: 16px;
+                    spacing: 16px;
+
+                    Rectangle {
+                        width: 88px;
+                        height: 88px;
+                        border-radius: 12px;
+                        clip: true;
+                        background: Theme.surface-0;
+
+                        // Empty until the world's own `icon.png` has been read,
+                        // which is why the box is filled first.
+                        Image {
+                            width: parent.width;
+                            height: parent.height;
+                            source: SaveDetailState.detail-icon;
+                            image-fit: cover;
+                        }
+                    }
+
+                    // The three lines, centred against the 88px picture, so a
+                    // short header stays level with it and a wrapped pill row
+                    // grows downwards.
+                    VerticalLayout {
+                        horizontal-stretch: 1;
+                        vertical-stretch: 1;
+                        spacing: 6px;
+                        alignment: center;
+
+                        Text {
+                            // An elided `Text` has no preferred width, so without
+                            // this it is drawn as a bare ellipsis.
+                            width: 100%;
+                            text: root.detail.name;
+                            font-size: 24px;
+                            font-weight: 600;
+                            color: Theme.default-text-color.transparentize(0.1);
+                            height: 24px;
+                            overflow: elide;
+                            vertical-alignment: center;
+                        }
+
+                        if root.detail.has-last-played: HorizontalLayout {
+                            height: 16px;
+                            spacing: 6px;
+                            alignment: start;
+
+                            Text {
+                                text: @tr("Last played at");
+                                font-size: 12px;
+                                color: Theme.subtext-1;
+                                vertical-alignment: center;
+                            }
+
+                            Text {
+                                text: root.detail.last-played-text;
+                                font-size: 12px;
+                                color: Theme.default-text-color.transparentize(0.1);
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        // The pills wrap, so a long translation adds a line
+                        // rather than running under the window's right edge. A
+                        // `FlexboxLayout`, and nothing but `for` in it: a Flexbox
+                        // holding an `if` reports no preferred size to its parent.
+                        FlexboxLayout {
+                            flex-wrap: wrap;
+                            spacing: 6px;
+                            for chip in root.detail.chips: SavePill {
+                                icon: root.pill-icon(chip);
+                                label: root.pill-label(chip);
+                                text: root.pill-text(chip);
+                                tone: root.pill-tone(chip);
+                                // A folder name is the one value with no bound
+                                // of its own.
+                                max-text-width: chip.kind == "folder" ? 180px : 4000px;
+                                clickable: chip.kind == "folder";
+                                clicked => { ContentState.open-path(root.detail.folder); }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // The preview the card used to expand into, and the page's whole
+            // content. Mounted with the overlay, so a closed panel asks for no
+            // tiles; a drag pans and the wheel zooms it.
+            if SaveDetailState.open && root.detail.instance-id != "": Rectangle {
+                vertical-stretch: 1;
+                // The floor: a window short enough for the name and its pills to
+                // eat the page loses the map's bottom, not its top.
+                min-height: 160px;
+                background: transparent;
+
+                // A frame around the map's own box: unexplored chunks render
+                // nothing, so without one a young world looks like a blank page.
+                Rectangle {
+                    x: 24px;
+                    y: 0;
+                    width: parent.width - 48px;
+                    height: parent.height - 16px;
+                    border-radius: 8px;
+                    border-width: 1px;
+                    border-color: Theme.surface-1;
+                    background: Theme.surface-0;
+                    clip: true;
+
+                    WorldMap {
+                        x: 1px;
+                        y: 1px;
+                        width: parent.width - 2px;
+                        height: parent.height - 2px;
+                        folder-name: root.detail.folder;
+                        instance-id: root.detail.instance-id;
+                        // `0, 0` means no `spawn.pos`; Rust falls back to the
+                        // world's own spawn.
+                        center-x: root.detail.has-spawn ? root.detail.spawn-x : 0;
+                        center-z: root.detail.has-spawn ? root.detail.spawn-z : 0;
+                        show-cursor-coords: true;
+                        cursor-coordinates-position: "bottom-center";
+                    }
+                }
+            }
+        }
+    }
+}

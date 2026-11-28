@@ -3947,3 +3947,18 @@ msgstr "Remove from favorites"
 msgctxt "DetailPill"
 msgid "Downloaded"
 msgstr "Downloaded"
+
+#: ui
+msgctxt "SaveDetailsPanel"
+msgid "Save info"
+msgstr "Save info"
+
+#: ui
+msgctxt "SaveDetailsPanel"
+msgid "Last played at"
+msgstr "Last played at"
+
+#: ui
+msgctxt "SaveDetailsPanel"
+msgid "Version"
+msgstr "Version"

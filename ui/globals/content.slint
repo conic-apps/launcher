@@ -61,19 +61,47 @@ export struct ContentCard {
     /// The trailing action column: "" | "favorite" (heart + link) | "file"
     /// (folder + trash).
     action-kind: string,
-    /// The saves' play button, which floats over the icon.
-    shows-play: bool,
     favorited: bool,
     /// A disabled local mod: struck-through name and a dimmed card.
     mod-disabled: bool,
-    /// The saves' expanded state: the card lifts and its extra panel slides out.
-    selected: bool,
-    /// Whether a selected save expands upwards (set within 160px of the bottom).
-    expand-up: bool,
-    /// A save's spawn point for its world map (`level.dat`'s `Data.spawn.pos`).
-    /// `0, 0` when absent, asking the world for its own spawn.
+}
+
+/// One pill of the save details overlay: one fact a `level.dat` gave up.
+///
+/// The value travels as data and the words are resolved in the view, because a
+/// string Rust composed would not follow a language change.
+export struct SaveChip {
+    /// "game-mode" | "cheats" | "version" | "folder"
+    kind: string,
+    /// The key the pill's colour and word are read from: a game mode's
+    /// `game-mode-…`. Empty for a kind that has no table.
+    key: string,
+    /// The value a kind with no table shows: the version, or the world's folder
+    /// name.
+    text: string,
+}
+
+/// The save whose details overlay is open, as the overlay draws it. Everything
+/// here comes from the save's own `level.dat` summary, so the page and the card
+/// the click came from cannot disagree.
+export struct SaveDetail {
+    /// The world's identifier in the instance: its folder name.
+    folder: string,
+    /// The name `level.dat` gives the world, or the folder name without one.
+    name: string,
+    /// The instance the save belongs to, which the map reads its regions from.
+    instance-id: string,
+    /// `Data.LastPlayed`, formatted. The line is dropped rather than drawn empty
+    /// for a world the game never wrote a timestamp for.
+    has-last-played: bool,
+    last-played-text: string,
+    /// `Data.spawn.pos`; the map opens centred on it.
+    has-spawn: bool,
     spawn-x: int,
     spawn-z: int,
+    /// The pills under the name: how the world is played, what it was played
+    /// with, and where it lives. Absent facts are absent pills.
+    chips: [SaveChip],
 }
 
 /// One filter chip of the search panel's filter rows.
@@ -252,12 +280,25 @@ export global ContentState {
     callback toggle-favorite(string);
     callback download();
     callback remove();
-    /// A save was selected, or deselected with an empty id.
-    callback select-save(string);
+    /// A save card was clicked: open its details overlay on that folder.
+    callback open-save(string);
     /// The screenshots viewer.
     callback set-screenshot(int);
     callback screenshot-next();
     callback screenshot-prev();
+}
+
+/// The save details overlay's state. It is one save at a time, opened from the
+/// saves grid and dismissed back onto it.
+export global SaveDetailState {
+    in-out property <bool> open: false;
+    in-out property <SaveDetail> detail;
+    /// The world's own picture, kept beside the struct because an `image` has no
+    /// default literal to write into one.
+    in-out property <image> detail-icon;
+
+    /// The overlay was dismissed: its scrim, or Escape through `close`.
+    callback close();
 }
 
 /// The search panel's own state, for whichever remote list is on screen. Kept

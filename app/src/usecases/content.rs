@@ -123,12 +123,7 @@ pub(crate) struct PendingCard {
     pub(crate) icon_url: Option<String>,
     /// "" | "favorite" | "file"
     pub(crate) action_kind: &'static str,
-    pub(crate) shows_play: bool,
     pub(crate) mod_disabled: bool,
-    /// A save's spawn point, which its world map opens centred on. Zero on
-    /// every other kind of card, and on a save whose `level.dat` has no
-    /// `spawn.pos` — which asks the world for its own instead.
-    pub(crate) spawn: Option<(i32, i32)>,
 }
 
 /// An image on its way to the UI thread: a plain buffer, because Slint's `Image`

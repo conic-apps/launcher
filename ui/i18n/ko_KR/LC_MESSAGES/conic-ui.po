@@ -3942,3 +3942,18 @@ msgstr "즐겨찾기에서 제거"
 msgctxt "DetailPill"
 msgid "Downloaded"
 msgstr "다운로드됨"
+
+#: ui
+msgctxt "SaveDetailsPanel"
+msgid "Save info"
+msgstr "월드 정보"
+
+#: ui
+msgctxt "SaveDetailsPanel"
+msgid "Last played at"
+msgstr "마지막 플레이 일시"
+
+#: ui
+msgctxt "SaveDetailsPanel"
+msgid "Version"
+msgstr "버전"
