@@ -749,7 +749,7 @@ msgid "Screenshots"
 msgstr "Screenshots"
 
 #: ui
-msgctxt "GameFooterBar"
+msgctxt "TitleBarAccountButton"
 msgid "Not logged in"
 msgstr "Nicht angemeldet"
 

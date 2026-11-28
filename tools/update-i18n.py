@@ -114,6 +114,9 @@ RECONTEXT = {
     ("InstancesList", "Favorites"): ["InstanceGroupRow"],
     ("InstancesList", "All instances"): ["InstanceGroupRow"],
     ("InstancesList", "Last played: "): ["InstanceListCard"],
+    # The footer's account pill moved to the title bar, so its logged-out sentence
+    # is looked up under the chip that draws it now.
+    ("GameFooterBar", "Not logged in"): ["TitleBarAccountButton"],
 }
 
 # Sentences to drop: a component that no longer exists at all.

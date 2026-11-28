@@ -749,7 +749,7 @@ msgid "Screenshots"
 msgstr "截圖"
 
 #: ui
-msgctxt "GameFooterBar"
+msgctxt "TitleBarAccountButton"
 msgid "Not logged in"
 msgstr "尚未登入"
 

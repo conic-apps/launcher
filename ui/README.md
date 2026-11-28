@@ -32,11 +32,12 @@ feature — is what decides where a file goes:
   callback, because the system hit-tests and clicks them), or when Rust's native layer produces or
   consumes the type (`WindowControl`, built by `app/src/support/native/windows/caption.rs`). It
   holds `title-bar.slint` with a `title-bar/` folder of its private children
-  (`title-bar-action-button`, `search-bar`), `window-background.slint` — the window's back layer,
-  drawn under everything else — and `window-control.slint`, the platform-control contract the title
-  bar draws from. This is the one bucket allowed to hold app-specific chrome, which is what
-  distinguishes it from `graphics/`: the title bar's search, gear, news, music and notification
-  buttons are fixed parts of this app's window frame, not reusable widgets.
+  (`title-bar-action-button`, `quick-action-button`, `account-button`),
+  `window-background.slint` — the window's back layer, drawn under everything else — and
+  `window-control.slint`, the platform-control contract the title bar draws from. This is the one
+  bucket allowed to hold app-specific chrome, which is what distinguishes it from `graphics/`: the
+  title bar's search, gear, news, music and notification buttons are fixed parts of this app's
+  window frame, not reusable widgets.
 - **`screens/`** — the destinations `Navigation` can navigate to: one `*-screen.slint` each
   (`game-screen`, `launch-screen`, `setup-screen`) with a same-named folder for its parts (`game/`,
   `setup/`). `screens.slint` is the stack that mounts them and is the only screen file the app root

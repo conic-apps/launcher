@@ -9,7 +9,7 @@ import { SetupScreen } from "setup-screen.slint";
 
 // The screen stack: the one place that maps `Navigation`'s screen name to a
 // component, and the only thing the app root needs to know about the screens.
-// The account view is an overlay on the game screen, not a screen of its own.
+// The account view is an app-root overlay, not a screen of its own.
 //
 // A screen playing its exit stays mounted while `leaving-screen` is set, which is
 // why two of these check a disjunction rather than `current-screen` alone.
