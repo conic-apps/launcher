@@ -6,7 +6,10 @@ import { Theme } from "../../graphics/theme.slint";
 import { AppIcon } from "../../graphics/display/app-icon.slint";
 import { Loading } from "../../graphics/controls/loading.slint";
 import { Progress } from "../../graphics/controls/progress.slint";
+import { TooltipArea } from "../../graphics/controls/tooltip-area.slint";
+import { PillFace } from "../../graphics/display/pill-face.slint";
 import { ContentState, ContentText } from "../../globals/content.slint";
+import { TaskState } from "../../globals/tasks.slint";
 import { ScrollView } from "../../graphics/containers/scroll-view.slint";
 import {
     ScrollViewHorizontal,
@@ -63,66 +66,115 @@ component MetadataEntry inherits Rectangle {
     }
 }
 
-component DetailButton inherits Rectangle {
+// The detail row's action: one pill whose fill and face say what a click does.
+//
+// The states cross-fade rather than swap, because stopping a download is a
+// different intent from starting one, and the width eases to the face on show so
+// a longer translation widens the pill instead of being elided.
+component DetailPill inherits Rectangle {
+    /// "download" | "cancel" | "installed"
     in property <string> kind: "download";
-    in property <string> label: "";
-    in property <bool> favorited: false;
-    in property <bool> on: true;
     callback clicked;
 
-    height: 36px;
-    border-radius: 6px;
-    opacity: root.on ? 1.0 : 0.6;
-    // Remove is surface0 with a red outline; the rest are Latte teal.
-    background: root.kind == "remove" ? Theme.surface-0 : Theme.latte-teal;
-    border-width: root.kind == "remove" ? 1px : 0px;
-    border-color: Theme.red;
+    // An installed project's pill stays green and done until the pointer is on
+    // it, and only then says what a click would do: take it away again. A
+    // destructive action should not be the resting state of a finished download.
+    private property <bool> removing: root.kind == "installed" && touch.has-hover;
+    // Tighter than the launch button's 24px: this row also carries the heart and
+    // the progress, so the pill gives the label less air than the game view's.
+    private property <length> face-padding: 20px;
 
-    private property <color> ink:
-        root.kind == "remove"
-        ? (touch.has-hover ? Theme.red : white)
-        : root.kind == "heart" && root.favorited ? Theme.red : white;
+    // An installed pill keeps the wider of its two faces so hovering can never
+    // shrink it out from under the pointer and start a hover flicker.
+    width: root.kind == "installed" ? max(installed-pill.pill-width, remove-pill.pill-width)
+        : root.kind == "cancel" ? cancel-pill.pill-width
+        : download-pill.pill-width;
+    height: 40px;
+    border-radius: 10000px;
+    background: root.kind == "cancel" ? Theme.mauve
+        : root.removing ? Theme.red
+        : root.kind == "installed" ? Theme.green
+        : Theme.blue;
+    opacity: touch.pressed ? 0.9 : 1.0;
+    clip: true;
+    animate width, background, opacity {
+        duration: 200ms;
+        easing: ease;
+    }
 
-    HorizontalLayout {
-        // The row fills the button so the glyph and label centre as one run.
-        x: 0;
-        y: 0;
-        width: parent.width;
-        height: parent.height;
-        spacing: 4px;
-        alignment: center;
-        // `alignment` is the main axis; without this the glyph sits at the top.
-        cross-axis-alignment: center;
-
-        if root.kind == "heart": AppIcon {
-            // The glyph inside the view box is smaller, so 16px looks too small.
-            name: root.favorited ? "heart" : "heart-outline";
-            size: 20px;
-            icon-color: root.ink;
+    download-face := Rectangle {
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        opacity: root.kind == "download" ? 1.0 : 0.0;
+        animate opacity {
+            duration: 120ms;
+            easing: ease-out-quad;
         }
 
-        if root.label != "": Text {
-            text: root.label;
-            font-size: 14px;
-            color: root.ink;
-            vertical-alignment: center;
+        download-pill := PillFace {
+            icon: "download";
+            side-padding: root.face-padding;
+            text: @tr("Download");
+        }
+    }
+
+    cancel-face := Rectangle {
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        opacity: root.kind == "cancel" ? 1.0 : 0.0;
+        animate opacity {
+            duration: 120ms;
+            easing: ease-out-quad;
         }
 
-        if root.kind == "download": AppIcon {
-            name: "download";
-            size: 20px;
-            icon-color: root.ink;
+        cancel-pill := PillFace {
+            icon: "xmark";
+            icon-size: 18px;
+            side-padding: root.face-padding;
+            text: @tr("Cancel");
+        }
+    }
+
+    installed-face := Rectangle {
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        opacity: root.kind == "installed" && !root.removing ? 1.0 : 0.0;
+        animate opacity {
+            duration: 120ms;
+            easing: ease-out-quad;
         }
 
-        if root.kind == "remove": AppIcon {
-            name: "trash";
-            size: 20px;
-            icon-color: root.ink;
+        installed-pill := PillFace {
+            icon: "checkmark-outline";
+            icon-size: 22px;
+            side-padding: root.face-padding;
+            text: @tr("Downloaded");
+        }
+    }
+
+    remove-face := Rectangle {
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        opacity: root.removing ? 1.0 : 0.0;
+        animate opacity {
+            duration: 120ms;
+            easing: ease-out-quad;
+        }
+
+        remove-pill := PillFace {
+            icon: "trash";
+            side-padding: root.face-padding;
+            text: @tr("Remove");
         }
     }
 
     touch := TouchArea {
-        enabled: root.on;
+        width: parent.width;
+        height: parent.height;
         clicked => { root.clicked(); }
     }
 }
@@ -134,6 +186,16 @@ component DetailBody inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;
+
+    // What the pill does next: still asking the disk → a spinner; a download
+    // running → cancel; installed → done, removing on hover; otherwise →
+    // download. A pack has no installed state at all, so it only ever downloads
+    // or cancels.
+    private property <string> action: ContentState.detail-can-remove
+        && ContentState.detail-checking-installed ? "checking"
+        : ContentState.detail-operating ? "cancel"
+        : ContentState.detail-can-remove && ContentState.detail-installed ? "installed"
+        : "download";
 
     // Named so the body can read its scroll offset and cull hidden items.
     scroller := ScrollView {
@@ -245,25 +307,18 @@ component DetailBody inherits Rectangle {
                     }
 
                     HorizontalLayout {
-                        height: 36px;
+                        height: 40px;
                         spacing: 8px;
                         alignment: start;
+                        cross-axis-alignment: center;
 
-                        DetailButton {
-                            kind: "heart";
-                            label: "";
-                            width: 36px;
-                            favorited: ContentState.detail-favorited;
-                            on: true;
-                            clicked => { ContentState.toggle-favorite(ContentState.detail-id); }
-                        }
-
-                        // checking → spinner, installed → remove, else → download.
-                        if ContentState.detail-can-remove && ContentState.detail-checking-installed: Rectangle {
-                            width: 120px;
-                            height: 36px;
-                            border-radius: 6px;
-                            background: Theme.latte-teal;
+                        // Still asking the disk whether this project is installed:
+                        // the same pill, holding a spinner.
+                        if root.action == "checking": Rectangle {
+                            width: 112px;
+                            height: 40px;
+                            border-radius: 10000px;
+                            background: Theme.blue;
                             opacity: 0.6;
 
                             Loading {
@@ -273,24 +328,54 @@ component DetailBody inherits Rectangle {
                             }
                         }
 
-                        if ContentState.detail-can-remove
-                            && !ContentState.detail-checking-installed
-                            && ContentState.detail-installed: DetailButton {
-                            kind: "remove";
-                            label: @tr("Remove");
-                            width: 120px;
-                            on: !ContentState.detail-operating;
-                            clicked => { ContentState.remove(); }
+                        if root.action != "checking": DetailPill {
+                            kind: root.action;
+                            clicked => {
+                                if root.action == "cancel" {
+                                    // The centre applies its own rule: a download
+                                    // that has been writing asks before it stops.
+                                    if ContentState.detail-task-id >= 0 {
+                                        TaskState.request-cancel(ContentState.detail-task-id);
+                                    }
+                                } else if root.action == "installed" {
+                                    ContentState.remove();
+                                } else {
+                                    ContentState.download();
+                                }
+                            }
                         }
 
-                        if (!ContentState.detail-can-remove
-                            || !ContentState.detail-checking-installed)
-                            && !ContentState.detail-installed: DetailButton {
-                            kind: "download";
-                            label: @tr("Download");
-                            width: 120px;
-                            on: !ContentState.detail-operating;
-                            clicked => { ContentState.download(); }
+                        // The project's own toggle, drawn like the action icons
+                        // beside the game view's launch button.
+                        Rectangle {
+                            width: 32px;
+                            height: 32px;
+                            border-radius: 100px;
+                            background: heart-touch.pressed ? Theme.surface-0
+                                : heart-touch.has-hover ? Theme.surface-1
+                                : transparent;
+
+                            AppIcon {
+                                name: ContentState.detail-favorited ? "heart" : "heart-outline";
+                                size: 20px;
+                            }
+
+                            heart-touch := TouchArea {
+                                width: parent.width;
+                                height: parent.height;
+                                clicked => { ContentState.toggle-favorite(ContentState.detail-id); }
+                            }
+
+                            // The glyph names the state, so the hint names the
+                            // action that changes it.
+                            TooltipArea {
+                                text: ContentState.detail-favorited
+                                    ? @tr("Remove from favorites")
+                                    : @tr("Add to favorites");
+                                hovered: heart-touch.has-hover;
+                                wrap: false;
+                                show-on-press: false;
+                            }
                         }
 
                         if ContentState.detail-operating && ContentState.detail-progress-max > 0: VerticalLayout {

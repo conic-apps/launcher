@@ -91,6 +91,20 @@ pub(crate) fn open_detail(ui: &App, platform: Platform, id: String) {
     ui_state.set_detail_body_always(platform == Platform::Modrinth);
     ui_state.set_detail_installed(false);
     ui_state.set_detail_installed_version(SharedString::default());
+    // A download belongs to the project it was started for. Reopening that
+    // project's panel resumes its Cancel, while another project starts idle
+    // instead of offering to stop the first one's work.
+    let instance = controller().borrow().instance_id.clone();
+    match crate::ui::services::tasks::active_content_download(&instance, &id) {
+        Some(running) => {
+            ui_state.set_detail_operating(true);
+            ui_state.set_detail_task_id(running);
+        }
+        None => {
+            ui_state.set_detail_operating(false);
+            ui_state.set_detail_task_id(-1);
+        }
+    }
     ui_state.set_detail_favorited(false);
     ui_state.set_detail_body(SharedString::default());
     // The body of the panel being left, not just its string: the display list

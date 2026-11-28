@@ -1435,16 +1435,6 @@ msgstr "Keine Ergebnisse entsprechen dem aktuellen Filter"
 
 #: ui
 msgctxt "DetailBody"
-msgid "Download"
-msgstr "Herunterladen"
-
-#: ui
-msgctxt "DetailBody"
-msgid "Remove"
-msgstr "Entfernen"
-
-#: ui
-msgctxt "DetailBody"
 msgid "Installed: {}"
 msgstr "Installiert: {}"
 
@@ -3922,3 +3912,33 @@ msgstr "Conic Launcher wurde auf Version {} aktualisiert.\n\nKlicke hier, um die
 msgctxt "SettingsAppearance"
 msgid "Theme"
 msgstr "Farbschema"
+
+#: ui
+msgctxt "DetailPill"
+msgid "Download"
+msgstr "Herunterladen"
+
+#: ui
+msgctxt "DetailPill"
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: ui
+msgctxt "DetailPill"
+msgid "Remove"
+msgstr "Entfernen"
+
+#: ui
+msgctxt "DetailBody"
+msgid "Add to favorites"
+msgstr "Zu Favoriten hinzufügen"
+
+#: ui
+msgctxt "DetailBody"
+msgid "Remove from favorites"
+msgstr "Aus Favoriten entfernen"
+
+#: ui
+msgctxt "DetailPill"
+msgid "Downloaded"
+msgstr "Heruntergeladen"
