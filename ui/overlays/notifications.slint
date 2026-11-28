@@ -347,8 +347,6 @@ component NotificationRow inherits Rectangle {
     // A stack consumes the slot, not the card. Collapsing it on the way out is
     // what glides the rows below up, now that no fixed pitch fits two heights.
     private property <bool> slot-closing: root.leaving || root.clearing || root.falling;
-    // A centre row leaves by fading inside a slot that is still collapsing, so
-    // its fade has to lead the collapse instead of hanging on the card.
     private property <bool> fade-exit: root.leaving && !root.slide-on-exit;
 
     width: 100%;
