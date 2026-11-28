@@ -29,16 +29,22 @@ component NavItem inherits Rectangle {
 
     width: 100%;
     height: 30px;
-    border-radius: 8px;
+    border-radius: 6px;
     background: touch.pressed ? Theme.surface-1.transparentize(0.2)
         : root.active ? Theme.surface-1.transparentize(0.2)
         : touch.has-hover ? Theme.surface-0.transparentize(0.2)
         : transparent;
 
+    // Dimmer than the active row, well above the 0.5-0.6 the disabled controls
+    // drop to.
+    private property <color> ink:
+        Theme.default-text-color.transparentize(root.active ? 0.1 : 0.25);
+
     Rectangle {
-        x: -6px;
+        x: 2px;
+        y: (root.height - self.height) / 2;
         width: 3px;
-        height: root.active ? 22px : 0px;
+        height: root.active ? 16px : 0px;
         border-radius: 9999px;
         background: Theme.mauve;
         opacity: root.active ? 1.0 : 0.0;
@@ -49,14 +55,14 @@ component NavItem inherits Rectangle {
     }
 
     HorizontalLayout {
-        padding-left: 8px;
+        padding-left: 10px;
         spacing: 6px;
         cross-axis-alignment: center;
 
         AppIcon {
             name: root.icon;
             size: 16px;
-            icon-color: Theme.default-text-color.transparentize(0.1);
+            icon-color: root.ink;
         }
 
         // The label has the row's remaining width; a long translation elides
@@ -75,7 +81,7 @@ component NavItem inherits Rectangle {
                 text: root.label;
                 font-size: 13px;
                 font-weight: Theme.font-weight-normal;
-                color: Theme.default-text-color.transparentize(0.1);
+                color: root.ink;
                 overflow: elide;
             }
         }
@@ -142,10 +148,10 @@ export component SettingsOverlay inherits Rectangle {
     clip: true;
 
     // A fixed drawer is either cramped on the 840px minimum window or too wide
-    // on a large display. The sidebar is fixed at 208px; trimming its padding by
-    // the same 16px keeps the longest translated label at its 224px text width.
-    // The body scales with the window and keeps 80px of game visible.
-    private property <length> sidebar-width: 208px;
+    // on a large display. The sidebar is fixed and narrow, so the translated
+    // labels it does not fit elide; the body scales with the window and keeps
+    // 80px of game visible.
+    private property <length> sidebar-width: 180px;
     private property <length> content-width:
         min(
             min(max(root.width * 0.60, 520px), 680px),
@@ -366,10 +372,7 @@ export component SettingsOverlay inherits Rectangle {
         }
 
         VerticalLayout {
-            padding-top: 24px;
-            padding-right: 14px;
-            padding-bottom: 16px;
-            padding-left: 14px;
+            padding: 12px;
             spacing: 4px;
             alignment: start;
 
