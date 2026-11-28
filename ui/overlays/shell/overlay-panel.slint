@@ -12,9 +12,6 @@ import { Theme } from "../../graphics/theme.slint";
 // Only `y` moves: `opacity` or `transform` on the panel would put the subtree in
 // a render layer, and the renderer gives up above 8192px. The overlay takes no
 // drag; a press on the scrim closes it.
-//
-// Showing one frame at the start value is what makes the entrance play: a hidden
-// element is never painted, so an unread animated property snaps to its target.
 export component OverlayPanel inherits Rectangle {
     in property <bool> panel-visible: false;
     /// How much of the window width the container leaves free — 150px, or 200px
@@ -47,8 +44,6 @@ export component OverlayPanel inherits Rectangle {
     changed panel-visible => {
         if root.panel-visible {
             if root.phase != "shown" {
-                // Play the entrance from wherever the panel is, so an
-                // interrupted leave carries on from its offset.
                 root.phase = "starting";
                 start-timer.restart();
             }
@@ -57,10 +52,10 @@ export component OverlayPanel inherits Rectangle {
         }
     }
 
-    // One frame at the start values, so the renderer sees them before the
+    // Two frames at the start values, so the renderer sees them before the
     // container is asked to move.
     start-timer := Timer {
-        interval: 16ms;
+        interval: 32ms;
         running: root.phase == "starting";
         triggered => { root.phase = "shown"; }
     }
@@ -80,12 +75,15 @@ export component OverlayPanel inherits Rectangle {
     }
 
     // The container's offset: the window height while parked, 0 once arrived.
-    // Each transition moves it, so the 400ms/280ms pair applies per direction.
+    // `starting` sits one pixel lower, still out of sight.
     private property <length> panel-y:
-        root.phase == "shown" || root.phase == "starting" ? 0px : root.height;
+        root.phase == "shown" ? 0px
+        : root.phase == "starting" ? root.height + 1px
+        : root.height;
     private property <bool> leaving: root.phase == "leaving";
 
     animate panel-y {
+        enabled: root.phase != "starting";
         duration: root.leaving ? 280ms : 400ms;
         easing: root.leaving ? cubic-bezier(0.47, 0, 1, 0.75) : cubic-bezier(0, 0.47, 0.25, 1);
     }
