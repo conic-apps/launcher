@@ -347,6 +347,9 @@ component NotificationRow inherits Rectangle {
     // A stack consumes the slot, not the card. Collapsing it on the way out is
     // what glides the rows below up, now that no fixed pitch fits two heights.
     private property <bool> slot-closing: root.leaving || root.clearing || root.falling;
+    // A centre row leaves by fading inside a slot that is still collapsing, so
+    // its fade has to lead the collapse instead of hanging on the card.
+    private property <bool> fade-exit: root.leaving && !root.slide-on-exit;
 
     width: 100%;
     height: root.slot-closing ? 0px : root.card-height;
@@ -360,15 +363,17 @@ component NotificationRow inherits Rectangle {
     }
 
     animate phase-dx, phase-alpha {
-        duration: root.leaving ? 200ms : 240ms;
-        easing: root.leaving
+        duration: root.fade-exit ? 160ms : root.leaving ? 200ms : 240ms;
+        easing: root.fade-exit
+            ? ease-out-quad
+            : root.leaving
             ? cubic-bezier(0.55, 0, 1, 0.45)
             : cubic-bezier(0, 0.55, 0.35, 1);
     }
     animate clear-dx, clear-alpha {
-        duration: 200ms;
+        duration: 160ms;
         delay: root.clear-index * 40ms;
-        easing: cubic-bezier(0.55, 0, 1, 0.45);
+        easing: ease-out-quad;
     }
     animate body-alpha {
         duration: 160ms;
