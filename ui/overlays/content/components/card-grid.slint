@@ -27,7 +27,6 @@ export component CardGrid inherits Rectangle {
     callback delete(string, string);
     callback toggle-favorite(string);
     callback open-link(string);
-    callback play(string);
 
     width: 100%;
     height: root.grid-height;
@@ -50,7 +49,6 @@ export component CardGrid inherits Rectangle {
             delete => { root.delete(card.id, card.title); }
             toggle-favorite => { root.toggle-favorite(card.id); }
             open-link => { root.open-link(card.link); }
-            play => { root.play(card.id); }
         }
     }
 }

@@ -3942,3 +3942,18 @@ msgstr "Favorilerden kaldır"
 msgctxt "DetailPill"
 msgid "Downloaded"
 msgstr "İndirildi"
+
+#: ui
+msgctxt "SaveDetailsPanel"
+msgid "Save info"
+msgstr "Kayıt bilgisi"
+
+#: ui
+msgctxt "SaveDetailsPanel"
+msgid "Last played at"
+msgstr "Son oynanma tarihi"
+
+#: ui
+msgctxt "SaveDetailsPanel"
+msgid "Version"
+msgstr "Sürüm"

@@ -21,7 +21,7 @@ use slint::{ComponentHandle, Image, Model, ModelRc, SharedPixelBuffer, SharedStr
 use crate::slint_backend::{
     App, AppConfig, CardTag, ContentCard, ContentSearch, ContentState, DeleteSaveState, Dialogs,
     FilterChip, FilterRow, GalleryShot, GameState, MarkdownImage, MdChunk, MdItem, Navigation,
-    PageButton,
+    PageButton, SaveChip, SaveDetail, SaveDetailState,
 };
 use content::mods::{ModLoader, ResolvedMod};
 use instance::InstanceRuntime;
@@ -33,6 +33,7 @@ mod grid;
 mod icon;
 mod lists;
 mod preview;
+mod save_detail;
 mod search;
 mod wiring;
 pub(crate) mod world_map;
@@ -45,6 +46,7 @@ pub(crate) use grid::*;
 pub(crate) use icon::*;
 pub(crate) use lists::*;
 pub(crate) use preview::*;
+pub(crate) use save_detail::*;
 pub(crate) use search::*;
 pub(crate) use wiring::*;
 
@@ -110,10 +112,7 @@ pub(crate) fn finish_card(card: PendingCard) -> ContentCard {
         },
         icon_loading,
         action_kind: SharedString::from(card.action_kind),
-        shows_play: card.shows_play,
         mod_disabled: card.mod_disabled,
-        spawn_x: card.spawn.map_or(0, |(x, _)| x),
-        spawn_z: card.spawn.map_or(0, |(_, z)| z),
         ..Default::default()
     }
 }

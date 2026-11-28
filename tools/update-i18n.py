@@ -2681,6 +2681,51 @@ SAVE_TAGS.update({
     },
 })
 
+# The save details overlay: its title and the two captions its pills carry.
+SAVE_TAGS.update({
+    "SaveDetailsPanel": {
+        "Save info": {
+            "zh_CN": "存档信息",
+            "zh_TW": "存檔資訊",
+            "ja_JP": "ワールド情報",
+            "ko_KR": "월드 정보",
+            "de_DE": "Welt-Informationen",
+            "fr_FR": "Informations sur la sauvegarde",
+            "es_ES": "Información de la partida",
+            "pt_BR": "Informações do mundo",
+            "ru_RU": "О сохранении",
+            "tr_TR": "Kayıt bilgisi",
+            "pl_PL": "Informacje o świecie",
+        },
+        "Last played at": {
+            "zh_CN": "最后游玩于",
+            "zh_TW": "最後遊玩於",
+            "ja_JP": "最終プレイ日時",
+            "ko_KR": "마지막 플레이 일시",
+            "de_DE": "Zuletzt gespielt am",
+            "fr_FR": "Dernière partie le",
+            "es_ES": "Última partida el",
+            "pt_BR": "Última partida em",
+            "ru_RU": "Последний запуск",
+            "tr_TR": "Son oynanma tarihi",
+            "pl_PL": "Ostatnio grano",
+        },
+        "Version": {
+            "zh_CN": "版本",
+            "zh_TW": "版本",
+            "ja_JP": "バージョン",
+            "ko_KR": "버전",
+            "de_DE": "Version",
+            "fr_FR": "Version",
+            "es_ES": "Versión",
+            "pt_BR": "Versão",
+            "ru_RU": "Версия",
+            "tr_TR": "Sürüm",
+            "pl_PL": "Wersja",
+        },
+    },
+})
+
 def unescape(text: str) -> str:
     escapes = {'"': '"', "\\": "\\", "n": "\n"}
     return re.sub(r"\\(.)", lambda found: escapes.get(found.group(1), found.group(0)), text)

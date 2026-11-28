@@ -5,14 +5,12 @@
 import { Theme } from "../../../graphics/theme.slint";
 import { AppIcon } from "../../../graphics/display/app-icon.slint";
 import { Loading } from "../../../graphics/controls/loading.slint";
-import { WorldMap } from "world-map.slint";
-import { WorldMapState } from "../../../globals/worldmap.slint";
 import {
     CardTag,
     ContentCard,
     ContentText,
 } from "../../../globals/content.slint";
-import { GameState, GameTime } from "../../../globals/game.slint";
+import { GameTime } from "../../../globals/game.slint";
 
 // One card of a content grid, shared by all nine grids. The card is three
 // overlapping boxes (image, info, action column) and the hover state reaches into
@@ -138,7 +136,6 @@ export component Card inherits Rectangle {
     callback delete();
     callback toggle-favorite();
     callback open-link();
-    callback play();
 
     // Placed by Rust: there is no grid layout here, so without these every card
     // would draw at the origin.
@@ -150,8 +147,6 @@ export component Card inherits Rectangle {
     background: Theme.surface-0.transparentize(0.6);
     border-radius: 8px;
     opacity: card.mod-disabled ? 0.7 : 1.0;
-    // An expanded save rises over its neighbours.
-    z: card.selected ? 10 : 0;
 
     // One `TouchArea` routes clicks to the hover-revealed controls by position.
     // Per-control areas would fight: `has-hover` is only true for the topmost
@@ -159,9 +154,7 @@ export component Card inherits Rectangle {
     hover-area := TouchArea {
         enabled: root.interactive;
         clicked => {
-            if root.over-play {
-                root.play();
-            } else if root.over-first {
+            if root.over-first {
                 if root.card.action-kind == "favorite" {
                     root.toggle-favorite();
                 } else {
@@ -179,7 +172,7 @@ export component Card inherits Rectangle {
         }
     }
 
-    private property <bool> hovered: hover-area.has-hover || expansion.pointed;
+    private property <bool> hovered: hover-area.has-hover;
     /// The 16px the inner card gives up while the pointer is on the card.
     private property <length> info-inset: root.hovered ? 16px : 0px;
     /// A click past the image and info is on the cell's transparent overhang and
@@ -189,7 +182,6 @@ export component Card inherits Rectangle {
 
     private property <length> actions-left: root.width - 18px;
     private property <bool> column-shown: root.card.action-kind != "";
-    private property <length> play-top: (root.height - 18px) / 2;
 
     /// The pointer is over the column's top button.
     private property <bool> over-first:
@@ -200,10 +192,6 @@ export component Card inherits Rectangle {
         root.hovered && root.column-shown
         && hover-area.mouse-x >= root.actions-left
         && hover-area.mouse-y >= root.height - 26px && hover-area.mouse-y <= root.height - 12px;
-    private property <bool> over-play:
-        root.hovered && root.card.shows-play
-        && hover-area.mouse-x >= 20px && hover-area.mouse-x <= 38px
-        && hover-area.mouse-y >= root.play-top && hover-area.mouse-y <= root.play-top + 18px;
 
     /// 1 while the icon is loading, 0 after. A float because `visible` cannot be
     /// animated, and the image's opacity is already used for the saves' hover dim.
@@ -383,71 +371,5 @@ export component Card inherits Rectangle {
                 }
             }
         }
-    }
-
-    if root.card.shows-play: Rectangle {
-        x: 20px;
-        width: 18px;
-        height: 18px;
-        background: transparent;
-        opacity: root.hovered ? 1.0 : 0.0;
-        transform-scale: root.hovered ? 1.0 : 0.5;
-
-        animate opacity, transform-scale {
-            duration: 200ms;
-            easing: ease-out-quad;
-        }
-
-        AppIcon {
-            name: "play";
-            size: 18px;
-            // The play glyph is a fill, so this is its fill colour.
-            icon-color: Theme.default-text-color.transparentize(0.1);
-        }
-    }
-
-    // The saves' expansion: a selected save grows by 160px (upwards near the
-    // window bottom), gains an outline and holds the world map. It is `visible`
-    // rather than `if`, so its hover keeps the card hovered.
-    expansion := Rectangle {
-        private property <float> expanded: root.card.selected ? 1.0 : 0.0;
-
-        visible: self.expanded > 0.0;
-        x: 0;
-        y: root.card.expand-up ? -160px * self.expanded : 0px;
-        width: root.width;
-        height: root.height + 160px * self.expanded;
-        opacity: self.expanded;
-        animate height, opacity, y {
-            duration: 200ms;
-            easing: ease;
-        }
-        background: Theme.surface-0;
-        border-radius: 8px;
-        // A 2px outline (a border is drawn inside the box).
-        border-width: 2px;
-        border-color: Theme.blue;
-
-        // A click here only keeps the card hovered.
-        expansion-touch := TouchArea { }
-
-        // 8px of padding around the world map. One map exists at a time; tearing
-        // it down drops its tiles, since the cache is keyed by world.
-        if root.card.selected && GameState.has-current: WorldMap {
-            x: 8px;
-            y: 8px;
-            width: parent.width - 16px;
-            height: parent.height - 16px;
-            folder-name: root.card.id;
-            instance-id: GameState.current-id;
-            // `0, 0` means no `spawn.pos`; Rust falls back to the world spawn.
-            center-x: root.card.spawn-x;
-            center-z: root.card.spawn-z;
-            show-cursor-coords: true;
-            cursor-coordinates-position: "bottom-center";
-        }
-
-        // The map's own hover counts too; `expansion-touch` is under it.
-        out property <bool> pointed: expansion-touch.has-hover || WorldMapState.hovered;
     }
 }

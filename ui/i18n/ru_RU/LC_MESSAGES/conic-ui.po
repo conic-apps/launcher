@@ -3942,3 +3942,18 @@ msgstr "Убрать из избранного"
 msgctxt "DetailPill"
 msgid "Downloaded"
 msgstr "Скачано"
+
+#: ui
+msgctxt "SaveDetailsPanel"
+msgid "Save info"
+msgstr "О сохранении"
+
+#: ui
+msgctxt "SaveDetailsPanel"
+msgid "Last played at"
+msgstr "Последний запуск"
+
+#: ui
+msgctxt "SaveDetailsPanel"
+msgid "Version"
+msgstr "Версия"

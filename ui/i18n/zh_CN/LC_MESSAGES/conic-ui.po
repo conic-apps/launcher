@@ -3942,3 +3942,18 @@ msgstr "从收藏夹中移除"
 msgctxt "DetailPill"
 msgid "Downloaded"
 msgstr "已下载"
+
+#: ui
+msgctxt "SaveDetailsPanel"
+msgid "Save info"
+msgstr "存档信息"
+
+#: ui
+msgctxt "SaveDetailsPanel"
+msgid "Last played at"
+msgstr "最后游玩于"
+
+#: ui
+msgctxt "SaveDetailsPanel"
+msgid "Version"
+msgstr "版本"

@@ -15,10 +15,8 @@ pub mod datapack;
 pub mod level;
 mod nbt;
 
-/// The fields a save's card shows, read out of its `level.dat` root.
-///
-/// The spawn position is not shown on the card, but the world map opens
-/// centred on it.
+/// The fields a save's card and details overlay show, read out of its
+/// `level.dat` root.
 #[derive(Debug, Clone, Default)]
 pub struct LevelSummary {
     pub name: Option<String>,
@@ -29,6 +27,8 @@ pub struct LevelSummary {
     pub last_played: Option<u64>,
     /// `Data.spawn.pos` — the world's spawn point, `[x, y, z]` in blocks.
     pub spawn: Option<[i32; 3]>,
+    /// `Data.Version.Name` — the game version that last saved the world.
+    pub version: Option<String>,
 }
 
 pub fn summarize_level(root: &Value) -> LevelSummary {
@@ -36,16 +36,21 @@ pub fn summarize_level(root: &Value) -> LevelSummary {
         return LevelSummary::default();
     };
     LevelSummary {
-        name: match compound_field(data, "LevelName") {
-            Some(Value::String(name)) => Some(name.clone()),
-            _ => None,
-        },
+        name: string_field(data, "LevelName"),
         game_type: integer_field(data, "GameType").map(|value| value as i32),
         allow_commands: integer_field(data, "allowCommands").is_some_and(|value| value != 0),
         // The launch script stores milliseconds, the unit the frontend's date
         // formatting expects.
         last_played: integer_field(data, "LastPlayed").map(|value| value as u64),
         spawn: spawn_field(data),
+        version: compound_field(data, "Version").and_then(|version| string_field(version, "Name")),
+    }
+}
+
+fn string_field(value: &Value, name: &str) -> Option<String> {
+    match compound_field(value, name)? {
+        Value::String(text) => Some(text.clone()),
+        _ => None,
     }
 }
 
@@ -154,6 +159,39 @@ mod tests {
         assert_eq!(summary.name.as_deref(), Some("New World"));
         assert_eq!(summary.game_type, Some(1));
         assert_eq!(summary.last_played, Some(1_700_000_000_000));
+    }
+
+    fn data_with(fields: &[(&str, Value)]) -> Value {
+        let mut data = HashMap::from([
+            (
+                "LevelName".to_string(),
+                Value::String("New World".to_string()),
+            ),
+            ("GameType".to_string(), Value::Int(1)),
+            ("LastPlayed".to_string(), Value::Long(1_700_000_000_000)),
+        ]);
+        for (name, value) in fields {
+            data.insert(name.to_string(), value.clone());
+        }
+        Value::Compound(HashMap::from([("Data".to_string(), Value::Compound(data))]))
+    }
+
+    #[test]
+    fn reads_the_version_the_world_was_last_saved_with() {
+        let summary = summarize_level(&data_with(&[(
+            "Version",
+            Value::Compound(HashMap::from([
+                ("Id".to_string(), Value::Int(4189)),
+                ("Name".to_string(), Value::String("1.21.4".to_string())),
+            ])),
+        )]));
+
+        assert_eq!(summary.version.as_deref(), Some("1.21.4"));
+    }
+
+    #[test]
+    fn a_world_without_a_version_tag_has_none() {
+        assert_eq!(summarize_level(&data_with(&[])).version, None);
     }
 
     #[test]

@@ -51,20 +51,12 @@ pub(crate) fn save_card(
     let last_played = level.last_played;
 
     let mut tags: Vec<PendingTag> = Vec::new();
-    if let Some(game_type) = level.game_type {
-        // The four names are words the user reads, so they are resolved in the
-        // card (`ContentText.save-tag`) rather than composed here: a string Rust
-        // pushed is fixed at that moment and would not follow a language change.
-        let kind = match game_type {
-            0 => "game-mode-survival",
-            1 => "game-mode-creative",
-            2 => "game-mode-adventure",
-            3 => "game-mode-spectator",
-            _ => "",
-        };
-        if !kind.is_empty() {
-            tags.push(translated_tag(kind));
-        }
+    // The four names are words the user reads, so they are resolved in the card
+    // (`ContentText.save-tag`) rather than composed here: a string Rust pushed is
+    // fixed at that moment and would not follow a language change.
+    let game_mode = game_mode_key(level.game_type);
+    if !game_mode.is_empty() {
+        tags.push(translated_tag(game_mode));
     }
     if cheats {
         tags.push(translated_tag("command-enabled"));
@@ -96,12 +88,19 @@ pub(crate) fn save_card(
         tags,
         icon,
         action_kind: "file",
-        shows_play: true,
-        // The save's spawn point, handed to the world map as its center. `None`
-        // where there is no `Data.spawn.pos`, which is the same as `(0, 0)` here
-        // and asks the world for its own spawn.
-        spawn: level.spawn.map(|pos| (pos[0], pos[2])),
         ..Default::default()
+    }
+}
+
+/// The `ContentText.save-tag` key of a `Data.GameType` value: the four modes the
+/// game has, and nothing for a number it does not know.
+pub(crate) fn game_mode_key(game_type: Option<i32>) -> &'static str {
+    match game_type {
+        Some(0) => "game-mode-survival",
+        Some(1) => "game-mode-creative",
+        Some(2) => "game-mode-adventure",
+        Some(3) => "game-mode-spectator",
+        _ => "",
     }
 }
 
@@ -298,25 +297,6 @@ pub(crate) fn set_screenshot(ui: &App, index: i32) {
     state.set_screenshot_index(index);
     if let Some(shot) = state.get_screenshots().row_data(index as usize) {
         state.set_current_screenshot(shot.image);
-    }
-}
-
-/// One card expands and the rest collapse, and the expansion flips upwards when
-/// the card sits within 160px of the window's bottom edge.
-pub(crate) fn select_save(ui: &App, folder: &str) {
-    let state = ui.global::<ContentState>();
-    let model = state.get_saves();
-    let mut cards: Vec<ContentCard> = (0..model.row_count())
-        .filter_map(|row| model.row_data(row))
-        .collect();
-    let flip_threshold = ui.window().size().height as i32 - 160;
-    for card in &mut cards {
-        let selected = !folder.is_empty() && card.id == folder;
-        card.selected = selected;
-        card.expand_up = selected && card.y as i32 + card.height as i32 > flip_threshold;
-    }
-    for (index, card) in cards.into_iter().enumerate() {
-        model.set_row_data(index, card);
     }
 }
 
