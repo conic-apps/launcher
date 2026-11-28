@@ -25,11 +25,16 @@ export component AccountAvatar inherits Rectangle {
     /// comment above for the two values callers actually use.
     in property <length> corner-radius: 10000px;
     /// The width of the per-kind ring. The dropdown's 18px rows ask for 1px,
-    /// where the ring is a large share of the head.
+    /// where the ring is a large share of the head; `0px` drops the ring, and the
+    /// head then fills the whole box.
     in property <length> ring-width: 2px;
 
     width: size;
     height: size;
+
+    // The ring is the frame around the head, so the 4px gap exists to hold it:
+    // without a ring there is nothing to hold and the head takes the whole box.
+    private property <length> inset: root.ring-width > 0px ? 4px : 0px;
 
     private property <color> ring-color: root.unlogged ? Theme.overlay-0
         : root.kind == "Microsoft" ? Theme.green
@@ -46,20 +51,23 @@ export component AccountAvatar inherits Rectangle {
         border-color: root.ring-color;
 
         if root.skin.width > 0: Image {
-            x: 4px;
-            y: 4px;
-            width: root.width - 8px;
-            height: root.height - 8px;
-            source: AvatarMask.rounded(root.skin, root.corner-radius, root.width - 8px);
+            x: root.inset;
+            y: root.inset;
+            width: root.width - 2 * root.inset;
+            height: root.height - 2 * root.inset;
+            source: AvatarMask.rounded(
+                root.skin,
+                root.corner-radius,
+                root.width - 2 * root.inset);
             image-fit: cover;
             image-rendering: pixelated;
         }
 
         if root.skin.width <= 0: Rectangle {
-            x: 4px;
-            y: 4px;
-            width: root.width - 8px;
-            height: root.height - 8px;
+            x: root.inset;
+            y: root.inset;
+            width: root.width - 2 * root.inset;
+            height: root.height - 2 * root.inset;
             border-radius: root.corner-radius;
             background: Theme.surface-1;
         }

@@ -174,28 +174,6 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         });
     }
     {
-        let controller = Rc::clone(&controller);
-        let weak = ui.as_weak();
-        state.on_select_account(move |key| {
-            let key = key.to_string();
-            let account = controller
-                .borrow()
-                .accounts
-                .iter()
-                .find(|account| account.key() == key)
-                .cloned();
-            let Some(account) = account else { return };
-            let config_rc = controller.borrow().config.clone();
-            config_rc.borrow_mut().current_account = Some(account);
-            if let Err(error) = config::save_config(&config_rc.borrow()) {
-                log::warn!("failed to save the config: {error}");
-            }
-            if let Some(ui) = weak.upgrade() {
-                controller.borrow_mut().apply(&ui);
-            }
-        });
-    }
-    {
         // `request` opens the launch screen and lets it wait for the centre; the button
         // does not get to decide when a launch may start. The id is the
         // caller's, so the right-click menu can launch a card that is not the
@@ -421,7 +399,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
 
 /// The head an account's avatar shows, memoised by `<key>@<size>`.
 ///
-/// `None` is the logged-out footer, which shows the bundled wide Steve.
+/// `None` is logged out, which shows the bundled wide Steve.
 pub(crate) fn account_avatar(
     account: Option<&Account>,
     size: u32,
@@ -445,7 +423,7 @@ pub(crate) fn account_avatar(
 /// Picks an account when none is selected, after an account is added.
 ///
 /// The precedence is Microsoft, then offline, then Yggdrasil — note that it is
-/// *not* the order `reload_accounts` pushes them into the footer's list in.
+/// *not* the order `reload_accounts` pushes them into the account switcher in.
 pub fn select_first_account_if_none(config: &Rc<RefCell<config::Config>>) {
     if config.borrow().current_account.is_some() {
         return;

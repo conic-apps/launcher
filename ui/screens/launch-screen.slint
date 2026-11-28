@@ -11,9 +11,10 @@ import { Progress } from "../graphics/controls/progress.slint";
 // The launch screen: avatar, instance name and version, progress panel, account
 // summary and a cancel button, in a centred column.
 //
-// The entrance is two beats: from the game screen the avatar flies in from its footer
-// slot, from anywhere else it grows in at the centre; after a 0.17s hold the hero
-// rises into the column's avatar slot while the other blocks fade in.
+// The entrance is two beats: from the game screen the avatar flies in from the
+// title bar's account chip, from anywhere else it grows in at the centre; after a
+// 0.17s hold the hero rises into the column's avatar slot while the other blocks
+// fade in.
 //
 // Layouts own their children's `x`/`y`, so every animated element sits in a slot that
 // keeps its layout box and carries the offset on a wrapper inside.
@@ -50,13 +51,15 @@ export component LaunchScreen inherits Rectangle {
     // rise is on the inner box because Slint only evaluates a read binding; a
     // second centre would first evaluate at its target and snap instead of animating.
     private property <length> hero-size: root.intro-stage == 0
-        ? (root.from-game ? 56px : 8px)
+        ? (root.from-game ? 24px : 8px)
         : 48px;
+    // The account chip's slot: the title bar's right-hand end, above this screen and
+    // outside its clip, so the flight enters from under the bar.
     private property <length> hero-first-cx: root.intro-stage == 0
-        ? (root.from-game ? 56px : root.width / 2)
+        ? (root.from-game ? root.width - 120px : root.width / 2)
         : root.width / 2;
     private property <length> hero-first-cy: root.intro-stage == 0
-        ? (root.from-game ? root.height - 46px : root.height / 2)
+        ? (root.from-game ? -22px : root.height / 2)
         : root.height / 2;
     // The slot relative to the centre the flight parks at, so the offset is zero
     // through beat one.
@@ -66,7 +69,7 @@ export component LaunchScreen inherits Rectangle {
     private property <length> hero-rise-dy: root.intro-stage >= 2
         ? root.avatar-target-y - root.height / 2
         : 0px;
-    // Already opaque when flying from the footer; the grow-in case fades up.
+    // Already opaque when flying from the account chip; the grow-in case fades up.
     private property <float> hero-opacity: root.from-game
         ? 1.0
         : (root.intro-stage == 0 ? 0.0 : 1.0);

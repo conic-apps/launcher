@@ -749,7 +749,7 @@ msgid "Screenshots"
 msgstr "Ekran görüntüleri"
 
 #: ui
-msgctxt "GameFooterBar"
+msgctxt "TitleBarAccountButton"
 msgid "Not logged in"
 msgstr "Oturum açılmadı"
 

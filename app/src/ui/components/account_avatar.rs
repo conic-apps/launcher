@@ -150,8 +150,8 @@ pub fn bundled_skin_image(texture_name: &str, model_type: &str, size: u32) -> Op
     Some(head(&decode(skin.texture)?, size))
 }
 
-/// The head the footer draws; `None` is logged out, where the Steve head is
-/// desaturated because Slint has no `grayscale` filter.
+/// The head an account surface draws; `None` is logged out, where the Steve head
+/// is desaturated because Slint has no `grayscale` filter.
 pub fn account_head(account: Option<&Account>, size: u32) -> Option<Image> {
     let Some(account) = account else {
         return Some(grayscale(bundled_skin_image("steve", "wide", size)?));

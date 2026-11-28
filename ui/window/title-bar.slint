@@ -7,7 +7,10 @@ import { OsFamily } from "../globals/platform.slint";
 import { Icons } from "../graphics/icons.slint";
 import { CommandPaletteState } from "../globals/command-palette.slint";
 import { TitleBarActionButton } from "title-bar/title-bar-action-button.slint";
+import { TitleBarAccountButton } from "title-bar/account-button.slint";
 import { QuickActionButton } from "title-bar/quick-action-button.slint";
+import { AccountViewState } from "../globals/account-view.slint";
+import { GameState } from "../globals/game.slint";
 import { NewsState } from "../globals/news.slint";
 import { NotificationState } from "../globals/notifications.slint";
 import { SettingsShell } from "../globals/settings-shell.slint";
@@ -40,6 +43,9 @@ export component TitleBar inherits Rectangle {
 
     callback open-home();
     callback open-settings();
+    /// The account chip: opens the account details, or the add-account dialog
+    /// while nobody is logged in.
+    callback open-account();
     callback open-search();
     callback open-news();
     callback open-notifications();
@@ -55,6 +61,8 @@ export component TitleBar inherits Rectangle {
 
     private property <length> left-actions-start:
         root.os-family == OsFamily.macos && !root.fullscreen ? 90px : 16px;
+    // Two 28px actions and the 4px gap between them; the search field follows it.
+    private property <length> left-actions-width: 60px;
     private property <length> right-actions-width:
         28px + 8px + 28px + (root.music-enabled ? 8px + 28px : 0px);
     private property <length> right-actions-start:
@@ -106,7 +114,7 @@ export component TitleBar inherits Rectangle {
     // traffic lights — except in fullscreen, where AppKit hides them.
     Rectangle {
         x: root.left-actions-start;
-        width: 60px;
+        width: root.left-actions-width;
         height: 28px;
 
         HorizontalLayout {
@@ -163,11 +171,11 @@ export component TitleBar inherits Rectangle {
         }
     }
 
-    // Sized to its text and parked left of the right action group, so it moves
-    // with those buttons rather than tracking the window centre.
+    // Sized to its text and parked right of the settings/home pair, so it stays
+    // with them rather than tracking the window centre.
     Rectangle {
         width: search-bar.content-width;
-        x: root.right-actions-start - 8px - self.width;
+        x: root.left-actions-start + root.left-actions-width + 8px;
         height: root.height;
         y: 0px;
 
@@ -180,6 +188,17 @@ export component TitleBar inherits Rectangle {
             active: CommandPaletteState.visible;
             activated => { root.open-search(); }
         }
+    }
+
+    // The account chip, parked left of the action group and sized to the name, so
+    // the group keeps its place against the window controls.
+    account-chip := TitleBarAccountButton {
+        x: root.right-actions-start - 8px - self.width;
+        name: GameState.current-account-name;
+        skin: GameState.current-account-avatar;
+        unlogged: !GameState.has-account;
+        selected: AccountViewState.visible;
+        clicked => { root.open-account(); }
     }
 
     // Right-side actions (news, music, then notifications). One container rather

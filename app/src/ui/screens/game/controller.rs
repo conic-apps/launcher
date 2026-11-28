@@ -846,12 +846,10 @@ fn apply_account(state: &GameState<'_>, account: Option<&Account>, avatar: Image
     state.set_current_account_avatar(avatar);
     match account {
         Some(account) => {
-            state.set_current_account_key(account.key().into());
             state.set_current_account_name(account.get_profile_name().into());
             state.set_current_account_kind(account.kind().into());
         }
         None => {
-            state.set_current_account_key(SharedString::default());
             state.set_current_account_name(SharedString::default());
             state.set_current_account_kind(SharedString::default());
         }

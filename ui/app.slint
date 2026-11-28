@@ -21,6 +21,7 @@ import { CommandPaletteOverlay } from "overlays/command-palette.slint";
 import { MusicPlayerOverlay } from "overlays/music-player.slint";
 import { SettingsOverlay } from "overlays/settings.slint";
 import { NewsRoot } from "overlays/news/news-root.slint";
+import { AccountViewRoot } from "overlays/account-view.slint";
 import { CrashRoot } from "overlays/crash/crash-root.slint";
 import {
     NotificationOverlay,
@@ -29,6 +30,7 @@ import {
 import { NotificationState } from "globals/notifications.slint";
 import { NewsState } from "globals/news.slint";
 import { OverlayShadow } from "globals/overlay-shadow.slint";
+import { AccountViewState } from "globals/account-view.slint";
 import { Scrim } from "graphics/display/scrim.slint";
 import { WindowDrag } from "globals/window-drag.slint";
 import { WindowBackground } from "window/window-background.slint";
@@ -376,6 +378,14 @@ export component App inherits Window {
                 height: root.height - root.title-bar-height;
             }
 
+            // Mounted here rather than on the game screen: the title bar's account
+            // chip reaches it from every screen, and it covers the screen's own
+            // panels.
+            AccountViewRoot {
+                y: root.title-bar-height;
+                height: root.height - root.title-bar-height;
+            }
+
             NotificationOverlay {
                 y: root.title-bar-height;
                 height: root.height - root.title-bar-height;
@@ -433,6 +443,21 @@ export component App inherits Window {
                     SettingsShell.toggle-settings();
                 }
                 open-search => { CommandPaletteState.open(); }
+                open-account => {
+                    if AccountViewState.visible {
+                        AccountViewState.visible = false;
+                    } else {
+                        NewsState.visible = false;
+                        NewsState.detail-visible = false;
+                        NotificationState.visible = false;
+                        SettingsShell.overlay-open = false;
+                        if GameState.has-account {
+                            GameState.open-accounts();
+                        } else {
+                            GameState.open-add-account();
+                        }
+                    }
+                }
                 open-news => {
                     NotificationState.visible = false;
                     root.open-news();

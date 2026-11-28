@@ -56,7 +56,7 @@ export struct GameRow {
     background: image,
 }
 
-/// One account entry of the footer account dropdown.
+/// One account entry of the account switcher's dropdown.
 export struct AccountItem {
     /// Stable account key (`microsoft-<uuid>` etc.).
     key: string,
@@ -255,10 +255,9 @@ export global GameState {
 
     in-out property <[AccountItem]> accounts: [];
     in-out property <bool> has-account: false;
-    in-out property <string> current-account-key: "";
     in-out property <string> current-account-name: "";
     in-out property <string> current-account-kind: "";
-    /// The head on the footer's avatar; the wide Steve when no account is selected.
+    /// The head the account chip shows; the wide Steve when no account is selected.
     in-out property <image> current-account-avatar;
 
     /// Called once at startup and whenever something changed on disk.
@@ -303,7 +302,6 @@ export global GameState {
     /// instance settings' "Delete instance" does.
     callback open-delete-instance(string);
     callback open-content(string);
-    callback select-account(string);
     callback open-accounts();
     callback open-add-account();
     callback open-connect();

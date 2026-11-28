@@ -1,0 +1,70 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../graphics/theme.slint";
+import { AccountAvatar } from "../../graphics/display/account-avatar.slint";
+
+// The title bar's account chip: the current account's name, then its head. A
+// selected one is filled with the accent tint, like the other title bar actions,
+// while the account overlay is open.
+//
+// The head is cut to rounded corners rather than to a disc, and carries no
+// account-type ring: at this size the ring and the gap around it would be most of
+// the face.
+export component TitleBarAccountButton inherits Rectangle {
+    /// The current account's name; the chip shows "Not logged in" without one.
+    in property <string> name;
+    in property <image> skin;
+    in property <bool> unlogged: false;
+    in property <bool> selected: false;
+    callback clicked;
+
+    private property <length> avatar-size: 24px;
+    // Capped so a long name cannot crowd the bar: the text elides instead, and the
+    // window controls keep their place.
+    private property <length> name-width: min(name-text.preferred-width, 140px);
+
+    width: 14px + root.name-width + 8px + root.avatar-size + 6px;
+    height: 28px;
+    border-radius: 6px;
+    background: touch.pressed ? Theme.overlay-0
+        : root.selected ? Theme.mauve.transparentize(0.7)
+        : touch.has-hover ? Theme.surface-2.transparentize(0.3)
+        : transparent;
+    animate background {
+        duration: 120ms;
+        easing: Easing.ease;
+    }
+
+    accessible-role: button;
+    accessible-label: root.unlogged ? @tr("Not logged in") : root.name;
+    accessible-action-default => { root.clicked(); }
+
+    name-text := Text {
+        x: 14px;
+        width: root.name-width;
+        text: root.unlogged ? @tr("Not logged in") : root.name;
+        font-size: 13px;
+        font-weight: Theme.font-weight-normal;
+        color: Theme.default-text-color.transparentize(0.1);
+        overflow: elide;
+        wrap: no-wrap;
+        vertical-alignment: center;
+    }
+
+    AccountAvatar {
+        x: root.width - root.avatar-size - 6px;
+        size: root.avatar-size;
+        corner-radius: 5px;
+        ring-width: 0px;
+        skin: root.skin;
+        unlogged: root.unlogged;
+    }
+
+    touch := TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => { root.clicked(); }
+    }
+}

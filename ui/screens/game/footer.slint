@@ -4,12 +4,10 @@
 
 import { Theme } from "../../graphics/theme.slint";
 import { AppIcon } from "../../graphics/display/app-icon.slint";
-import { AccountAvatar } from "../../graphics/display/account-avatar.slint";
 import { BeatMap } from "beat-map.slint";
 import { MusicState } from "../../globals/music.slint";
 import { AppConfig } from "../../globals/settings.slint";
 import { GameState, GameIntro } from "../../globals/game.slint";
-import { AccountListDropdown } from "account-list-dropdown.slint";
 
 // A pill-shaped footer action; the label is hidden for icon-only buttons.
 component FooterButton inherits Rectangle {
@@ -58,8 +56,8 @@ component FooterButton inherits Rectangle {
     }
 }
 
-// Bottom bar: account avatar + switcher, connect / new instance / install pack,
-// over the background music visualizer.
+// Bottom bar: connect / new instance / install pack, over the background music
+// visualizer. The account chip lives in the title bar.
 export component GameFooterBar inherits Rectangle {
     width: 100%;
     height: 56px;
@@ -102,139 +100,12 @@ export component GameFooterBar inherits Rectangle {
             resized(bar-count) => { MusicState.resized(bar-count); }
         }
 
-        if GameState.has-account: account-layer := Rectangle {
-            width: parent.width;
-            height: parent.height;
-            background: transparent;
-
-            pill := AccountListDropdown {
-                // Avatar's right edge, less the 16px the pill tucks under it.
-                x: 68px;
-                y: -6px + self.intro-dy;
-                name: GameState.current-account-name;
-                kind: GameState.current-account-kind;
-                players: GameState.accounts;
-                current-key: GameState.current-account-key;
-                include-add-account: true;
-                opacity: self.intro-alpha;
-                select(key) => { GameState.select-account(key); }
-                add-account => { GameState.open-add-account(); }
-                // The name opens the account details too, just like the avatar.
-                name-clicked => { GameState.open-accounts(); }
-
-                private property <length> intro-dy: GameIntro.played ? 0px : 10px;
-                private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-                animate intro-dy {
-                    duration: root.item-duration;
-                    delay: 150ms;
-                    easing: ease-out-quart;
-                }
-                animate intro-alpha {
-                    duration: root.item-duration;
-                    delay: 150ms;
-                    easing: ease-out-quart;
-                }
-            }
-
-            connect-button := FooterButton {
-                x: pill.x + pill.width + 8px;
-                y: -6px + self.intro-dy;
-                icon: "globe";
-                opacity: self.intro-alpha;
-                clicked => { GameState.open-connect(); }
-
-                private property <length> intro-dy: GameIntro.played ? 0px : 10px;
-                private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-                animate intro-dy {
-                    duration: root.item-duration;
-                    delay: 200ms;
-                    easing: ease-out-quart;
-                }
-                animate intro-alpha {
-                    duration: root.item-duration;
-                    delay: 200ms;
-                    easing: ease-out-quart;
-                }
-            }
-        }
-
-        if !GameState.has-account: unlogged-layer := Rectangle {
-            width: parent.width;
-            height: parent.height;
-            background: transparent;
-
-            unlogged-pill := Rectangle {
-                // As the logged-in pill above.
-                x: 68px;
-                y: -6px + self.intro-dy;
-                width: 32px + unlogged-text.preferred-width + 16px;
-                height: 36px;
-                border-radius: 8px;
-                background: Theme.surface-0;
-                drop-shadow-color: #00000033;
-                drop-shadow-blur: 10px;
-                opacity: self.intro-alpha;
-
-                private property <length> intro-dy: GameIntro.played ? 0px : 10px;
-                private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-                animate intro-dy {
-                    duration: root.item-duration;
-                    delay: 150ms;
-                    easing: ease-out-quart;
-                }
-                animate intro-alpha {
-                    duration: root.item-duration;
-                    delay: 150ms;
-                    easing: ease-out-quart;
-                }
-
-                unlogged-text := Text {
-                    text: @tr("Not logged in");
-                    font-size: 14px;
-                    font-weight: Theme.font-weight-normal;
-                    color: Theme.default-text-color.transparentize(0.1);
-                    x: 32px;
-                }
-
-                unlogged-touch := TouchArea {
-                    width: parent.width;
-                    height: parent.height;
-                    clicked => { GameState.open-add-account(); }
-                }
-            }
-
-            connect-button-unlogged := FooterButton {
-                x: unlogged-pill.x + unlogged-pill.width + 8px;
-                y: -6px + self.intro-dy;
-                icon: "globe";
-                opacity: self.intro-alpha;
-                clicked => { GameState.open-connect(); }
-
-                private property <length> intro-dy: GameIntro.played ? 0px : 10px;
-                private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-                animate intro-dy {
-                    duration: root.item-duration;
-                    delay: 200ms;
-                    easing: ease-out-quart;
-                }
-                animate intro-alpha {
-                    duration: root.item-duration;
-                    delay: 200ms;
-                    easing: ease-out-quart;
-                }
-            }
-        }
-
-        // Declared after the account layers so the overhanging circle paints over
-        // the name pill. The compiler ignores `z` on a component root, so
-        // declaration order is the z-order here.
-        avatar-wrap := Rectangle {
+        connect-button := FooterButton {
             x: 28px;
-            y: -18px + self.intro-dy;
-            width: 56px;
-            height: 56px;
-            background: transparent;
+            y: -6px + self.intro-dy;
+            icon: "globe";
             opacity: self.intro-alpha;
+            clicked => { GameState.open-connect(); }
 
             private property <length> intro-dy: GameIntro.played ? 0px : 10px;
             private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
@@ -247,34 +118,6 @@ export component GameFooterBar inherits Rectangle {
                 duration: root.item-duration;
                 delay: 100ms;
                 easing: ease-out-quart;
-            }
-
-            // Scale about the box centre so the circle stays put.
-            transform-origin: { x: self.width / 2, y: self.height / 2 };
-            transform-scale: avatar-touch.pressed ? 92% : avatar-touch.has-hover ? 104% : 100%;
-            animate transform-scale {
-                duration: 160ms;
-                easing: ease-out-quart;
-            }
-
-            AccountAvatar {
-                width: 100%;
-                height: 100%;
-                skin: GameState.current-account-avatar;
-                kind: GameState.current-account-kind;
-                unlogged: !GameState.has-account;
-            }
-
-            avatar-touch := TouchArea {
-                width: parent.width;
-                height: parent.height;
-                clicked => {
-                    if GameState.has-account {
-                        GameState.open-accounts();
-                    } else {
-                        GameState.open-add-account();
-                    }
-                }
             }
         }
 

@@ -155,9 +155,9 @@ fn select(ui: &App, key: &str) {
     let Some(account) = account else {
         return;
     };
-    // Choosing here is the same act as the footer's switcher: it changes the
-    // launcher's *current* account, not just what the overlay is looking at, so
-    // the footer and the launch screen follow. The overlay shows that account too.
+    // Choosing here is the same act as the title bar's account chip: it changes the
+    // launcher's *current* account, not just what the overlay is looking at, so the
+    // chip and the launch screen follow. The overlay shows that account too.
     if let Some(config) = config() {
         config.borrow_mut().current_account = Some(account.clone());
         if let Err(error) = config::save_config(&config.borrow()) {

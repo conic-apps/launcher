@@ -26,7 +26,8 @@ export global OverlayShadow {
         || NewsState.detail-visible
         || MusicState.panel-open
         || NotificationState.visible
-        || CrashState.visible;
+        || CrashState.visible
+        || AccountViewState.visible;
 
     /// The palette's band, mounted above the title bar.
     in property <bool> palette-open: OverlayShadow.palette;
@@ -35,6 +36,5 @@ export global OverlayShadow {
     /// The game screen's band, under its own panels.
     in property <bool> screen-open: !OverlayShadow.palette && !OverlayShadow.app && (
         ContentState.open-panel != ""
-        || InstanceSettingsState.visible
-        || AccountViewState.visible);
+        || InstanceSettingsState.visible);
 }
